@@ -78,7 +78,11 @@ function StepHeader({ step, total }: { step: number; total: number }) {
           </div>
         ))}
       </div>
-      <ProgressBar value={((step - 1) / (total - 1)) * 100} tone="primary" size="sm" />
+      <ProgressBar
+        value={((step - 1) / (total - 1)) * 100}
+        tone="primary"
+        size="sm"
+      />
     </div>
   );
 }
@@ -100,8 +104,11 @@ export function EmailBulkFinderTab() {
   const [syncRowCount, setSyncRowCount] = useState(SYNC_CAP);
   const [startingFinderJob, setStartingFinderJob] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadCsvFile, bucketName, uploading: s3Uploading } =
-    useS3Files(undefined);
+  const {
+    uploadCsvFile,
+    bucketName,
+    uploading: s3Uploading,
+  } = useS3Files(undefined);
 
   const headers = useMemo(
     () => (rawCsv ? sniffCsvHeaders(rawCsv) : []),
@@ -199,9 +206,7 @@ export function EmailBulkFinderTab() {
       const res = await jobsService.createEmailFinderExport({
         inputCsvKey: uploaded.key,
         outputPrefix: "exports/",
-        ...(bucketName?.trim()
-          ? { s3Bucket: bucketName.trim() }
-          : {}),
+        ...(bucketName?.trim() ? { s3Bucket: bucketName.trim() } : {}),
         csvColumns: {
           firstName: columns.firstName.trim() || "first_name",
           lastName: columns.lastName.trim() || "last_name",

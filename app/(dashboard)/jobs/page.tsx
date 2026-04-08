@@ -93,13 +93,20 @@ function JobDetailPanel({ jobId }: { jobId: string }) {
             <ProgressBar
               value={job.progress}
               tone={
-                job.status.toUpperCase() === "FAILED" ? "danger"
-                : job.status.toUpperCase() === "COMPLETED" ? "success"
-                : job.status.toUpperCase() === "PAUSED" ? "warning"
-                : "primary"
+                job.status.toUpperCase() === "FAILED"
+                  ? "danger"
+                  : job.status.toUpperCase() === "COMPLETED"
+                    ? "success"
+                    : job.status.toUpperCase() === "PAUSED"
+                      ? "warning"
+                      : "primary"
               }
               showValue
-              label={job.total > 0 ? `${job.processed} / ${job.total} rows` : undefined}
+              label={
+                job.total > 0
+                  ? `${job.processed} / ${job.total} rows`
+                  : undefined
+              }
               size="sm"
             />
           </dd>
@@ -297,23 +304,33 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {error && (() => {
-        const opErr = parseOperationError(error, "jobs");
-        return (
-          <Alert
-            variant={opErr.isServiceDown ? "danger" : "danger"}
-            title={opErr.isServiceDown ? "Service unavailable" : "Failed to load jobs"}
-            className="c360-mb-4"
-          >
-            {opErr.userMessage}
-            {opErr.retryable && (
-              <Button variant="ghost" size="sm" className="c360-mt-2" onClick={() => refresh()}>
-                Retry
-              </Button>
-            )}
-          </Alert>
-        );
-      })()}
+      {error &&
+        (() => {
+          const opErr = parseOperationError(error, "jobs");
+          return (
+            <Alert
+              variant={opErr.isServiceDown ? "danger" : "danger"}
+              title={
+                opErr.isServiceDown
+                  ? "Service unavailable"
+                  : "Failed to load jobs"
+              }
+              className="c360-mb-4"
+            >
+              {opErr.userMessage}
+              {opErr.retryable && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="c360-mt-2"
+                  onClick={() => refresh()}
+                >
+                  Retry
+                </Button>
+              )}
+            </Alert>
+          );
+        })()}
 
       <Card
         title="Jobs"
@@ -463,8 +480,8 @@ export default function JobsPage() {
                 <TabsContent value="quick">
                   <div className="c360-section-stack c360-pt-2">
                     <p className="c360-text-xs c360-text-muted">
-                      Export all {exportType} with no additional VQL filter.
-                      The output prefix above will be used as the S3 key prefix.
+                      Export all {exportType} with no additional VQL filter. The
+                      output prefix above will be used as the S3 key prefix.
                     </p>
                     <p className="c360-text-xs c360-text-muted">
                       Effective VQL: <code>{"{}"}</code>

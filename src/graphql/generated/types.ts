@@ -543,11 +543,6 @@ export type BulkEmailFinderItemInput = {
   lastName: Scalars["String"]["input"];
 };
 
-export type BulkEmailFinderJobInput = {
-  idempotencyKey?: InputMaybe<Scalars["String"]["input"]>;
-  items: Array<BulkEmailFinderItemInput>;
-};
-
 export type BulkEmailFinderResponse = {
   processedCount: Scalars["Int"]["output"];
   results: Array<BulkEmailFinderResult>;
@@ -566,6 +561,16 @@ export type BulkEmailFinderResult = {
   total: Scalars["Int"]["output"];
 };
 
+export type BulkEmailPatternPredictInput = {
+  items: Array<BulkEmailPatternPredictItemInput>;
+};
+
+export type BulkEmailPatternPredictItemInput = {
+  domain: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
 export type BulkEmailVerifierInput = {
   emails: Array<Scalars["String"]["input"]>;
   provider?: InputMaybe<Scalars["String"]["input"]>;
@@ -580,12 +585,6 @@ export type BulkEmailVerifierResponse = {
   total: Scalars["Int"]["output"];
   unknownCount: Scalars["Int"]["output"];
   validCount: Scalars["Int"]["output"];
-};
-
-export type BulkEmailVerifyJobInput = {
-  emails: Array<Scalars["String"]["input"]>;
-  idempotencyKey?: InputMaybe<Scalars["String"]["input"]>;
-  provider: Scalars["String"]["input"];
 };
 
 export type CacheStats = {
@@ -894,6 +893,7 @@ export type CompleteUploadInput = {
 export type CompleteUploadResponse = {
   fileKey: Scalars["String"]["output"];
   location?: Maybe<Scalars["String"]["output"]>;
+  metadataQueued: Scalars["Boolean"]["output"];
   s3Url: Scalars["String"]["output"];
   status: Scalars["String"]["output"];
 };
@@ -1204,6 +1204,13 @@ export type CreateEmailFinderExportInput = {
   s3Bucket?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type CreateEmailPatternExportInput = {
+  csvColumns?: InputMaybe<EmailPatternCsvColumnsInput>;
+  inputCsvKey: Scalars["String"]["input"];
+  outputPrefix: Scalars["String"]["input"];
+  s3Bucket?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type CreateEmailVerifyExportInput = {
   csvColumns?: InputMaybe<EmailExportCsvColumnsInput>;
   inputCsvKey: Scalars["String"]["input"];
@@ -1361,30 +1368,25 @@ export type EmailFinderResponse = {
   total: Scalars["Int"]["output"];
 };
 
-export type EmailJobQueuedResponse = {
-  idempotentReplay?: Maybe<Scalars["Boolean"]["output"]>;
-  jobId: Scalars["String"]["output"];
-  queued?: Maybe<Scalars["Int"]["output"]>;
-  statusUrl?: Maybe<Scalars["String"]["output"]>;
-  success: Scalars["Boolean"]["output"];
-};
-
 export type EmailJobStatusResponse = {
+  createdAt?: Maybe<Scalars["String"]["output"]>;
+  credits?: Maybe<Scalars["Int"]["output"]>;
   done: Scalars["Boolean"]["output"];
   jobId: Scalars["String"]["output"];
+  jobTitle?: Maybe<Scalars["String"]["output"]>;
   jobType?: Maybe<Scalars["String"]["output"]>;
   outputCsvKey?: Maybe<Scalars["String"]["output"]>;
   processedRows: Scalars["Int"]["output"];
   progressPercent: Scalars["Int"]["output"];
   provider?: Maybe<Scalars["String"]["output"]>;
   status?: Maybe<Scalars["String"]["output"]>;
+  success: Scalars["Boolean"]["output"];
+  updatedAt?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type EmailMutation = {
   addEmailPattern: EmailPatternResult;
   addEmailPatternBulk: EmailPatternBulkAddResponse;
-  createEmailFinderBulkJob: EmailJobQueuedResponse;
-  createEmailVerifyBulkJob: EmailJobQueuedResponse;
 };
 
 export type EmailMutationAddEmailPatternArgs = {
@@ -1393,14 +1395,6 @@ export type EmailMutationAddEmailPatternArgs = {
 
 export type EmailMutationAddEmailPatternBulkArgs = {
   input: EmailPatternBulkAddInput;
-};
-
-export type EmailMutationCreateEmailFinderBulkJobArgs = {
-  input: BulkEmailFinderJobInput;
-};
-
-export type EmailMutationCreateEmailVerifyBulkJobArgs = {
-  input: BulkEmailVerifyJobInput;
 };
 
 export type EmailPatternAddInput = {
@@ -1416,8 +1410,11 @@ export type EmailPatternBulkAddInput = {
 };
 
 export type EmailPatternBulkAddResponse = {
+  inserted?: Maybe<Scalars["Int"]["output"]>;
   results: Array<EmailPatternResult>;
+  skipped?: Maybe<Scalars["Int"]["output"]>;
   success: Scalars["Boolean"]["output"];
+  total?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type EmailPatternBulkItemInput = {
@@ -1426,6 +1423,47 @@ export type EmailPatternBulkItemInput = {
   email: Scalars["String"]["input"];
   firstName: Scalars["String"]["input"];
   lastName: Scalars["String"]["input"];
+};
+
+export type EmailPatternCsvColumnsInput = {
+  companyUuid?: Scalars["String"]["input"];
+  domain?: Scalars["String"]["input"];
+  email?: Scalars["String"]["input"];
+  firstName?: Scalars["String"]["input"];
+  lastName?: Scalars["String"]["input"];
+};
+
+export type EmailPatternPredictBulkResult = {
+  results: Array<EmailPatternPredictRowGroup>;
+  success: Scalars["Boolean"]["output"];
+  total: Scalars["Int"]["output"];
+};
+
+export type EmailPatternPredictInput = {
+  domain: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type EmailPatternPredictResult = {
+  domain: Scalars["String"]["output"];
+  patterns: Array<EmailPatternPredictRow>;
+  success: Scalars["Boolean"]["output"];
+  total: Scalars["Int"]["output"];
+};
+
+export type EmailPatternPredictRow = {
+  contactCount: Scalars["Int"]["output"];
+  email: Scalars["String"]["output"];
+  errorRate?: Maybe<Scalars["Float"]["output"]>;
+  patternFormat: Scalars["String"]["output"];
+  status?: Maybe<Scalars["String"]["output"]>;
+  successRate?: Maybe<Scalars["Float"]["output"]>;
+  uuid: Scalars["String"]["output"];
+};
+
+export type EmailPatternPredictRowGroup = {
+  patterns: Array<EmailPatternPredictRow>;
 };
 
 export type EmailPatternResult = {
@@ -1442,9 +1480,12 @@ export type EmailPatternResult = {
 
 export type EmailQuery = {
   emailJobStatus: EmailJobStatusResponse;
+  emailSatelliteJobs: Array<EmailSatelliteJobSummary>;
   exportEmails: ComingSoonResponse;
   findEmails: EmailFinderResponse;
   findEmailsBulk: BulkEmailFinderResponse;
+  predictEmailPattern: EmailPatternPredictResult;
+  predictEmailPatternBulk: EmailPatternPredictBulkResult;
   verifyEmailsBulk: BulkEmailVerifierResponse;
   verifySingleEmail: SingleEmailVerifierResponse;
   verifyexportEmail: ComingSoonResponse;
@@ -1461,6 +1502,14 @@ export type EmailQueryFindEmailsArgs = {
 
 export type EmailQueryFindEmailsBulkArgs = {
   input: BulkEmailFinderInput;
+};
+
+export type EmailQueryPredictEmailPatternArgs = {
+  input: EmailPatternPredictInput;
+};
+
+export type EmailQueryPredictEmailPatternBulkArgs = {
+  input: BulkEmailPatternPredictInput;
 };
 
 export type EmailQueryVerifyEmailsBulkArgs = {
@@ -1491,6 +1540,18 @@ export type EmailRiskAnalysisResponse = {
   isRoleBased: Scalars["Boolean"]["output"];
   /** Risk score from 0-100, where higher scores indicate higher risk */
   riskScore: Scalars["Int"]["output"];
+};
+
+export type EmailSatelliteJobSummary = {
+  completed: Scalars["Int"]["output"];
+  createdAt?: Maybe<Scalars["String"]["output"]>;
+  done: Scalars["Boolean"]["output"];
+  id: Scalars["String"]["output"];
+  provider: Scalars["String"]["output"];
+  status: Scalars["String"]["output"];
+  totalEmails: Scalars["Int"]["output"];
+  unknownCount: Scalars["Int"]["output"];
+  updatedAt?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type EndpointPerformance = {
@@ -1593,12 +1654,14 @@ export type HealthQuery = {
 export type InitiateCsvUploadInput = {
   fileSize: Scalars["BigInt"]["input"];
   filename: Scalars["String"]["input"];
+  idempotencyKey?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type InitiateUploadInput = {
   contentType?: Scalars["String"]["input"];
   fileSize: Scalars["BigInt"]["input"];
   filename: Scalars["String"]["input"];
+  idempotencyKey?: InputMaybe<Scalars["String"]["input"]>;
   prefix?: InputMaybe<Scalars["String"]["input"]>;
 };
 
@@ -1646,6 +1709,7 @@ export type JobMutation = {
   createContact360Export: SchedulerJob;
   createContact360Import: SchedulerJob;
   createEmailFinderExport: SchedulerJob;
+  createEmailPatternExport: SchedulerJob;
   createEmailVerifyExport: SchedulerJob;
   pauseConnectraJob: Scalars["JSON"]["output"];
   pauseJob: Scalars["JSON"]["output"];
@@ -1666,6 +1730,10 @@ export type JobMutationCreateContact360ImportArgs = {
 
 export type JobMutationCreateEmailFinderExportArgs = {
   input: CreateEmailFinderExportInput;
+};
+
+export type JobMutationCreateEmailPatternExportArgs = {
+  input: CreateEmailPatternExportInput;
 };
 
 export type JobMutationCreateEmailVerifyExportArgs = {

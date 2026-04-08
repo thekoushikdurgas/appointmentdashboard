@@ -29,10 +29,13 @@ export function ContactExportModal({
 }: ContactExportModalProps) {
   const [outputPrefix, setOutputPrefix] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [opError, setOpError] = useState<ReturnType<typeof parseOperationError> | null>(null);
+  const [opError, setOpError] = useState<ReturnType<
+    typeof parseOperationError
+  > | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const { jobStatus, polling, isTerminal, startPolling, reset } = useJobPoller();
+  const { jobStatus, polling, isTerminal, startPolling, reset } =
+    useJobPoller();
 
   useEffect(() => {
     if (isOpen) {
@@ -61,7 +64,10 @@ export function ContactExportModal({
     setOpError(null);
     setSubmitting(true);
     try {
-      const vql = JSON.parse(JSON.stringify(vqlForExport)) as Record<string, unknown>;
+      const vql = JSON.parse(JSON.stringify(vqlForExport)) as Record<
+        string,
+        unknown
+      >;
       const job = await contactsService.exportContacts({
         service: CONTACT_EXPORT_SERVICE,
         outputPrefix: prefix,
@@ -93,7 +99,13 @@ export function ContactExportModal({
 
         {opError && (
           <Alert
-            variant={opError.isValidation ? "warning" : opError.isServiceDown ? "danger" : "danger"}
+            variant={
+              opError.isValidation
+                ? "warning"
+                : opError.isServiceDown
+                  ? "danger"
+                  : "danger"
+            }
             title={
               opError.isServiceDown
                 ? "Service unavailable"

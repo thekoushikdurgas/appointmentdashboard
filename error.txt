@@ -1,1 +1,92 @@
-GraphQL Error (Code: 500): {"response":{"error":"Internal Server Error","status":500,"headers":{}},"request":{"query":"\n mutation AuthLogin($input: LoginInput!, $pageType: String) {\n auth {\n login(input: $input, pageType: $pageType) {\n \n accessToken\n refreshToken\n user { \n uuid\n email\n name\n role\n userType\n }\n pages { \n pageId\n title\n pageType\n route\n status\n }\n twoFactorRequired\n challengeToken\n\n }\n }\n }\n","variables":{"input":{"email":"koushikchandrasaha558@gmail.com","password":"koushikchandrasaha558","geolocation":{"timezone":"Asia/Calcutta","device":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}},"pageType":null}}}
+----------------------------------------
+  Same as npm run typecheck (tsc --noEmit); duplicates removed vs older bat.
+  Running: npm run typecheck
+
+> contact360-app@0.1.0 typecheck
+> tsc --noEmit
+
+src/components/feature/companies/CompanyCard.tsx:74:32 - error TS2322: Type '{ children: string; key: string; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+
+74               <Badge key={ind} variant="outline" size="sm">
+                                  ~~~~~~~
+
+src/components/feature/companies/CompanyCard.tsx:79:22 - error TS2322: Type '{ children: (string | number)[]; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+
+79               <Badge variant="outline" size="sm">
+                        ~~~~~~~
+
+src/components/feature/companies/CompanyCard.tsx:104:15 - error TS2322: Type '"xs"' is not assignable to type 'ButtonSize | undefined'.
+
+104               size="xs"
+                  ~~~~
+
+  src/components/ui/Button.tsx:11:3
+    11   size?: ButtonSize;
+         ~~~~
+    The expected type comes from property 'size' which is declared here on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'
+
+src/components/feature/companies/CompanyCard.tsx:113:15 - error TS2322: Type '"xs"' is not assignable to type 'ButtonSize | undefined'.
+
+113               size="xs"
+                  ~~~~
+
+  src/components/ui/Button.tsx:11:3
+    11   size?: ButtonSize;
+         ~~~~
+    The expected type comes from property 'size' which is declared here on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'
+
+src/lib/errorParser.ts:86:5 - error TS2881: This expression is never nullish.
+
+86     httpStatus === 404 ??
+       ~~~~~~~~~~~~~~~~~~
+
+src/lib/errorParser.ts:87:5 - error TS2881: This expression is never nullish.
+
+87     code === "ERR_JOB_NOT_FOUND" ??
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/lib/errorParser.ts:92:5 - error TS2881: This expression is never nullish.
+
+92     httpStatus === 400 ??
+       ~~~~~~~~~~~~~~~~~~
+
+src/lib/errorParser.ts:93:5 - error TS2881: This expression is never nullish.
+
+93     httpStatus === 422 ??
+       ~~~~~~~~~~~~~~~~~~
+
+src/lib/errorParser.ts:94:5 - error TS2881: This expression is never nullish.
+
+94     !!(fieldErrors && Object.keys(fieldErrors).length > 0) ??
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/lib/errorParser.ts:98:60 - error TS2881: This expression is never nullish.
+
+98   const isPermission = parsedGraphQL?.isPermissionError ?? httpStatus === 403 ?? false;
+                                                              ~~~~~~~~~~~~~~~~~~
+
+
+Found 10 errors in 2 files.
+
+Errors  Files
+     4  src/components/feature/companies/CompanyCard.tsx:74
+     6  src/lib/errorParser.ts:86
+  X Type check failed
+  ✓ Compiled successfully in 33.6s
+  Running TypeScript  ..Failed to type check.
+
+./src/components/feature/companies/CompanyCard.tsx:74:32
+Type error: Type '{ children: string; key: string; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+
+  72 |           <div className="c360-badge-row c360-mt-2 c360-flex-wrap">
+  73 |             {company.industries.slice(0, 3).map((ind) => (
+> 74 |               <Badge key={ind} variant="outline" size="sm">
+     |                                ^
+  75 |                 {ind}
+  76 |               </Badge>
+  77 |             ))}
+Next.js build worker exited with code: 1 and signal: null
+  X Build failed

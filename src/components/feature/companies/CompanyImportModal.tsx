@@ -42,7 +42,9 @@ export function CompanyImportModal({
   const [s3Key, setS3Key] = useState("");
   const [outputPrefix, setOutputPrefix] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [opError, setOpError] = useState<ReturnType<typeof parseOperationError> | null>(null);
+  const [opError, setOpError] = useState<ReturnType<
+    typeof parseOperationError
+  > | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const { jobStatus, polling, isTerminal, startPolling, reset } = useJobPoller({
@@ -64,7 +66,8 @@ export function CompanyImportModal({
   const validateStep1 = (): string | null => {
     if (!s3Bucket.trim()) return "S3 bucket is required.";
     if (!s3Key.trim()) return "S3 key is required.";
-    if (!s3Key.trim().endsWith(".csv")) return "S3 key must point to a .csv file.";
+    if (!s3Key.trim().endsWith(".csv"))
+      return "S3 key must point to a .csv file.";
     return null;
   };
 
@@ -72,7 +75,14 @@ export function CompanyImportModal({
     if (step === 1) {
       const err = validateStep1();
       if (err) {
-        setOpError({ userMessage: err, retryable: false, isNotFound: false, isValidation: true, isPermission: false, isServiceDown: false });
+        setOpError({
+          userMessage: err,
+          retryable: false,
+          isNotFound: false,
+          isValidation: true,
+          isPermission: false,
+          isServiceDown: false,
+        });
         return;
       }
     }
@@ -139,7 +149,13 @@ export function CompanyImportModal({
         {opError && (
           <Alert
             variant={opError.isValidation ? "warning" : "danger"}
-            title={opError.isServiceDown ? "Service unavailable" : opError.isValidation ? "Validation error" : "Import failed"}
+            title={
+              opError.isServiceDown
+                ? "Service unavailable"
+                : opError.isValidation
+                  ? "Validation error"
+                  : "Import failed"
+            }
             onClose={() => setOpError(null)}
           >
             {opError.userMessage}
@@ -189,13 +205,19 @@ export function CompanyImportModal({
             </Alert>
             <dl className="c360-dl-grid">
               <dt>Bucket</dt>
-              <dd><code>{s3Bucket}</code></dd>
+              <dd>
+                <code>{s3Bucket}</code>
+              </dd>
               <dt>Key</dt>
-              <dd><code>{s3Key}</code></dd>
+              <dd>
+                <code>{s3Key}</code>
+              </dd>
               {outputPrefix && (
                 <>
                   <dt>Output prefix</dt>
-                  <dd><code>{outputPrefix}</code></dd>
+                  <dd>
+                    <code>{outputPrefix}</code>
+                  </dd>
                 </>
               )}
             </dl>

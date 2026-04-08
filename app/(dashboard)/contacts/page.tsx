@@ -287,23 +287,41 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {error && (() => {
-        const opErr = parseOperationError(error, "contacts");
-        return (
-          <Alert
-            variant={opErr.isServiceDown ? "danger" : opErr.isPermission ? "warning" : "danger"}
-            title={opErr.isServiceDown ? "Service unavailable" : opErr.isPermission ? "Access denied" : "Failed to load contacts"}
-            className="c360-mb-4"
-          >
-            {opErr.userMessage}
-            {opErr.retryable && (
-              <Button variant="ghost" size="sm" className="c360-mt-2" onClick={() => void refresh()}>
-                Retry
-              </Button>
-            )}
-          </Alert>
-        );
-      })()}
+      {error &&
+        (() => {
+          const opErr = parseOperationError(error, "contacts");
+          return (
+            <Alert
+              variant={
+                opErr.isServiceDown
+                  ? "danger"
+                  : opErr.isPermission
+                    ? "warning"
+                    : "danger"
+              }
+              title={
+                opErr.isServiceDown
+                  ? "Service unavailable"
+                  : opErr.isPermission
+                    ? "Access denied"
+                    : "Failed to load contacts"
+              }
+              className="c360-mb-4"
+            >
+              {opErr.userMessage}
+              {opErr.retryable && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="c360-mt-2"
+                  onClick={() => void refresh()}
+                >
+                  Retry
+                </Button>
+              )}
+            </Alert>
+          );
+        })()}
 
       <Card title="Contacts" padding="none" className="c360-mb-4">
         <div className="c360-p-4">

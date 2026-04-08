@@ -227,28 +227,43 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {error && (() => {
-        const opErr = parseOperationError(error, "companies");
-        return (
-          <Alert
-            variant={opErr.isServiceDown ? "danger" : opErr.isPermission ? "warning" : "danger"}
-            title={opErr.isServiceDown ? "Service unavailable" : opErr.isPermission ? "Access denied" : "Failed to load companies"}
-            className="c360-mb-4"
-          >
-            {opErr.userMessage}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="c360-mt-2"
-              disabled={loading}
-              leftIcon={<RefreshCw size={13} className={cn(loading && "c360-spin")} />}
-              onClick={() => void refresh()}
+      {error &&
+        (() => {
+          const opErr = parseOperationError(error, "companies");
+          return (
+            <Alert
+              variant={
+                opErr.isServiceDown
+                  ? "danger"
+                  : opErr.isPermission
+                    ? "warning"
+                    : "danger"
+              }
+              title={
+                opErr.isServiceDown
+                  ? "Service unavailable"
+                  : opErr.isPermission
+                    ? "Access denied"
+                    : "Failed to load companies"
+              }
+              className="c360-mb-4"
             >
-              Retry
-            </Button>
-          </Alert>
-        );
-      })()}
+              {opErr.userMessage}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="c360-mt-2"
+                disabled={loading}
+                leftIcon={
+                  <RefreshCw size={13} className={cn(loading && "c360-spin")} />
+                }
+                onClick={() => void refresh()}
+              >
+                Retry
+              </Button>
+            </Alert>
+          );
+        })()}
 
       {loading ? (
         <div className="c360-text-center c360-p-12">

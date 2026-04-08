@@ -28,10 +28,13 @@ export function CompanyExportModal({
 }: CompanyExportModalProps) {
   const [outputPrefix, setOutputPrefix] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [opError, setOpError] = useState<ReturnType<typeof parseOperationError> | null>(null);
+  const [opError, setOpError] = useState<ReturnType<
+    typeof parseOperationError
+  > | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const { jobStatus, polling, isTerminal, startPolling, reset } = useJobPoller();
+  const { jobStatus, polling, isTerminal, startPolling, reset } =
+    useJobPoller();
 
   useEffect(() => {
     if (isOpen) {
@@ -60,7 +63,10 @@ export function CompanyExportModal({
     setOpError(null);
     setSubmitting(true);
     try {
-      const vql = JSON.parse(JSON.stringify(vqlForExport)) as Record<string, unknown>;
+      const vql = JSON.parse(JSON.stringify(vqlForExport)) as Record<
+        string,
+        unknown
+      >;
       const job = await companiesService.exportCompanies({
         service: COMPANY_EXPORT_SERVICE,
         outputPrefix: prefix,
@@ -104,7 +110,12 @@ export function CompanyExportModal({
           >
             {opError.userMessage}
             {opError.retryable && (
-              <Button variant="ghost" size="sm" className="c360-mt-2" onClick={() => void handleSubmit()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="c360-mt-2"
+                onClick={() => void handleSubmit()}
+              >
                 Retry
               </Button>
             )}

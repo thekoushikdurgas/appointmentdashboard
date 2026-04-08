@@ -289,13 +289,15 @@ export default function LinkedInPage() {
           <div className="c360-stat-chip">
             <Users size={14} className="c360-text-primary" />
             <span className="c360-text-sm">
-              <strong>{filtered.length}</strong> contact{filtered.length !== 1 ? "s" : ""}
+              <strong>{filtered.length}</strong> contact
+              {filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
           <div className="c360-stat-chip">
             <Building2 size={14} className="c360-text-primary" />
             <span className="c360-text-sm">
-              <strong>{filteredCompanies.length}</strong> compan{filteredCompanies.length !== 1 ? "ies" : "y"}
+              <strong>{filteredCompanies.length}</strong> compan
+              {filteredCompanies.length !== 1 ? "ies" : "y"}
             </span>
           </div>
         </div>

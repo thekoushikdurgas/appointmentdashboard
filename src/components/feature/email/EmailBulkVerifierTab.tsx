@@ -78,7 +78,11 @@ function StepHeader({ step, total }: { step: number; total: number }) {
           </div>
         ))}
       </div>
-      <ProgressBar value={((step - 1) / (total - 1)) * 100} tone="primary" size="sm" />
+      <ProgressBar
+        value={((step - 1) / (total - 1)) * 100}
+        tone="primary"
+        size="sm"
+      />
     </div>
   );
 }
@@ -98,8 +102,11 @@ export function EmailBulkVerifierTab() {
   const [syncVerifyCount, setSyncVerifyCount] = useState(MAX_SYNC);
   const [startingVerifyJob, setStartingVerifyJob] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadCsvFile, bucketName, uploading: s3Uploading } =
-    useS3Files(undefined);
+  const {
+    uploadCsvFile,
+    bucketName,
+    uploading: s3Uploading,
+  } = useS3Files(undefined);
 
   const headers = useMemo(
     () => (rawCsv ? sniffCsvHeaders(rawCsv) : []),
@@ -203,9 +210,7 @@ export function EmailBulkVerifierTab() {
       const res = await jobsService.createEmailVerifyExport({
         inputCsvKey: uploaded.key,
         outputPrefix: "exports/",
-        ...(bucketName?.trim()
-          ? { s3Bucket: bucketName.trim() }
-          : {}),
+        ...(bucketName?.trim() ? { s3Bucket: bucketName.trim() } : {}),
         provider,
         csvColumns: {
           email: col,
@@ -406,9 +411,10 @@ export function EmailBulkVerifierTab() {
         {step === 3 && (
           <div className="c360-section-stack">
             <p className="c360-text-sm">
-              Ready to process <strong>{emails.length}</strong> unique addresses.
-              Each sync request can include up to <strong>{MAX_SYNC}</strong>{" "}
-              addresses (app limit). Using <strong>{providerLabel}</strong>.
+              Ready to process <strong>{emails.length}</strong> unique
+              addresses. Each sync request can include up to{" "}
+              <strong>{MAX_SYNC}</strong> addresses (app limit). Using{" "}
+              <strong>{providerLabel}</strong>.
             </p>
             <div className="c360-max-w-xs">
               <Input
@@ -423,9 +429,7 @@ export function EmailBulkVerifierTab() {
                 onChange={(e) => {
                   const raw = parseInt(e.target.value, 10);
                   if (!Number.isFinite(raw)) return;
-                  setSyncVerifyCount(
-                    clampVerifyBatchSize(raw, emails.length),
-                  );
+                  setSyncVerifyCount(clampVerifyBatchSize(raw, emails.length));
                 }}
                 onBlur={() =>
                   setSyncVerifyCount((prev) =>
@@ -463,9 +467,9 @@ export function EmailBulkVerifierTab() {
               </Button>
             </div>
             <p className="c360-text-xs c360-text-muted">
-              Start Jobs uploads your CSV (or a file built from pasted emails) to
-              workspace S3 and enqueues <strong>Email verify (bulk)</strong> with
-              provider <strong>{providerLabel}</strong> and email column{" "}
+              Start Jobs uploads your CSV (or a file built from pasted emails)
+              to workspace S3 and enqueues <strong>Email verify (bulk)</strong>{" "}
+              with provider <strong>{providerLabel}</strong> and email column{" "}
               <strong>{emailColumn.trim() || "email"}</strong>. For more than{" "}
               {MAX_SYNC} addresses per sync, use Start Jobs or{" "}
               <Link href="/jobs" className="c360-text-primary">

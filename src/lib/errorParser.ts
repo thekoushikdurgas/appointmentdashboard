@@ -31,7 +31,13 @@ export interface OperationError {
   isServiceDown: boolean;
 }
 
-type Domain = "contacts" | "companies" | "jobs" | "linkedin" | "email" | "storage";
+type Domain =
+  | "contacts"
+  | "companies"
+  | "jobs"
+  | "linkedin"
+  | "email"
+  | "storage";
 
 type ErrWithParsed = Error & {
   parsedError?: ReturnType<typeof parseGraphQLError>;
@@ -56,7 +62,10 @@ function extractMessage(err: unknown, domain: Domain): string {
  * Convert any error thrown during a GraphQL / REST call into a structured
  * `OperationError` that UI components can branch on without string matching.
  */
-export function parseOperationError(err: unknown, domain: Domain): OperationError {
+export function parseOperationError(
+  err: unknown,
+  domain: Domain,
+): OperationError {
   // Attempt to extract GraphQL error metadata
   let parsedGraphQL: ReturnType<typeof parseGraphQLError> | undefined;
 
@@ -71,38 +80,47 @@ export function parseOperationError(err: unknown, domain: Domain): OperationErro
 
   const httpStatus =
     parsedGraphQL?.status ??
-    ((err as Record<string, unknown>)?.extensions as Record<string, unknown> | undefined)
-      ?.httpStatus as number | undefined;
+    ((
+      (err as Record<string, unknown>)?.extensions as
+        | Record<string, unknown>
+        | undefined
+    )?.httpStatus as number | undefined);
 
   const code =
     parsedGraphQL?.code ??
-    (((err as Record<string, unknown>)?.extensions as Record<string, unknown> | undefined)
-      ?.errorCode as string | undefined);
+    ((
+      (err as Record<string, unknown>)?.extensions as
+        | Record<string, unknown>
+        | undefined
+    )?.errorCode as string | undefined);
 
   const fieldErrors = parsedGraphQL?.fieldErrors;
 
   const isNotFound =
-    parsedGraphQL?.isNotFoundError ??
-    httpStatus === 404 ??
-    code === "ERR_JOB_NOT_FOUND" ??
-    false;
+    Boolean(parsedGraphQL?.isNotFoundError) ||
+    httpStatus === 404 ||
+    code === "ERR_JOB_NOT_FOUND";
 
   const isValidation =
-    parsedGraphQL?.isValidationError ??
-    httpStatus === 400 ??
-    httpStatus === 422 ??
-    !!(fieldErrors && Object.keys(fieldErrors).length > 0) ??
-    (typeof code === "string" && (code.includes("INVALID") || code.includes("MISSING") || code.includes("VALIDATION"))) ??
-    false;
+    Boolean(parsedGraphQL?.isValidationError) ||
+    httpStatus === 400 ||
+    httpStatus === 422 ||
+    !!(fieldErrors && Object.keys(fieldErrors).length > 0) ||
+    (typeof code === "string" &&
+      (code.includes("INVALID") ||
+        code.includes("MISSING") ||
+        code.includes("VALIDATION")));
 
-  const isPermission = parsedGraphQL?.isPermissionError ?? httpStatus === 403 ?? false;
+  const isPermission =
+    Boolean(parsedGraphQL?.isPermissionError) || httpStatus === 403;
 
   const isServiceDown =
     (httpStatus !== undefined && httpStatus >= 500) ||
     code === "SERVICE_UNAVAILABLE" ||
     code === "RATE_LIMIT_EXCEEDED";
 
-  const retryable = isServiceDown || (httpStatus !== undefined && httpStatus === 429);
+  const retryable =
+    isServiceDown || (httpStatus !== undefined && httpStatus === 429);
 
   return {
     userMessage: extractMessage(err, domain),

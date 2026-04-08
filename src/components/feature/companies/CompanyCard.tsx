@@ -71,12 +71,12 @@ export function CompanyCard({ company, onAction }: CompanyCardProps) {
         {company.industries && company.industries.length > 0 && (
           <div className="c360-badge-row c360-mt-2 c360-flex-wrap">
             {company.industries.slice(0, 3).map((ind) => (
-              <Badge key={ind} variant="outline" size="sm">
+              <Badge key={ind} color="secondary" size="sm">
                 {ind}
               </Badge>
             ))}
             {company.industries.length > 3 && (
-              <Badge variant="outline" size="sm">
+              <Badge color="secondary" size="sm">
                 +{company.industries.length - 3}
               </Badge>
             )}
@@ -95,22 +95,21 @@ export function CompanyCard({ company, onAction }: CompanyCardProps) {
         </div>
         <div className="c360-flex c360-gap-1">
           {company.websiteUrl && (
-            <Button
-              as="a"
-              href={company.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="ghost"
-              size="xs"
-              aria-label="Visit website"
-            >
-              <ExternalLink size={13} />
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href={company.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit website"
+              >
+                <ExternalLink size={13} />
+              </a>
             </Button>
           )}
           {onAction && (
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               onClick={() => onAction(company.id, "view")}
             >
               View
