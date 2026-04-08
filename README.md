@@ -22,9 +22,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable                              | Description           | Default                    |
 | ------------------------------------- | --------------------- | -------------------------- |
-| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `http://api.contact360.io` |
+| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `https://api.contact360.io` |
 | `NEXT_PUBLIC_GRAPHQL_URL`             | Full GraphQL endpoint | `${API_URL}/graphql`       |
-| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `contact360uploads`        |
+| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `appointment360uploads`        |
 | `NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED` | Enable export feature | `false`                    |
 
 ## Commands
