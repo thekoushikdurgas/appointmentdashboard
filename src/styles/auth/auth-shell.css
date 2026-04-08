@@ -1,0 +1,110 @@
+/* Auth shell — Dashboard UI kit parity (tokens only; no Bootstrap). */
+
+.c360-auth-shell__brand {
+  text-align: center;
+  margin-bottom: var(--c360-spacing-6);
+}
+
+.c360-auth-shell__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--c360-radius-lg);
+  background: var(--c360-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--c360-spacing-4);
+}
+
+.c360-auth-shell__title {
+  font-size: var(--c360-text-2xl);
+  font-weight: 700;
+  color: var(--c360-text);
+  margin-bottom: var(--c360-spacing-1);
+}
+
+.c360-auth-shell__subtitle {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+.c360-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-4);
+}
+
+.c360-auth-form__progress {
+  margin: calc(-1 * var(--c360-spacing-2)) 0 var(--c360-spacing-1);
+}
+
+.c360-auth-form__row--split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-4);
+  flex-wrap: wrap;
+}
+
+.c360-auth-form__remember {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.c360-auth-footer {
+  text-align: center;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+.c360-auth-link-btn {
+  background: none;
+  border: none;
+  color: var(--c360-primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.c360-auth-pw-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  padding: 0;
+}
+
+.c360-auth-forgot-link {
+  font-size: var(--c360-text-sm);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.c360-auth-tabs-spaced {
+  margin-bottom: var(--c360-spacing-6);
+}
+
+.c360-auth-fallback__brand {
+  text-align: center;
+  margin-bottom: var(--c360-spacing-6);
+}
+
+.c360-auth-fallback__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--c360-radius-lg);
+  background: var(--c360-primary);
+  margin: 0 auto var(--c360-spacing-4);
+}
+
+.c360-auth-fallback__spinner {
+  margin: 0 auto;
+}
+
+.c360-auth-fallback__text {
+  margin-top: var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}

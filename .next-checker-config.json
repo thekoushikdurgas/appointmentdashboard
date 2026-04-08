@@ -1,0 +1,21 @@
+{
+  "_comment": "Optional overrides for scripts/check-best-practices.mjs",
+  "ignore_points": [],
+  "skip_categories": [],
+  "require_playwright_config": false,
+  "require_middleware": false,
+  "_max_inline_style_files_doc": "Point 45: max count of src/ TS/TSX files containing style={{ (default 30 if omitted).",
+  "max_inline_style_files": 1,
+  "_max_any_count_doc": "Point 51: max matches of : any / as any / any[] in src/ excluding graphql/generated (default 20).",
+  "max_any_count": 20,
+  "_max_console_logs_doc": "Point 58: max console.log( occurrences in src/ (default 10).",
+  "max_console_logs": 10,
+  "require_coverage_script": false,
+  "require_ci_script": false,
+  "_localstorage_allow_files_doc": "Point 59: UI prefs use localStorage outside tokenManager; list those paths here.",
+  "localstorage_allow_files": [
+    "src/context/ThemeContext.tsx",
+    "src/components/layout/MainLayout.tsx",
+    "src/components/shared/OnboardingTour.tsx"
+  ]
+}

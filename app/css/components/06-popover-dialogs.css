@@ -1,0 +1,281 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   POPOVER & TOOLTIP (portals — static chrome in CSS, position via inline)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-popover__panel {
+  position: absolute;
+  z-index: var(--c360-z-popover);
+  width: var(--c360-popover-width, 280px);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-shadow-lg);
+  font-family: var(--c360-font-primary);
+  overflow: hidden;
+}
+
+/* Placement: transforms live in CSS; TS sets only top/left (px) from layout measurements */
+.c360-popover__panel--bottom {
+  transform: none;
+}
+.c360-popover__panel--top {
+  transform: translateY(-100%);
+}
+.c360-popover__panel--left {
+  transform: translateX(-100%);
+}
+.c360-popover__panel--right {
+  transform: none;
+}
+
+.c360-popover__trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.c360-tooltip__panel {
+  position: absolute;
+  z-index: var(--c360-z-tooltip);
+  max-width: var(--c360-tooltip-max, 240px);
+  background: var(--c360-tooltip-bg);
+  color: #fff;
+  font-size: var(--c360-text-xs);
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: var(--c360-radius-sm);
+  pointer-events: none;
+  box-shadow: var(--c360-shadow-md);
+  font-family: var(--c360-font-primary);
+}
+
+.c360-tooltip__panel--top {
+  transform: translate(-50%, -100%);
+}
+.c360-tooltip__panel--bottom {
+  transform: translateX(-50%);
+}
+.c360-tooltip__panel--left {
+  transform: translate(-100%, -50%);
+}
+.c360-tooltip__panel--right {
+  transform: translateY(-50%);
+}
+
+.c360-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON GROUP
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-btn-group {
+  display: inline-flex;
+}
+
+.c360-btn-group--full {
+  width: 100%;
+}
+
+.c360-btn-group--default {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  overflow: hidden;
+}
+
+.c360-btn-group--pills {
+  gap: var(--c360-spacing-1);
+}
+
+.c360-btn-group__btn {
+  border: none;
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text);
+  font-weight: 400;
+  cursor: pointer;
+  transition: all var(--c360-transition-fast);
+  white-space: nowrap;
+}
+
+.c360-btn-group__btn--sm {
+  padding: 5px 12px;
+  font-size: var(--c360-text-xs);
+}
+.c360-btn-group__btn--md {
+  padding: 7px 16px;
+  font-size: var(--c360-text-sm);
+}
+.c360-btn-group__btn--lg {
+  padding: 10px 20px;
+  font-size: var(--c360-text-base);
+}
+
+.c360-btn-group__btn--pill {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-full);
+}
+
+.c360-btn-group__btn--divider {
+  border-right: 1px solid var(--c360-border);
+}
+
+.c360-btn-group__btn--active {
+  background: var(--c360-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.c360-btn-group__btn--disabled {
+  color: var(--c360-text-light);
+  cursor: not-allowed;
+}
+
+.c360-btn-group--full .c360-btn-group__btn {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIRM MODAL BODY
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-confirm-modal {
+  text-align: center;
+  padding: var(--c360-spacing-2) 0;
+}
+
+.c360-confirm-modal__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--c360-spacing-4);
+}
+
+.c360-confirm-modal__icon--danger {
+  background: var(--c360-danger-light);
+  color: var(--c360-danger);
+}
+.c360-confirm-modal__icon--warning {
+  background: var(--c360-warning-light);
+  color: var(--c360-warning);
+}
+.c360-confirm-modal__icon--info {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-confirm-modal__title {
+  font-size: var(--c360-text-lg);
+  font-weight: 600;
+  color: var(--c360-text);
+  margin: 0 0 var(--c360-spacing-2);
+}
+
+.c360-confirm-modal__message {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SWEET ALERT (custom modal, not swal2 library)
+══════════════════════════════════════════════════════════════════════════════ */
+@keyframes c360-sweet-alert-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.c360-sweet-alert__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--c360-z-modal);
+  background: var(--c360-bg-overlay);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--c360-spacing-4);
+  animation: c360-fade-in 150ms ease;
+}
+
+.c360-sweet-alert__dialog {
+  background: var(--c360-bg-elevated);
+  border-radius: var(--c360-radius-xl);
+  padding: var(--c360-spacing-8);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: var(--c360-shadow-xl);
+  animation: c360-sweet-alert-in 0.3s ease;
+}
+
+.c360-sweet-alert__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c360-text-muted);
+}
+
+.c360-sweet-alert__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--c360-spacing-5);
+}
+
+.c360-sweet-alert__icon--success {
+  background: var(--c360-success-light);
+  color: var(--c360-success);
+}
+.c360-sweet-alert__icon--error {
+  background: var(--c360-danger-light);
+  color: var(--c360-danger);
+}
+.c360-sweet-alert__icon--warning {
+  background: var(--c360-warning-light);
+  color: var(--c360-warning);
+}
+.c360-sweet-alert__icon--info {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+.c360-sweet-alert__icon--confirm {
+  background: var(--c360-warning-light);
+  color: var(--c360-warning);
+}
+
+.c360-sweet-alert__title {
+  font-weight: 700;
+  font-size: var(--c360-text-xl);
+  color: var(--c360-text);
+  margin: 0 0 8px;
+}
+
+.c360-sweet-alert__message {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  margin: 0 0 var(--c360-spacing-6);
+  line-height: 1.6;
+}
+
+.c360-sweet-alert__actions {
+  display: flex;
+  gap: var(--c360-spacing-3);
+  justify-content: center;
+}

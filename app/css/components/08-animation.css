@@ -1,0 +1,16 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATION
+══════════════════════════════════════════════════════════════════════════════ */
+@keyframes c360-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.c360-spin {
+  animation: c360-spin 1s linear infinite;
+}

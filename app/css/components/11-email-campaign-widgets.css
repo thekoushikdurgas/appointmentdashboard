@@ -1,0 +1,72 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMAIL FINDER / VERIFIER
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-email-result-row {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) 0;
+  border-bottom: 1px solid var(--c360-border);
+  font-size: var(--c360-text-sm);
+}
+
+.c360-email-result-row__addr {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAMPAIGN / TEMPLATE
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-template-card {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  padding: var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-template-card__subject {
+  font-weight: 600;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-primary);
+}
+
+.c360-template-card__meta {
+  font-size: 11px;
+  color: var(--c360-text-muted);
+}
+
+.c360-template-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  flex-wrap: wrap;
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+  background: var(--c360-bg-secondary);
+  border-radius: var(--c360-radius-md) var(--c360-radius-md) 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WIDGET GRID — dashboard widget layout
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--c360-spacing-4);
+}
+
+.c360-widget-grid--dense {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.c360-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--c360-spacing-4);
+  margin-bottom: var(--c360-spacing-6);
+}

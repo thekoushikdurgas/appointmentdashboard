@@ -1,0 +1,132 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUT / FORM CONTROLS
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-label {
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text);
+}
+
+.c360-label--required::after {
+  content: " *";
+  color: var(--c360-danger);
+}
+
+.c360-input {
+  height: var(--c360-input-height);
+  padding: 0 var(--c360-spacing-3);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border-strong);
+  border-radius: var(--c360-radius-md);
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  transition:
+    border-color var(--c360-transition-fast),
+    box-shadow var(--c360-transition-fast);
+  width: 100%;
+}
+
+.c360-input::placeholder {
+  color: var(--c360-text-light);
+}
+
+.c360-input:hover {
+  border-color: var(--c360-primary);
+}
+
+.c360-input:focus {
+  outline: none;
+  border-color: var(--c360-primary);
+  box-shadow: 0 0 0 3px var(--c360-focus-ring);
+}
+
+.c360-input--error {
+  border-color: var(--c360-danger);
+}
+.c360-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(247, 43, 80, 0.2);
+}
+
+.c360-input--sm {
+  height: var(--c360-input-height-sm);
+  font-size: var(--c360-text-xs);
+}
+
+.c360-input-wrap {
+  position: relative;
+}
+
+.c360-input__affix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c360-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.c360-input__affix--left {
+  left: var(--c360-spacing-3);
+  pointer-events: none;
+}
+
+.c360-input__affix--right {
+  right: var(--c360-spacing-3);
+}
+
+.c360-helper-text {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+.c360-error-text {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-danger);
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-1);
+}
+
+textarea.c360-input {
+  height: auto;
+  padding: var(--c360-spacing-3);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.c360-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e7e7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.c360-select-wrap {
+  position: relative;
+}
+
+.c360-select-wrap .c360-input.c360-select {
+  padding-right: 2.5rem;
+  appearance: none;
+  cursor: pointer;
+  background-image: none;
+}
+
+.c360-select__chevron {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--c360-text-muted);
+}

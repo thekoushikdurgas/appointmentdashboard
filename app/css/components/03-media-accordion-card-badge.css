@@ -1,0 +1,274 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEDIA OBJECT
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-media {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--c360-media-gap, var(--c360-spacing-3));
+}
+
+.c360-media--center {
+  align-items: center;
+}
+.c360-media--bottom {
+  align-items: flex-end;
+}
+
+.c360-media__figure {
+  flex-shrink: 0;
+}
+
+.c360-media__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.c360-media__title {
+  font-weight: 500;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  margin-bottom: 4px;
+}
+
+.c360-media__title--solo {
+  margin-bottom: 0;
+}
+
+.c360-media__text {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  line-height: 1.5;
+}
+
+.c360-media__actions {
+  margin-top: var(--c360-spacing-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACCORDION
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-accordion {
+  overflow: hidden;
+}
+
+.c360-accordion--default {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+}
+
+.c360-accordion--bordered {
+  border-radius: var(--c360-radius-md);
+}
+
+.c360-accordion__item {
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-accordion__item:last-child {
+  border-bottom: none;
+}
+
+.c360-accordion__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-4);
+  border: none;
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--c360-text-sm);
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-accordion__trigger--open {
+  background: var(--c360-bg);
+  color: var(--c360-text);
+  cursor: pointer;
+}
+
+.c360-accordion__trigger--closed {
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text);
+  cursor: pointer;
+}
+
+.c360-accordion__trigger--disabled {
+  color: var(--c360-text-muted);
+  cursor: not-allowed;
+}
+
+.c360-accordion__title {
+  flex: 1;
+}
+
+.c360-accordion__chevron {
+  flex-shrink: 0;
+  color: var(--c360-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.c360-accordion__chevron--open {
+  transform: rotate(180deg);
+}
+
+.c360-accordion__panel-outer {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.c360-accordion__panel-outer--collapsed {
+  max-height: 0;
+}
+
+.c360-accordion__panel-outer--expanded {
+  max-height: 1000px;
+}
+
+.c360-accordion__panel-inner {
+  padding: var(--c360-spacing-4);
+  border-top: 1px solid var(--c360-border);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-card {
+  background: var(--c360-bg-elevated);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-shadow-card);
+  border: 1px solid var(--c360-border);
+  overflow: hidden;
+}
+
+.c360-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-4);
+  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-card__title {
+  font-size: var(--c360-text-base);
+  font-weight: 600;
+  color: var(--c360-text);
+  margin: 0;
+}
+
+.c360-card__subtitle {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  margin-top: 2px;
+}
+
+.c360-card__body {
+  padding: var(--c360-spacing-6);
+}
+
+.c360-card__body--none {
+  padding: 0;
+}
+.c360-card__body--sm {
+  padding: var(--c360-spacing-4);
+}
+.c360-card__body--lg {
+  padding: var(--c360-spacing-8);
+}
+
+.c360-card__footer {
+  padding: var(--c360-spacing-4) var(--c360-spacing-6);
+  border-top: 1px solid var(--c360-border);
+  background: var(--c360-bg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--c360-spacing-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--c360-radius-full);
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.c360-badge--sm {
+  font-size: 10px;
+  padding: 1px 8px;
+  line-height: 1.5;
+}
+
+.c360-badge--blue {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+.c360-badge--green {
+  background: var(--c360-success-light);
+  color: var(--c360-success);
+}
+.c360-badge--orange {
+  background: var(--c360-warning-light);
+  color: var(--c360-warning);
+}
+.c360-badge--red {
+  background: var(--c360-danger-light);
+  color: var(--c360-danger);
+}
+.c360-badge--purple {
+  background: rgba(181, 25, 236, 0.12);
+  color: var(--c360-accent);
+}
+.c360-badge--gray {
+  background: var(--c360-border);
+  color: var(--c360-text-muted);
+}
+.c360-badge--indigo {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.c360-badge--emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+.c360-badge--yellow {
+  background: #fefce8;
+  color: #ca8a04;
+}
+
+/* ─── Dark theme overrides for hardcoded badge colors ─────────────────────── */
+[data-theme="dark"] .c360-badge--indigo {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+[data-theme="dark"] .c360-badge--emerald {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+[data-theme="dark"] .c360-badge--yellow {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+}
+
+.c360-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}

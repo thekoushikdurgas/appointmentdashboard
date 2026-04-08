@@ -1,0 +1,255 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-tabs {
+  gap: var(--c360-spacing-4);
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+}
+
+.c360-tabs__list {
+  border-bottom: 2px solid var(--c360-border);
+  gap: var(--c360-spacing-1);
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+}
+
+.c360-tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: all var(--c360-transition-fast);
+  font-family: var(--c360-font-primary);
+}
+
+.c360-tabs__tab:hover {
+  color: var(--c360-primary);
+}
+
+.c360-tabs__tab--active {
+  color: var(--c360-primary);
+  border-bottom-color: var(--c360-primary);
+  font-weight: 600;
+}
+
+/* Contained variant */
+.c360-tabs--contained .c360-tabs__list {
+  border-bottom: none;
+  background: var(--c360-border);
+  padding: 4px;
+  border-radius: var(--c360-radius-md);
+  gap: 2px;
+}
+.c360-tabs--contained .c360-tabs__tab {
+  border-radius: var(--c360-radius-sm);
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.c360-tabs--contained .c360-tabs__tab--active {
+  background: var(--c360-bg-elevated);
+  color: var(--c360-primary);
+  box-shadow: var(--c360-shadow-sm);
+}
+
+/* Filter variant (pill tabs) */
+.c360-tabs--filter .c360-tabs__list {
+  border-bottom: none;
+  gap: var(--c360-spacing-2);
+}
+.c360-tabs--filter .c360-tabs__tab {
+  border-radius: var(--c360-radius-full);
+  border: 1px solid var(--c360-border-strong);
+  border-bottom: 1px solid var(--c360-border-strong);
+  margin-bottom: 0;
+  padding: 6px var(--c360-spacing-4);
+}
+.c360-tabs--filter .c360-tabs__tab--active {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+  border-color: var(--c360-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--c360-bg-overlay);
+  backdrop-filter: blur(2px);
+  z-index: var(--c360-z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--c360-spacing-4);
+  animation: c360-fade-in 150ms ease;
+}
+
+.c360-modal {
+  background: var(--c360-bg-elevated);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-shadow-xl);
+  width: 100%;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  animation: c360-fade-in 200ms ease;
+}
+
+.c360-modal--sm {
+  max-width: 400px;
+}
+.c360-modal--md {
+  max-width: 560px;
+}
+.c360-modal--lg {
+  max-width: 720px;
+}
+.c360-modal--xl {
+  max-width: 960px;
+}
+
+.c360-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+  border-bottom: 1px solid var(--c360-border);
+  flex-shrink: 0;
+}
+
+.c360-modal__title {
+  font-size: var(--c360-text-lg);
+  font-weight: 600;
+  color: var(--c360-text);
+  margin: 0;
+}
+
+.c360-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--c360-radius-sm);
+  border: none;
+  background: none;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  transition: all var(--c360-transition-fast);
+}
+.c360-modal__close:hover {
+  background: var(--c360-border);
+  color: var(--c360-text);
+}
+
+.c360-modal__body {
+  padding: var(--c360-spacing-6);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.c360-modal__footer {
+  padding: var(--c360-spacing-4) var(--c360-spacing-6);
+  border-top: 1px solid var(--c360-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--c360-spacing-3);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-1);
+}
+
+.c360-progress__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+.c360-progress__bar {
+  width: 100%;
+  background: var(--c360-border);
+  border-radius: var(--c360-radius-full);
+  overflow: hidden;
+}
+
+.c360-progress__bar--sm {
+  height: 4px;
+}
+.c360-progress__bar--md {
+  height: 8px;
+}
+.c360-progress__bar--lg {
+  height: 12px;
+}
+
+.c360-progress__fill {
+  width: var(--c360-progress-fill-pct, 0%);
+  height: 100%;
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-primary);
+  transition: width var(--c360-transition-slow);
+}
+
+.c360-progress__fill--success {
+  background: var(--c360-success);
+}
+.c360-progress__fill--warning {
+  background: var(--c360-warning);
+}
+.c360-progress__fill--danger {
+  background: var(--c360-danger);
+}
+
+.c360-progress__fill--indeterminate {
+  width: 40% !important;
+  animation: c360-progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes c360-progress-indeterminate {
+  0% {
+    margin-left: -40%;
+  }
+  100% {
+    margin-left: 100%;
+  }
+}
+
+/* Stacked (bulk results) */
+.c360-progress--stacked .c360-progress__bar {
+  display: flex;
+}
+.c360-progress--stacked .c360-progress__fill {
+  width: var(--c360-progress-segment-pct, 0%);
+  background: var(--c360-progress-segment-bg, var(--c360-primary));
+  border-radius: 0;
+  transition: none;
+}
+.c360-progress--stacked .c360-progress__fill:first-child {
+  border-radius: var(--c360-radius-full) 0 0 var(--c360-radius-full);
+}
+.c360-progress--stacked .c360-progress__fill:last-child {
+  border-radius: 0 var(--c360-radius-full) var(--c360-radius-full) 0;
+}

@@ -1,0 +1,35 @@
+name: Deploy Contact360 App
+
+on:
+  push:
+    branches:
+      - dashboard
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd /opt/contact360/app
+            git fetch origin dashboard
+            git reset --hard origin/dashboard
+            echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
+            echo "NEXT_PUBLIC_GRAPHQL_URL=${{ secrets.NEXT_PUBLIC_GRAPHQL_URL }}" >> .env.local
+            echo "NEXT_PUBLIC_JOBS_S3_BUCKET=${{ secrets.NEXT_PUBLIC_JOBS_S3_BUCKET }}" >> .env.local
+            docker compose -f docker-compose.prod.yml up --build -d
+            docker system prune -f --volumes
+            echo "Deployment complete: $(date)"

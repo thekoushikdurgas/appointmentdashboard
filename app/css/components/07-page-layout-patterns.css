@@ -1,0 +1,342 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE HEADER — common flex header with title + actions
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--c360-spacing-6);
+}
+
+.c360-page-title {
+  font-size: var(--c360-text-2xl);
+  font-weight: 700;
+  color: var(--c360-text-primary);
+  margin-bottom: 4px;
+}
+
+.c360-page-subtitle {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAB NAV — underline tab bar
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--c360-border);
+  margin-bottom: var(--c360-spacing-5);
+}
+
+.c360-tab-nav__btn {
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--c360-text-muted);
+  font-weight: 400;
+  font-size: var(--c360-text-sm);
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  font-family: var(--c360-font-primary);
+}
+
+.c360-tab-nav__btn:hover {
+  color: var(--c360-text-primary);
+}
+
+.c360-tab-nav__btn--active {
+  border-bottom-color: var(--c360-primary);
+  color: var(--c360-primary);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STAT TILE — small info tile (label + value, secondary bg)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-stat-tile {
+  padding: var(--c360-spacing-3);
+  background: var(--c360-bg-secondary);
+  border-radius: var(--c360-radius-md);
+}
+
+.c360-stat-tile__label {
+  font-size: 11px;
+  color: var(--c360-text-muted);
+  margin-bottom: 4px;
+}
+
+.c360-stat-tile__value {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.c360-stat-tile__value--medium {
+  font-weight: 500;
+  word-break: normal;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STAT GRID — auto-fill responsive grid of stat tiles
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--c360-spacing-3);
+}
+
+.c360-stat-grid--wide {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TWO-COLUMN GRID
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-2col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--c360-spacing-4);
+}
+
+@media (max-width: 640px) {
+  .c360-2col-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KV ROW — key/value row flex space-between
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-kv-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--c360-text-sm);
+}
+
+.c360-kv-row__key {
+  color: var(--c360-text-muted);
+}
+
+.c360-kv-row__value {
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATUS ROW — service health row
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) 0;
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-status-row__body {
+  flex: 1;
+}
+
+.c360-status-row__name {
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text-primary);
+}
+
+.c360-status-row__msg {
+  font-size: 11px;
+  color: var(--c360-text-muted);
+  margin-top: 2px;
+}
+
+.c360-status-row__cell {
+  text-align: right;
+  font-size: 12px;
+  color: var(--c360-text-muted);
+}
+
+.c360-status-row__cell--latency {
+  min-width: 80px;
+}
+
+.c360-status-row__cell--uptime {
+  min-width: 60px;
+}
+
+.c360-status-col-header {
+  display: flex;
+  color: var(--c360-text-muted);
+  font-size: 11px;
+  padding: var(--c360-spacing-2) 0;
+  border-bottom: 1px solid var(--c360-border);
+  gap: var(--c360-spacing-3);
+}
+
+.c360-status-col-header__status {
+  min-width: 90px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATUS BANNER — overall health banner
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-status-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-4);
+  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  border-radius: var(--c360-radius-lg);
+  margin-bottom: var(--c360-spacing-6);
+  border: 1px solid;
+}
+
+.c360-status-banner--ok {
+  background: rgba(43, 193, 85, 0.08);
+  border-color: rgba(43, 193, 85, 0.3);
+}
+
+.c360-status-banner--warn {
+  background: rgba(255, 109, 77, 0.08);
+  border-color: rgba(247, 43, 80, 0.3);
+}
+
+.c360-status-banner--err {
+  background: rgba(247, 43, 80, 0.08);
+  border-color: rgba(247, 43, 80, 0.3);
+}
+
+.c360-status-banner__icon {
+  display: flex;
+}
+
+.c360-status-banner__icon--ok {
+  color: var(--c360-success);
+}
+.c360-status-banner__icon--warn {
+  color: var(--c360-warning);
+}
+.c360-status-banner__icon--err {
+  color: var(--c360-danger);
+}
+
+.c360-status-banner__label {
+  font-weight: 700;
+  font-size: var(--c360-text-base);
+  color: var(--c360-text-primary);
+}
+
+.c360-status-banner__desc {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+.c360-status-banner__ts {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--c360-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD BODY — standard card inner padding
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-card-body {
+  padding: var(--c360-spacing-4);
+}
+
+.c360-card-body--sm {
+  padding: var(--c360-spacing-3);
+}
+
+.c360-card-body--lg {
+  padding: var(--c360-spacing-6);
+}
+
+.c360-card-body--xl {
+  padding: var(--c360-spacing-8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMPTY STATE — centered empty/error placeholder
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-empty-state {
+  padding: var(--c360-spacing-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-empty-state__icon {
+  opacity: 0.3;
+}
+
+.c360-empty-state__title {
+  font-weight: 600;
+  color: var(--c360-text-primary);
+  margin: 0;
+}
+
+.c360-empty-state__desc {
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-sm);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INCIDENT CARD
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-incident-card {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-4);
+  margin-bottom: var(--c360-spacing-3);
+}
+
+.c360-incident-card__title {
+  font-weight: 600;
+  font-size: var(--c360-text-sm);
+  margin-bottom: 4px;
+}
+
+.c360-incident-card__ts {
+  font-size: 11px;
+  color: var(--c360-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION STACK — flex-col gap-4 wrapper
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-4);
+}
+
+.c360-chart-card__viewport {
+  position: relative;
+  height: var(--c360-chart-viewport-h, 240px);
+}
+.c360-chart-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.c360-chart-card__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-sm);
+  text-align: center;
+  padding: var(--c360-spacing-4);
+}

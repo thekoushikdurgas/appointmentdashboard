@@ -1,0 +1,22 @@
+/* Contact360 — Components: Button, Input, Card, Badge, Tabs, Modal, Progress, Checkbox, Radio, Table, Alert
+ * Split into app/css/components/*.css for maintainability (see scripts/split-components-css.mjs). */
+
+@import "./components/01-button.css";
+@import "./components/02-form-controls.css";
+@import "./components/03-media-accordion-card-badge.css";
+@import "./components/04-tabs-modal-progress.css";
+@import "./components/05-checkbox-radio-table-alert.css";
+@import "./components/06-popover-dialogs.css";
+@import "./components/07-page-layout-patterns.css";
+@import "./components/08-animation.css";
+@import "./components/09-chat-ui.css";
+@import "./components/10-profile-billing-checkout.css";
+@import "./components/11-email-campaign-widgets.css";
+@import "./components/12-filter-company-monospace.css";
+@import "./components/13-inline-flex-dropzone-result.css";
+@import "./components/14-form-wizards-search.css";
+@import "./components/15-code-ads-activity-widgets.css";
+@import "./components/19-contacts-and-sequences.css";
+@import "./components/16-app-pages-tail.css";
+@import "./components/18-app-dynamic-maps-widgets.css";
+@import "./components/17-onboarding-tour.css";

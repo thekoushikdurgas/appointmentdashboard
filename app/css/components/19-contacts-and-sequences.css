@@ -1,0 +1,79 @@
+/* Contact360 — contacts list / detail and sequence builder (split from 16-app-pages-tail.css) */
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTACTS PAGE SPECIFIC
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-contact-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.c360-section-label {
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.c360-contact-info-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: var(--c360-text-sm);
+  margin-bottom: 4px;
+}
+.c360-contact-info-row a,
+.c360-contact-info-row span {
+  color: var(--c360-text-muted);
+}
+.c360-contact-info-row a[href^="mailto"],
+.c360-contact-info-row a[href^="http"] {
+  color: var(--c360-primary);
+}
+.c360-contact-detail-expand-cell {
+  padding: 0;
+  border-bottom: 1px solid var(--c360-border);
+}
+.c360-contact-detail-grid {
+  padding: var(--c360-spacing-4) var(--c360-spacing-6);
+  background: var(--c360-bg);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--c360-spacing-4);
+  border-top: 2px solid var(--c360-primary);
+}
+.c360-seq-step-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-1);
+  padding: 4px 10px;
+  border-radius: var(--c360-radius-full);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.c360-seq-step-pill--mail {
+  background: var(--c360-primary-soft);
+  border: 1px solid rgba(47, 76, 221, 0.2);
+  color: var(--c360-primary);
+}
+.c360-seq-step-pill--wait {
+  background: var(--c360-bg-tertiary);
+  border: 1px solid var(--c360-border);
+  color: var(--c360-text-muted);
+}
+.c360-seq-pill-connector {
+  width: 16px;
+  height: 1px;
+  background: var(--c360-border-strong);
+  flex-shrink: 0;
+}
+.c360-seq-builder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius);
+}

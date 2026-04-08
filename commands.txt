@@ -1,0 +1,337 @@
+# ========================================
+# DASHBOARD - NEXT.JS COMMANDS REFERENCE
+# ========================================
+#
+# Contact360 Dashboard - Next.js 15, React 19, TypeScript
+# For root-level commands, see: ../../commands.txt
+#
+# ========================================
+# QUICK START
+# ========================================
+#
+# 1. Install dependencies:
+#    npm install
+#
+# 2. Environment setup:
+#    cp .env.example .env.local
+#    # Edit .env.local with your configuration
+#
+# 3. Start development server:
+#    npm run dev
+#
+# 4. Open browser:
+#    http://localhost:3000
+#
+# ========================================
+# ENVIRONMENT SETUP
+# ========================================
+#
+# Install dependencies:
+npm install
+npm install <package>              # Install a package
+npm install -D <package>          # Install as dev dependency
+#
+# Update dependencies:
+npm update
+npm outdated                      # Check for outdated packages
+#
+# Clean and reinstall:
+npm run clean:all
+npm run clean:install
+#
+# ========================================
+# DEVELOPMENT
+# ========================================
+#
+# Start development server:
+npm run dev
+# Server runs at: http://localhost:3000
+#
+# Start with custom port:
+PORT=3001 npm run dev
+#
+# Start with custom host:
+HOSTNAME=0.0.0.0 npm run dev
+#
+# ========================================
+# BUILD & PRODUCTION
+# ========================================
+#
+# Build for production:
+npm run build
+#
+# Start production server:
+npm run start
+#
+# Build and start:
+npm run build && npm run start
+#
+# Analyze bundle size:
+npm run build -- --analyze
+#
+# ========================================
+# CODE QUALITY
+# ========================================
+#
+# Run ESLint:
+npm run lint
+#
+# Fix ESLint issues:
+npm run lint:fix
+#
+# Type checking:
+npm run typecheck
+npx tsc --noEmit
+#
+# Direct TypeScript check:
+npx tsc --noEmit
+npx tsc --watch --noEmit
+#
+# ========================================
+# CLEAN & MAINTENANCE
+# ========================================
+#
+# Remove Next.js build output:
+npm run clean                    # Removes .next folder
+#
+# Remove .next and node_modules:
+npm run clean:all
+#
+# Clean everything and reinstall:
+npm run clean:install
+#
+# Windows alternatives:
+rmdir /s /q .next                # Remove .next folder
+rmdir /s /q node_modules         # Remove node_modules folder
+#
+# Unix/Linux/Mac alternatives:
+rm -rf .next                     # Remove .next folder
+rm -rf node_modules              # Remove node_modules folder
+#
+# ========================================
+# TESTING
+# ========================================
+#
+# Run tests (if configured):
+npm test
+npm run test:watch
+#
+# Run tests with coverage:
+npm run test:coverage
+#
+# ========================================
+# PACKAGE MANAGEMENT
+# ========================================
+#
+# Check for outdated packages:
+npm outdated
+#
+# Update packages:
+npm update
+#
+# Security audit:
+npm audit
+npm audit fix                    # Fix security vulnerabilities
+npm audit fix --force            # Force fix (use with caution)
+#
+# ========================================
+# TYPE CHECKING
+# ========================================
+#
+# Check TypeScript types:
+npm run typecheck
+npx tsc --noEmit
+#
+# Watch mode for type checking:
+npx tsc --watch --noEmit
+#
+# ========================================
+# UTILITY COMMANDS
+# ========================================
+#
+# Display Next.js environment information:
+npx next-info
+#
+# Create a new Next.js app (reference):
+npx create-next-app@latest
+#
+# ========================================
+# ENVIRONMENT VARIABLES
+# ========================================
+#
+# Create .env.local file with:
+# NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+# API_KEY=your_gemini_api_key
+# NEXT_PUBLIC_API_BASE_URL=http://54.87.173.234:8000
+#
+# Note: Variables prefixed with NEXT_PUBLIC_ are exposed to the browser
+#
+# Load environment variables:
+# Next.js automatically loads .env.local, .env.development, .env.production
+#
+# ========================================
+# CODE GENERATION
+# ========================================
+#
+# Create new page:
+# Create app/(dashboard)/[route]/page.tsx
+#
+# Create new component:
+# Create src/components/[ComponentName].tsx
+#
+# Create new hook:
+# Create src/hooks/use[HookName].ts
+#
+# Create new service:
+# Create src/services/[serviceName].ts
+#
+# Create new utility:
+# Create src/lib/[utilityName].ts
+#
+# ========================================
+# DEPLOYMENT
+# ========================================
+#
+# Build for production:
+npm run build
+#
+# Start production server:
+npm run start
+#
+# Deploy to Vercel:
+vercel
+vercel --prod
+#
+# Deploy to AWS EC2:
+# See: deploy/DEPLOYMENT.md
+#
+# ========================================
+# DEBUGGING
+# ========================================
+#
+# Start with debugging:
+NODE_OPTIONS='--inspect' npm run dev
+#
+# Check for console errors:
+# Open browser DevTools (F12)
+#
+# React DevTools:
+# Install React DevTools browser extension
+#
+# Network inspection:
+# Use browser DevTools Network tab
+#
+# ========================================
+# CSS MANAGEMENT
+# ========================================
+#
+# Minify all CSS files:
+npm run css:minify
+#
+# Preview minification (dry run):
+npm run css:minify:dry
+#
+# Minify single CSS file:
+npm run css:minify:single path/to/file.css
+#
+# Run all CSS maintenance scripts:
+npm run css:all
+#
+# ========================================
+# QUICK REFERENCE
+# ========================================
+#
+# Application URLs:
+# - Development: http://localhost:3000
+# - Production: Configure in deployment
+#
+# Project Structure:
+# - app/                    # Next.js app router pages
+#   - (auth)/               # Authentication routes
+#   - (dashboard)/         # Protected dashboard routes
+# - src/
+#   - components/           # React components
+#     - auth/               # Authentication components
+#     - features/           # Feature-specific components
+#     - layout/             # Layout components
+#     - patterns/           # Design pattern components
+#     - shared/             # Shared/reusable components
+#     - ui/                 # UI components
+#   - context/              # React contexts (Auth, Theme, Role)
+#   - hooks/                # Custom React hooks
+#   - lib/                  # Utility functions
+#   - services/             # API service functions
+#   - styles/               # CSS files
+#   - types/                # TypeScript type definitions
+#
+# Common Workflow:
+# 1. Install dependencies: npm install
+# 2. Configure environment: cp .env.example .env.local
+# 3. Start development: npm run dev
+# 4. Run linting: npm run lint
+# 5. Type check: npm run typecheck
+# 6. Build: npm run build
+#
+# ========================================
+# TROUBLESHOOTING
+# ========================================
+#
+# Development server won't start:
+# - Check Node.js version: node --version (should be 18+)
+# - Delete node_modules and reinstall: npm run clean:install
+# - Check .env.local file exists
+# - Check for port conflicts: lsof -i :3000 (Mac/Linux) or netstat -ano | findstr :3000 (Windows)
+#
+# Build fails:
+# - Check for TypeScript errors: npm run typecheck
+# - Check for linting errors: npm run lint
+# - Clear .next folder: npm run clean
+# - Check environment variables are set correctly
+#
+# Type errors:
+# - Run type check: npm run typecheck
+# - Check tsconfig.json configuration
+# - Ensure all dependencies are installed
+#
+# Module not found:
+# - Reinstall dependencies: npm install
+# - Check import paths are correct
+# - Verify package is in package.json
+#
+# Styling issues:
+# - Check styles are imported in layout or page
+# - Verify CSS classes match component usage
+# - Check for conflicting styles
+#
+# API connection issues:
+# - Verify NEXT_PUBLIC_API_BASE_URL in .env.local
+# - Check backend server is running
+# - Verify CORS settings on backend
+# - Check browser console for errors
+#
+# ========================================
+# ENVIRONMENT VARIABLES
+# ========================================
+#
+# Required variables (see .env.local):
+# - NEXT_PUBLIC_API_BASE_URL: Backend API base URL
+# - NEXT_PUBLIC_GEMINI_API_KEY: Google Gemini API key
+# - NEXT_PUBLIC_CONTACTS_WRITE_KEY: Contacts write operations key
+# - NEXT_PUBLIC_COMPANIES_WRITE_KEY: Companies write operations key
+#
+# Note: Variables prefixed with NEXT_PUBLIC_ are exposed to the browser
+# Do not put sensitive keys in NEXT_PUBLIC_ variables
+#
+# ========================================
+# NOTES
+# ========================================
+#
+# - Always run npm install after pulling changes
+# - Use npm run lint before committing
+# - Run npm run typecheck to catch type errors
+# - Use npm run clean if build issues occur
+# - Check browser console for runtime errors
+# - Use React DevTools for component debugging
+# - This project uses Next.js App Router (not Pages Router)
+# - Most pages are client components (use 'use client' directive)
+# - This is the authenticated dashboard application

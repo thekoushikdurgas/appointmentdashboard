@@ -1,0 +1,115 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-2);
+  padding: 0 var(--c360-spacing-4);
+  height: var(--c360-button-height);
+  border-radius: var(--c360-radius-md);
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--c360-transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.c360-btn:disabled,
+.c360-btn--loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Variants */
+.c360-btn--primary {
+  background: var(--c360-primary);
+  color: #fff;
+  border-color: var(--c360-primary);
+  box-shadow: 0 2px 8px rgba(47, 76, 221, 0.35);
+}
+.c360-btn--primary:hover:not(:disabled) {
+  background: var(--c360-primary-hover);
+  border-color: var(--c360-primary-hover);
+  box-shadow: 0 4px 14px rgba(47, 76, 221, 0.4);
+  transform: translateY(-1px);
+}
+
+.c360-btn--secondary {
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text);
+  border-color: var(--c360-border-strong);
+}
+.c360-btn--secondary:hover:not(:disabled) {
+  border-color: var(--c360-primary);
+  color: var(--c360-primary);
+  background: var(--c360-primary-light);
+}
+
+.c360-btn--ghost {
+  background: transparent;
+  color: var(--c360-text-muted);
+  border-color: transparent;
+}
+.c360-btn--ghost:hover:not(:disabled) {
+  background: var(--c360-border);
+  color: var(--c360-text);
+}
+
+.c360-btn--outline {
+  background: transparent;
+  color: var(--c360-primary);
+  border-color: var(--c360-primary);
+}
+.c360-btn--outline:hover:not(:disabled) {
+  background: var(--c360-primary-light);
+}
+
+.c360-btn--danger {
+  background: var(--c360-danger);
+  color: #fff;
+  border-color: var(--c360-danger);
+  box-shadow: 0 2px 8px rgba(247, 43, 80, 0.35);
+}
+.c360-btn--danger:hover:not(:disabled) {
+  background: #d91e44;
+  transform: translateY(-1px);
+}
+
+/* Sizes */
+.c360-btn--sm {
+  height: var(--c360-button-height-sm);
+  padding: 0 var(--c360-spacing-3);
+  font-size: var(--c360-text-xs);
+  border-radius: var(--c360-radius-sm);
+}
+.c360-btn--lg {
+  height: var(--c360-button-height-lg);
+  padding: 0 var(--c360-spacing-6);
+  font-size: var(--c360-text-base);
+}
+.c360-btn--icon {
+  width: var(--c360-button-height);
+  padding: 0;
+}
+.c360-btn--icon.c360-btn--sm {
+  width: var(--c360-button-height-sm);
+}
+
+/* Loading spinner */
+.c360-btn__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: c360-spin 0.6s linear infinite;
+}

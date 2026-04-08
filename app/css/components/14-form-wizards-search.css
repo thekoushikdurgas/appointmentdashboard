@@ -1,0 +1,171 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM GRID — 2-col with smaller gap
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--c360-spacing-3);
+}
+
+@media (max-width: 480px) {
+  .c360-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   JOB PROGRESS ROW
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--c360-spacing-1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WIZARD STEP CIRCLES
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-wizard-step-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.c360-wizard-step-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.c360-wizard-step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+  background: var(--c360-border);
+  color: var(--c360-text-muted);
+}
+
+.c360-wizard-step-circle--active {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-wizard-step-circle--done {
+  background: var(--c360-success);
+  color: #fff;
+}
+
+.c360-wizard-step-label {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+.c360-wizard-step-label--active {
+  color: var(--c360-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WIZARD NAV BAR (footer buttons)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-wizard-nav {
+  display: flex;
+  gap: var(--c360-spacing-3);
+  justify-content: flex-end;
+  margin-top: var(--c360-spacing-6);
+  border-top: 1px solid var(--c360-border);
+  padding-top: var(--c360-spacing-4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM LABEL — reusable label above raw inputs
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-form-label {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--c360-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WEB SEARCH RESULT ITEM
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-search-result {
+  padding: var(--c360-spacing-3);
+  background: var(--c360-bg);
+  border-radius: var(--c360-radius-md);
+}
+
+.c360-search-result__title {
+  font-weight: 600;
+  color: var(--c360-primary);
+  text-decoration: none;
+}
+
+.c360-search-result__title:hover {
+  text-decoration: underline;
+}
+
+.c360-search-result__snippet {
+  margin: var(--c360-spacing-1) 0 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+.c360-search-result__url {
+  margin: var(--c360-spacing-1) 0 0;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPE SELECTOR BUTTONS (wizard step 1)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-type-btn {
+  flex: 1;
+  padding: var(--c360-spacing-3);
+  border-radius: var(--c360-radius-md);
+  border: 1px solid var(--c360-border);
+  background: var(--c360-bg);
+  cursor: pointer;
+  font-weight: 400;
+  color: var(--c360-text);
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  transition: all var(--c360-transition-fast);
+}
+
+.c360-type-btn--active {
+  border: 2px solid var(--c360-primary);
+  font-weight: 600;
+  color: var(--c360-primary);
+}
+
+.c360-type-btn--theme-light {
+  background: #f9f9f9;
+  color: #333;
+  border: 2px solid var(--c360-border-strong);
+  font-weight: 600;
+}
+.c360-type-btn--theme-light.c360-type-btn--active {
+  border-color: var(--c360-primary);
+  color: var(--c360-primary);
+}
+.c360-type-btn--theme-dark {
+  background: #181f39;
+  color: #f4f4f4;
+  border: 2px solid var(--c360-border-strong);
+  font-weight: 600;
+}
+.c360-type-btn--theme-dark.c360-type-btn--active {
+  border-color: var(--c360-primary);
+  color: var(--c360-primary);
+}

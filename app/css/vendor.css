@@ -1,0 +1,123 @@
+/* Third-party widget surfaces (TipTap, optional FullCalendar when wired) */
+
+.c360-tiptap {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-bg-elevated);
+  overflow: hidden;
+}
+
+.c360-tiptap__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--c360-border);
+  background: var(--c360-bg);
+  flex-wrap: wrap;
+}
+
+.c360-tiptap__toolbar-group {
+  display: flex;
+  gap: 2px;
+}
+
+.c360-tiptap__toolbar-group--sep {
+  padding-right: 8px;
+  border-right: 1px solid var(--c360-border);
+  margin-right: 8px;
+}
+
+.c360-tiptap-toolbar-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--c360-radius-sm);
+  background: transparent;
+  color: var(--c360-text-muted);
+  transition: all var(--c360-transition-fast);
+}
+
+.c360-tiptap-toolbar-btn:hover:not(:disabled) {
+  background: var(--c360-border);
+}
+
+.c360-tiptap-toolbar-btn--active {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-tiptap-toolbar-btn:disabled {
+  cursor: not-allowed;
+  color: var(--c360-text-light);
+}
+
+.c360-tiptap__heading-select {
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-sm);
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text);
+  cursor: pointer;
+}
+
+.c360-tiptap__editor-wrap {
+  position: relative;
+  background: var(--c360-bg-elevated);
+  min-height: var(--c360-tiptap-min-h, 280px);
+}
+
+.c360-tiptap__editor-wrap .ProseMirror,
+.c360-tiptap__editor-wrap .c360-tiptap__prose,
+.c360-tiptap__editor-wrap .tiptap {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  line-height: 1.7;
+  min-height: inherit;
+}
+
+.c360-tiptap__placeholder {
+  position: absolute;
+  pointer-events: none;
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-light);
+  z-index: 0;
+}
+
+.c360-tiptap__footer {
+  border-top: 1px solid var(--c360-border);
+  padding: 4px 12px;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  background: var(--c360-bg);
+  text-align: right;
+}
+
+/* FullCalendar (import component CSS in the page that uses it; theme hooks below) */
+.c360-fullcalendar-host .fc {
+  --fc-border-color: var(--c360-border);
+  --fc-page-bg-color: var(--c360-bg-elevated);
+  --fc-neutral-bg-color: var(--c360-bg);
+  --fc-today-bg-color: var(--c360-primary-light);
+  font-family: var(--c360-font-primary);
+}
+
+.c360-fullcalendar-host .fc-button-primary {
+  background-color: var(--c360-primary);
+  border-color: var(--c360-primary);
+}
+
+.c360-fullcalendar-host .fc-button-primary:hover {
+  background-color: var(--c360-primary-hover);
+  border-color: var(--c360-primary-hover);
+}

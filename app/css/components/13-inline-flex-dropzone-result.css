@@ -1,0 +1,204 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   INLINE FLEX HELPERS (supplement utilities.css)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-inline-flex {
+  display: inline-flex;
+  align-items: center;
+}
+
+.c360-text-right {
+  text-align: right;
+}
+
+.c360-text-center {
+  text-align: center;
+}
+
+.c360-ml-auto {
+  margin-left: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DROPZONE — file upload drop target
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-dropzone {
+  border: 2px dashed var(--c360-border-strong);
+  border-radius: var(--c360-radius-lg);
+  padding: var(--c360-spacing-8);
+  text-align: center;
+  background: var(--c360-bg);
+  cursor: pointer;
+  transition: border-color var(--c360-transition-fast);
+}
+
+.c360-dropzone:hover {
+  border-color: var(--c360-primary);
+}
+
+.c360-dropzone__icon {
+  color: var(--c360-text-muted);
+  margin: 0 auto var(--c360-spacing-3);
+  display: block;
+}
+
+.c360-dropzone__label {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  margin: 0 0 4px;
+}
+
+.c360-dropzone__label--selected {
+  color: var(--c360-primary);
+  font-weight: 500;
+}
+
+.c360-dropzone__hint {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-light);
+  margin: 0;
+}
+
+/* Upload modal — gateway flow (step graph) */
+.c360-upload-flow-steps {
+  padding: var(--c360-spacing-2) 0;
+}
+
+.c360-upload-flow-steps__nodes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.c360-upload-flow-steps__node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--c360-radius-full);
+  font-size: var(--c360-text-xs);
+  font-weight: 700;
+  border: 2px solid var(--c360-border);
+  color: var(--c360-text-muted);
+  background: var(--c360-bg);
+  transition:
+    border-color var(--c360-transition-fast),
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-upload-flow-steps__node--done {
+  border-color: var(--c360-primary);
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-upload-flow-steps__line {
+  flex: 1;
+  max-width: 48px;
+  height: 2px;
+  background: var(--c360-border);
+  margin: 0 4px;
+}
+
+.c360-upload-flow-steps__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--c360-spacing-2);
+  padding: 0 var(--c360-spacing-1);
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  max-width: 220px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.c360-upload-file-modal__tabs {
+  margin-bottom: var(--c360-spacing-4);
+}
+
+.c360-upload-file-modal__tabs .c360-tabs__tab {
+  gap: var(--c360-spacing-2);
+}
+
+.c360-upload-file-modal .c360-dropzone {
+  min-height: 168px;
+  border-radius: var(--c360-radius-lg, 12px);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.c360-upload-file-modal .c360-dropzone:focus-visible {
+  outline: 2px solid var(--c360-primary);
+  outline-offset: 2px;
+}
+
+/* S3 file detail modal (tabs + preview table) */
+.c360-tab-panel {
+  margin-top: var(--c360-spacing-3);
+}
+
+.c360-file-detail__key {
+  display: block;
+  word-break: break-all;
+  font-size: var(--c360-text-sm);
+}
+
+.c360-file-detail__preview-scroll {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.c360-file-detail__cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c360-file-detail__stats-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.c360-file-detail__loading {
+  padding: var(--c360-spacing-6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESULT BOX — highlighted result area
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-result-box {
+  padding: var(--c360-spacing-4);
+  border-radius: var(--c360-radius-lg);
+}
+
+.c360-result-box--success {
+  background: var(--c360-success-light);
+  border: 1px solid rgba(43, 193, 85, 0.25);
+}
+
+.c360-result-box--info {
+  background: var(--c360-primary-light);
+  border: 1px solid rgba(var(--c360-primary-rgb, 99 102 241), 0.2);
+}
+
+.c360-result-box--neutral {
+  background: var(--c360-bg);
+  border: 1px solid var(--c360-border);
+}
+
+.c360-result-box__header {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-2);
+}
+
+.c360-result-box__label {
+  font-weight: 600;
+  color: var(--c360-success);
+}

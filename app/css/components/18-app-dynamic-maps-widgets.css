@@ -1,0 +1,359 @@
+﻿/* Contact360 — dynamic CMS blocks, carousel, range sliders, VQL/calendar/map, chart placeholders (split from 16-app-pages-tail.css) */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DYNAMIC CMS PAGE (app/(dashboard)/dashboard/[pageId])
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-dynamic-block-text {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-secondary);
+  line-height: 1.7;
+}
+.c360-dynamic-stats {
+  display: flex;
+  gap: var(--c360-spacing-4);
+  flex-wrap: wrap;
+}
+.c360-dynamic-stat-card {
+  background: var(--c360-bg-tertiary);
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-4);
+  min-width: 140px;
+}
+.c360-dynamic-stat-value {
+  font-size: var(--c360-text-2xl);
+  font-weight: 700;
+  color: var(--c360-primary);
+}
+.c360-dynamic-stat-label {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+.c360-dynamic-embed {
+  border-radius: var(--c360-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--c360-border);
+}
+.c360-dynamic-embed-frame {
+  width: 100%;
+  height: 400px;
+  border: none;
+}
+.c360-dynamic-stub {
+  background: var(--c360-bg-tertiary);
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  font-style: italic;
+}
+
+/* Carousel (src/components/ui/Carousel.tsx) */
+.c360-carousel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--c360-radius-lg);
+}
+.c360-carousel__track {
+  display: flex;
+  transition: transform 0.4s ease;
+  transform: translateX(var(--c360-carousel-slide-offset, 0%));
+}
+.c360-carousel__slide {
+  min-width: 100%;
+  flex-shrink: 0;
+}
+.c360-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: var(--c360-radius-full);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  z-index: 1;
+}
+.c360-carousel__arrow--prev {
+  left: 8px;
+}
+.c360-carousel__arrow--next {
+  right: 8px;
+}
+.c360-carousel__dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  z-index: 1;
+}
+.c360-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
+}
+.c360-carousel__dot--active {
+  width: 20px;
+  background: var(--c360-primary);
+}
+
+/* Range sliders (src/components/ui/RangeSlider.tsx) */
+.c360-range-slider__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.c360-range-slider__label {
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text);
+}
+.c360-range-slider__value {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-primary);
+}
+.c360-range-slider__track-wrap {
+  position: relative;
+}
+.c360-range-slider__input {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--c360-primary) var(--c360-range-pct, 0%),
+    var(--c360-border) var(--c360-range-pct, 0%)
+  );
+}
+.c360-range-slider__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.c360-range-slider__ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.c360-range-slider__tick {
+  font-size: 10px;
+  color: var(--c360-text-light);
+}
+.c360-range-dual__track {
+  position: relative;
+  height: 6px;
+}
+.c360-range-dual__rail {
+  position: absolute;
+  inset: 0;
+  background: var(--c360-border);
+  border-radius: 3px;
+}
+.c360-range-dual__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--c360-range-lo, 0%);
+  right: var(--c360-range-hi-right, 0%);
+  background: var(--c360-primary);
+  border-radius: 3px;
+}
+.c360-range-dual__input {
+  position: absolute;
+  top: -4px;
+  width: 100%;
+  height: 14px;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+}
+
+/* VQL query builder modal grid */
+.c360-vql-query-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 1fr auto;
+  gap: var(--c360-spacing-2);
+  align-items: center;
+}
+
+/* Lightweight month calendar (src/components/shared/CalendarView.tsx) */
+.c360-calendar-view {
+  display: flex;
+  flex-direction: column;
+  height: var(--c360-calendar-view-h, 420px);
+}
+.c360-calendar-view__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--c360-spacing-3);
+}
+.c360-calendar-view__nav-btn {
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.c360-calendar-view__title {
+  font-weight: 600;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+}
+.c360-calendar-view__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.c360-calendar-view__weekday {
+  text-align: center;
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  padding-bottom: 4px;
+}
+.c360-calendar-view__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  flex: 1;
+}
+.c360-calendar-view__cell {
+  border-radius: var(--c360-radius-sm);
+  padding: 4px 2px;
+  min-height: 48px;
+}
+.c360-calendar-view__cell--empty {
+  background: transparent;
+}
+.c360-calendar-view__cell--day {
+  background: var(--c360-bg);
+}
+.c360-calendar-view__cell--today {
+  background: var(--c360-primary);
+}
+.c360-calendar-view__day-num {
+  font-size: var(--c360-text-xs);
+  display: block;
+  text-align: center;
+}
+.c360-calendar-view__day-num--day {
+  font-weight: 400;
+  color: var(--c360-text);
+}
+.c360-calendar-view__day-num--today {
+  font-weight: 700;
+  color: #fff;
+}
+.c360-calendar-view__events {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+.c360-calendar-view__event-bar {
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.85;
+  background: var(--c360-cal-event-bg, var(--c360-accent));
+}
+.c360-calendar-view__more {
+  font-size: 9px;
+  text-align: center;
+}
+.c360-calendar-view__more--today {
+  color: rgba(255, 255, 255, 0.7);
+}
+.c360-calendar-view__more--muted {
+  color: var(--c360-text-muted);
+}
+
+/* World map (src/components/shared/WorldMap.tsx) */
+.c360-world-map {
+  position: relative;
+  width: 100%;
+  height: var(--c360-world-map-h, 340px);
+}
+.c360-world-map__map-wrap {
+  width: 100%;
+  height: 100%;
+}
+.c360-world-map__map-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.c360-world-map__tooltip {
+  position: fixed;
+  left: var(--c360-map-tip-x, 0);
+  top: var(--c360-map-tip-y, 0);
+  background: var(--c360-card-bg);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-sm);
+  padding: 6px 10px;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text);
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: var(--c360-shadow-md);
+  white-space: nowrap;
+}
+.c360-world-map__legend {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--c360-text-muted);
+}
+.c360-world-map__legend-swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  /* Opacity steps from TS `--c360-map-legend-a`; tint matches map fill (primary token). */
+  background: color-mix(
+    in srgb,
+    var(--c360-primary) calc(var(--c360-map-legend-a, 0.5) * 100%),
+    transparent
+  );
+}
+
+/* VQL JSON preview (export modals) */
+.c360-vql-json-preview {
+  background: var(--c360-bg-muted);
+  max-height: 160px;
+  overflow: auto;
+}
+
+/* Chart empty / placeholder states */
+.c360-activity-bar-empty {
+  display: flex;
+  align-items: center;
+  min-height: var(--c360-chart-empty-h, 260px);
+}
+.c360-empty-chart {
+  height: var(--c360-empty-chart-h, 260px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-sm);
+}

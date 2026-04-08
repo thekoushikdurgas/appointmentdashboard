@@ -1,0 +1,73 @@
+name: App CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dashboard
+      - main
+
+jobs:
+  quality:
+    name: Lint, types, tests, best-practices
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: "0"
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Best practices report
+        run: |
+          mkdir -p reports
+          node scripts/check-best-practices.mjs --format json --output reports/ci_check_report.json --no-fail
+        env:
+          HUSKY: "0"
+
+      - name: CSS inventory report
+        run: |
+          mkdir -p reports
+          node scripts/css-inventory.mjs
+        env:
+          HUSKY: "0"
+
+      - name: Upload best practices report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: best-practices-report
+          path: reports/ci_check_report.json
+          retention-days: 30
+
+      - name: Upload CSS inventory report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: css-inventory-report
+          path: reports/css-inventory.txt
+          retention-days: 30

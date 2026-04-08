@@ -1,0 +1,254 @@
+# ========================================
+# DASHBOARD - NEXT.JS PROMPTS REFERENCE
+# ========================================
+#
+# Dashboard-specific development prompts for Next.js, React, TypeScript
+# For general prompts, see: ../../prompts.txt
+#
+# ========================================
+# COMPONENT CREATION PROMPTS
+# ========================================
+#
+# Create a new React component for [feature] following the existing codebase patterns. Use TypeScript, custom CSS for styling, and ensure it integrates with the ThemeContext for dark mode support.
+#
+# Generate a reusable form component for [purpose] that matches the design system used in the settings pages, with proper validation and error handling.
+#
+# Create a modal/dialog component that follows the existing UI patterns in the codebase, with support for dark mode and responsive design.
+#
+# Create a new UI component following the BEM-like naming convention and semantic CSS classes used in styles/ directory
+#
+# ========================================
+# FEATURE DEVELOPMENT PROMPTS
+# ========================================
+#
+# Add a new feature to [page] that allows users to [action]. Follow the existing API patterns in src/services/ and integrate with the Contact360 API for data persistence.
+#
+# Implement a new filter option in the contacts page that filters by [criteria]. Ensure it works with the existing server-side pagination and sorting.
+#
+# Create a new dashboard widget that displays [metric] using Recharts, following the patterns in the dashboard page.
+#
+# Add a new page following the Next.js App Router pattern in app/(dashboard)/[route]/page.tsx
+#
+# ========================================
+# API INTEGRATION PROMPTS
+# ========================================
+#
+# Add a new API endpoint integration in src/services/ that fetches [data] from the Contact360 API, following the existing contact fetching patterns with proper error handling and type mapping.
+#
+# Create a new service function that [action] following the patterns in src/services/, with proper TypeScript types and error handling.
+#
+# Add error handling and retry logic to an API service function
+#
+# ========================================
+# AUTHENTICATION & AUTHORIZATION PROMPTS
+# ========================================
+#
+# Add role-based access control to [page/feature] that checks user roles stored in the backend API and restricts access accordingly.
+#
+# Implement a new authentication method [method] following the existing auth patterns in src/context/AuthContext.tsx and src/services/auth.ts.
+#
+# Add session persistence using cookies or localStorage so users automatically log in on return
+#
+# Implement protected route wrapper for Next.js App Router
+#
+# ========================================
+# UI/UX IMPROVEMENTS PROMPTS
+# ========================================
+#
+# Apply dark-light theme to all pages, tabs, components, buttons, input boxes, and text with modern styling and more icons
+#
+# Make all pages, tabs, components, buttons, input boxes, and text fully responsive on all screen sizes
+#
+# Create a good-looking loading page for the project, and then a welcome page
+#
+# Add a loading screen for the project, and then create an auth flow
+#
+# Create a good-looking loading page, then a welcome page, and all auth pages
+#
+# Ensure the loading screen properly transitions to the welcome page (fix any infinite loading issues)
+#
+# On the Contacts page, make the Contacts table fully responsive on all screen sizes with both vertical and horizontal scroll bars
+#
+# Improve the responsive design of [component/page] for mobile devices, ensuring it follows the mobile-first approach used in the codebase.
+#
+# Add loading states and error boundaries to [page] following the patterns used in other pages, with proper user feedback.
+#
+# Implement optimistic updates for [feature] to improve perceived performance, with proper error rollback handling.
+#
+# Create a company page with:
+# - Dark-light UI theme
+# - More icons and user-friendly modern style
+# - Fully responsive on all screen sizes
+# - Glassmorphism with blur effects and transparency (default)
+# - Swipe gestures
+# - Smooth transitions and hover effects
+# - Rich animations with tooltips and highlights
+#
+# When clicking every row in the contact table, open a popup with contact details, then create pages /contact/uuid and open in new tab with full contact details
+#
+# Remove all SVGs and use icons instead (use lucide-react or react-icons)
+#
+# Ensure the sidebar is the height of the screen and scrollable
+#
+# ========================================
+# TYPESCRIPT & TYPE SAFETY PROMPTS
+# ========================================
+#
+# Add TypeScript types for [data structure] in src/types/, ensuring they match the API response structure and are used consistently across the codebase.
+#
+# Refactor [component] to use proper TypeScript types and remove any 'any' types, following the existing type patterns.
+#
+# Add TypeScript strict mode to the project and fix all resulting type errors.
+#
+# ========================================
+# TESTING & DEBUGGING PROMPTS
+# ========================================
+#
+# Add error logging and monitoring to [feature] to help debug production issues, following the existing error handling patterns.
+#
+# Create a debug utility that helps log API requests and responses for [service] during development.
+#
+# Debug why [component] is not rendering correctly in dark mode. Check ThemeContext integration and CSS classes.
+#
+# Investigate why API calls are failing. Check environment variables, API endpoint configuration, and CORS settings.
+#
+# Fix the layout issue on [page] where [problem]. Ensure responsive design patterns are followed.
+#
+# Why is the authentication not working? Check the AuthContext implementation and API configuration in src/services/auth.ts.
+#
+# ========================================
+# CODE REFACTORING PROMPTS
+# ========================================
+#
+# Refactor [component] to extract reusable logic into a custom hook, following the patterns in src/hooks/.
+#
+# Optimize [page] for performance by implementing proper memoization and reducing unnecessary re-renders, following React best practices.
+#
+# Convert Tailwind CSS classes to semantic CSS classes following the patterns in styles/ directory
+#
+# Remove all console.log statements and replace with proper logging
+#
+# Refactor duplicate code into reusable utility functions
+#
+# ========================================
+# DOCUMENTATION PROMPTS
+# ========================================
+#
+# Add JSDoc comments to [function/component] explaining its purpose, parameters, return values, and usage examples.
+#
+# Create inline documentation for [complex logic] explaining the business rules and implementation details.
+#
+# ========================================
+# AI ASSISTANT PROMPTS (Gemini Integration)
+# ========================================
+#
+# Explain how the AI assistant feature works in this codebase, including how it integrates with Google Gemini API and the function calling mechanism for contact search.
+#
+# Add a new AI function capability that allows users to [action] through natural language, following the existing searchContacts function pattern.
+#
+# How does the AI assistant maintain conversation context and save chat history to the backend API?
+#
+# ========================================
+# ARCHITECTURE & DESIGN PROMPTS
+# ========================================
+#
+# Explain the authentication flow in this application, from user registration through protected routes.
+#
+# How does the theme switching work? Walk through the ThemeContext implementation and how it persists across page reloads.
+#
+# Describe how server-side pagination is implemented in the contacts page and how it integrates with filtering and sorting.
+#
+# What is the data flow for fetching contacts? Trace from the UI component through the API service to the external Contact360 API.
+#
+# How are environment variables configured in this Next.js application? Explain the difference between NEXT_PUBLIC_ and regular env vars.
+#
+# What is the folder structure pattern for this Next.js app? Explain the route groups (auth) and (dashboard) and how they work.
+#
+# How does the settings page handle multiple tabs and sub-routes? Explain the routing structure.
+#
+# ========================================
+# MIGRATION & UPGRADE PROMPTS
+# ========================================
+#
+# Upgrade Next.js to the latest version while maintaining compatibility with existing code and dependencies.
+#
+# Migrate [feature] from client-side state to server-side state using Next.js Server Components, if applicable.
+#
+# Migrate from Tailwind CSS to custom CSS following the established patterns in styles/ directory
+#
+# ========================================
+# FILTER & SEARCH PROMPTS
+# ========================================
+#
+# In title input, make it multi-value and input will be dropdown:
+# - Show by default: /contacts/title/?limit=25&offset=0
+# - When user types "search_text": /contacts/title/?limit=25&search={search_text}&offset=0
+#
+# Implement a new filter option that supports multi-value selection with search functionality
+#
+# Add autocomplete functionality to filter inputs using the API endpoints
+#
+# ========================================
+# INTEGRATION PROMPTS
+# ========================================
+#
+# Implement Firebase for the auth flow and storage for the codebase
+# Firebase Config:
+# {
+#   "apiKey": "AIzaSyAZYzNlpWNQVHMN1_R3_XEh2W4_mDWyJmw",
+#   "authDomain": "studio-3226400778-b5249.firebaseapp.com",
+#   "projectId": "studio-3226400778-b5249",
+#   "storageBucket": "studio-3226400778-b5249.appspot.com",
+#   "messagingSenderId": "749960864381",
+#   "appId": "1:749960864381:web:8d56f877c29d28d7a20714"
+# }
+#
+# Implement Supabase for the auth flow and storage for the codebase
+# Supabase Config:
+# SUPABASE_URL=https://woqnlgszvkqxaqabtqfv.supabase.co
+# SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcW5sZ3N6dmtxeGFxYWJ0cWZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMTM4ODYsImV4cCI6MjA3Njg4OTg4Nn0.DpePQML323-gdbbPxidrq-up8PXeBdXlG_8AtcIMW0o
+#
+# When user logs in and signs up completely, create a session or cookie or local storage so the user automatically logs in next time
+#
+# ========================================
+# CODE ORGANIZATION PROMPTS
+# ========================================
+#
+# Check all files in the codebase and break all files into pages, components, utilities, services, hooks, contexts, etc
+#
+# Read the files and folders thoroughly to learn about Genkit in JavaScript. After that, implement it correctly into the codebase and make necessary modifications. Break tasks into smaller parts and create a plan
+#
+# In the codebase, find all console statements and remove all console statements and replace with logger statements, then modify the codebase. Break tasks into smaller tasks and create a plan
+#
+# Modify the codebase UI. Learn, understand, and analyze this deeply, then break tasks into smaller tasks
+#
+# ========================================
+# GENERAL DEVELOPMENT PROMPTS
+# ========================================
+#
+# Learn, understand, and analyze the codebase deeply, then break your tasks into smaller tasks
+#
+# Review the project structure and create a plan for implementing a new feature
+#
+# Refactor code to follow the existing architectural patterns
+#
+# Add comprehensive error handling to a component or service
+#
+# Create unit tests with high coverage for a component
+#
+# Document a complex algorithm or business logic
+#
+# ========================================
+# NOTES
+# ========================================
+#
+# - All prompts should be analyzed deeply before implementation
+# - Break complex tasks into smaller, manageable tasks
+# - Follow existing code patterns and conventions
+# - Use TypeScript for type safety
+# - Use semantic CSS classes instead of Tailwind (project uses custom CSS)
+# - Integrate with ThemeContext for dark mode support
+# - Follow Next.js App Router patterns
+# - Test thoroughly after implementing any changes
+# - Maintain consistency with existing codebase patterns
+# - This is the authenticated dashboard application

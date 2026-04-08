@@ -1,0 +1,52 @@
+/* Contact360 — split from components.css */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTER BAR — horizontal filter controls strip
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-3);
+  flex-wrap: wrap;
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  margin-bottom: var(--c360-spacing-4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPANY / CONTACT CARD (list mode)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-entity-card {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  padding: var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-2);
+  transition: box-shadow var(--c360-transition-fast);
+}
+
+.c360-entity-card:hover {
+  box-shadow: var(--c360-shadow-md);
+}
+
+.c360-entity-card__name {
+  font-weight: 600;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-primary);
+}
+
+.c360-entity-card__meta {
+  font-size: 11px;
+  color: var(--c360-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MONOSPACE CELL
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-mono {
+  font-family: monospace;
+  font-size: 12px;
+}

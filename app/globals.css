@@ -1,0 +1,16 @@
+/* Contact360 App — Global Styles
+ * Design system: Dashboard UI Kit tokens → c360-* CSS variables
+ * Fonts: Poppins (primary), Nunito (secondary)
+ * No Tailwind — custom CSS only
+ * Inline `style` in TSX: use only for DOM-computed layout (portals, tooltips) or
+ *   passing values into CSS via `--c360-*` custom properties; static visuals → classes.
+ */
+
+/* Google Fonts loaded in app/layout.tsx via next/font */
+
+@import "./css/core.css";
+@import "./css/layout.css";
+@import "./css/components.css";
+@import "./css/utilities.css";
+@import "./css/vendor.css";
+@import "./css/responsive.css";

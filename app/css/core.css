@@ -1,0 +1,306 @@
+/* Contact360 — Core Design Tokens
+ * Dashboard UI Kit alignment: $primary #2f4cdd, $accent #b519ec, fonts Poppins + Nunito
+ * Shadow: 0px 0px 40px 0px rgba(82,63,105,0.1) — kit $shadow
+ */
+
+/* ─── Reset ────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  line-height: 1.5;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ─── Design tokens (light) ─────────────────────────────────────────────────  */
+:root {
+  /* Dashboard UI kit palette — kit $primary / $accent */
+  --c360-primary: #2f4cdd;
+  --c360-primary-hover: #2340c5;
+  --c360-primary-light: #e8ecfb;
+  --c360-accent: #b519ec;
+  --c360-accent-hover: #9b12cc;
+
+  /* Kit semantic colours */
+  --c360-success: #2bc155;
+  --c360-success-light: #e6f9ed;
+  --c360-warning: #ff6d4d;
+  --c360-warning-light: #fff3f0;
+  --c360-danger: #f72b50;
+  --c360-danger-light: #fef0f3;
+  --c360-info: #2781d5;
+  --c360-info-light: #e8f2fb;
+
+  /* Neutral palette — kit $body-bg, $body-color, $border */
+  --c360-bg: #f9f9f9;
+  --c360-bg-elevated: #ffffff;
+  /* Subtle panels / inset rows (kit secondary surface) */
+  --c360-bg-secondary: #f4f5f8;
+  --c360-bg-overlay: rgba(0, 0, 0, 0.5);
+  --c360-text: #333333;
+  --c360-text-muted: #7e7e7e;
+  --c360-text-light: #adadad;
+  --c360-border: #f0f1f5;
+  --c360-border-strong: #e0e0e0;
+
+  /* Kit dark surface */
+  --c360-dark-bg: #181f39;
+  --c360-dark-card: #1e2746;
+
+  /* Focus */
+  --c360-focus-ring: rgba(47, 76, 221, 0.4);
+
+  /* Premium accent */
+  --c360-premium-yellow: #f7b91c;
+
+  /* Spacing — 4 px base grid */
+  --c360-spacing-0: 0;
+  --c360-spacing-1: 4px;
+  --c360-spacing-2: 8px;
+  --c360-spacing-3: 12px;
+  --c360-spacing-4: 16px;
+  --c360-spacing-5: 20px;
+  --c360-spacing-6: 24px;
+  --c360-spacing-8: 32px;
+  --c360-spacing-10: 40px;
+  --c360-spacing-12: 48px;
+  --c360-spacing-16: 64px;
+
+  /* Border radius — kit $border-radius: 0.75rem */
+  --c360-radius-sm: 6px;
+  --c360-radius-md: 10px;
+  --c360-radius-lg: 0.75rem; /* cards, modals */
+  --c360-radius-xl: 1.25rem;
+  --c360-radius-2xl: 1.5rem;
+  --c360-radius-full: 9999px;
+
+  /* Shadows — kit $shadow */
+  --c360-shadow-card: 0px 0px 40px 0px rgba(82, 63, 105, 0.1);
+  --c360-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --c360-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --c360-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --c360-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.2);
+
+  /* Transitions */
+  --c360-transition-fast: 150ms ease;
+  --c360-transition-default: 200ms ease;
+  --c360-transition-slow: 300ms ease;
+
+  /* Z-index layers */
+  --c360-z-sidebar: 40;
+  --c360-z-topbar: 45;
+  --c360-z-dropdown: 50;
+  --c360-z-popover: 60;
+  --c360-z-tooltip: 70;
+  --c360-z-modal: 100;
+  /* Command palette above page modals */
+  --c360-z-cmd-palette-overlay: 150;
+  --c360-z-cmd-palette: 151;
+  --c360-z-toast: 200;
+
+  --c360-tooltip-bg: #1a1a2e;
+
+  /* Layout */
+  --c360-sidebar-width: 240px;
+  --c360-sidebar-width-collapsed: 72px;
+  --c360-topbar-height: 64px;
+  --c360-content-max-width: 1280px;
+  --c360-container-padding: 24px;
+
+  /* Component heights */
+  --c360-input-height: 40px;
+  --c360-button-height: 40px;
+  --c360-input-height-sm: 32px;
+  --c360-button-height-sm: 32px;
+  --c360-input-height-lg: 48px;
+  --c360-button-height-lg: 48px;
+
+  /* Typography */
+  --c360-font-primary:
+    "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --c360-font-secondary:
+    "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --c360-font-mono: "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+  --c360-text-xs: 0.75rem; /* 12px */
+  --c360-text-sm: 0.875rem; /* 14px */
+  --c360-text-base: 1rem; /* 16px */
+  --c360-text-lg: 1.125rem; /* 18px */
+  --c360-text-xl: 1.25rem; /* 20px */
+  --c360-text-2xl: 1.5rem; /* 24px */
+  --c360-text-3xl: 1.875rem; /* 30px */
+  --c360-text-4xl: 2.25rem; /* 36px */
+
+  /* Scrollbar */
+  --c360-scrollbar-thumb: #d1d1d1;
+  --c360-scrollbar-thumb-hover: #b0b0b0;
+
+  /* ─── Semantic aliases (used by CSS partials that predate the canonical names) */
+  --c360-text-primary: var(--c360-text);
+  --c360-text-secondary: var(--c360-text-muted);
+  --c360-bg-primary: var(--c360-bg-elevated);
+  --c360-bg-tertiary: var(--c360-bg);
+  --c360-bg-hover: var(--c360-primary-light);
+}
+
+/* ─── Dark theme ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --c360-primary: #4f6ef7;
+  --c360-primary-hover: #3b5bf5;
+  --c360-primary-light: rgba(79, 110, 247, 0.15);
+  --c360-accent: #c743f5;
+
+  --c360-bg: #181f39;
+  --c360-bg-elevated: #1e2746;
+  --c360-bg-secondary: #252d4f;
+  --c360-text: #f4f4f4;
+  --c360-text-muted: #9ba3b8;
+  --c360-text-light: #6b7280;
+  --c360-border: #2d3561;
+  --c360-border-strong: #3a4580;
+
+  --c360-success-light: rgba(43, 193, 85, 0.15);
+  --c360-warning-light: rgba(255, 109, 77, 0.15);
+  --c360-danger-light: rgba(247, 43, 80, 0.15);
+  --c360-info-light: rgba(39, 129, 213, 0.15);
+
+  --c360-focus-ring: rgba(79, 110, 247, 0.5);
+  --c360-scrollbar-thumb: #2d3561;
+  --c360-scrollbar-thumb-hover: #3a4580;
+
+  --c360-tooltip-bg: #0f1419;
+
+  /* Semantic aliases — dark theme overrides */
+  --c360-text-primary: var(--c360-text);
+  --c360-text-secondary: var(--c360-text-muted);
+  --c360-bg-primary: var(--c360-bg-elevated);
+  --c360-bg-tertiary: var(--c360-bg);
+  --c360-bg-hover: var(--c360-primary-light);
+}
+
+/* ─── Custom scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c360-scrollbar-thumb);
+  border-radius: var(--c360-radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c360-scrollbar-thumb-hover);
+}
+
+/* ─── Base typography ────────────────────────────────────────────────────── */
+body {
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  background-color: var(--c360-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--c360-text);
+}
+
+p {
+  margin: 0;
+}
+a {
+  color: var(--c360-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--c360-primary-hover);
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--c360-primary);
+  outline-offset: 2px;
+  border-radius: var(--c360-radius-sm);
+}
+
+/* ─── Page enter animation ───────────────────────────────────────────────── */
+@keyframes c360-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes c360-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes c360-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes c360-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes c360-skeleton {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
