@@ -6,7 +6,7 @@
 
 const defaultApiBase =
   process.env.NODE_ENV === "production"
-    ? "https://api.contact360.io"
+    ? "http://api.contact360.io"
     : "http://api.contact360.io";
 
 const _apiBase = process.env.NEXT_PUBLIC_API_URL || defaultApiBase;
