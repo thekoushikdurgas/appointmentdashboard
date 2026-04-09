@@ -6,7 +6,7 @@
 
 const defaultApiBase =
   process.env.NODE_ENV === "production"
-    ? "http://api.contact360.io"
+    ? "https://api.contact360.io"
     : "http://api.contact360.io";
 
 const _apiBase = process.env.NEXT_PUBLIC_API_URL || defaultApiBase;
@@ -29,12 +29,6 @@ function resolveGraphqlUrl(): string {
 
 export const GRAPHQL_URL = resolveGraphqlUrl();
 
-export const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v3";
-export const AUTH_API_VERSION =
-  process.env.NEXT_PUBLIC_AUTH_API_VERSION || "v1";
-export const USER_API_VERSION =
-  process.env.NEXT_PUBLIC_USER_API_VERSION || "v1";
-export const VQL_API_VERSION = process.env.NEXT_PUBLIC_VQL_API_VERSION || "v3";
 
 export const JOBS_S3_BUCKET =
   process.env.NEXT_PUBLIC_JOBS_S3_BUCKET || "appointment360uploads";
