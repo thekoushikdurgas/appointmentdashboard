@@ -6,6 +6,10 @@ import type {
   ContactFilter,
   ContactFilterData,
 } from "@/graphql/generated/types";
+import { readTTLCache, writeTTLCache } from "@/lib/ttlLocalStorageCache";
+
+const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v1";
+const CONTACT_FILTERS_TTL_MS = 30 * 60 * 1000;
 
 export interface FilterSection {
   filterKey: string;
@@ -23,20 +27,32 @@ export interface UseContactFiltersReturn {
 }
 
 export function useContactFilters(): UseContactFiltersReturn {
-  const [filters, setFilters] = useState<ContactFilter[]>([]);
-  const [filtersLoading, setFiltersLoading] = useState(true);
+  const [filters, setFilters] = useState<ContactFilter[]>(
+    () => readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY) ?? [],
+  );
+  const [filtersLoading, setFiltersLoading] = useState(
+    () => readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY) == null,
+  );
   const [sectionData, setSectionData] = useState<
     Record<string, { options: ContactFilterData[]; loading: boolean }>
   >({});
 
   useEffect(() => {
+    const cached = readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY);
+    if (cached) {
+      setFilters(cached);
+      setFiltersLoading(false);
+      return;
+    }
     let cancelled = false;
     setFiltersLoading(true);
     contactsService
       .getFilters()
       .then((res) => {
         if (!cancelled) {
-          setFilters(res.contacts.filters.items);
+          const items = res.contacts.filters.items;
+          setFilters(items);
+          writeTTLCache(CONTACT_FILTERS_CACHE_KEY, items, CONTACT_FILTERS_TTL_MS);
         }
       })
       .catch(() => {

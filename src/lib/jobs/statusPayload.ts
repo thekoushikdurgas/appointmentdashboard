@@ -62,6 +62,8 @@ export function normalizeEmailSatelliteStatus(
     running: "RUNNING",
     pending: "PENDING",
     queued: "PENDING",
+    in_queue: "PENDING",
+    open: "OPEN",
     paused: "PAUSED",
     completed: "COMPLETED",
     complete: "COMPLETED",
@@ -86,6 +88,13 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
   }
   const p = unwrapStatusPayload(statusPayload as Record<string, unknown>);
 
+  const jobResponse =
+    typeof p.job_response === "object" &&
+    p.job_response !== null &&
+    !Array.isArray(p.job_response)
+      ? (p.job_response as Record<string, unknown>)
+      : null;
+
   const progressPercent = num(
     p,
     "progress_percent",
@@ -93,13 +102,23 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
     "progress_pct",
     "percent",
   );
-  const processedRows = num(
-    p,
-    "processed_rows",
-    "processedRows",
-    "processed",
-    "rows_processed",
-  );
+  const processedRows =
+    num(
+      p,
+      "processed_rows",
+      "processedRows",
+      "processed",
+      "rows_processed",
+    ) ??
+    (jobResponse
+      ? num(
+          jobResponse,
+          "processed_rows",
+          "processedRows",
+          "processed",
+          "rows_processed",
+        )
+      : null);
   const totalRows = num(p, "total_rows", "totalRows", "total", "row_count");
 
   const liveStatus = str(p, "status", "job_status", "state");

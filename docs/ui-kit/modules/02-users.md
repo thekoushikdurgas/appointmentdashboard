@@ -85,7 +85,7 @@ The **Admin** module exposes **`admin { userStats }`** → `AdminUserStats`:
 | **General tab logic**    | `src/hooks/useProfileGeneral.ts`                                                           |
 | **Avatar helpers**       | `src/lib/profileAvatarUpload.ts`, `resolveProfileAvatarSrc` in `src/lib/utils.ts`          |
 | **Users GraphQL docs**   | `src/graphql/usersOperations.ts`                                                           |
-| **Services**             | `src/services/graphql/usersService.ts`                                                    |
+| **Services**             | `src/services/graphql/usersService.ts`                                                     |
 | **Auth + profile shape** | `src/context/AuthContext.tsx` (`AuthUser` profile fields), `src/graphql/authOperations.ts` |
 
 ---

@@ -407,8 +407,7 @@ export default function JobsPage() {
                 label="S3 input CSV key"
                 value={emailInputCsvKey}
                 onChange={(e) => setEmailInputCsvKey(e.target.value)}
-                placeholder="upload/abc.csv"
-                helperText="Logical key from Upload/Files (upload/…). The API expands it to the full object path."
+                placeholder="uploads/abc.csv"
               />
               <Input
                 label="S3 output prefix"

@@ -275,12 +275,37 @@ export async function graphqlRequest<T = unknown>(
   }
 }
 
+/**
+ * In-flight deduplication map for queries.
+ * If the same query+variables is already pending, callers share one Promise
+ * instead of issuing duplicate HTTP requests.
+ */
+const inflightQueries = new Map<string, Promise<unknown>>();
+
+function buildInflightKey(
+  query: string,
+  variables?: Record<string, unknown>,
+): string {
+  try {
+    return `${query}::${JSON.stringify(variables ?? {})}`;
+  } catch {
+    return query;
+  }
+}
+
 export async function graphqlQuery<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
   options?: GraphQLRequestOptions,
 ): Promise<T> {
-  return graphqlRequest<T>(query, variables, options);
+  const key = buildInflightKey(query, variables);
+  const existing = inflightQueries.get(key);
+  if (existing) return existing as Promise<T>;
+
+  const promise = graphqlRequest<T>(query, variables, options);
+  inflightQueries.set(key, promise);
+  promise.finally(() => inflightQueries.delete(key));
+  return promise;
 }
 
 export async function graphqlMutation<T = unknown>(

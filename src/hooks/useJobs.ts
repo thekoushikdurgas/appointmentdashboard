@@ -69,6 +69,8 @@ export function useJobs(
   });
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** True while the 5-s active-job fast-poller is running. */
+  const isActivePollRunning = useRef(false);
 
   const fetchJobs = useCallback(
     async (silent = false) => {
@@ -115,6 +117,7 @@ export function useJobs(
     let cancelled = false;
     let initialTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // Single read — reused for both hydration and age calculation
     const cached = readJobsListCache(filterKey);
     if (cached) {
       setJobs(cached.jobs);
@@ -125,11 +128,10 @@ export function useJobs(
       setLoading(true);
     }
 
-    const c = readJobsListCache(filterKey);
-    const age = c ? Date.now() - c.savedAt : Infinity;
-    const hasRows = c != null && c.jobs.length > 0;
+    const age = cached ? Date.now() - cached.savedAt : Infinity;
+    const hasRows = cached != null && cached.jobs.length > 0;
 
-    if (c == null || age >= CACHED_LIST_REFRESH_MS) {
+    if (cached == null || age >= CACHED_LIST_REFRESH_MS) {
       void fetchJobs(hasRows);
     } else {
       initialTimer = setTimeout(() => {
@@ -137,8 +139,9 @@ export function useJobs(
       }, CACHED_LIST_REFRESH_MS - age);
     }
 
+    // Skip the 5-min background refresh if the 5-s active-poll is already running
     const interval = setInterval(() => {
-      if (!cancelled) void fetchJobs(true);
+      if (!cancelled && !isActivePollRunning.current) void fetchJobs(true);
     }, CACHED_LIST_REFRESH_MS);
 
     return () => {
@@ -148,17 +151,24 @@ export function useJobs(
     };
   }, [cachedList, filterKey, fetchJobs]);
 
-  /** Cached dashboard mode otherwise refreshes every 5 min; email jobs need live progress. */
+  /** Fast-poll for active remote jobs; suppresses the 5-min background interval. */
   useEffect(() => {
     if (!cachedList) return;
-    const hasActiveEmail = jobs.some(
-      (j) => j.sourceService === "email_server" && !j.isTerminal,
+    const hasActiveRemote = jobs.some(
+      (j) =>
+        (j.sourceService === "email_server" ||
+          j.sourceService === "sync_server") &&
+        !j.isTerminal,
     );
-    if (!hasActiveEmail) return;
+    if (!hasActiveRemote) return;
+    isActivePollRunning.current = true;
     const id = setInterval(() => {
       void fetchJobs(true);
     }, ACTIVE_POLL_INTERVAL);
-    return () => clearInterval(id);
+    return () => {
+      isActivePollRunning.current = false;
+      clearInterval(id);
+    };
   }, [cachedList, jobs, fetchJobs]);
 
   const retry = async (jobId: string) => {

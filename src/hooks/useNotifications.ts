@@ -11,6 +11,14 @@ import type {
   UpdateNotificationPreferencesInput,
   GraphQlNotificationType,
 } from "@/graphql/generated/types";
+import {
+  readTTLCache,
+  writeTTLCache,
+  clearTTLCache,
+} from "@/lib/ttlLocalStorageCache";
+
+const NOTIF_PREFS_CACHE_KEY = "c360:notif:prefs:v1";
+const NOTIF_PREFS_TTL_MS = 10 * 60 * 1000;
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -105,8 +113,8 @@ export function useNotifications(opts?: {
   }, []);
 
   useEffect(() => {
-    void fetchFirstPage();
-    void fetchUnreadCount();
+    // Fetch first page + unread count concurrently instead of sequentially
+    void Promise.all([fetchFirstPage(), fetchUnreadCount()]);
     intervalRef.current = setInterval(
       () => void fetchUnreadCount(),
       POLL_INTERVAL_MS,
@@ -170,16 +178,27 @@ export function useNotifications(opts?: {
 
 export function useNotificationPreferences() {
   const [preferences, setPreferences] =
-    useState<NotificationPreferences | null>(null);
+    useState<NotificationPreferences | null>(
+      () => readTTLCache<NotificationPreferences>(NOTIF_PREFS_CACHE_KEY),
+    );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const cached = readTTLCache<NotificationPreferences>(NOTIF_PREFS_CACHE_KEY);
+    if (cached) {
+      setPreferences(cached);
+      return;
+    }
     setLoading(true);
     notificationsService
       .getPreferences()
-      .then((res) => setPreferences(res.notifications.notificationPreferences))
+      .then((res) => {
+        const prefs = res.notifications.notificationPreferences;
+        setPreferences(prefs);
+        writeTTLCache(NOTIF_PREFS_CACHE_KEY, prefs, NOTIF_PREFS_TTL_MS);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -190,7 +209,10 @@ export function useNotificationPreferences() {
       setError(null);
       try {
         const res = await notificationsService.updatePreferences(patch);
-        setPreferences(res.notifications.updateNotificationPreferences);
+        const updated = res.notifications.updateNotificationPreferences;
+        setPreferences(updated);
+        clearTTLCache(NOTIF_PREFS_CACHE_KEY);
+        writeTTLCache(NOTIF_PREFS_CACHE_KEY, updated, NOTIF_PREFS_TTL_MS);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       } finally {

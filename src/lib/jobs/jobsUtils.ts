@@ -25,7 +25,8 @@ export function getJobBadgeColor(
 }
 
 export function shouldPollJob(status: string): boolean {
-  return ["PENDING", "RUNNING"].includes(status);
+  /** OPEN = scheduler DB default for new jobs; Connectra may keep reporting until live status is merged. */
+  return ["PENDING", "RUNNING", "OPEN", "IN_QUEUE"].includes(status);
 }
 
 export function getJobEta(job: Job): string | null {

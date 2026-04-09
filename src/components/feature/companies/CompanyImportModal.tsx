@@ -10,7 +10,6 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { companiesService } from "@/services/graphql/companiesService";
 import { useJobPoller } from "@/hooks/useJobPoller";
 import { parseOperationError } from "@/lib/errorParser";
-import { JOBS_S3_BUCKET } from "@/lib/config";
 import { toast } from "sonner";
 
 export interface CompanyImportModalProps {
@@ -55,7 +54,7 @@ export function CompanyImportModal({
   useEffect(() => {
     if (isOpen) {
       setStep(1);
-      setS3Bucket(JOBS_S3_BUCKET);
+      setS3Bucket("");
       setS3Key("");
       setOutputPrefix("");
       setOpError(null);
@@ -166,23 +165,20 @@ export function CompanyImportModal({
         {step === 1 && (
           <div className="c360-section-stack">
             <p className="c360-text-sm c360-text-muted">
-              Use the logical object key from Files after upload (e.g.{" "}
-              <code className="c360-text-xs">upload/…</code>). The API expands it
-              to the full path in the shared bucket.
+              Provide the S3 location of the companies CSV to import.
             </p>
             <Input
-              label="S3 bucket name *"
+              label="S3 Bucket *"
               value={s3Bucket}
               onChange={(e) => setS3Bucket(e.target.value)}
-              placeholder={JOBS_S3_BUCKET}
-              helperText="Preset matches NEXT_PUBLIC_JOBS_S3_BUCKET; the import job uses the API-configured bucket."
+              placeholder="my-bucket"
             />
             <Input
-              label="S3 object key *"
+              label="S3 Key *"
               value={s3Key}
               onChange={(e) => setS3Key(e.target.value)}
-              placeholder="upload/companies.csv"
-              helperText="Logical key ending in .csv (same as shown in Files)."
+              placeholder="imports/companies.csv"
+              helperText="Must be a .csv file accessible to the API."
             />
           </div>
         )}
@@ -205,10 +201,7 @@ export function CompanyImportModal({
         {step === 3 && (
           <div className="c360-section-stack">
             <Alert variant="info" title="Review before importing">
-              The following company import will be started. Connectra receives the
-              server-configured bucket; the key below is expanded to your
-              workspace path when it starts with{" "}
-              <code className="c360-text-xs">upload/</code>.
+              The following company import will be started:
             </Alert>
             <dl className="c360-dl-grid">
               <dt>Bucket</dt>

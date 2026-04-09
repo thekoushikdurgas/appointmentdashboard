@@ -6,6 +6,10 @@ import type {
   CompanyFilter,
   CompanyFilterData,
 } from "@/graphql/generated/types";
+import { readTTLCache, writeTTLCache } from "@/lib/ttlLocalStorageCache";
+
+const COMPANY_FILTERS_CACHE_KEY = "c360:company:filters:v1";
+const COMPANY_FILTERS_TTL_MS = 30 * 60 * 1000;
 
 export interface CompanyFilterSection {
   filterKey: string;
@@ -23,20 +27,32 @@ export interface UseCompanyFiltersReturn {
 }
 
 export function useCompanyFilters(): UseCompanyFiltersReturn {
-  const [filters, setFilters] = useState<CompanyFilter[]>([]);
-  const [filtersLoading, setFiltersLoading] = useState(true);
+  const [filters, setFilters] = useState<CompanyFilter[]>(
+    () => readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY) ?? [],
+  );
+  const [filtersLoading, setFiltersLoading] = useState(
+    () => readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY) == null,
+  );
   const [sectionData, setSectionData] = useState<
     Record<string, { options: CompanyFilterData[]; loading: boolean }>
   >({});
 
   useEffect(() => {
+    const cached = readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY);
+    if (cached) {
+      setFilters(cached);
+      setFiltersLoading(false);
+      return;
+    }
     let cancelled = false;
     setFiltersLoading(true);
     companiesService
       .getFilters()
       .then((res) => {
         if (!cancelled) {
-          setFilters(res.companies.filters.items);
+          const items = res.companies.filters.items;
+          setFilters(items);
+          writeTTLCache(COMPANY_FILTERS_CACHE_KEY, items, COMPANY_FILTERS_TTL_MS);
         }
       })
       .catch(() => {

@@ -27,6 +27,14 @@ import { authService } from "@/services/graphql/authService";
 import type { GeolocationInput } from "@/graphql/generated/types";
 import { AUTH_ME_QUERY, AUTH_LOGOUT_MUTATION } from "@/graphql/authOperations";
 import { buildClientGeolocationHint } from "@/lib/authGeo";
+import {
+  readTTLCache,
+  writeTTLCache,
+  clearTTLCache,
+} from "@/lib/ttlLocalStorageCache";
+
+const ME_CACHE_KEY = "c360:auth:me:v1";
+const ME_CACHE_TTL_MS = 5 * 60 * 1000;
 
 export interface AuthUser {
   id: string;
@@ -76,7 +84,7 @@ interface AuthContextValue {
     options?: AuthRegisterOptions,
   ) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: (forceRefetch?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -117,12 +125,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useState<TwoFactorChallenge | null>(null);
   const router = useRouter();
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (forceRefetch = false) => {
     try {
       if (!isAuthenticated()) {
         setUser(null);
+        clearTTLCache(ME_CACHE_KEY);
         return;
       }
+
+      if (!forceRefetch) {
+        const cached = readTTLCache<GatewayUser>(ME_CACHE_KEY);
+        if (cached) {
+          setUser(mapGatewayUserToAuthUser(cached));
+          return;
+        }
+      }
+
       const data = await graphqlQuery<MeResponse>(
         AUTH_ME_QUERY,
         {},
@@ -130,8 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       const me = data.auth?.me;
       if (me) {
+        writeTTLCache(ME_CACHE_KEY, me, ME_CACHE_TTL_MS);
         setUser(mapGatewayUserToAuthUser(me));
       } else {
+        clearTTLCache(ME_CACHE_KEY);
         setUser(null);
       }
     } catch {
@@ -140,93 +160,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
+    refreshUser(false).finally(() => setLoading(false));
   }, [refreshUser]);
 
-  const login = async (
-    email: string,
-    password: string,
-    options?: AuthLoginOptions,
-  ) => {
-    const attachClient = options?.attachClientGeo !== false;
-    const geo = mergeGeo(options?.geolocation, attachClient);
-    const result = await authService.login(
-      { email, password },
-      {
-        geolocation: geo ?? null,
-      },
-    );
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+      options?: AuthLoginOptions,
+    ) => {
+      const attachClient = options?.attachClientGeo !== false;
+      const geo = mergeGeo(options?.geolocation, attachClient);
+      const result = await authService.login(
+        { email, password },
+        { geolocation: geo ?? null },
+      );
 
-    if (result.twoFactorRequired && result.challengeToken) {
-      setTwoFactorChallenge({
-        challengeToken: result.challengeToken,
-        email,
+      if (result.twoFactorRequired && result.challengeToken) {
+        setTwoFactorChallenge({ challengeToken: result.challengeToken, email });
+        router.push("/login/2fa");
+        return;
+      }
+
+      clearTTLCache(ME_CACHE_KEY);
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      setUser({
+        id: result.user.id,
+        email: result.user.email,
+        full_name: result.user.fullName,
+        role: result.user.role,
+        user_type: result.user.userType,
       });
-      router.push("/login/2fa");
-      return;
-    }
+      refreshUser(true).catch(() => undefined);
+      router.push(ROUTES.DASHBOARD);
+    },
+    [router, refreshUser],
+  );
 
-    setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-    setUser({
-      id: result.user.id,
-      email: result.user.email,
-      full_name: result.user.fullName,
-      role: result.user.role,
-      user_type: result.user.userType,
-    });
-    refreshUser().catch(() => undefined);
-    router.push(ROUTES.DASHBOARD);
-  };
+  const completeTwoFactorLogin = useCallback(
+    async (code: string) => {
+      if (!twoFactorChallenge) throw new Error("No active 2FA challenge.");
+      const result = await authService.completeTwoFactorLogin(
+        twoFactorChallenge.challengeToken,
+        code,
+      );
+      setTwoFactorChallenge(null);
+      clearTTLCache(ME_CACHE_KEY);
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      setUser({
+        id: result.user.id,
+        email: result.user.email,
+        full_name: result.user.fullName,
+        role: result.user.role,
+        user_type: result.user.userType,
+      });
+      refreshUser(true).catch(() => undefined);
+      router.push(ROUTES.DASHBOARD);
+    },
+    [twoFactorChallenge, router, refreshUser],
+  );
 
-  const completeTwoFactorLogin = async (code: string) => {
-    if (!twoFactorChallenge) {
-      throw new Error("No active 2FA challenge.");
-    }
-    const result = await authService.completeTwoFactorLogin(
-      twoFactorChallenge.challengeToken,
-      code,
-    );
-    setTwoFactorChallenge(null);
-    setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-    setUser({
-      id: result.user.id,
-      email: result.user.email,
-      full_name: result.user.fullName,
-      role: result.user.role,
-      user_type: result.user.userType,
-    });
-    refreshUser().catch(() => undefined);
-    router.push(ROUTES.DASHBOARD);
-  };
+  const register = useCallback(
+    async (
+      name: string,
+      email: string,
+      password: string,
+      options?: AuthRegisterOptions,
+    ) => {
+      const result = await authService.register(
+        { name, email, password },
+        {
+          geolocation:
+            (options?.geolocation as GeolocationInput | null | undefined) ??
+            buildClientGeolocationHint() ??
+            null,
+        },
+      );
+      clearTTLCache(ME_CACHE_KEY);
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      setUser({
+        id: result.user.id,
+        email: result.user.email,
+        full_name: result.user.fullName,
+        role: result.user.role,
+        user_type: result.user.userType,
+      });
+      refreshUser(true).catch(() => undefined);
+      router.push(ROUTES.DASHBOARD);
+    },
+    [router, refreshUser],
+  );
 
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    options?: AuthRegisterOptions,
-  ) => {
-    const result = await authService.register(
-      { name, email, password },
-      {
-        geolocation:
-          (options?.geolocation as GeolocationInput | null | undefined) ??
-          buildClientGeolocationHint() ??
-          null,
-      },
-    );
-    setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-    setUser({
-      id: result.user.id,
-      email: result.user.email,
-      full_name: result.user.fullName,
-      role: result.user.role,
-      user_type: result.user.userType,
-    });
-    refreshUser().catch(() => undefined);
-    router.push(ROUTES.DASHBOARD);
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (getAccessToken()) {
         await graphqlMutation<{ auth: { logout: boolean } }>(
@@ -238,11 +263,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* still clear local session */
     }
+    clearTTLCache(ME_CACHE_KEY);
     clearTokens();
     setUser(null);
     toast.info("You have been signed out.");
     router.push(ROUTES.LOGIN);
-  };
+  }, [router]);
 
   return (
     <AuthContext.Provider

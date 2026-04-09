@@ -8,6 +8,7 @@ import {
   parseStatusPayload,
 } from "@/lib/jobs/statusPayload";
 
+/** Full fields — used for single-job detail view where all payloads are needed. */
 const JOB_FIELDS = `
   id
   jobId
@@ -19,6 +20,24 @@ const JOB_FIELDS = `
   jobSubtype
   requestPayload
   responsePayload
+  statusPayload
+  createdAt
+  updatedAt
+`;
+
+/**
+ * Slim fields for list queries — omits large JSON payload blobs that are only
+ * needed in the detail view.  Reduces list response sizes significantly.
+ */
+const JOB_LIST_FIELDS = `
+  id
+  jobId
+  userId
+  jobType
+  status
+  sourceService
+  jobFamily
+  jobSubtype
   statusPayload
   createdAt
   updatedAt
@@ -63,8 +82,11 @@ export interface JobRow {
 function mapJob(r: JobRow): Job {
   const parsed = parseStatusPayload(r.statusPayload);
   const live = normalizeEmailSatelliteStatus(parsed.liveStatus);
-  const displayStatus =
-    r.sourceService === "email_server" && live ? live : r.status;
+  /** Connectra (sync_server) exposes live status on GET /common/jobs/:uuid — same as email.server. */
+  const useLiveStatus =
+    !!live &&
+    (r.sourceService === "email_server" || r.sourceService === "sync_server");
+  const displayStatus = useLiveStatus ? live : r.status;
   const fromResponse =
     r.responsePayload &&
     typeof r.responsePayload === "object" &&
@@ -101,7 +123,7 @@ function mapJob(r: JobRow): Job {
 const JOBS_LIST = `query JobsGateway($limit: Int, $offset: Int, $status: String, $jobType: String, $jobFamily: String, $relatedFileKey: String) {
   jobs {
     jobs(limit: $limit, offset: $offset, status: $status, jobType: $jobType, jobFamily: $jobFamily, relatedFileKey: $relatedFileKey) {
-      jobs { ${JOB_FIELDS} }
+      jobs { ${JOB_LIST_FIELDS} }
       pageInfo {
         total
         limit
@@ -117,6 +139,22 @@ const JOB_ONE = `query JobGateway($jobId: ID!) {
   jobs {
     job(jobId: $jobId) {
       ${JOB_FIELDS}
+    }
+  }
+}`;
+
+/** Full-payload list used when raw requestPayload/responsePayload is needed (e.g. related-file view). */
+const JOBS_LIST_FULL = `query JobsGatewayFull($limit: Int, $offset: Int, $status: String, $jobType: String, $jobFamily: String, $relatedFileKey: String) {
+  jobs {
+    jobs(limit: $limit, offset: $offset, status: $status, jobType: $jobType, jobFamily: $jobFamily, relatedFileKey: $relatedFileKey) {
+      jobs { ${JOB_FIELDS} }
+      pageInfo {
+        total
+        limit
+        offset
+        hasNext
+        hasPrevious
+      }
     }
   }
 }`;
@@ -282,7 +320,7 @@ export const jobsService = {
           pageInfo: { total: number; limit: number; offset: number };
         };
       };
-    }>(JOBS_LIST, {
+    }>(JOBS_LIST_FULL, {
       limit: opts?.limit ?? 100,
       offset: 0,
       status: null,

@@ -25,7 +25,7 @@
 | P2b   | `dashboard/page.tsx` → DashboardAdCarousel, DashboardStatRow, DashboardActivityFeed, DashboardChartSection                               | ✅     |
 | P2c   | `billing/page.tsx` → BillingPlanCards, BillingCheckoutWizard, BillingInvoiceList, BillingCreditSummary                                   | ✅     |
 | P2d   | `activities/page.tsx` → ActivityFeedTab, ActivityCalendarTab, ActivityAnalyticsTab + JobStatsTab                                         | ✅     |
-| P2e   | Admin console **removed** from app — Django `admin_ops` + `NEXT_PUBLIC_ADMIN_URL`                                                       | ✅     |
+| P2e   | Admin console **removed** from app — Django `admin_ops` + `NEXT_PUBLIC_ADMIN_URL`                                                        | ✅     |
 | P2f   | `companies/[id]/page.tsx` → CompanyHeader, CompanyContactsTable, CompanyFindEmailsPanel                                                  | ✅     |
 | P2g   | `email/page.tsx` → EmailFinderSingleTab, EmailBulkFinderTab, EmailBulkVerifierTab, EmailVerifierTab, EmailWebSearchTab, EmailPatternsTab | ✅     |
 | P2h   | `status/page.tsx` → StatusOverviewTab, StatusConnectraTab, Reference (Operations tab → Django admin)                                     | ✅     |
