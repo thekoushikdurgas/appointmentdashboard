@@ -52,7 +52,11 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
         if (!cancelled) {
           const items = res.companies.filters.items;
           setFilters(items);
-          writeTTLCache(COMPANY_FILTERS_CACHE_KEY, items, COMPANY_FILTERS_TTL_MS);
+          writeTTLCache(
+            COMPANY_FILTERS_CACHE_KEY,
+            items,
+            COMPANY_FILTERS_TTL_MS,
+          );
         }
       })
       .catch(() => {

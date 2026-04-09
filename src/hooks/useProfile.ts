@@ -152,7 +152,9 @@ export function useProfile() {
       const res = await profileService.updateTeamMemberRole(memberId, role);
       const updated = res.profile.updateTeamMemberRole;
       setTeamMembers((prev) => {
-        const next = prev.map((m) => (m.id === memberId ? { ...m, ...updated } : m));
+        const next = prev.map((m) =>
+          m.id === memberId ? { ...m, ...updated } : m,
+        );
         clearTTLCache(PROFILE_CACHE_KEY);
         return next;
       });

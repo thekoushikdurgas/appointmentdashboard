@@ -164,11 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = useCallback(
-    async (
-      email: string,
-      password: string,
-      options?: AuthLoginOptions,
-    ) => {
+    async (email: string, password: string, options?: AuthLoginOptions) => {
       const attachClient = options?.attachClientGeo !== false;
       const geo = mergeGeo(options?.geolocation, attachClient);
       const result = await authService.login(

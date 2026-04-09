@@ -103,13 +103,7 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
     "percent",
   );
   const processedRows =
-    num(
-      p,
-      "processed_rows",
-      "processedRows",
-      "processed",
-      "rows_processed",
-    ) ??
+    num(p, "processed_rows", "processedRows", "processed", "rows_processed") ??
     (jobResponse
       ? num(
           jobResponse,

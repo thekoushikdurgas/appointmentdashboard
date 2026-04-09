@@ -178,8 +178,8 @@ export function useNotifications(opts?: {
 
 export function useNotificationPreferences() {
   const [preferences, setPreferences] =
-    useState<NotificationPreferences | null>(
-      () => readTTLCache<NotificationPreferences>(NOTIF_PREFS_CACHE_KEY),
+    useState<NotificationPreferences | null>(() =>
+      readTTLCache<NotificationPreferences>(NOTIF_PREFS_CACHE_KEY),
     );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

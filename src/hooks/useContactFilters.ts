@@ -52,7 +52,11 @@ export function useContactFilters(): UseContactFiltersReturn {
         if (!cancelled) {
           const items = res.contacts.filters.items;
           setFilters(items);
-          writeTTLCache(CONTACT_FILTERS_CACHE_KEY, items, CONTACT_FILTERS_TTL_MS);
+          writeTTLCache(
+            CONTACT_FILTERS_CACHE_KEY,
+            items,
+            CONTACT_FILTERS_TTL_MS,
+          );
         }
       })
       .catch(() => {
