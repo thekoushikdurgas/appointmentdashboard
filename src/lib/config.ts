@@ -6,8 +6,8 @@
 
 const defaultApiBase =
   process.env.NODE_ENV === "production"
-    ? "https://api.contact360.io"
-    : "https://api.contact360.io";
+    ? "http://api.contact360.io"
+    : "http://api.contact360.io";
 
 const _apiBase = process.env.NEXT_PUBLIC_API_URL || defaultApiBase;
 export const API_URL = _apiBase.replace(/\/$/, "");
@@ -16,7 +16,7 @@ export const API_URL = _apiBase.replace(/\/$/, "");
  * In development, default to same-origin `/graphql` (resolved below) so the browser
  * does not cross-origin fetch `api.contact360.io` (avoids CORS unless the API lists
  * http://localhost:3000 in ALLOWED_ORIGINS). next.config.ts rewrites `/graphql` to
- * GRAPHQL_UPSTREAM_URL (default https://api.contact360.io/graphql).
+ * GRAPHQL_UPSTREAM_URL (default http://api.contact360.io/graphql).
  */
 function resolveGraphqlUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_GRAPHQL_URL?.trim();
