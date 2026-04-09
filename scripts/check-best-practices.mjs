@@ -162,10 +162,12 @@ function countSrcFilesWithInlineStyle() {
 
 /** Count TypeScript `any` usages in src/ excluding graphql/generated (matches : any, as any, any[], Array<any>, <any>). */
 function countAnyAnnotationsInSrc() {
-  const re = /:\s*any\b|as\s+any\b|Array<\s*any\s*>|<\s*any\s*>|\bany\s*\[\s*\]/g;
+  const re =
+    /:\s*any\b|as\s+any\b|Array<\s*any\s*>|<\s*any\s*>|\bany\s*\[\s*\]/g;
   let count = 0;
   for (const p of walkCodeFiles(["src"])) {
-    if (p.includes(`${path.sep}graphql${path.sep}generated${path.sep}`)) continue;
+    if (p.includes(`${path.sep}graphql${path.sep}generated${path.sep}`))
+      continue;
     const matches = readText(p).match(re);
     if (matches) count += matches.length;
   }
@@ -187,10 +189,14 @@ function countConsoleLogsInSrc() {
  * @param {string[]} allowedRelative — paths relative to app root (e.g. src/context/ThemeContext.tsx)
  */
 function findLocalStorageOutsideTokenManager(allowedRelative = []) {
-  const tokenPath = path.resolve(path.join(ROOT, "src", "lib", "tokenManager.ts"));
+  const tokenPath = path.resolve(
+    path.join(ROOT, "src", "lib", "tokenManager.ts"),
+  );
   const allowedResolved = new Set(
     [tokenPath].concat(
-      (allowedRelative || []).map((r) => path.resolve(ROOT, String(r).replace(/\//g, path.sep))),
+      (allowedRelative || []).map((r) =>
+        path.resolve(ROOT, String(r).replace(/\//g, path.sep)),
+      ),
     ),
   );
   const re = /localStorage\.(getItem|setItem|removeItem|clear)\s*\(/;
@@ -238,14 +244,18 @@ function listGraphqlOperationFiles() {
   walkDir(dir, all);
   return all.filter(
     (p) =>
-      /Operations\.tsx?$/.test(p) && !p.includes(`${path.sep}generated${path.sep}`),
+      /Operations\.tsx?$/.test(p) &&
+      !p.includes(`${path.sep}generated${path.sep}`),
   );
 }
 
 const SECRET_PATTERNS = [
   { name: "Stripe live key", re: /sk_live_[0-9a-zA-Z]{20,}/ },
   { name: "AWS access key id", re: /AKIA[0-9A-Z]{16}/ },
-  { name: "PEM private key", re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
+  {
+    name: "PEM private key",
+    re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+  },
   { name: "GitHub PAT (classic)", re: /ghp_[0-9a-zA-Z]{36}/ },
 ];
 
@@ -263,7 +273,14 @@ function runAllChecks(ctx) {
 
   const results = [];
 
-  function add(point_number, category, description, passed, message, severity = "info") {
+  function add(
+    point_number,
+    category,
+    description,
+    passed,
+    message,
+    severity = "info",
+  ) {
     results.push({
       point_number,
       category,
@@ -279,7 +296,8 @@ function runAllChecks(ctx) {
     1,
     "Project Structure",
     "app/ directory exists (App Router)",
-    exists(path.join(ROOT, "app")) && fs.statSync(path.join(ROOT, "app")).isDirectory(),
+    exists(path.join(ROOT, "app")) &&
+      fs.statSync(path.join(ROOT, "app")).isDirectory(),
     exists(path.join(ROOT, "app")) ? "app/ present" : "app/ missing",
   );
 
@@ -304,7 +322,11 @@ function runAllChecks(ctx) {
   );
 
   const tsconfig = readJson(path.join(ROOT, "tsconfig.json"));
-  const strict = !!(tsconfig && tsconfig.compilerOptions && tsconfig.compilerOptions.strict === true);
+  const strict = !!(
+    tsconfig &&
+    tsconfig.compilerOptions &&
+    tsconfig.compilerOptions.strict === true
+  );
   add(
     4,
     "Project Structure",
@@ -314,14 +336,15 @@ function runAllChecks(ctx) {
   );
 
   const readme = path.join(ROOT, "README.md");
-  const readmeOk =
-    exists(readme) && readText(readme).trim().length >= 200;
+  const readmeOk = exists(readme) && readText(readme).trim().length >= 200;
   add(
     5,
     "Project Structure",
     "README.md exists with substantive content (>= 200 chars)",
     readmeOk,
-    readmeOk ? `README length ${readText(readme).trim().length}` : "README missing or too short",
+    readmeOk
+      ? `README length ${readText(readme).trim().length}`
+      : "README missing or too short",
   );
 
   const gi = path.join(ROOT, ".gitignore");
@@ -342,8 +365,11 @@ function runAllChecks(ctx) {
     7,
     "Project Structure",
     "scripts/ directory for maintenance tooling",
-    exists(path.join(ROOT, "scripts")) && fs.statSync(path.join(ROOT, "scripts")).isDirectory(),
-    exists(path.join(ROOT, "scripts")) ? "scripts/ present" : "scripts/ missing",
+    exists(path.join(ROOT, "scripts")) &&
+      fs.statSync(path.join(ROOT, "scripts")).isDirectory(),
+    exists(path.join(ROOT, "scripts"))
+      ? "scripts/ present"
+      : "scripts/ missing",
   );
 
   add(
@@ -351,7 +377,9 @@ function runAllChecks(ctx) {
     "Project Structure",
     "package.json is private (npm publish safety)",
     pkg.private === true,
-    pkg.private === true ? "private: true" : "Set private: true in package.json",
+    pkg.private === true
+      ? "private: true"
+      : "Set private: true in package.json",
   );
 
   // —— Security & Environment ——
@@ -363,10 +391,14 @@ function runAllChecks(ctx) {
     "Security",
     ".env.example or .env.production.example documents required variables",
     envExample,
-    envExample ? "Env template file present" : "Add .env.example (or .env.production.example)",
+    envExample
+      ? "Env template file present"
+      : "Add .env.example (or .env.production.example)",
   );
 
-  const envDoc = readText(path.join(ROOT, ".env.example")) + readText(path.join(ROOT, ".env.production.example"));
+  const envDoc =
+    readText(path.join(ROOT, ".env.example")) +
+    readText(path.join(ROOT, ".env.production.example"));
   add(
     10,
     "Security",
@@ -396,11 +428,15 @@ function runAllChecks(ctx) {
     "Security",
     "No obvious hardcoded secrets in app/ and src/ (heuristic scan)",
     secretHits.length === 0,
-    secretHits.length === 0 ? "No high-risk patterns matched" : secretHits.join("; "),
+    secretHits.length === 0
+      ? "No high-risk patterns matched"
+      : secretHits.join("; "),
     secretHits.length ? "error" : "info",
   );
 
-  const ncPath = nextConfig ? path.join(ROOT, nextConfig) : path.join(ROOT, "next.config.ts");
+  const ncPath = nextConfig
+    ? path.join(ROOT, nextConfig)
+    : path.join(ROOT, "next.config.ts");
   add(
     12,
     "Security",
@@ -423,7 +459,9 @@ function runAllChecks(ctx) {
     "Code Organization",
     "src/components/ for UI composition",
     exists(path.join(ROOT, "src", "components")),
-    exists(path.join(ROOT, "src", "components")) ? "src/components present" : "src/components missing",
+    exists(path.join(ROOT, "src", "components"))
+      ? "src/components present"
+      : "src/components missing",
   );
 
   const appLayout =
@@ -441,7 +479,8 @@ function runAllChecks(ctx) {
     16,
     "Code Organization",
     "GraphQL codegen config (codegen.ts or similar)",
-    exists(path.join(ROOT, "codegen.ts")) || exists(path.join(ROOT, "codegen.yml")),
+    exists(path.join(ROOT, "codegen.ts")) ||
+      exists(path.join(ROOT, "codegen.yml")),
     exists(path.join(ROOT, "codegen.ts"))
       ? "codegen.ts present"
       : exists(path.join(ROOT, "codegen.yml"))
@@ -450,7 +489,8 @@ function runAllChecks(ctx) {
   );
 
   const hasLib =
-    exists(path.join(ROOT, "src", "lib")) || exists(path.join(ROOT, "src", "utils"));
+    exists(path.join(ROOT, "src", "lib")) ||
+    exists(path.join(ROOT, "src", "utils"));
   add(
     17,
     "Code Organization",
@@ -471,7 +511,9 @@ function runAllChecks(ctx) {
     "Code Organization",
     "Colocated tests under src/ (*.test.* or *.spec.*)",
     testFiles.length > 0,
-    testFiles.length > 0 ? `${testFiles.length} test files under src/` : "No unit tests under src/",
+    testFiles.length > 0
+      ? `${testFiles.length} test files under src/`
+      : "No unit tests under src/",
     testFiles.length ? "info" : "warning",
   );
 
@@ -486,16 +528,30 @@ function runAllChecks(ctx) {
     "ESLint config file",
   );
 
-  add(20, "Quality Tooling", "Prettier in devDependencies", !!devDeps.prettier, devDeps.prettier ? `prettier ${devDeps.prettier}` : "Add prettier");
+  add(
+    20,
+    "Quality Tooling",
+    "Prettier in devDependencies",
+    !!devDeps.prettier,
+    devDeps.prettier ? `prettier ${devDeps.prettier}` : "Add prettier",
+  );
 
-  add(21, "Quality Tooling", "ESLint in devDependencies", !!devDeps.eslint, devDeps.eslint ? `eslint ${devDeps.eslint}` : "Add eslint");
+  add(
+    21,
+    "Quality Tooling",
+    "ESLint in devDependencies",
+    !!devDeps.eslint,
+    devDeps.eslint ? `eslint ${devDeps.eslint}` : "Add eslint",
+  );
 
   add(
     22,
     "Quality Tooling",
     "Husky + prepare script for git hooks",
     !!devDeps.husky && /husky/.test(String(scripts.prepare || "")),
-    devDeps.husky && scripts.prepare ? "prepare runs husky" : "Add husky and \"prepare\": \"husky\"",
+    devDeps.husky && scripts.prepare
+      ? "prepare runs husky"
+      : 'Add husky and "prepare": "husky"',
   );
 
   add(
@@ -511,7 +567,9 @@ function runAllChecks(ctx) {
     "Quality Tooling",
     "lint-staged configured in package.json",
     !!pkg["lint-staged"],
-    pkg["lint-staged"] ? "lint-staged present" : "Optional: lint-staged for pre-commit",
+    pkg["lint-staged"]
+      ? "lint-staged present"
+      : "Optional: lint-staged for pre-commit",
     pkg["lint-staged"] ? "info" : "warning",
   );
 
@@ -539,7 +597,9 @@ function runAllChecks(ctx) {
     "Testing",
     "@playwright/test in devDependencies",
     !!devDeps["@playwright/test"],
-    devDeps["@playwright/test"] ? "Playwright devDependency present" : "Add @playwright/test for e2e",
+    devDeps["@playwright/test"]
+      ? "Playwright devDependency present"
+      : "Add @playwright/test for e2e",
   );
 
   add(
@@ -551,9 +611,11 @@ function runAllChecks(ctx) {
   );
 
   const requirePwc = config.require_playwright_config === true;
-  const pwc = ["playwright.config.ts", "playwright.config.mjs", "playwright.config.js"].some((n) =>
-    exists(path.join(ROOT, n)),
-  );
+  const pwc = [
+    "playwright.config.ts",
+    "playwright.config.mjs",
+    "playwright.config.js",
+  ].some((n) => exists(path.join(ROOT, n)));
   add(
     29,
     "Testing",
@@ -568,7 +630,9 @@ function runAllChecks(ctx) {
   );
 
   // —— Performance & Next.js ——
-  const usesNextImage = codeFiles.some((f) => readText(f).includes("next/image"));
+  const usesNextImage = codeFiles.some((f) =>
+    readText(f).includes("next/image"),
+  );
   add(
     30,
     "Performance",
@@ -583,7 +647,8 @@ function runAllChecks(ctx) {
     31,
     "Performance",
     "next.config defines images.* (remotePatterns or domains)",
-    /\bimages\s*:\s*\{/.test(ncText) && (/remotePatterns/.test(ncText) || /domains/.test(ncText)),
+    /\bimages\s*:\s*\{/.test(ncText) &&
+      (/remotePatterns/.test(ncText) || /domains/.test(ncText)),
     "images.remotePatterns or domains configured",
   );
 
@@ -591,17 +656,22 @@ function runAllChecks(ctx) {
     32,
     "Performance",
     "Standalone output for container deploy (output: 'standalone')",
-    /output\s*:\s*["']standalone["']/.test(ncText) || /output:\s*["']standalone["']/.test(ncText),
+    /output\s*:\s*["']standalone["']/.test(ncText) ||
+      /output:\s*["']standalone["']/.test(ncText),
     "next.config output standalone",
   );
 
-  const dynamicImports = codeFiles.filter((f) => readText(f).includes("import(")).length;
+  const dynamicImports = codeFiles.filter((f) =>
+    readText(f).includes("import("),
+  ).length;
   add(
     33,
     "Performance",
     "Some dynamic import() usage for code-splitting",
     dynamicImports > 0,
-    dynamicImports > 0 ? `${dynamicImports} files use import()` : "Consider import() for heavy client modules",
+    dynamicImports > 0
+      ? `${dynamicImports} files use import()`
+      : "Consider import() for heavy client modules",
     dynamicImports > 0 ? "info" : "warning",
   );
 
@@ -617,7 +687,8 @@ function runAllChecks(ctx) {
     "Edge routing: middleware.ts or proxy.ts (Next 16 — proxy-only when both would conflict)",
     requireMw ? mw : mw || true,
     mw
-      ? exists(path.join(ROOT, "proxy.ts")) && !exists(path.join(ROOT, "middleware.ts"))
+      ? exists(path.join(ROOT, "proxy.ts")) &&
+        !exists(path.join(ROOT, "middleware.ts"))
         ? "proxy.ts present (Next 16 edge routing)"
         : "middleware present"
       : requireMw
@@ -632,7 +703,9 @@ function runAllChecks(ctx) {
     "Deployment",
     "Dockerfile present",
     exists(path.join(ROOT, "Dockerfile")),
-    exists(path.join(ROOT, "Dockerfile")) ? "Dockerfile found" : "Add Dockerfile for reproducible deploys",
+    exists(path.join(ROOT, "Dockerfile"))
+      ? "Dockerfile found"
+      : "Add Dockerfile for reproducible deploys",
   );
 
   const compose = fs
@@ -644,7 +717,9 @@ function runAllChecks(ctx) {
     "Deployment",
     "docker-compose*.yml at repo root (optional if Dockerfile only)",
     compose.length > 0 || exists(path.join(ROOT, "Dockerfile")),
-    compose.length ? `Found ${compose.join(", ")}` : "No compose file (OK if Dockerfile-only)",
+    compose.length
+      ? `Found ${compose.join(", ")}`
+      : "No compose file (OK if Dockerfile-only)",
     compose.length ? "info" : "warning",
   );
 
@@ -653,7 +728,9 @@ function runAllChecks(ctx) {
     "Deployment",
     ".github/workflows present",
     exists(path.join(ROOT, ".github", "workflows")),
-    exists(path.join(ROOT, ".github", "workflows")) ? "CI/CD workflows dir exists" : ".github/workflows missing",
+    exists(path.join(ROOT, ".github", "workflows"))
+      ? "CI/CD workflows dir exists"
+      : ".github/workflows missing",
   );
 
   add(
@@ -670,7 +747,9 @@ function runAllChecks(ctx) {
     "Quality Tooling",
     "next and react declared in dependencies",
     !!(deps.next && deps.react && deps["react-dom"]),
-    deps.next && deps.react ? "next + react present" : "Check next/react/react-dom in dependencies",
+    deps.next && deps.react
+      ? "next + react present"
+      : "Check next/react/react-dom in dependencies",
   );
 
   add(
@@ -697,18 +776,24 @@ function runAllChecks(ctx) {
     "Styling / CSS",
     "app/globals.css exists and imports core + components layers",
     globalsOk,
-    globalsOk ? "globals.css chains design-system layers" : "Fix app/globals.css @import chain",
+    globalsOk
+      ? "globals.css chains design-system layers"
+      : "Fix app/globals.css @import chain",
   );
 
   const compBarrel = path.join(ROOT, "app", "css", "components.css");
   const compBarrelText = readText(compBarrel);
-  const compImports = (compBarrelText.match(/@import\s+["']\.\/components\//g) || []).length;
+  const compImports = (
+    compBarrelText.match(/@import\s+["']\.\/components\//g) || []
+  ).length;
   add(
     42,
     "Styling / CSS",
     "app/css/components.css barrels numbered partials (>=10 @import ./components/)",
     exists(compBarrel) && compImports >= 10,
-    exists(compBarrel) ? `${compImports} partial @imports` : "components.css missing",
+    exists(compBarrel)
+      ? `${compImports} partial @imports`
+      : "components.css missing",
   );
 
   const tailwindConfigs = [
@@ -738,7 +823,8 @@ function runAllChecks(ctx) {
 
   const inlineStyleFiles = countSrcFilesWithInlineStyle();
   const maxInline =
-    typeof config.max_inline_style_files === "number" && config.max_inline_style_files >= 0
+    typeof config.max_inline_style_files === "number" &&
+    config.max_inline_style_files >= 0
       ? config.max_inline_style_files
       : 30;
   const inlineOk = inlineStyleFiles <= maxInline;
@@ -755,7 +841,9 @@ function runAllChecks(ctx) {
 
   const co = (tsconfig && tsconfig.compilerOptions) || {};
   const pathsObj = co.paths && typeof co.paths === "object" ? co.paths : {};
-  const hasAtAlias = Object.keys(pathsObj).some((k) => k === "@/*" || k.startsWith("@/"));
+  const hasAtAlias = Object.keys(pathsObj).some(
+    (k) => k === "@/*" || k.startsWith("@/"),
+  );
 
   // —— TypeScript Discipline ——
   add(
@@ -763,7 +851,9 @@ function runAllChecks(ctx) {
     "TypeScript Discipline",
     "tsconfig.json enables noUnusedLocals",
     co.noUnusedLocals === true,
-    co.noUnusedLocals === true ? "noUnusedLocals: true" : "Set noUnusedLocals: true",
+    co.noUnusedLocals === true
+      ? "noUnusedLocals: true"
+      : "Set noUnusedLocals: true",
     co.noUnusedLocals === true ? "info" : "warning",
   );
   add(
@@ -771,7 +861,9 @@ function runAllChecks(ctx) {
     "TypeScript Discipline",
     "tsconfig.json enables noUnusedParameters",
     co.noUnusedParameters === true,
-    co.noUnusedParameters === true ? "noUnusedParameters: true" : "Set noUnusedParameters: true",
+    co.noUnusedParameters === true
+      ? "noUnusedParameters: true"
+      : "Set noUnusedParameters: true",
     co.noUnusedParameters === true ? "info" : "warning",
   );
   add(
@@ -779,7 +871,9 @@ function runAllChecks(ctx) {
     "TypeScript Discipline",
     "tsconfig.json enables noImplicitReturns",
     co.noImplicitReturns === true,
-    co.noImplicitReturns === true ? "noImplicitReturns: true" : "Set noImplicitReturns: true",
+    co.noImplicitReturns === true
+      ? "noImplicitReturns: true"
+      : "Set noImplicitReturns: true",
     co.noImplicitReturns === true ? "info" : "warning",
   );
   add(
@@ -847,22 +941,30 @@ function runAllChecks(ctx) {
     54,
     "Code Architecture",
     "src/hooks/ directory for custom hooks",
-    exists(path.join(ROOT, "src", "hooks")) && fs.statSync(path.join(ROOT, "src", "hooks")).isDirectory(),
-    exists(path.join(ROOT, "src", "hooks")) ? "src/hooks/ present" : "Add src/hooks/",
+    exists(path.join(ROOT, "src", "hooks")) &&
+      fs.statSync(path.join(ROOT, "src", "hooks")).isDirectory(),
+    exists(path.join(ROOT, "src", "hooks"))
+      ? "src/hooks/ present"
+      : "Add src/hooks/",
   );
 
   add(
     55,
     "Code Architecture",
     "src/context/ for global cross-cutting React state",
-    exists(path.join(ROOT, "src", "context")) && fs.statSync(path.join(ROOT, "src", "context")).isDirectory(),
-    exists(path.join(ROOT, "src", "context")) ? "src/context/ present" : "Add src/context/",
+    exists(path.join(ROOT, "src", "context")) &&
+      fs.statSync(path.join(ROOT, "src", "context")).isDirectory(),
+    exists(path.join(ROOT, "src", "context"))
+      ? "src/context/ present"
+      : "Add src/context/",
   );
 
   const featureDir = path.join(ROOT, "src", "components", "feature");
   let featureSubdirs = 0;
   if (exists(featureDir) && fs.statSync(featureDir).isDirectory()) {
-    featureSubdirs = fs.readdirSync(featureDir, { withFileTypes: true }).filter((d) => d.isDirectory()).length;
+    featureSubdirs = fs
+      .readdirSync(featureDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory()).length;
   }
   add(
     56,
@@ -881,7 +983,9 @@ function runAllChecks(ctx) {
     "Code Architecture",
     "src/services/graphql/index.ts barrel re-exports services",
     exists(svcBarrel),
-    exists(svcBarrel) ? "Barrel present" : "Add index.ts barrel in services/graphql/",
+    exists(svcBarrel)
+      ? "Barrel present"
+      : "Add index.ts barrel in services/graphql/",
   );
 
   const maxLogs =
@@ -901,7 +1005,9 @@ function runAllChecks(ctx) {
     logsOk ? "info" : "warning",
   );
 
-  const lsAllow = Array.isArray(config.localstorage_allow_files) ? config.localstorage_allow_files : [];
+  const lsAllow = Array.isArray(config.localstorage_allow_files)
+    ? config.localstorage_allow_files
+    : [];
   const lsHits = findLocalStorageOutsideTokenManager(lsAllow);
   add(
     59,
@@ -931,7 +1037,9 @@ function runAllChecks(ctx) {
     "GraphQL & API Contract",
     'package.json defines "codegen" script',
     /codegen/.test(String(scripts.codegen || "")),
-    scripts.codegen ? "codegen script present" : 'Add "codegen": "graphql-codegen --config codegen.ts"',
+    scripts.codegen
+      ? "codegen script present"
+      : 'Add "codegen": "graphql-codegen --config codegen.ts"',
   );
 
   const opFiles = listGraphqlOperationFiles();
@@ -940,7 +1048,9 @@ function runAllChecks(ctx) {
     "GraphQL & API Contract",
     "src/graphql/*Operations.ts files colocate GraphQL operations",
     opFiles.length >= 1,
-    opFiles.length >= 1 ? `${opFiles.length} *Operations.ts files` : "Add *Operations.ts next to generated types",
+    opFiles.length >= 1
+      ? `${opFiles.length} *Operations.ts files`
+      : "Add *Operations.ts next to generated types",
   );
 
   const gqlClientPath = path.join(ROOT, "src", "lib", "graphqlClient.ts");
@@ -953,7 +1063,9 @@ function runAllChecks(ctx) {
     "GraphQL & API Contract",
     "graphqlClient.ts exports parseGraphQLError (centralized API errors)",
     exportsParseError,
-    exportsParseError ? "parseGraphQLError exported" : "Export parseGraphQLError from graphqlClient.ts",
+    exportsParseError
+      ? "parseGraphQLError exported"
+      : "Export parseGraphQLError from graphqlClient.ts",
   );
 
   const tokenMgrPath = path.join(ROOT, "src", "lib", "tokenManager.ts");
@@ -962,7 +1074,9 @@ function runAllChecks(ctx) {
     "GraphQL & API Contract",
     "src/lib/tokenManager.ts isolates JWT storage",
     exists(tokenMgrPath),
-    exists(tokenMgrPath) ? "tokenManager.ts present" : "Add tokenManager for tokens",
+    exists(tokenMgrPath)
+      ? "tokenManager.ts present"
+      : "Add tokenManager for tokens",
   );
 
   // —— Auth & Security (client) ——
@@ -971,7 +1085,9 @@ function runAllChecks(ctx) {
     "Security",
     "src/context/AuthContext.tsx exists",
     exists(path.join(ROOT, "src", "context", "AuthContext.tsx")),
-    exists(path.join(ROOT, "src", "context", "AuthContext.tsx")) ? "AuthContext present" : "Add AuthContext",
+    exists(path.join(ROOT, "src", "context", "AuthContext.tsx"))
+      ? "AuthContext present"
+      : "Add AuthContext",
   );
 
   add(
@@ -979,7 +1095,9 @@ function runAllChecks(ctx) {
     "Security",
     "src/context/RoleContext.tsx exists (RBAC / plan features)",
     exists(path.join(ROOT, "src", "context", "RoleContext.tsx")),
-    exists(path.join(ROOT, "src", "context", "RoleContext.tsx")) ? "RoleContext present" : "Add RoleContext",
+    exists(path.join(ROOT, "src", "context", "RoleContext.tsx"))
+      ? "RoleContext present"
+      : "Add RoleContext",
   );
 
   const envOutside = findProcessEnvOutsideConfig();
@@ -999,10 +1117,14 @@ function runAllChecks(ctx) {
     "Security",
     "src/lib/featureAccess.ts for plan / feature gating",
     exists(path.join(ROOT, "src", "lib", "featureAccess.ts")),
-    exists(path.join(ROOT, "src", "lib", "featureAccess.ts")) ? "featureAccess.ts present" : "Add featureAccess helpers",
+    exists(path.join(ROOT, "src", "lib", "featureAccess.ts"))
+      ? "featureAccess.ts present"
+      : "Add featureAccess helpers",
   );
 
-  const envEx = exists(path.join(ROOT, ".env.example")) ? readText(path.join(ROOT, ".env.example")) : "";
+  const envEx = exists(path.join(ROOT, ".env.example"))
+    ? readText(path.join(ROOT, ".env.example"))
+    : "";
   const envExOk =
     exists(path.join(ROOT, ".env.example")) &&
     /NEXT_PUBLIC_/i.test(envEx) &&
@@ -1012,7 +1134,9 @@ function runAllChecks(ctx) {
     "Security",
     ".env.example documents NEXT_PUBLIC_* and API/GraphQL URLs",
     envExOk,
-    envExOk ? ".env.example covers API/GraphQL + NEXT_PUBLIC_" : "Expand .env.example",
+    envExOk
+      ? ".env.example covers API/GraphQL + NEXT_PUBLIC_"
+      : "Expand .env.example",
     envExOk ? "info" : "warning",
   );
 
@@ -1022,7 +1146,9 @@ function runAllChecks(ctx) {
     "Error Handling & UX",
     "parseGraphQLError defined for consistent GraphQL error shape",
     exportsParseError,
-    exportsParseError ? "parseGraphQLError present" : "Add parseGraphQLError in graphqlClient.ts",
+    exportsParseError
+      ? "parseGraphQLError present"
+      : "Add parseGraphQLError in graphqlClient.ts",
   );
 
   add(
@@ -1038,7 +1164,9 @@ function runAllChecks(ctx) {
     "Error Handling & UX",
     "src/components/shared/DataState.tsx for loading/empty/error states",
     exists(path.join(ROOT, "src", "components", "shared", "DataState.tsx")),
-    exists(path.join(ROOT, "src", "components", "shared", "DataState.tsx")) ? "DataState present" : "Add DataState",
+    exists(path.join(ROOT, "src", "components", "shared", "DataState.tsx"))
+      ? "DataState present"
+      : "Add DataState",
   );
 
   add(
@@ -1046,7 +1174,9 @@ function runAllChecks(ctx) {
     "Error Handling & UX",
     "src/components/shared/Skeleton.tsx for loading placeholders",
     exists(path.join(ROOT, "src", "components", "shared", "Skeleton.tsx")),
-    exists(path.join(ROOT, "src", "components", "shared", "Skeleton.tsx")) ? "Skeleton present" : "Add Skeleton",
+    exists(path.join(ROOT, "src", "components", "shared", "Skeleton.tsx"))
+      ? "Skeleton present"
+      : "Add Skeleton",
   );
 
   // —— Testing Depth ——
@@ -1055,7 +1185,7 @@ function runAllChecks(ctx) {
   add(
     74,
     "Testing",
-    'package.json defines test:coverage (Vitest coverage)',
+    "package.json defines test:coverage (Vitest coverage)",
     requireCov ? hasCovScript : hasCovScript || true,
     hasCovScript
       ? "test:coverage present"
@@ -1073,7 +1203,9 @@ function runAllChecks(ctx) {
     "Testing",
     "pre-push script runs typecheck, lint, and test",
     prePushOk,
-    prePushOk ? "pre-push chains typecheck + lint + test" : "Align pre-push with quality gates",
+    prePushOk
+      ? "pre-push chains typecheck + lint + test"
+      : "Align pre-push with quality gates",
     prePushOk ? "info" : "warning",
   );
 
@@ -1126,8 +1258,12 @@ function runAllChecks(ctx) {
     "Performance",
     "build:analyze script for bundle analysis",
     /analyze|ANALYZE/.test(String(scripts["build:analyze"] || "")),
-    scripts["build:analyze"] ? "build:analyze present" : "Add ANALYZE=true next build",
-    /analyze|ANALYZE/.test(String(scripts["build:analyze"] || "")) ? "info" : "warning",
+    scripts["build:analyze"]
+      ? "build:analyze present"
+      : "Add ANALYZE=true next build",
+    /analyze|ANALYZE/.test(String(scripts["build:analyze"] || ""))
+      ? "info"
+      : "warning",
   );
 
   add(
@@ -1166,7 +1302,9 @@ function runAllChecks(ctx) {
     "Deployment",
     ".husky/pre-push hook file exists",
     exists(huskyPrePush),
-    exists(huskyPrePush) ? ".husky/pre-push present" : "Add .husky/pre-push running npm run pre-push",
+    exists(huskyPrePush)
+      ? ".husky/pre-push present"
+      : "Add .husky/pre-push running npm run pre-push",
     exists(huskyPrePush) ? "info" : "warning",
   );
 
@@ -1185,7 +1323,9 @@ function runAllChecks(ctx) {
     "Deployment",
     ".gitignore excludes reports/ (generated checker reports)",
     gitignoreText.includes("reports/"),
-    gitignoreText.includes("reports/") ? "reports/ ignored" : "Add reports/ to .gitignore",
+    gitignoreText.includes("reports/")
+      ? "reports/ ignored"
+      : "Add reports/ to .gitignore",
   );
 
   const requireCiBp = config.require_ci_script === true;
@@ -1208,7 +1348,9 @@ function runAllChecks(ctx) {
 
 function applyConfigFilters(results, config) {
   const ignore = new Set(config.ignore_points || []);
-  const skipCats = (config.skip_categories || []).map((s) => String(s).toLowerCase());
+  const skipCats = (config.skip_categories || []).map((s) =>
+    String(s).toLowerCase(),
+  );
   return results.filter((r) => {
     if (ignore.has(r.point_number)) return false;
     if (skipCats.length) {
@@ -1287,7 +1429,9 @@ function main() {
     if (report.summary.score >= args.threshold) {
       log(`Codebase meets best practices threshold (${args.threshold}%+)`);
     } else {
-      log(`Codebase below threshold (${args.threshold}%); review failed checks above`);
+      log(
+        `Codebase below threshold (${args.threshold}%); review failed checks above`,
+      );
     }
   }
 
@@ -1317,7 +1461,8 @@ function main() {
     }
   }
 
-  const ok = report.summary.score >= args.threshold || report.summary.total_points === 0;
+  const ok =
+    report.summary.score >= args.threshold || report.summary.total_points === 0;
   if (!args.noFail && !ok) {
     process.exit(1);
   }

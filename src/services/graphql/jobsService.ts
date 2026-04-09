@@ -3,6 +3,7 @@ import type {
   CreateContact360ExportInput,
   CreateContact360ImportInput,
 } from "@/graphql/generated/types";
+import { deriveDisplayProgressPercent } from "@/lib/jobs/jobsUtils";
 import {
   normalizeEmailSatelliteStatus,
   parseStatusPayload,
@@ -86,7 +87,13 @@ function mapJob(r: JobRow): Job {
   const useLiveStatus =
     !!live &&
     (r.sourceService === "email_server" || r.sourceService === "sync_server");
-  const displayStatus = useLiveStatus ? live : r.status;
+  /** Normalize DB enum strings (e.g. ``processing``) when live JSON is missing or stale. */
+  const dbDisplay =
+    typeof r.status === "string" && r.status.trim()
+      ? (normalizeEmailSatelliteStatus(r.status) ??
+        r.status.trim().toUpperCase())
+      : r.status;
+  const displayStatus = useLiveStatus ? live : dbDisplay;
   const fromResponse =
     r.responsePayload &&
     typeof r.responsePayload === "object" &&
@@ -98,8 +105,16 @@ function mapJob(r: JobRow): Job {
       ? fromResponse.download_url
       : typeof fromResponse.output_csv_key === "string"
         ? fromResponse.output_csv_key
-        : undefined
+        : typeof fromResponse.s3_key === "string"
+          ? fromResponse.s3_key
+          : undefined
     : undefined;
+
+  const progress = deriveDisplayProgressPercent(displayStatus, {
+    progress: parsed.progress,
+    total: parsed.total,
+    processed: parsed.processed,
+  });
 
   return {
     id: r.id,
@@ -110,7 +125,7 @@ function mapJob(r: JobRow): Job {
     sourceService: r.sourceService,
     jobFamily: r.jobFamily,
     jobSubtype: r.jobSubtype,
-    progress: parsed.progress,
+    progress,
     total: parsed.total,
     processed: parsed.processed,
     outputFile: parsed.outputFile ?? outputFromResponse,

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw, Loader2, Plus, Download, FileKey } from "lucide-react";
+import {
+  RefreshCw,
+  Loader2,
+  Plus,
+  Download,
+  FileKey,
+  ClipboardCopy,
+} from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -16,10 +23,15 @@ import { cn, formatRelativeTime } from "@/lib/utils";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobDetail } from "@/hooks/useJobDetail";
 import { jobsService } from "@/services/graphql/jobsService";
+import { s3Service } from "@/services/graphql/s3Service";
 import { StartJobFromS3Modal } from "@/components/feature/jobs/StartJobFromS3Modal";
 import { JobsDataTable } from "@/components/feature/jobs/JobsDataTable";
 import { toast } from "sonner";
 import { parseOperationError } from "@/lib/errorParser";
+import {
+  getJobProgressBarTone,
+  isSuccessfulTerminalJobStatus,
+} from "@/lib/jobs/jobsUtils";
 
 const EXPORT_TYPE_OPTIONS = [
   { value: "contacts", label: "Contacts" },
@@ -36,7 +48,32 @@ const JOB_FAMILY_OPTIONS = [
   { value: "company_job", label: "Company Jobs" },
 ];
 
-function JobDetailPanel({ jobId }: { jobId: string }) {
+async function openSchedulerExportDownload(output: string): Promise<void> {
+  const o = output.trim();
+  if (/^https?:\/\//i.test(o)) {
+    window.open(o, "_blank", "noopener,noreferrer");
+    return;
+  }
+  try {
+    const data = await s3Service.getDownloadUrl(o);
+    const url = data.s3?.s3FileDownloadUrl?.downloadUrl;
+    if (typeof url === "string" && url.length > 0) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      toast.error("Could not get download link for this file.");
+    }
+  } catch (e) {
+    toast.error(parseOperationError(e, "storage").userMessage);
+  }
+}
+
+function JobDetailPanel({
+  jobId,
+  onDownload,
+}: {
+  jobId: string;
+  onDownload: (output: string) => void | Promise<void>;
+}) {
   const { job, loading, error, polling } = useJobDetail(jobId);
 
   if (loading && !job) {
@@ -56,6 +93,15 @@ function JobDetailPanel({ jobId }: { jobId: string }) {
   }
   if (!job) return null;
 
+  const progressValue =
+    isSuccessfulTerminalJobStatus(job.status) && job.progress === 0
+      ? 100
+      : job.progress;
+  const canDownload =
+    job.outputFile &&
+    job.outputFile.trim().length > 0 &&
+    isSuccessfulTerminalJobStatus(job.status);
+
   return (
     <div className="c360-job-detail-panel">
       {polling && (
@@ -64,43 +110,45 @@ function JobDetailPanel({ jobId }: { jobId: string }) {
           Live polling…
         </span>
       )}
+      <p className="c360-job-detail-meta-line" aria-label="Job summary">
+        {[
+          job.type,
+          job.sourceService === "email_server"
+            ? "Email"
+            : job.sourceService === "sync_server"
+              ? "Sync"
+              : job.sourceService,
+          job.jobSubtype,
+          job.jobFamily,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
       <dl className="c360-job-detail-grid">
-        <div>
-          <dt>Job ID</dt>
-          <dd className="c360-font-mono">{job.jobId}</dd>
-        </div>
-        <div>
-          <dt>Type</dt>
-          <dd>{job.type}</dd>
-        </div>
-        <div>
-          <dt>Family</dt>
-          <dd>{job.jobFamily}</dd>
-        </div>
-        <div>
-          <dt>Source Service</dt>
-          <dd>{job.sourceService}</dd>
-        </div>
-        {job.jobSubtype && (
-          <div>
-            <dt>Subtype</dt>
-            <dd>{job.jobSubtype}</dd>
-          </div>
-        )}
         <div className="c360-job-detail-full">
+          <dt>Job ID</dt>
+          <dd className="c360-job-detail-id-row">
+            <span className="c360-font-mono c360-text-sm">{job.jobId}</span>
+            <button
+              type="button"
+              className="c360-job-detail-copy"
+              aria-label="Copy job ID"
+              title="Copy job ID"
+              onClick={() => {
+                void navigator.clipboard.writeText(job.jobId);
+                toast.success("Job ID copied");
+              }}
+            >
+              <ClipboardCopy size={16} strokeWidth={2} />
+            </button>
+          </dd>
+        </div>
+        <div className="c360-job-detail-progress-row">
           <dt>Progress</dt>
           <dd>
             <ProgressBar
-              value={job.progress}
-              tone={
-                job.status.toUpperCase() === "FAILED"
-                  ? "danger"
-                  : job.status.toUpperCase() === "COMPLETED"
-                    ? "success"
-                    : job.status.toUpperCase() === "PAUSED"
-                      ? "warning"
-                      : "primary"
-              }
+              value={progressValue}
+              tone={getJobProgressBarTone(job.status)}
               showValue
               label={
                 job.total > 0
@@ -127,14 +175,29 @@ function JobDetailPanel({ jobId }: { jobId: string }) {
         )}
         {job.inputFile && (
           <div className="c360-job-detail-full">
-            <dt>Input File</dt>
+            <dt>Input file</dt>
             <dd className="c360-font-mono c360-text-xs">{job.inputFile}</dd>
           </div>
         )}
         {job.outputFile && (
           <div className="c360-job-detail-full">
-            <dt>Output File</dt>
-            <dd className="c360-font-mono c360-text-xs">{job.outputFile}</dd>
+            <dt>Output file</dt>
+            <dd className="c360-job-detail-output">
+              <span className="c360-font-mono c360-text-xs">
+                {job.outputFile}
+              </span>
+              {canDownload && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={<Download size={16} />}
+                  onClick={() => void onDownload(job.outputFile!)}
+                >
+                  Download CSV
+                </Button>
+              )}
+            </dd>
           </div>
         )}
         {job.error && (
@@ -370,10 +433,15 @@ export default function JobsPage() {
             onTerminateConnectra={(jobId) => void terminateConnectra(jobId)}
             onResume={(jobId) => void resume(jobId)}
             onResumeConnectra={(jobId) => void resumeConnectra(jobId)}
-            onDownloadOutput={(url) =>
-              window.open(url, "_blank", "noopener,noreferrer")
+            onDownloadOutput={(output) =>
+              void openSchedulerExportDownload(output)
             }
-            renderDetailPanel={(jobId) => <JobDetailPanel jobId={jobId} />}
+            renderDetailPanel={(jobId) => (
+              <JobDetailPanel
+                jobId={jobId}
+                onDownload={openSchedulerExportDownload}
+              />
+            )}
           />
         </div>
       </Card>

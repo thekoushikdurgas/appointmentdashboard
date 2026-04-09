@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 
 REM ========================================
@@ -8,7 +8,7 @@ REM Run from app folder: double-click or run codebase_state.bat from this direct
 REM
 REM Pipeline - local full audit; order differs slightly from npm run ci:
 REM   0 CSS inventory optional, 1 clean+install, 2 codegen, 3 typecheck,
-REM   4 format check, 5 lint, 6 unit tests, 6b coverage if RUN_TEST_COVERAGE=1,
+REM   4 Prettier (npx prettier --check / write), 5 lint, 6 unit tests, 6b coverage if RUN_TEST_COVERAGE=1,
 REM   7 check-best-practices ~86 checks, 8 final format, 9 build, then optional dev.
 REM
 REM npm run ci is: lint, typecheck, test, css:inventory, check:best-practices, build.
@@ -22,6 +22,7 @@ REM BEST_PRACTICES_THRESHOLD=N  Pass --threshold default 80 in script
 REM BEST_PRACTICES_FORMAT=text or json or both
 REM RUN_TEST_COVERAGE=1      After tests run npm run test:coverage warn-only on fail
 REM SKIP_FINAL_FORMAT=1      Skip step 8 npm run format
+REM SKIP_PRETTIER=1          Skip step 4 Prettier (npx prettier --check / --write)
 REM
 REM Best-practices: scripts\check-best-practices.mjs - ~86 points, categories include
 REM Project Structure, Security, Code Organization, Quality Tooling, Testing, Performance,
@@ -143,7 +144,7 @@ call npm run codegen
 if errorlevel 1 (
     set /a WARNING_COUNT+=1
     set "SECTION2_STATUS=WARNING"
-    call :color_echo "%YELLOW%" "  ! Codegen failed — API may be down; continuing with existing generated types"
+    call :color_echo "%YELLOW%" "  ! Codegen failed  -  API may be down; continuing with existing generated types"
 ) else (
     set "SECTION2_STATUS=PASSED"
     call :color_echo "%GREEN%" "  OK GraphQL types regenerated"
@@ -165,26 +166,40 @@ if errorlevel 1 (
 )
 echo.
 
-call :color_echo "%CYAN%" "[4/10] Formatting checks..."
+call :color_echo "%CYAN%" "[4/10] Prettier (format check)..."
 echo ----------------------------------------
-call :color_echo "%YELLOW%" "  Running: npm run format:check"
-call npm run format:check
-if errorlevel 1 (
-    set /a WARNING_COUNT+=1
-    set "SECTION4_STATUS=WARNING"
-    call :color_echo "%YELLOW%" "  Formatting issues found, running format..."
-    call npm run format
-    if errorlevel 1 (
-        set /a ERROR_COUNT+=1
-        set "SECTION4_STATUS=FAILED"
-        call :color_echo "%RED%" "  X Auto-format failed"
-    ) else (
-        set "SECTION4_STATUS=WARNING_FIXED"
-        call :color_echo "%GREEN%" "  OK Code formatted"
-    )
+if /i "%SKIP_PRETTIER%"=="1" (
+    call :color_echo "%YELLOW%" "  Skipped (SKIP_PRETTIER=1)"
+    set "SECTION4_STATUS=SKIPPED"
 ) else (
-    set "SECTION4_STATUS=PASSED"
-    call :color_echo "%GREEN%" "  OK Code is properly formatted"
+    call :color_echo "%BLUE%" "  Formatter: Prettier (respects .prettierrc / .prettierignore if present)"
+    call :color_echo "%YELLOW%" "  Running: npx prettier --check ."
+    call npx prettier --check .
+    if errorlevel 1 (
+        set /a WARNING_COUNT+=1
+        set "SECTION4_STATUS=WARNING"
+        call :color_echo "%YELLOW%" "  Prettier found issues  -  running: npx prettier --write ."
+        call npx prettier --write .
+        if errorlevel 1 (
+            set /a ERROR_COUNT+=1
+            set "SECTION4_STATUS=FAILED"
+            call :color_echo "%RED%" "  X Prettier --write failed"
+        ) else (
+            call :color_echo "%YELLOW%" "  Verifying: npx prettier --check ."
+            call npx prettier --check .
+            if errorlevel 1 (
+                set /a ERROR_COUNT+=1
+                set "SECTION4_STATUS=FAILED"
+                call :color_echo "%RED%" "  X Prettier check still failing after write"
+            ) else (
+                set "SECTION4_STATUS=WARNING_FIXED"
+                call :color_echo "%GREEN%" "  OK Prettier formatted and verified"
+            )
+        )
+    ) else (
+        set "SECTION4_STATUS=PASSED"
+        call :color_echo "%GREEN%" "  OK Prettier check passed"
+    )
 )
 echo.
 
@@ -233,7 +248,7 @@ if /i "%RUN_TEST_COVERAGE%"=="1" (
   if errorlevel 1 (
     set /a WARNING_COUNT+=1
     set "SECTION6_COVERAGE_STATUS=WARNING"
-    call :color_echo "%YELLOW%" "  Warning: Coverage run failed or below thresholds — fix when tightening quality gates"
+    call :color_echo "%YELLOW%" "  Warning: Coverage run failed or below thresholds  -  fix when tightening quality gates"
   ) else (
     set "SECTION6_COVERAGE_STATUS=PASSED"
     call :color_echo "%GREEN%" "  OK Coverage run completed"
@@ -252,7 +267,7 @@ if /i "%SKIP_BEST_PRACTICES%"=="1" (
   call :color_echo "%CYAN%" "[7/10] Next.js best-practices checklist..."
   echo ----------------------------------------
   call :color_echo "%BLUE%" "  ~86 scored checks (default threshold 80%%). Output: reports\check_report_*.json"
-  call :color_echo "%BLUE%" "  Config: .next-checker-config.json — env BEST_PRACTICES_THRESHOLD, BEST_PRACTICES_FORMAT, BEST_PRACTICES_NO_FAIL"
+  call :color_echo "%BLUE%" "  Config: .next-checker-config.json  -  env BEST_PRACTICES_THRESHOLD, BEST_PRACTICES_FORMAT, BEST_PRACTICES_NO_FAIL"
   if exist "scripts\check-best-practices.mjs" (
     set "BP_ARGS="
     if not "!BEST_PRACTICES_THRESHOLD!"=="" set "BP_ARGS=!BP_ARGS! --threshold !BEST_PRACTICES_THRESHOLD!"
@@ -287,7 +302,7 @@ if /i "%SKIP_FINAL_FORMAT%"=="1" (
   set "SECTION8_STATUS=SKIPPED"
   echo.
 ) else (
-  call :color_echo "%CYAN%" "[8/10] Final format verification..."
+  call :color_echo "%CYAN%" "[8/10] Final format verification (Prettier via npm)..."
   echo ----------------------------------------
   call :color_echo "%YELLOW%" "  Running: npm run format"
   call npm run format
@@ -333,7 +348,7 @@ echo   [0] CSS inventory:                  see reports\css-inventory.txt if not 
 echo   [1] Cleanup and Preparation:        !SECTION1_STATUS!
 echo   [2] GraphQL Codegen:                !SECTION2_STATUS!
 echo   [3] Type Checking:                  !SECTION3_STATUS!
-echo   [4] Formatting Checks:              !SECTION4_STATUS!
+echo   [4] Prettier:                       !SECTION4_STATUS!
 echo   [5] Linting:                        !SECTION5_STATUS!
 echo   [6] Testing:                        !SECTION6_STATUS!
 echo   [6b] Vitest coverage:               !SECTION6_COVERAGE_STATUS!
@@ -348,6 +363,7 @@ if %ERROR_COUNT% EQU 0 (
     echo.
     call :color_echo "%CYAN%" "  Start development server? (Y/N)"
     choice /C YN /N /M ""
+    if errorlevel 2 goto :end
     if errorlevel 1 goto :dev_server
 ) else (
     call :color_echo "%RED%" "  X Found %ERROR_COUNT% error(s)"

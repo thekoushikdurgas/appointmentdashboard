@@ -1,4 +1,5 @@
 import type { Job } from "@/services/graphql/jobsService";
+import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
 
 export interface MappedJob extends Job {
   typeLabel: string;
@@ -33,9 +34,11 @@ export function mapJob(job: Job): MappedJob {
     status,
     typeLabel: TYPE_LABELS[job.type] || job.type,
     statusLabel: status ? status.charAt(0) + status.slice(1).toLowerCase() : "",
-    isTerminal: ["COMPLETED", "FAILED", "CANCELLED", "COMPLETE"].includes(
-      status,
-    ),
+    isTerminal:
+      status === "FAILED" ||
+      status === "CANCELLED" ||
+      status === "CANCELED" ||
+      isSuccessfulTerminalJobStatus(status),
     canRetry: status === "FAILED" && !isEmail,
     canPause: status === "RUNNING" && isEmail,
     canCancel:

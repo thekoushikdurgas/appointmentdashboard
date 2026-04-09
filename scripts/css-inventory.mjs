@@ -65,9 +65,7 @@ function findConfigFiles() {
     "postcss.config.mjs",
     "postcss.config.cjs",
   ];
-  return names
-    .map((n) => path.join(ROOT, n))
-    .filter((p) => fs.existsSync(p));
+  return names.map((n) => path.join(ROOT, n)).filter((p) => fs.existsSync(p));
 }
 
 function collectImportsFromFile(filePath) {
@@ -328,7 +326,7 @@ function main() {
     ...walkDir(path.join(ROOT, "src"), [".tsx", ".jsx"]),
   ];
 
-  out("## 6) External <link rel=\"stylesheet\"> in TSX/JSX");
+  out('## 6) External <link rel="stylesheet"> in TSX/JSX');
   const links = scanExternalStylesheetRefs(tsxFiles);
   if (links.length === 0) {
     out("  (none found in scanned app/ + src/)");
@@ -343,13 +341,15 @@ function main() {
   const cssAll = walkDir(path.join(ROOT, "app"), [".css"], []);
   const twLike = scanTailwindLikeSignals(tsxFiles, cssAll);
   if (twLike.length === 0) {
-    out("  (none — project uses custom c360-* CSS; no Tailwind toolchain detected.)");
+    out(
+      "  (none — project uses custom c360-* CSS; no Tailwind toolchain detected.)",
+    );
   } else {
     twLike.forEach((h) => out(`  - ${h.file}  (${h.reason})`));
   }
   out();
 
-  out("## 8) Inline styles (React style={{ … }} and style=\"…\")");
+  out('## 8) Inline styles (React style={{ … }} and style="…")');
   const inline = scanInlineStyles(tsxFiles);
   out(
     `  Files with inline style: ${inline.perFile.length} (sorted by inline style count, descending).`,
@@ -386,11 +386,21 @@ function main() {
   out();
 
   out("## 9) Suggested workflow (unique classes + custom CSS)");
-  out("  - Prefer c360-<feature>-<element> or existing utilities in utilities.css.");
-  out("  - Replace style={{}} with classes; keep dynamic values as minimal inline.");
-  out("  - New feature CSS: add to the smallest relevant components/NN-*.css or utilities.");
-  out("  - Large partials (e.g. layout.css, utilities.css, or app-page bundles): split by domain into new NN-* files");
-  out("    and add @import lines to components.css (see 18-app-dynamic-maps-widgets.css for a recent split).");
+  out(
+    "  - Prefer c360-<feature>-<element> or existing utilities in utilities.css.",
+  );
+  out(
+    "  - Replace style={{}} with classes; keep dynamic values as minimal inline.",
+  );
+  out(
+    "  - New feature CSS: add to the smallest relevant components/NN-*.css or utilities.",
+  );
+  out(
+    "  - Large partials (e.g. layout.css, utilities.css, or app-page bundles): split by domain into new NN-* files",
+  );
+  out(
+    "    and add @import lines to components.css (see 18-app-dynamic-maps-widgets.css for a recent split).",
+  );
   out();
 
   out("=".repeat(72));

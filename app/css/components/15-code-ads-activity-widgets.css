@@ -199,6 +199,51 @@
   padding-top: var(--c360-spacing-3);
   border-top: 1px solid var(--c360-border);
 }
+.c360-job-detail-meta-line {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  margin: 0 0 var(--c360-spacing-3);
+  line-height: 1.45;
+}
+.c360-job-detail-id-row {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  flex-wrap: wrap;
+}
+.c360-job-detail-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--c360-radius-sm);
+  background: transparent;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+}
+.c360-job-detail-copy:hover {
+  background: var(--c360-surface-hover, rgba(0, 0, 0, 0.06));
+  color: var(--c360-text);
+}
+.c360-job-detail-progress-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(88px, 120px) minmax(0, 1fr);
+  gap: var(--c360-spacing-2) var(--c360-spacing-4);
+  align-items: start;
+}
+.c360-job-detail-progress-row dt {
+  padding-top: 2px;
+}
+.c360-job-detail-output {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--c360-spacing-2);
+}
 .c360-job-detail-polling {
   display: inline-flex;
   align-items: center;
@@ -215,7 +260,8 @@
 }
 .c360-job-detail-grid dt {
   font-size: var(--c360-text-xs);
-  color: var(--c360-text-muted);
+  font-weight: 600;
+  color: var(--c360-text-secondary, #5c6370);
   margin-bottom: 2px;
 }
 .c360-job-detail-grid dd {
@@ -535,26 +581,27 @@
   color: var(--c360-text);
 }
 .c360-jobs-dt__progress-track {
-  height: 8px;
-  border-radius: 4px;
+  height: 10px;
+  border-radius: 5px;
   overflow: hidden;
   max-width: 160px;
   margin-bottom: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 .c360-jobs-dt__progress-track--primary {
-  background: rgba(127, 99, 244, 0.12);
+  background: rgba(127, 99, 244, 0.2);
 }
 .c360-jobs-dt__progress-track--success {
-  background: rgba(76, 175, 80, 0.12);
+  background: rgba(76, 175, 80, 0.22);
 }
 .c360-jobs-dt__progress-track--danger {
-  background: rgba(244, 67, 54, 0.12);
+  background: rgba(244, 67, 54, 0.18);
 }
 .c360-jobs-dt__progress-track--warning {
-  background: rgba(255, 193, 7, 0.15);
+  background: rgba(255, 193, 7, 0.22);
 }
 .c360-jobs-dt__progress-track--muted {
-  background: rgba(70, 74, 83, 0.1);
+  background: rgba(70, 74, 83, 0.14);
 }
 .c360-jobs-dt__progress-fill {
   height: 100%;
@@ -581,6 +628,13 @@
   display: block;
   font-size: var(--c360-text-xs);
   color: var(--c360-text-muted);
+}
+.c360-jobs-dt__status-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
 }
 .c360-jobs-dt__pill {
   display: inline-flex;
@@ -633,13 +687,15 @@
   background: var(--c360-text-muted);
 }
 .c360-jobs-dt__label-badge {
-  display: inline-block;
-  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  vertical-align: middle;
+  line-height: 1.2;
 }
 .c360-jobs-dt__label-badge--primary {
   background: rgba(127, 99, 244, 0.15);
@@ -663,6 +719,25 @@
 }
 .c360-jobs-dt__action-cell {
   text-align: right;
+  white-space: nowrap;
+}
+.c360-jobs-dt__download-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 2px;
+  border: none;
+  border-radius: var(--c360-radius-sm);
+  background: transparent;
+  color: var(--c360-success, #2e7d32);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.c360-jobs-dt__download-icon:hover {
+  background: rgba(76, 175, 80, 0.12);
+  color: #1b5e20;
 }
 .c360-jobs-dt__action-btn {
   display: inline-flex;

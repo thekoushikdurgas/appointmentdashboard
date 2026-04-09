@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Upload, Info } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Upload, Info, Copy } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,36 @@ import {
   type PaymentInstructions,
 } from "@/services/graphql/billingService";
 import { toast } from "sonner";
+import { parseOperationError } from "@/lib/errorParser";
+
+async function copyToClipboard(label: string, value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(`${label} copied`);
+  } catch {
+    toast.error("Could not copy — try selecting the text manually.");
+  }
+}
+
+function CopyableField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="c360-detail-row">
+      <span className="c360-section-label">{label}</span>
+      <div className="c360-billing-instruction-row__value">
+        <span>{value}</span>
+        <button
+          type="button"
+          className="c360-billing-copy-btn"
+          aria-label={`Copy ${label}`}
+          title="Copy"
+          onClick={() => void copyToClipboard(label, value)}
+        >
+          <Copy size={14} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export interface BillingPaymentProofFormProps {
   onSubmitted?: () => void;
@@ -24,6 +54,9 @@ export function BillingPaymentProofForm({
     null,
   );
   const [loadingInstructions, setLoadingInstructions] = useState(true);
+  const [instructionsError, setInstructionsError] = useState<string | null>(
+    null,
+  );
 
   const [screenshotKey, setScreenshotKey] = useState("");
   const [amount, setAmount] = useState("");
@@ -34,16 +67,24 @@ export function BillingPaymentProofForm({
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
+  const loadInstructions = useCallback(() => {
     setLoadingInstructions(true);
+    setInstructionsError(null);
     billingService
       .getPaymentInstructions()
       .then((res) => {
         setInstructions(res.billing.paymentInstructions);
       })
-      .catch(() => setInstructions(null))
+      .catch((err: unknown) => {
+        setInstructions(null);
+        setInstructionsError(parseOperationError(err, "jobs").userMessage);
+      })
       .finally(() => setLoadingInstructions(false));
   }, []);
+
+  useEffect(() => {
+    void loadInstructions();
+  }, [loadInstructions]);
 
   const handleSubmit = async () => {
     if (!screenshotKey.trim()) {
@@ -99,30 +140,63 @@ export function BillingPaymentProofForm({
         {loadingInstructions ? (
           <div className="c360-text-center c360-p-4">
             <span className="c360-spinner" />
+            <p className="c360-text-muted c360-text-sm c360-mt-2">
+              Loading payment details…
+            </p>
           </div>
+        ) : instructionsError ? (
+          <Alert variant="danger" title="Could not load payment details">
+            <p className="c360-mb-3">{instructionsError}</p>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void loadInstructions()}
+            >
+              Retry
+            </Button>
+          </Alert>
         ) : instructions ? (
-          <Alert variant="info" title="Payment details">
+          <Alert variant="info" title="Pay with UPI (manual transfer)">
+            <p className="c360-text-sm c360-text-muted c360-mb-3">
+              Use these details in your UPI app, then upload your receipt
+              screenshot below.
+            </p>
             <div className="c360-section-stack">
-              {instructions.upiId && (
+              {instructions.upiId ? (
                 <div className="c360-detail-row">
                   <span className="c360-section-label">UPI ID</span>
-                  <Badge color="blue">{instructions.upiId}</Badge>
+                  <div className="c360-billing-instruction-row__value">
+                    <Badge color="blue">{instructions.upiId}</Badge>
+                    <button
+                      type="button"
+                      className="c360-billing-copy-btn"
+                      aria-label="Copy UPI ID"
+                      title="Copy UPI ID"
+                      onClick={() =>
+                        void copyToClipboard("UPI ID", instructions.upiId)
+                      }
+                    >
+                      <Copy size={14} strokeWidth={2} />
+                    </button>
+                  </div>
                 </div>
-              )}
-              {instructions.phoneNumber && (
-                <div className="c360-detail-row">
-                  <span className="c360-section-label">Phone</span>
-                  <span>{instructions.phoneNumber}</span>
-                </div>
-              )}
-              {instructions.email && (
-                <div className="c360-detail-row">
-                  <span className="c360-section-label">Email</span>
-                  <span>{instructions.email}</span>
-                </div>
-              )}
-              {instructions.qrCodeDownloadUrl && (
-                <div>
+              ) : null}
+              {instructions.phoneNumber ? (
+                <CopyableField label="Phone" value={instructions.phoneNumber} />
+              ) : null}
+              {instructions.email ? (
+                <CopyableField label="Email" value={instructions.email} />
+              ) : null}
+              {!instructions.upiId &&
+                !instructions.phoneNumber &&
+                !instructions.email && (
+                  <p className="c360-text-sm c360-text-muted">
+                    No UPI ID or contact fields are set. Ask your administrator
+                    to configure payment instructions on the gateway.
+                  </p>
+                )}
+              {instructions.qrCodeDownloadUrl ? (
+                <div className="c360-pt-2">
                   <a
                     href={instructions.qrCodeDownloadUrl}
                     target="_blank"
@@ -132,7 +206,7 @@ export function BillingPaymentProofForm({
                     Download QR code
                   </a>
                 </div>
-              )}
+              ) : null}
             </div>
           </Alert>
         ) : (

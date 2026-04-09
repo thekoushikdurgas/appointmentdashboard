@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
+  Download,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,10 @@ import { Input } from "@/components/ui/Input";
 import { Popover } from "@/components/ui/Popover";
 import { cn } from "@/lib/utils";
 import type { MappedJob } from "@/lib/jobs/jobsMapper";
+import {
+  formatJobIdShort,
+  isSuccessfulTerminalJobStatus,
+} from "@/lib/jobs/jobsUtils";
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -91,7 +96,7 @@ function statusTone(status: string): StatusTone {
     if (s === "RUNNING") return "primary";
     return "warning";
   }
-  if (s === "COMPLETED" || s === "COMPLETE") return "success";
+  if (isSuccessfulTerminalJobStatus(status)) return "success";
   return "muted";
 }
 
@@ -138,7 +143,8 @@ export interface JobsDataTableProps {
   onTerminateConnectra: (jobId: string) => void;
   onResume: (jobId: string) => void;
   onResumeConnectra: (jobId: string) => void;
-  onDownloadOutput: (outputUrl: string) => void;
+  /** Raw S3 object key or HTTPS URL; parent may presign keys via GraphQL. */
+  onDownloadOutput: (outputUrl: string) => void | Promise<void>;
   renderDetailPanel: (jobId: string) => React.ReactNode;
 }
 
@@ -362,10 +368,7 @@ export function JobsDataTable({
                 const expanded = expandedJobId === job.jobId;
                 const tone = statusTone(job.status);
                 const pct = Math.min(100, Math.max(0, job.progress));
-                const pctLabel =
-                  job.total > 0
-                    ? `${Math.round((job.processed / job.total) * 100)}%`
-                    : `${pct}%`;
+                const pctLabel = `${Math.round(pct)}%`;
                 return (
                   <Fragment key={job.jobId}>
                     <tr
@@ -387,7 +390,7 @@ export function JobsDataTable({
                         <button
                           type="button"
                           className="c360-jobs-dt__expand"
-                          aria-expanded={expanded}
+                          aria-expanded={expanded ? "true" : "false"}
                           aria-label={
                             expanded
                               ? "Collapse job details"
@@ -439,9 +442,10 @@ export function JobsDataTable({
                             )}
                             style={{ width: `${pct}%` }}
                             role="progressbar"
-                            aria-valuenow={pct}
+                            aria-valuenow={Math.round(pct)}
                             aria-valuemin={0}
                             aria-valuemax={100}
+                            aria-label={`Progress ${Math.round(pct)} percent`}
                           />
                         </div>
                         <span className="c360-jobs-dt__progress-meta">
@@ -451,36 +455,52 @@ export function JobsDataTable({
                         </span>
                       </td>
                       <td>
-                        <span
-                          className={cn(
-                            "c360-jobs-dt__pill",
-                            `c360-jobs-dt__pill--${tone}`,
-                          )}
-                        >
+                        <div className="c360-jobs-dt__status-wrap">
                           <span
-                            className="c360-jobs-dt__pill-dot"
-                            aria-hidden
-                          />
-                          {job.status}
-                        </span>
-                        <span
-                          className={cn(
-                            "c360-jobs-dt__label-badge",
-                            `c360-jobs-dt__label-badge--${tone}`,
-                          )}
-                        >
-                          {pctLabel}
-                        </span>
+                            className={cn(
+                              "c360-jobs-dt__pill",
+                              `c360-jobs-dt__pill--${tone}`,
+                            )}
+                          >
+                            <span
+                              className="c360-jobs-dt__pill-dot"
+                              aria-hidden
+                            />
+                            {job.status}
+                          </span>
+                          <span
+                            className={cn(
+                              "c360-jobs-dt__label-badge",
+                              `c360-jobs-dt__label-badge--${tone}`,
+                            )}
+                          >
+                            {pctLabel}
+                          </span>
+                        </div>
                       </td>
                       <td
                         className="c360-jobs-dt__mono c360-text-xs"
                         title={job.jobId}
                       >
-                        {job.jobId.length > 14
-                          ? `…${job.jobId.slice(-10)}`
-                          : job.jobId}
+                        {formatJobIdShort(job.jobId)}
                       </td>
                       <td className="c360-jobs-dt__action-cell">
+                        {job.isTerminal &&
+                          isSuccessfulTerminalJobStatus(job.status) &&
+                          job.outputFile &&
+                          job.outputFile.trim().length > 0 && (
+                            <button
+                              type="button"
+                              className="c360-jobs-dt__download-icon"
+                              aria-label="Download CSV"
+                              title="Download CSV"
+                              onClick={() =>
+                                void onDownloadOutput(job.outputFile!)
+                              }
+                            >
+                              <Download size={18} strokeWidth={2} />
+                            </button>
+                          )}
                         <Popover
                           align="end"
                           width={220}
@@ -572,18 +592,17 @@ export function JobsDataTable({
                                 </button>
                               )}
                               {job.isTerminal &&
-                                (job.status === "COMPLETED" ||
-                                  job.status === "COMPLETE") &&
+                                isSuccessfulTerminalJobStatus(job.status) &&
                                 job.outputFile &&
-                                /^https?:\/\//i.test(job.outputFile) && (
+                                job.outputFile.trim().length > 0 && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item"
                                     onClick={() =>
-                                      onDownloadOutput(job.outputFile!)
+                                      void onDownloadOutput(job.outputFile!)
                                     }
                                   >
-                                    Download
+                                    Download CSV
                                   </button>
                                 )}
                             </div>

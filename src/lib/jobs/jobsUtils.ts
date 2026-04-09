@@ -1,8 +1,63 @@
 import type { Job } from "@/services/graphql/jobsService";
 
+/** True when the job reached a successful terminal state (incl. Connectra ``succeeded``). */
+export function isSuccessfulTerminalJobStatus(displayStatus: string): boolean {
+  const u = displayStatus.toUpperCase();
+  return (
+    u === "COMPLETED" ||
+    u === "COMPLETE" ||
+    u === "SUCCEEDED" ||
+    u === "SUCCESS" ||
+    u === "DONE"
+  );
+}
+
+/**
+ * List rows often only have DB ``status`` + stale/minimal ``statusPayload`` (no percent).
+ * Map successful terminal jobs to 100% so the bar and badge match user expectations.
+ */
+export function deriveDisplayProgressPercent(
+  displayStatus: string,
+  parsed: { progress: number; total: number; processed: number },
+): number {
+  const s = displayStatus.toUpperCase();
+  if (s === "FAILED" || s === "CANCELLED" || s === "CANCELED") {
+    return Math.min(100, Math.max(0, parsed.progress));
+  }
+  if (isSuccessfulTerminalJobStatus(displayStatus)) {
+    if (parsed.total > 0 && parsed.processed > 0) {
+      return Math.min(100, Math.round((parsed.processed / parsed.total) * 100));
+    }
+    if (parsed.progress > 0) return Math.min(100, parsed.progress);
+    return 100;
+  }
+  if (parsed.total > 0) {
+    return Math.min(100, Math.round((parsed.processed / parsed.total) * 100));
+  }
+  return Math.min(100, Math.max(0, parsed.progress));
+}
+
+/** Short UUID for dense tables: no leading punctuation that reads as “--”. */
+export function formatJobIdShort(jobId: string): string {
+  const u = (jobId || "").trim();
+  if (u.length <= 16) return u || "—";
+  return `${u.slice(0, 8)}…${u.slice(-6)}`;
+}
+
+export type JobProgressBarTone = "primary" | "success" | "warning" | "danger";
+
+/** Maps scheduler status to ``ProgressBar`` / ``Progress`` tone (incl. ``succeeded`` → success). */
+export function getJobProgressBarTone(status: string): JobProgressBarTone {
+  const u = status.toUpperCase();
+  if (u === "FAILED") return "danger";
+  if (isSuccessfulTerminalJobStatus(status)) return "success";
+  if (u === "PAUSED") return "warning";
+  return "primary";
+}
+
 export function getJobProgressColor(job: Job): string {
   if (job.status === "FAILED") return "var(--c360-danger)";
-  if (job.status === "COMPLETED") return "var(--c360-success)";
+  if (isSuccessfulTerminalJobStatus(job.status)) return "var(--c360-success)";
   if (job.status === "PAUSED") return "var(--c360-warning)";
   return "var(--c360-primary)";
 }
@@ -25,8 +80,19 @@ export function getJobBadgeColor(
 }
 
 export function shouldPollJob(status: string): boolean {
-  /** OPEN = scheduler DB default for new jobs; Connectra may keep reporting until live status is merged. */
-  return ["PENDING", "RUNNING", "OPEN", "IN_QUEUE"].includes(status);
+  /**
+   * Non-terminal work states. Include PROCESSING/RETRY/PAUSED so DB-only status (no live JSON yet)
+   * still uses the fast interval — otherwise ``processing``.toUpperCase() misses RUNNING and polls slowly.
+   */
+  return [
+    "PENDING",
+    "RUNNING",
+    "OPEN",
+    "IN_QUEUE",
+    "PROCESSING",
+    "RETRY",
+    "PAUSED",
+  ].includes(status);
 }
 
 export function getJobEta(job: Job): string | null {

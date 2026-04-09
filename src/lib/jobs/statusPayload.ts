@@ -31,10 +31,35 @@ function str(
   return undefined;
 }
 
+/**
+ * Connectra job row: top-level ``status`` / ``job_response``; nested ``data`` is S3/job config only.
+ * Do not unwrap into ``data`` or we lose the real job status (email.server uses a different shape).
+ */
+function isConnectraJobStatusRow(payload: Record<string, unknown>): boolean {
+  const jt = payload.job_type;
+  if (typeof jt === "string") {
+    if (jt === "insert_csv_file" || jt === "export_csv_file") return true;
+  }
+  if (
+    typeof payload.uuid === "string" &&
+    payload.data &&
+    typeof payload.data === "object"
+  ) {
+    const d = payload.data as Record<string, unknown>;
+    if (typeof d.s3_key === "string" || typeof d.s3_bucket === "string") {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** email.server GET /jobs/:id/status returns ``{ success, data: { progress_percent, status, ... } }``. */
 function unwrapStatusPayload(
   payload: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (isConnectraJobStatusRow(payload)) {
+    return payload;
+  }
   const inner = payload.data;
   if (
     inner &&
@@ -67,6 +92,7 @@ export function normalizeEmailSatelliteStatus(
     paused: "PAUSED",
     completed: "COMPLETED",
     complete: "COMPLETED",
+    succeeded: "COMPLETED",
     done: "COMPLETED",
     success: "COMPLETED",
     failed: "FAILED",
@@ -128,6 +154,15 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
       "downloadUrl",
       "s3_url",
     ) ??
+    (jobResponse
+      ? str(
+          jobResponse,
+          "s3_key",
+          "output_csv_key",
+          "outputCsvKey",
+          "download_url",
+        )
+      : undefined) ??
     (typeof p.result === "object" && p.result !== null
       ? str(
           p.result as Record<string, unknown>,
