@@ -27,12 +27,10 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   profile: "Profile",
   settings: "Settings",
   status: "Status",
-  admin: "Admin",
   campaigns: "Campaigns",
   new: "New",
   templates: "Templates",
   sequences: "Sequences",
-  deployments: "Deployments",
 };
 
 interface TopBarProps {

@@ -78,7 +78,7 @@ const SPARK_DATA = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 export default function UIKitPage() {
-  useSessionGuard({ requireAdmin: true });
+  useSessionGuard();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [bgGroup, setBgGroup] = useState("all");

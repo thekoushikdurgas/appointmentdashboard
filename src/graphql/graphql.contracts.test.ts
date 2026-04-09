@@ -112,28 +112,6 @@ describe("GraphQL operation contracts (static)", () => {
     expect(s).toContain("activityStats(filters: $filters)");
   });
 
-  it("admin operations nest under admin with schema-shaped args", () => {
-    const s = read("graphql/adminOperations.ts");
-    expect(s).toContain("admin {");
-    expect(s).toContain("userStats");
-    expect(s).toContain("usersWithBuckets(filters: $filters)");
-    expect(s).toContain("logStatistics(timeRange: $timeRange)");
-    expect(s).toContain("logs(filters: $filters)");
-    expect(s).toContain("searchLogs(input: $input)");
-    expect(s).toContain("userHistory(filters: $filters)");
-    expect(s).toContain("deleteUser(input: $input)");
-    expect(s).toContain("promoteToAdmin(input: $input)");
-    expect(s).toContain("promoteToSuperAdmin(input: $input)");
-  });
-
-  it("admin service wires queries from adminOperations", () => {
-    const s = read("services/graphql/adminService.ts");
-    expect(s).toContain("@/graphql/adminOperations");
-    expect(s).toContain("ADMIN_USER_STATS_QUERY");
-    expect(s).toContain("ADMIN_USERS_QUERY");
-    expect(s).toContain("ADMIN_LOGS_QUERY");
-  });
-
   it("ai chats service nests under aiChats namespace", () => {
     const s = read("services/graphql/aiChatService.ts");
     expect(s).toContain("aiChats {\n          aiChats(");

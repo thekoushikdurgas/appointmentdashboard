@@ -134,23 +134,6 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
       },
     ],
   },
-  {
-    label: "Admin",
-    items: [
-      {
-        label: "Admin",
-        icon: "Shield",
-        children: [
-          { href: ROUTES.ADMIN, label: "Admin", icon: "Shield" },
-          {
-            href: ROUTES.ADMIN_DEPLOYMENTS,
-            label: "Deployments",
-            icon: "Rocket",
-          },
-        ],
-      },
-    ],
-  },
 ];
 
 export interface FlatNavEntry {

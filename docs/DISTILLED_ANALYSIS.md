@@ -8,7 +8,7 @@ Excerpts for **`contact360.io/app`**. See [`README.md`](README.md). Imported not
 
 - [x] **AI chat** — _(partial)_ — **GraphQL:** `aiChatService` / `AiChatMutation.sendMessage` aligned — **UI:** `/ai-chat` via `useAIChat` (no mock send).
 - [x] **LinkedIn** — _(partial)_ — **GraphQL:** `Mutation.linkedin` — **UI:** search + upsert wired; feature components `LinkedInUrlSearch` / `LinkedInSearchResultRow`.
-- [x] **Admin CRUD** — _(partial)_ — **GraphQL:** `adminService` stats/logs/searchLogs/userHistory aligned with `AdminQuery` — **UI:** stat grid + log table field fixes; some actions still “coming soon”.
+- [x] **Admin CRUD** — **App:** admin UI removed; **ops:** Django `admin_ops` + gateway `admin` via `admin_client.py`.
 - [x] **Settings** — **UI:** `app/(dashboard)/settings/page.tsx` exists (theme, notifications, 2FA panel).
 - [x] **2FA / API keys** — _(partial)_ — **GraphQL:** `twoFactor` / `profile` — **UI:** `/profile`; verify edge cases.
 

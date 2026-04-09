@@ -85,8 +85,8 @@ The kit is a large static HTML/Bootstrap-style set (`form-element.html`, `chart-
 
 ### Phase C — Hooks & UX truthfulness
 
-- [x] **`usePublicHealth`**, **`useVqlHealthData`**, **`usePerformanceStatsData`** + **`useHealthStatus`** (composed); operations fetch gated by SuperAdmin.
-- [x] **`/status`** — no mock fallback; overview info alert explains single-gateway GraphQL scope; Connectra + Operations tabs; Operations blocked client-side for non–SuperAdmin (no request).
+- [x] **`usePublicHealth`**, **`useVqlHealthData`**, **`useHealthStatus`** (composed); performance stats / token cleanup live on the gateway and may be used from **Django admin** or scripts.
+- [x] **`/status`** — Overview + Connectra + Reference; **Operations** tab removed from the app (use Django ops / gateway for SuperAdmin health tools).
 
 ### Phase D — Health envelope matrix in product (optional; 18-specific)
 

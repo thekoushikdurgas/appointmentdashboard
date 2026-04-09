@@ -25,10 +25,10 @@
 | P2b   | `dashboard/page.tsx` → DashboardAdCarousel, DashboardStatRow, DashboardActivityFeed, DashboardChartSection                               | ✅     |
 | P2c   | `billing/page.tsx` → BillingPlanCards, BillingCheckoutWizard, BillingInvoiceList, BillingCreditSummary                                   | ✅     |
 | P2d   | `activities/page.tsx` → ActivityFeedTab, ActivityCalendarTab, ActivityAnalyticsTab + JobStatsTab                                         | ✅     |
-| P2e   | `admin/page.tsx` → AdminStatGrid, AdminUserTable, AdminLogTable, AdminCreditsForm                                                        | ✅     |
+| P2e   | Admin console **removed** from app — Django `admin_ops` + `NEXT_PUBLIC_ADMIN_URL`                                                       | ✅     |
 | P2f   | `companies/[id]/page.tsx` → CompanyHeader, CompanyContactsTable, CompanyFindEmailsPanel                                                  | ✅     |
 | P2g   | `email/page.tsx` → EmailFinderSingleTab, EmailBulkFinderTab, EmailBulkVerifierTab, EmailVerifierTab, EmailWebSearchTab, EmailPatternsTab | ✅     |
-| P2h   | `status/page.tsx` → StatusOverviewTab, StatusConnectraTab, StatusOperationsTab, ServiceStatusRow                                         | ✅     |
+| P2h   | `status/page.tsx` → StatusOverviewTab, StatusConnectraTab, Reference (Operations tab → Django admin)                                     | ✅     |
 | P2i   | `saved-searches/page.tsx` → SavedSearchFilterBar, SavedSearchTable, SavedSearchCreateModal, SavedSearchEditModal, SavedSearchDeleteModal | ✅     |
 | P2j   | `profile/page.tsx` → ProfileInfoTab, ProfileSecurityTab, ProfileApiKeysTab, ProfileSessionsTab, ProfileTeamTab                           | ✅     |
 | QA    | `tsc --noEmit` — 0 errors                                                                                                                | ✅     |
@@ -186,7 +186,7 @@ These avoid repeat TypeScript / ESLint / runtime issues.
 
 - [x] `src/types/api-modules.ts` + extended `graphql-gateway.ts` (contacts/companies).
 - [x] Service gaps: billing, contacts, companies, email, jobs, notifications, profile, saved searches, resume, s3, sales navigator, users, ai chat, two-factor, admin; **`pagesService`**, **`uploadService`**.
-- [x] Hooks: `useNotifications`, `useBilling`, `useProfile`, `useUsage`, `useResume`, `useSalesNavigator`, `useS3Files`, `useAdmin`, `useActivities`.
+- [x] Hooks: `useNotifications`, `useBilling`, `useProfile`, `useUsage`, `useResume`, `useSalesNavigator`, `useS3Files`, `useActivities`.
 - [x] Pages wired: profile, billing, contacts, companies, jobs, email, ai-chat, admin, usage, activities, status, **notifications**, **saved-searches**, **sales-navigator**, **resume** (`/resume`).
 - [x] **API demo removal:** `demo_data.py` deleted; **`DEMO_MODE`** removed from settings; demo branches stripped from listed GraphQL query modules (see `GRAPHQL_PARITY.md` / API changelog in repo).
 

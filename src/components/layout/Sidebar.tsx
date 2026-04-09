@@ -22,12 +22,13 @@ import {
   CheckCircle,
   Bell,
   Bookmark,
-  Shield,
-  Rocket,
   Plus,
   LayoutTemplate,
   ListOrdered,
   FileText,
+  Database,
+  Brain,
+  Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -63,12 +64,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
   CheckCircle,
   Bell,
   Bookmark,
-  Shield,
-  Rocket,
   Plus,
   LayoutTemplate,
   ListOrdered,
   FileText,
+  Database,
+  Brain,
+  Tool: Wrench,
 };
 
 interface SidebarProps {

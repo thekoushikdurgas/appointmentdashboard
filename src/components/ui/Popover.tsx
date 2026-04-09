@@ -21,6 +21,8 @@ export interface PopoverProps {
   align?: "start" | "end";
   closeOnOutside?: boolean;
   width?: number;
+  /** Extra classes on the portaled panel (e.g. sidebar flyout shadow). */
+  panelClassName?: string;
 }
 
 type PopoverPos = { top: number; left: number };
@@ -32,6 +34,7 @@ export function Popover({
   align = "start",
   closeOnOutside = true,
   width = 280,
+  panelClassName,
 }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PopoverPos | null>(null);
@@ -122,7 +125,13 @@ export function Popover({
       ? createPortal(
           <div
             ref={popoverRef}
-            className={`c360-popover__panel c360-popover__panel--${placement}`}
+            className={[
+              "c360-popover__panel",
+              `c360-popover__panel--${placement}`,
+              panelClassName ?? "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             {content}
           </div>,

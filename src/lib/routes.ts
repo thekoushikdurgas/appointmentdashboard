@@ -21,8 +21,6 @@ export const ROUTES = {
   STATUS: "/status",
   NOTIFICATIONS: "/notifications",
   SAVED_SEARCHES: "/saved-searches",
-  ADMIN: "/admin",
-  ADMIN_DEPLOYMENTS: "/admin/deployments",
   CAMPAIGNS: "/campaigns",
   CAMPAIGNS_NEW: "/campaigns/new",
   CAMPAIGNS_TEMPLATES: "/campaigns/templates",

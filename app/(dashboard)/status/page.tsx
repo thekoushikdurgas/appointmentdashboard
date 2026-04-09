@@ -1,30 +1,20 @@
 "use client";
 
-import { XCircle, RefreshCw, Shield } from "lucide-react";
+import { XCircle, RefreshCw } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { useRole } from "@/context/RoleContext";
 import { useHealthStatus, type HealthStatusTab } from "@/hooks/useHealthStatus";
 import { StatusOverviewTab } from "@/components/feature/status/StatusOverviewTab";
 import { StatusConnectraTab } from "@/components/feature/status/StatusConnectraTab";
-import { StatusOperationsTab } from "@/components/feature/status/StatusOperationsTab";
 import { StatusEnvelopeReferenceTab } from "@/components/feature/status/StatusEnvelopeReferenceTab";
 import { cn } from "@/lib/utils";
 
 export default function StatusPage() {
-  const { isSuperAdmin } = useRole();
-  const {
-    tab,
-    setTab,
-    overview,
-    connectra,
-    operations,
-    refreshCurrent,
-    refreshing,
-  } = useHealthStatus({ operationsEnabled: isSuperAdmin });
+  const { tab, setTab, overview, connectra, refreshCurrent, refreshing } =
+    useHealthStatus();
 
   return (
     <DashboardPageLayout>
@@ -32,8 +22,8 @@ export default function StatusPage() {
         <div>
           <h1 className="c360-page-header__title">System status</h1>
           <p className="c360-page-header__subtitle">
-            Gateway health (public), Connectra / VQL (signed in), SuperAdmin
-            operations, and HTTP envelope reference (static)
+            Gateway health (public), Connectra / VQL (signed in), and HTTP
+            envelope reference (static). Operations tooling is in Django admin.
           </p>
         </div>
         <Button
@@ -58,7 +48,6 @@ export default function StatusPage() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="connectra">Connectra</TabsTrigger>
-            <TabsTrigger value="operations">Operations</TabsTrigger>
             <TabsTrigger value="reference">Reference</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -103,28 +92,6 @@ export default function StatusPage() {
           error={connectra.error}
         />
       )}
-
-      {tab === "operations" &&
-        (!isSuperAdmin ? (
-          <Card>
-            <div className="c360-empty-state">
-              <Shield size={32} className="c360-empty-state__icon" />
-              <p className="c360-empty-state__title">
-                SuperAdmin access required
-              </p>
-              <p className="c360-empty-state__desc">
-                Performance statistics and token blacklist cleanup are only
-                available to SuperAdmin users. No request was sent to the API.
-              </p>
-            </div>
-          </Card>
-        ) : (
-          <StatusOperationsTab
-            data={operations.data}
-            loading={operations.loading}
-            error={operations.error}
-          />
-        ))}
 
       {tab === "reference" && <StatusEnvelopeReferenceTab />}
     </DashboardPageLayout>

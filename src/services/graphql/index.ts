@@ -14,7 +14,6 @@ export * from "./linkedinService";
 export * from "./activitiesService";
 export * from "./aiChatService";
 export * from "./healthService";
-export * from "./adminService";
 export * from "./analyticsService";
 export * from "./campaignSatelliteService";
 export * from "./notificationsService";

@@ -33,8 +33,10 @@ video {
   --c360-primary: #2f4cdd;
   --c360-primary-hover: #2340c5;
   --c360-primary-light: #e8ecfb;
+  --c360-primary-dark: #1a2fa0;
   --c360-accent: #b519ec;
   --c360-accent-hover: #9b12cc;
+  --c360-accent-light: #f5e4fd;
 
   /* Kit semantic colours */
   --c360-success: #2bc155;
@@ -117,7 +119,8 @@ video {
 
   /* Layout */
   --c360-sidebar-width: 240px;
-  --c360-sidebar-width-collapsed: 72px;
+  /* Kit mini sidebar rail ≈ 5rem (_sidebar-mini-nav.scss .deznav width) */
+  --c360-sidebar-width-collapsed: 80px;
   --c360-topbar-height: 64px;
   --c360-content-max-width: 1280px;
   --c360-container-padding: 24px;
@@ -136,6 +139,12 @@ video {
   --c360-font-secondary:
     "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
   --c360-font-mono: "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+  /* Font weights */
+  --c360-font-normal: 400;
+  --c360-font-medium: 500;
+  --c360-font-semibold: 600;
+  --c360-font-bold: 700;
 
   --c360-text-xs: 0.75rem; /* 12px */
   --c360-text-sm: 0.875rem; /* 14px */

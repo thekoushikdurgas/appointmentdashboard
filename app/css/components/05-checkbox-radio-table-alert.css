@@ -318,3 +318,88 @@
 .c360-alert__close:hover {
   opacity: 1;
 }
+
+/* ============================================================
+   TOAST STACK — fixed top-right, matches Dashboard UI kit
+   uc-toastr.html pattern and admin alerts.css spec.
+   z-index: --c360-z-toast (200)
+   ============================================================ */
+.c360-toast-stack {
+  position: fixed;
+  top: var(--c360-spacing-4);
+  right: var(--c360-spacing-4);
+  z-index: var(--c360-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-2);
+  max-width: 360px;
+  pointer-events: none;
+}
+
+.c360-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+  border-radius: var(--c360-radius-md);
+  box-shadow: var(--c360-shadow-md);
+  border-left: 4px solid transparent;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  pointer-events: auto;
+  animation: c360-toast-in var(--c360-transition-fast);
+}
+.c360-toast.is-leaving {
+  animation: c360-toast-out var(--c360-transition-fast) forwards;
+}
+.c360-toast--success {
+  border-left-color: var(--c360-success);
+}
+.c360-toast--warning {
+  border-left-color: var(--c360-warning);
+}
+.c360-toast--danger,
+.c360-toast--error {
+  border-left-color: var(--c360-danger);
+}
+.c360-toast--info {
+  border-left-color: var(--c360-info);
+}
+.c360-toast__msg {
+  flex: 1;
+}
+.c360-toast__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--c360-text-muted);
+  display: flex;
+  align-items: center;
+  transition: opacity var(--c360-transition-fast);
+}
+.c360-toast__close:hover {
+  opacity: 0.7;
+}
+
+@keyframes c360-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes c360-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

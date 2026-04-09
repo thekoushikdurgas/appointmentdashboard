@@ -10,7 +10,6 @@ import {
   flatNavEntriesForAccessiblePages,
 } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
-import { useRole } from "@/context/RoleContext";
 
 interface NavCommandPaletteProps {
   open: boolean;
@@ -23,16 +22,12 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
-  const { isSuperAdmin } = useRole();
   const { accessiblePages } = useAuth();
 
   const navIndex = useMemo(() => {
-    const base = isSuperAdmin
-      ? NAV_SEARCH_INDEX
-      : NAV_SEARCH_INDEX.filter((r) => !r.href.startsWith("/admin"));
     const mine = flatNavEntriesForAccessiblePages(accessiblePages);
-    return [...mine, ...base];
-  }, [isSuperAdmin, accessiblePages]);
+    return [...mine, ...NAV_SEARCH_INDEX];
+  }, [accessiblePages]);
 
   const results = query.trim()
     ? navIndex.filter((r) =>

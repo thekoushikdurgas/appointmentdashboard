@@ -39,7 +39,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 
 **`FeatureUsageInfo`:** `feature`, `used`, `limit`, **`remaining`** (-1 = unlimited), **`resetAt`**.
 
-**Auth:** All of the above require a **logged-in user** (`require_auth`). **`resetUsage`** is testing/admin-oriented; UI gates **reset** to **SuperAdmin** + confirm modal.
+**Auth:** All of the above require a **logged-in user** (`require_auth`). **`resetUsage`** remains on the gateway for tooling; the **app no longer exposes** the SuperAdmin reset control (use Django admin / direct API for testing).
 
 **Implementation notes (API)**
 

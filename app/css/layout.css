@@ -26,6 +26,8 @@
 
 .c360-sidebar--collapsed {
   width: var(--c360-sidebar-width-collapsed);
+  /* Allow flyout panels to extend past rail (popover is portaled; nav still scrolls) */
+  overflow: visible;
 }
 
 .c360-sidebar__nav {
@@ -36,6 +38,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--c360-spacing-1);
+}
+
+.c360-sidebar--collapsed .c360-sidebar__nav {
+  overflow-x: visible;
+  align-items: center;
+  padding-left: var(--c360-spacing-2);
+  padding-right: var(--c360-spacing-2);
 }
 
 .c360-sidebar__section-label {
@@ -107,6 +116,14 @@
   opacity: 0;
   width: 0;
   pointer-events: none;
+}
+
+.c360-sidebar--collapsed .c360-sidebar__section-label {
+  display: none;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 /* ─── Sidebar Search ──────────────────────────────────────────────────────── */
@@ -636,6 +653,109 @@
   background: var(--c360-bg);
 }
 
+/* Collapsed sidebar: center popover triggers on the icon rail */
+.c360-sidebar--collapsed .c360-popover__trigger {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Two-column flyout (kit metismenu mini: primary + nested panel) */
+.c360-sidebar-flyout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 40px;
+}
+
+.c360-sidebar-flyout__primary {
+  flex: 0 0 13rem;
+  min-width: 13rem;
+  max-width: 13rem;
+  padding: var(--c360-spacing-1) 0;
+}
+
+.c360-sidebar-flyout__sub {
+  flex: 0 0 13rem;
+  min-width: 13rem;
+  max-width: 13rem;
+  padding: var(--c360-spacing-1) 0;
+  border-left: 1px solid var(--c360-border);
+}
+
+.c360-sidebar-flyout__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  font-weight: var(--c360-font-medium);
+  color: var(--c360-text);
+  cursor: default;
+  user-select: none;
+  transition:
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-sidebar-flyout__row:hover,
+.c360-sidebar-flyout__row--open {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+}
+
+.c360-sidebar-flyout__row--active {
+  color: var(--c360-primary);
+  font-weight: var(--c360-font-semibold);
+}
+
+.c360-sidebar-flyout__chev {
+  flex-shrink: 0;
+  color: var(--c360-text-muted);
+}
+
+.c360-sidebar-flyout__row--open .c360-sidebar-flyout__chev,
+.c360-sidebar-flyout__row:hover .c360-sidebar-flyout__chev {
+  color: var(--c360-primary);
+}
+
+.c360-sidebar-flyout__link {
+  display: block;
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  border-radius: var(--c360-radius-md);
+  font-size: var(--c360-text-sm);
+  font-weight: var(--c360-font-medium);
+  color: var(--c360-text);
+  text-decoration: none;
+  transition:
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-sidebar-flyout__link:hover {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+}
+
+.c360-sidebar-flyout__link--active {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-sidebar-flyout__sub-block {
+  padding-bottom: var(--c360-spacing-2);
+}
+
+.c360-sidebar-flyout__sub-title {
+  padding: var(--c360-spacing-1) var(--c360-spacing-4) var(--c360-spacing-1);
+  font-size: var(--c360-text-xs);
+  font-weight: var(--c360-font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c360-text-muted);
+}
+
 /* ─── Sidebar branch accordion ───────────────────────────────────────────── */
 .c360-sidebar__branch-wrap {
   display: flex;
@@ -678,12 +798,66 @@
 
 .c360-sidebar__item--collapsed-icon {
   justify-content: center;
+  width: 100%;
+  max-width: 48px;
+  min-height: 44px;
+  margin-left: auto;
+  margin-right: auto;
   padding-left: var(--c360-spacing-2);
   padding-right: var(--c360-spacing-2);
 }
 
 .c360-sidebar__item--collapsed-icon .c360-sidebar__item-label {
   display: none;
+}
+
+/* Kit mini sidebar: active / hover = solid primary tile + white icon (_sidebar-mini-nav.scss) */
+.c360-sidebar--collapsed .c360-sidebar__item--collapsed-icon:hover {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__item--collapsed-icon:hover
+  .c360-sidebar__item-icon {
+  color: #fff;
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__item--collapsed-icon.c360-sidebar__item--active {
+  background: var(--c360-primary);
+  color: #fff;
+  font-weight: var(--c360-font-semibold);
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__item--collapsed-icon.c360-sidebar__item--active::before {
+  display: none;
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__item--collapsed-icon.c360-sidebar__item--active
+  .c360-sidebar__item-icon {
+  color: #fff;
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__item--collapsed-icon.c360-sidebar__item--active:hover {
+  background: var(--c360-primary-hover);
+}
+
+.c360-sidebar--collapsed .c360-sidebar__search {
+  display: flex;
+  justify-content: center;
+  padding-left: var(--c360-spacing-2);
+  padding-right: var(--c360-spacing-2);
+}
+
+.c360-sidebar--collapsed .c360-sidebar-search-trigger {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  justify-content: center;
 }
 
 /* ─── Top bar: credits (inside account popover) ───────────────────────────── */

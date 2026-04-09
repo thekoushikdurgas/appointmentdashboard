@@ -51,7 +51,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 
 **`useHealthStatus`** ([`useHealthStatus.ts`](../../../src/hooks/useHealthStatus.ts)) — consolidates loading/error/refresh for all tabs; avoids refetch loops when a tab errors.
 
-**`status/page.tsx`** — **`DashboardPageLayout`**, kit **Tabs** (filter variant): **Overview** (public), **Connectra**, **Operations** (lazy-load). Overview: API card with **`resolveGatewayDocsUrl`**, incidents empty copy; Operations: cache **Progress**, token blacklist card.
+**`status/page.tsx`** — **`DashboardPageLayout`**, kit **Tabs** (filter variant): **Overview** (public), **Connectra**, **Reference**. Overview: API card with **`resolveGatewayDocsUrl`**, incidents empty copy. **Operations** (performance stats / token cleanup) was removed from the app — use Django admin / gateway tools.
 
 **Remaining gaps vs ideal doc:** **Incidents** are still not sourced from a real incident pipeline; **overview** uptime/latency may remain simplified until metrics exist.
 

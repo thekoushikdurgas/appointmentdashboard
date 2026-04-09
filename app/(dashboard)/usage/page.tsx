@@ -14,7 +14,6 @@ import { useUsage } from "@/hooks/useUsage";
 import { useFeatureOverview } from "@/hooks/useFeatureOverview";
 import { FeatureUsageCard } from "@/components/feature/usage/FeatureUsageCard";
 import { FeatureOverviewPanel } from "@/components/feature/usage/FeatureOverviewPanel";
-import { toast } from "sonner";
 
 function firstOfNextMonthLabel(): string {
   const d = new Date();
@@ -27,41 +26,20 @@ function firstOfNextMonthLabel(): string {
 }
 
 export default function UsagePage() {
-  const { plan, credits, isSuperAdmin } = useRole();
-  const { usageData, loading, error, refresh, resetUsage } = useUsage();
+  const { plan, credits } = useRole();
+  const { usageData, loading, error, refresh } = useUsage();
   const [activeTab, setActiveTab] = useState<"overview" | "drill-down">(
     "overview",
   );
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const {
-    overview,
-    loading: overviewLoading,
-    refresh: refreshOverview,
-  } = useFeatureOverview(activeTab === "drill-down" ? selectedFeature : null);
-
-  const [resetting, setResetting] = useState(false);
+  const { overview, loading: overviewLoading } = useFeatureOverview(
+    activeTab === "drill-down" ? selectedFeature : null,
+  );
 
   const handleDrillDown = useCallback((feature: string) => {
     setSelectedFeature(feature);
     setActiveTab("drill-down");
   }, []);
-
-  const handleResetFeature = useCallback(
-    async (feature: string) => {
-      setResetting(true);
-      try {
-        await resetUsage({ feature });
-        await refreshOverview();
-        toast.success(`Usage reset for ${feature}`);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Reset failed");
-        throw e;
-      } finally {
-        setResetting(false);
-      }
-    },
-    [resetUsage, refreshOverview],
-  );
 
   return (
     <DashboardPageLayout>
@@ -139,13 +117,7 @@ export default function UsagePage() {
             </div>
           </Card>
 
-          <FeatureOverviewPanel
-            overview={overview}
-            loading={overviewLoading}
-            showResetUsage={isSuperAdmin}
-            onResetUsage={handleResetFeature}
-            resetProcessing={resetting}
-          />
+          <FeatureOverviewPanel overview={overview} loading={overviewLoading} />
         </div>
       )}
 

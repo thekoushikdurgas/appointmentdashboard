@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   isNavBranch,
@@ -54,39 +54,96 @@ function expandKeysForPathname(
 
 type IconFn = (key: string) => LucideIcon | undefined;
 
+function SubBranchPanel({
+  branch,
+  pathname,
+  onPick,
+}: {
+  branch: NavBranch;
+  pathname: string;
+  onPick: () => void;
+}) {
+  return (
+    <nav className="c360-sidebar-flyout__sub" aria-label={branch.label}>
+      {branch.children.map((node, i) => {
+        if (isNavBranch(node)) {
+          return (
+            <div
+              key={`${branch.label}-sub-${i}`}
+              className="c360-sidebar-flyout__sub-block"
+            >
+              <div className="c360-sidebar-flyout__sub-title">{node.label}</div>
+              {node.children.map((c) =>
+                isNavBranch(c) ? null : (
+                  <Link
+                    key={c.href}
+                    href={c.href}
+                    className={cn(
+                      "c360-sidebar-flyout__link",
+                      leafActive(c.href, pathname) &&
+                        "c360-sidebar-flyout__link--active",
+                    )}
+                    onClick={onPick}
+                  >
+                    {c.label}
+                  </Link>
+                ),
+              )}
+            </div>
+          );
+        }
+        return (
+          <Link
+            key={node.href}
+            href={node.href}
+            className={cn(
+              "c360-sidebar-flyout__link",
+              leafActive(node.href, pathname) &&
+                "c360-sidebar-flyout__link--active",
+            )}
+            onClick={onPick}
+          >
+            {node.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 function CollapsedBranchMenu({
   branch,
   iconFor,
   onPick,
+  pathname,
 }: {
   branch: NavBranch;
   iconFor: IconFn;
   onPick: () => void;
+  pathname: string;
 }) {
-  const flattenLeaves = (
-    nodes: NavNode[],
-  ): { href: string; label: string }[] => {
-    const out: { href: string; label: string }[] = [];
-    for (const n of nodes) {
-      if (isNavBranch(n)) out.push(...flattenLeaves(n.children));
-      else out.push({ href: n.href, label: n.label });
-    }
-    return out;
-  };
-
-  const leaves = flattenLeaves(branch.children);
+  const [sub, setSub] = useState<NavBranch | null>(null);
   const Icon = iconFor(branch.icon);
+  const hasNested = branch.children.some(isNavBranch);
+  const panelWidth = hasNested && sub ? 416 : 208;
+  const branchActive = branchHasActive(branch, pathname);
 
   return (
     <Popover
-      width={220}
+      width={panelWidth}
       placement="right"
+      panelClassName="c360-popover__panel--sidebar-flyout"
       trigger={
         <button
           type="button"
-          className="c360-sidebar__item c360-sidebar__item--collapsed-icon"
+          className={cn(
+            "c360-sidebar__item",
+            "c360-sidebar__item--collapsed-icon",
+            branchActive && "c360-sidebar__item--active",
+          )}
           title={branch.label}
           aria-label={branch.label}
+          aria-haspopup="menu"
         >
           {Icon && (
             <Icon size={20} className="c360-sidebar__item-icon" aria-hidden />
@@ -94,18 +151,54 @@ function CollapsedBranchMenu({
         </button>
       }
       content={
-        <nav className="c360-popover-nav" aria-label={branch.label}>
-          {leaves.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="c360-popover-nav__link"
-              onClick={onPick}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="c360-sidebar-flyout" onMouseLeave={() => setSub(null)}>
+          <div className="c360-sidebar-flyout__primary" role="menu">
+            {branch.children.map((node, i) => {
+              if (isNavBranch(node)) {
+                const open = sub === node;
+                return (
+                  <div
+                    key={`${branch.label}-${i}`}
+                    role="menuitem"
+                    className={cn(
+                      "c360-sidebar-flyout__row",
+                      open && "c360-sidebar-flyout__row--open",
+                      branchHasActive(node, pathname) &&
+                        "c360-sidebar-flyout__row--active",
+                    )}
+                    onMouseEnter={() => setSub(node)}
+                  >
+                    <span>{node.label}</span>
+                    <ChevronRight
+                      size={14}
+                      className="c360-sidebar-flyout__chev"
+                      aria-hidden
+                    />
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={node.href}
+                  href={node.href}
+                  role="menuitem"
+                  className={cn(
+                    "c360-sidebar-flyout__link",
+                    leafActive(node.href, pathname) &&
+                      "c360-sidebar-flyout__link--active",
+                  )}
+                  onClick={onPick}
+                  onMouseEnter={() => setSub(null)}
+                >
+                  {node.label}
+                </Link>
+              );
+            })}
+          </div>
+          {sub ? (
+            <SubBranchPanel branch={sub} pathname={pathname} onPick={onPick} />
+          ) : null}
+        </div>
       }
     />
   );
@@ -144,6 +237,7 @@ function NavNodesList({
                 branch={node}
                 iconFor={iconFor}
                 onPick={onMobileClose}
+                pathname={pathname}
               />
             );
           }

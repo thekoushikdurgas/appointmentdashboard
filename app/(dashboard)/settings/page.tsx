@@ -5,12 +5,17 @@ import { Card } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { useTheme } from "@/context/ThemeContext";
+import { useRole } from "@/context/RoleContext";
 import { useNotificationPreferences } from "@/hooks/useNotifications";
 import { TwoFactorPanel } from "@/components/feature/two-factor/TwoFactorPanel";
 import { cn } from "@/lib/utils";
 
+const ADMIN_CONSOLE_URL =
+  (process.env.NEXT_PUBLIC_ADMIN_URL || "").replace(/\/$/, "") || null;
+
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { isSuperAdmin } = useRole();
 
   /* Notification prefs */
   const {
@@ -116,6 +121,24 @@ export default function SettingsPage() {
         >
           <TwoFactorPanel variant="full" />
         </Card>
+
+        {isSuperAdmin && ADMIN_CONSOLE_URL ? (
+          <Card
+            title="Operator console"
+            subtitle="Django admin / ops (opens in a new tab)"
+          >
+            <div className="c360-card-body">
+              <a
+                href={ADMIN_CONSOLE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="c360-btn c360-btn--primary"
+              >
+                Open admin console
+              </a>
+            </div>
+          </Card>
+        ) : null}
       </div>
     </DashboardPageLayout>
   );

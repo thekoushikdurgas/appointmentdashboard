@@ -28,6 +28,14 @@
   transform: none;
 }
 
+/* Dashboard UI kit mini-sidebar flyout: $shadow 40px rgba(82,63,105,0.1) */
+.c360-popover__panel--sidebar-flyout {
+  box-shadow: var(--c360-shadow-card);
+  border-radius: var(--c360-radius-lg);
+  padding: 0;
+  overflow: visible;
+}
+
 .c360-popover__trigger {
   display: inline-flex;
   align-items: center;

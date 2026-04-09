@@ -4,23 +4,18 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
-import { ROLES, type UserRole } from "@/lib/constants";
+import { ROLES } from "@/lib/constants";
 
 interface SessionGuardOptions {
-  /** Legacy flag — requires ADMIN or SUPER_ADMIN role */
-  requireAdmin?: boolean;
-  /** Explicit allowlist of roles that may access this route */
-  allowedRoles?: UserRole[];
   redirectTo?: string;
 }
 
+/** Ensures a logged-in session; redirects to login when unauthenticated. */
 export function useSessionGuard({
-  requireAdmin = false,
-  allowedRoles,
   redirectTo = "/login",
 }: SessionGuardOptions = {}) {
   const { user, loading } = useAuth();
-  const { role, checkRole } = useRole();
+  const { role } = useRole();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,30 +23,8 @@ export function useSessionGuard({
 
     if (!user) {
       router.replace(redirectTo);
-      return;
     }
-
-    if (allowedRoles && allowedRoles.length > 0) {
-      const hasAccess = allowedRoles.some((r) => checkRole(r));
-      if (!hasAccess) {
-        router.replace("/403");
-      }
-      return;
-    }
-
-    if (requireAdmin && role !== ROLES.ADMIN && role !== ROLES.SUPER_ADMIN) {
-      router.replace("/403");
-    }
-  }, [
-    user,
-    loading,
-    role,
-    requireAdmin,
-    allowedRoles,
-    redirectTo,
-    router,
-    checkRole,
-  ]);
+  }, [user, loading, redirectTo, router]);
 
   return {
     user,

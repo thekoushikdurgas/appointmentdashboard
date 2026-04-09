@@ -8,7 +8,6 @@ import {
   History,
   Package,
   Upload,
-  Shield,
 } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Badge } from "@/components/ui/Badge";
@@ -25,7 +24,6 @@ import { BillingCheckoutWizard } from "@/components/feature/billing/BillingCheck
 import { BillingInvoiceList } from "@/components/feature/billing/BillingInvoiceList";
 import { BillingCreditSummary } from "@/components/feature/billing/BillingCreditSummary";
 import { BillingPaymentProofForm } from "@/components/feature/billing/BillingPaymentProofForm";
-import { BillingAdminPaymentQueue } from "@/components/feature/billing/BillingAdminPaymentQueue";
 import type { InvoiceData } from "@/components/shared/InvoiceCard";
 import { Progress } from "@/components/ui/Progress";
 
@@ -58,7 +56,7 @@ const PLAN_ACCENTS = [
 ];
 
 export default function BillingPage() {
-  const { plan, isSuperAdmin } = useRole();
+  const { plan } = useRole();
   const {
     billingInfo,
     plans: apiPlans,
@@ -217,11 +215,6 @@ export default function BillingPage() {
           <TabsTrigger value="payment-proof" icon={<Upload size={14} />}>
             Payment Proof
           </TabsTrigger>
-          {isSuperAdmin && (
-            <TabsTrigger value="payment-queue" icon={<Shield size={14} />}>
-              Admin Queue
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="plans">
@@ -279,12 +272,6 @@ export default function BillingPage() {
         <TabsContent value="payment-proof">
           <BillingPaymentProofForm onSubmitted={() => void refreshBilling()} />
         </TabsContent>
-
-        {isSuperAdmin && (
-          <TabsContent value="payment-queue">
-            <BillingAdminPaymentQueue />
-          </TabsContent>
-        )}
       </Tabs>
     </DashboardPageLayout>
   );

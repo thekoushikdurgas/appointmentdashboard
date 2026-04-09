@@ -52,7 +52,7 @@ The **Admin** module exposes **`admin { userStats }`** → `AdminUserStats`:
 
 - `totalUsers`, `activeUsers`, `usersByRole` (JSON map), `usersByPlan` (JSON map) — see `contact360.io/api/app/graphql/modules/admin/types.py`.
 
-The **admin dashboard** uses **`adminService.getUserStats()`** / **`admin.userStats`**. The app also exposes **`usersService.getUsersNamespaceUserStats()`** for the **list-based** `UserStats` when you add a widget that should match **`02_USERS_MODULE.md`** literally.
+**Admin stats in the app:** use **`usersService.getUsersNamespaceUserStats()`** for **list-based** `UserStats` when a widget should match **`02_USERS_MODULE.md`** literally. **`admin.userStats`** is consumed from **Django `admin_ops`**, not the Next.js client.
 
 ---
 
@@ -69,7 +69,7 @@ The **admin dashboard** uses **`adminService.getUserStats()`** / **`admin.userSt
 
 ### Optional / product choices
 
-1. **`users { user }` / `users { users }` / `users { userStats }`** — Implemented on **`usersService`** as **`getUserByUuid`**, **`listUsersNamespace`**, **`getUsersNamespaceUserStats`** for parity/tests; **admin pages** may keep using **`admin.*`**.
+1. **`users { user }` / `users { users }` / `users { userStats }`** — Implemented on **`usersService`** as **`getUserByUuid`**, **`listUsersNamespace`**, **`getUsersNamespaceUserStats`** for parity/tests; **admin `admin.*`** is for **Django ops** only.
 2. **`promoteToAdmin` / `promoteToSuperAdmin`** — Not called from the app; **admin role changes** may use **`admin.updateUserRole`**; document as product choice.
 3. **`notifications` JSON on `updateProfile`** — Not exposed as checkboxes yet; add when product defines keys.
 4. **E2E matrix** — Still recommended (Phase E).
@@ -85,7 +85,7 @@ The **admin dashboard** uses **`adminService.getUserStats()`** / **`admin.userSt
 | **General tab logic**    | `src/hooks/useProfileGeneral.ts`                                                           |
 | **Avatar helpers**       | `src/lib/profileAvatarUpload.ts`, `resolveProfileAvatarSrc` in `src/lib/utils.ts`          |
 | **Users GraphQL docs**   | `src/graphql/usersOperations.ts`                                                           |
-| **Services**             | `src/services/graphql/usersService.ts` (also `adminService` for admin stats/list)          |
+| **Services**             | `src/services/graphql/usersService.ts`                                                    |
 | **Auth + profile shape** | `src/context/AuthContext.tsx` (`AuthUser` profile fields), `src/graphql/authOperations.ts` |
 
 ---
@@ -107,13 +107,13 @@ Contact360: **`--c360-*` tokens**, **`Card` / `Input` / `Button` / `Tabs`**, **`
 ### Phase A — Contract and types (Users module)
 
 - [x] **Codegen types** — `User`, `UserProfile`, `UserStats`, `UserRoleCount`, `UserSubscriptionCount`, `UpdateProfileInput`, `UpdateUserInput`, `UploadAvatarInput`, `AdminUserStats`, `UserFilterInput`.
-- [x] **Split “Users vs Admin”** — Documented above; `usersService` + `adminService` roles are clear.
+- [x] **Split “Users vs Admin”** — `usersService` in app; `admin` GraphQL from Django `admin_ops`.
 - [x] **`admin.userStats` query** — Matches **`AdminUserStats`**.
 - [x] **`users { userStats }` (optional)** — `usersService.getUsersNamespaceUserStats()` for list-based stats.
 
 ### Phase B — Services and hooks (`users` namespace)
 
-- [x] **`usersService`** — `me` (via `auth`), `updateProfile`, `updateUser`, `uploadAvatar`, `getUser` / `listUsers` (**admin** paths for existing admin UI), `getUserStats` (**admin**), plus **`getUserByUuid`**, **`listUsersNamespace`**, **`getUsersNamespaceUserStats`**.
+- [x] **`usersService`** — `me` (via `auth`), `updateProfile`, `updateUser`, `uploadAvatar`, plus **`getUserByUuid`**, **`listUsersNamespace`**, **`getUsersNamespaceUserStats`**.
 - [x] **`uploadAvatar`** — `UploadAvatarInput`-shaped variables; full profile selection on response.
 - [x] **`updateUser`** — Wrapped; profile General tab updates **name** when changed.
 - [ ] **`notifications` on `updateProfile`** — UI toggles _(planned)_ when API keys are fixed.
