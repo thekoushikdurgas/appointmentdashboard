@@ -41,19 +41,10 @@ export interface GatewayUserInfo {
   userType: string | null;
 }
 
-export interface GatewayPageSummary {
-  pageId: string;
-  title: string;
-  pageType: string;
-  route: string | null;
-  status: string;
-}
-
 export interface GatewayAuthPayload {
   accessToken: string;
   refreshToken: string;
   user: GatewayUserInfo;
-  pages: GatewayPageSummary[] | null;
   twoFactorRequired?: boolean;
   challengeToken?: string | null;
 }

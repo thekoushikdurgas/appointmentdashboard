@@ -3,7 +3,6 @@
  * Used by Sidebar (accordion), SidebarSearch (flattened index), and TopBar search.
  */
 import { ROUTES } from "@/lib/routes";
-import type { GatewayPageSummary } from "@/types/graphql-gateway";
 
 export type NavLeaf = {
   href: string;
@@ -170,44 +169,3 @@ export function flattenNavLeaves(
 
 export const NAV_SEARCH_INDEX: FlatNavEntry[] =
   flattenNavLeaves(SIDEBAR_SECTIONS);
-
-/** Resolve link for a DocsAI / gateway page (login + `pages.myPages` share this shape). */
-export function hrefForGatewayPage(p: GatewayPageSummary): string {
-  const r = p.route?.trim();
-  if (r && r.startsWith("/")) return r;
-  return `/dashboard/${encodeURIComponent(p.pageId)}`;
-}
-
-/** Insert a “My pages” section after the first sidebar block when the user has assigned pages. */
-export function mergeAccessiblePagesIntoSidebarSections(
-  base: SidebarSectionConfig[],
-  pages: GatewayPageSummary[] | null | undefined,
-): SidebarSectionConfig[] {
-  const list = (pages ?? []).filter(
-    (p) => p.status?.toLowerCase() !== "deleted",
-  );
-  if (list.length === 0) return base;
-  const docsSection: SidebarSectionConfig = {
-    label: "My pages",
-    items: list.map((p) => ({
-      href: hrefForGatewayPage(p),
-      label: p.title,
-      icon: "LayoutTemplate",
-    })),
-  };
-  if (base.length === 0) return [docsSection];
-  return [base[0], docsSection, ...base.slice(1)];
-}
-
-/** Command palette rows for authenticated user pages (same href rules as the sidebar). */
-export function flatNavEntriesForAccessiblePages(
-  pages: GatewayPageSummary[] | null | undefined,
-): FlatNavEntry[] {
-  return (pages ?? [])
-    .filter((p) => p.status?.toLowerCase() !== "deleted")
-    .map((p) => ({
-      label: p.title,
-      href: hrefForGatewayPage(p),
-      section: "My pages",
-    }));
-}

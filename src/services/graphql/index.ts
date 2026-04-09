@@ -19,5 +19,4 @@ export * from "./campaignSatelliteService";
 export * from "./notificationsService";
 export * from "./resumeService";
 export * from "./salesNavigatorService";
-export * from "./pagesService";
 export * from "./uploadService";

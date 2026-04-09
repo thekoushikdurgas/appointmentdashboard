@@ -1,33 +1,22 @@
 /**
  * Single source of truth for auth GraphQL documents.
- * Variable shapes match `AuthMutation*` args in `graphql/generated/types.ts`
- * (`pageType` optional on login / register / refreshToken).
+ * Variable shapes match `AuthMutation*` args in `graphql/generated/types.ts`.
  */
 import { AUTH_PAYLOAD_USER_FIELDS } from "@/graphql/authSelections";
 import { USERS_PROFILE_FIELDS } from "@/graphql/usersOperations";
-
-export const AUTH_PAGE_SUMMARY_FIELDS = `
-  pageId
-  title
-  pageType
-  route
-  status
-`;
 
 const AUTH_PAYLOAD_BODY = `
   accessToken
   refreshToken
   user { ${AUTH_PAYLOAD_USER_FIELDS} }
-  pages { ${AUTH_PAGE_SUMMARY_FIELDS} }
   twoFactorRequired
   challengeToken
 `;
 
-/** @see AuthMutationLoginArgs — `$pageType` filters DocsAI pages when set. */
 export const AUTH_LOGIN_MUTATION = `
-  mutation AuthLogin($input: LoginInput!, $pageType: String) {
+  mutation AuthLogin($input: LoginInput!) {
     auth {
-      login(input: $input, pageType: $pageType) {
+      login(input: $input) {
         ${AUTH_PAYLOAD_BODY}
       }
     }
@@ -36,9 +25,9 @@ export const AUTH_LOGIN_MUTATION = `
 
 /** @see AuthMutationRegisterArgs */
 export const AUTH_REGISTER_MUTATION = `
-  mutation AuthRegister($input: RegisterInput!, $pageType: String) {
+  mutation AuthRegister($input: RegisterInput!) {
     auth {
-      register(input: $input, pageType: $pageType) {
+      register(input: $input) {
         ${AUTH_PAYLOAD_BODY}
       }
     }
@@ -47,9 +36,9 @@ export const AUTH_REGISTER_MUTATION = `
 
 /** @see AuthMutationRefreshTokenArgs */
 export const AUTH_REFRESH_MUTATION = `
-  mutation AuthRefreshToken($input: RefreshTokenInput!, $pageType: String) {
+  mutation AuthRefreshToken($input: RefreshTokenInput!) {
     auth {
-      refreshToken(input: $input, pageType: $pageType) {
+      refreshToken(input: $input) {
         ${AUTH_PAYLOAD_BODY}
       }
     }
@@ -99,9 +88,9 @@ export const AUTH_SESSION_QUERY = `
 `;
 
 export const AUTH_COMPLETE_TWO_FACTOR_MUTATION = `
-  mutation AuthCompleteTwoFactor($input: CompleteTwoFactorLoginInput!, $pageType: String) {
+  mutation AuthCompleteTwoFactor($input: CompleteTwoFactorLoginInput!) {
     auth {
-      completeTwoFactorLogin(input: $input, pageType: $pageType) {
+      completeTwoFactorLogin(input: $input) {
         ${AUTH_PAYLOAD_BODY}
       }
     }

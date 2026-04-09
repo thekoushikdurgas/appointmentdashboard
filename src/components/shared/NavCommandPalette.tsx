@@ -5,11 +5,7 @@ import { createPortal } from "react-dom";
 import { useOverlayLayer } from "@/hooks/useOverlayLayer";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import {
-  NAV_SEARCH_INDEX,
-  flatNavEntriesForAccessiblePages,
-} from "@/lib/constants";
-import { useAuth } from "@/context/AuthContext";
+import { NAV_SEARCH_INDEX } from "@/lib/constants";
 
 interface NavCommandPaletteProps {
   open: boolean;
@@ -22,12 +18,7 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
-  const { accessiblePages } = useAuth();
-
-  const navIndex = useMemo(() => {
-    const mine = flatNavEntriesForAccessiblePages(accessiblePages);
-    return [...mine, ...NAV_SEARCH_INDEX];
-  }, [accessiblePages]);
+  const navIndex = useMemo(() => NAV_SEARCH_INDEX, []);
 
   const results = query.trim()
     ? navIndex.filter((r) =>

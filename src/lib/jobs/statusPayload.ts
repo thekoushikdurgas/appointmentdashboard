@@ -8,6 +8,8 @@ export interface ParsedJobStatus {
   processed: number;
   outputFile?: string;
   error?: string;
+  /** Raw satellite status (e.g. email.server ``data.status``) when present. */
+  liveStatus?: string;
 }
 
 function num(o: Record<string, unknown>, ...keys: string[]): number | null {
@@ -29,6 +31,50 @@ function str(
   return undefined;
 }
 
+/** email.server GET /jobs/:id/status returns ``{ success, data: { progress_percent, status, ... } }``. */
+function unwrapStatusPayload(
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const inner = payload.data;
+  if (
+    inner &&
+    typeof inner === "object" &&
+    !Array.isArray(inner) &&
+    (Object.prototype.hasOwnProperty.call(inner, "progress_percent") ||
+      Object.prototype.hasOwnProperty.call(inner, "status") ||
+      Object.prototype.hasOwnProperty.call(inner, "processed_rows") ||
+      Object.prototype.hasOwnProperty.call(inner, "job_type"))
+  ) {
+    return inner as Record<string, unknown>;
+  }
+  return payload;
+}
+
+/** Map email.server status strings to dashboard tokens (``RUNNING``, ``COMPLETED``, …). */
+export function normalizeEmailSatelliteStatus(
+  raw: string | null | undefined,
+): string | undefined {
+  if (raw == null || typeof raw !== "string") return undefined;
+  const s = raw.trim().toLowerCase();
+  if (!s) return undefined;
+  const m: Record<string, string> = {
+    processing: "RUNNING",
+    running: "RUNNING",
+    pending: "PENDING",
+    queued: "PENDING",
+    paused: "PAUSED",
+    completed: "COMPLETED",
+    complete: "COMPLETED",
+    done: "COMPLETED",
+    success: "COMPLETED",
+    failed: "FAILED",
+    error: "FAILED",
+    cancelled: "CANCELLED",
+    canceled: "CANCELLED",
+  };
+  return m[s] ?? raw.trim().toUpperCase();
+}
+
 export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
   const base: ParsedJobStatus = {
     progress: 0,
@@ -38,7 +84,7 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
   if (statusPayload == null || typeof statusPayload !== "object") {
     return base;
   }
-  const p = statusPayload as Record<string, unknown>;
+  const p = unwrapStatusPayload(statusPayload as Record<string, unknown>);
 
   const progressPercent = num(
     p,
@@ -55,6 +101,8 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
     "rows_processed",
   );
   const totalRows = num(p, "total_rows", "totalRows", "total", "row_count");
+
+  const liveStatus = str(p, "status", "job_status", "state");
 
   const outputFile =
     str(
@@ -94,5 +142,6 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
     processed: processedRows ?? 0,
     outputFile,
     error,
+    ...(liveStatus ? { liveStatus } : {}),
   };
 }

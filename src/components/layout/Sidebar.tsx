@@ -31,12 +31,8 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  SIDEBAR_SECTIONS,
-  mergeAccessiblePagesIntoSidebarSections,
-} from "@/lib/constants";
+import { SIDEBAR_SECTIONS } from "@/lib/constants";
 import type { SidebarSectionConfig } from "@/lib/constants";
-import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
 import { SidebarSearch } from "@/components/shared/SidebarSearch";
 import { SidebarNav } from "./SidebarNav";
@@ -85,14 +81,12 @@ export default function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const { isSuperAdmin } = useRole();
-  const { accessiblePages } = useAuth();
 
   const visibleSections = useMemo((): SidebarSectionConfig[] => {
-    const filtered = SIDEBAR_SECTIONS.filter(
+    return SIDEBAR_SECTIONS.filter(
       (s) => !s.requiresSuperAdmin || isSuperAdmin,
     );
-    return mergeAccessiblePagesIntoSidebarSections(filtered, accessiblePages);
-  }, [isSuperAdmin, accessiblePages]);
+  }, [isSuperAdmin]);
 
   const iconFor = (key: string) => ICON_MAP[key];
 

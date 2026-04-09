@@ -15,8 +15,6 @@ import {
 import { GRAPHQL_URL } from "./config";
 import { toast } from "sonner";
 import { AUTH_REFRESH_MUTATION } from "@/graphql/authOperations";
-import { DEFAULT_AUTH_PAGE_TYPE } from "@/lib/authDefaults";
-import { notifyAuthPagesRefreshed } from "@/lib/authRefreshBridge";
 import type { GatewayAuthPayload } from "@/types/graphql-gateway";
 
 export interface GraphQLRequestOptions {
@@ -154,7 +152,6 @@ async function handleTokenRefresh(retryCount = 0): Promise<string | null> {
         auth: { refreshToken: GatewayAuthPayload };
       }>(AUTH_REFRESH_MUTATION, {
         input: { refreshToken: refreshTokenValue },
-        pageType: DEFAULT_AUTH_PAGE_TYPE,
       });
       const payload = response.auth?.refreshToken;
       const accessToken = payload?.accessToken;
@@ -162,7 +159,6 @@ async function handleTokenRefresh(retryCount = 0): Promise<string | null> {
       if (!accessToken || !newRefresh)
         throw new Error("Invalid token response");
       setTokens(accessToken, newRefresh);
-      notifyAuthPagesRefreshed(payload?.pages ?? null);
       return accessToken;
     } catch (error) {
       if (retryCount < MAX_RETRY_ATTEMPTS) {

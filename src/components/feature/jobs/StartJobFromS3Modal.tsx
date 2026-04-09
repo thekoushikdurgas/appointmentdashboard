@@ -24,6 +24,7 @@ import type {
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
 import { parseEmailServiceError } from "@/lib/emailErrors";
+import { JOBS_S3_BUCKET } from "@/lib/config";
 
 export type StartJobFromS3JobKind =
   | "email_finder"
@@ -199,12 +200,13 @@ export function StartJobFromS3Modal({
     initialVerifyProvider,
   ]);
 
+  /** Connectra import GraphQL requires s3Bucket; API uses server env for the real job — use app bucket name, not workspace UUID. */
   useEffect(() => {
-    if (!isOpen || !bucketName) return;
+    if (!isOpen) return;
     if (jobKind === "import_contact" || jobKind === "import_company") {
-      setImportBucket((prev) => prev || bucketName);
+      setImportBucket((prev) => prev.trim() || JOBS_S3_BUCKET);
     }
-  }, [isOpen, bucketName, jobKind]);
+  }, [isOpen, jobKind]);
 
   useEffect(() => {
     if (
@@ -416,12 +418,11 @@ export function StartJobFromS3Modal({
       <div className="c360-section-stack">
         {isImport && (
           <Alert variant="info" title="SuperAdmin — Connectra import">
-            Uses{" "}
-            <code className="c360-text-xs">jobs.createContact360Import</code>{" "}
-            with <code className="c360-text-xs">s3Bucket</code>,{" "}
-            <code className="c360-text-xs">s3Key</code>, optional{" "}
-            <code className="c360-text-xs">csvColumns</code> JSON for column
-            mapping.
+            <code className="c360-text-xs">s3Key</code> should be the logical key
+            from Files (e.g. <code className="c360-text-xs">upload/…</code>) —
+            the API expands it to the full object path under your workspace.
+            <code className="c360-text-xs"> s3Bucket</code> here satisfies the
+            GraphQL input; the job uses the API-configured bucket.
           </Alert>
         )}
         {error && (
@@ -453,11 +454,11 @@ export function StartJobFromS3Modal({
           </p>
         )}
         <Input
-          label="S3 object key (payload: inputCsvKey / s3Key)"
+          label="Object key (email: inputCsvKey · import: s3Key)"
           value={selectedKey}
           onChange={(e) => setSelectedKey(e.target.value)}
           placeholder="upload/example.csv"
-          helperText="Filled from the file you pick; edit if the gateway expects a different logical key."
+          helperText="Usually filled from the file picker (logical path). The API turns upload/… into the full S3 key for jobs."
         />
         {listMatch ? (
           <div className="c360-card c360-p-3 c360-text-sm">
@@ -636,15 +637,11 @@ export function StartJobFromS3Modal({
         {isImport && (
           <>
             <Input
-              label="S3 bucket (logical) *"
+              label={`S3 bucket name (preset: ${JOBS_S3_BUCKET}) *`}
               value={importBucket}
               onChange={(e) => setImportBucket(e.target.value)}
-              placeholder={bucketName ?? "Workspace bucket id"}
-              helperText={
-                bucketName
-                  ? `Default from listing: ${bucketName}`
-                  : "Loaded when the file list succeeds."
-              }
+              placeholder={JOBS_S3_BUCKET}
+              helperText="Use the shared uploads bucket name (NEXT_PUBLIC_JOBS_S3_BUCKET). Listing “bucket” in Files is your workspace id, not this field."
             />
             <div className="c360-card c360-p-3 c360-text-sm c360-section-stack">
               <p className="c360-font-medium">
@@ -694,9 +691,9 @@ export function StartJobFromS3Modal({
           placeholder="exports/"
         />
         <p className="c360-text-xs c360-text-muted">
-          Request payloads include the S3 key above, output prefix, and column
-          maps as sent to email.server (finder/verify/pattern) or Connectra{" "}
-          <code className="c360-text-xs">insert_csv_file</code>.
+          Email jobs send <code className="c360-text-xs">input_csv_key</code>;
+          Connectra import sends <code className="c360-text-xs">s3_key</code> —
+          both are normalized server-side from the logical key when needed.
         </p>
         <div className="c360-modal-actions">
           <Button variant="secondary" onClick={onClose}>

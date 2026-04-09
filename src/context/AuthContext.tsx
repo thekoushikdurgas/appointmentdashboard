@@ -20,17 +20,13 @@ import { ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/lib/constants";
 import type {
   GatewayGeolocationInput,
-  GatewayPageSummary,
   GatewayUser,
 } from "@/types/graphql-gateway";
 import { normalizeGatewayRole } from "@/types/graphql-gateway";
-import { pagesService } from "@/services/graphql/pagesService";
 import { authService } from "@/services/graphql/authService";
 import type { GeolocationInput } from "@/graphql/generated/types";
 import { AUTH_ME_QUERY, AUTH_LOGOUT_MUTATION } from "@/graphql/authOperations";
 import { buildClientGeolocationHint } from "@/lib/authGeo";
-import { DEFAULT_AUTH_PAGE_TYPE } from "@/lib/authDefaults";
-import { registerAuthPagesRefreshHandler } from "@/lib/authRefreshBridge";
 
 export interface AuthUser {
   id: string;
@@ -49,14 +45,12 @@ export interface AuthUser {
 }
 
 export interface AuthLoginOptions {
-  pageType?: string | null;
   /** When true (default), sends best-effort `geolocation` on login for gateway audit. */
   attachClientGeo?: boolean;
   geolocation?: GeolocationInput | GatewayGeolocationInput | null;
 }
 
 export interface AuthRegisterOptions {
-  pageType?: string | null;
   geolocation?: GeolocationInput | GatewayGeolocationInput | null;
 }
 
@@ -67,7 +61,6 @@ export interface TwoFactorChallenge {
 
 interface AuthContextValue {
   user: AuthUser | null;
-  accessiblePages: GatewayPageSummary[];
   loading: boolean;
   twoFactorChallenge: TwoFactorChallenge | null;
   login: (
@@ -119,9 +112,6 @@ function mergeGeo(
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [accessiblePages, setAccessiblePages] = useState<GatewayPageSummary[]>(
-    [],
-  );
   const [loading, setLoading] = useState(true);
   const [twoFactorChallenge, setTwoFactorChallenge] =
     useState<TwoFactorChallenge | null>(null);
@@ -131,7 +121,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!isAuthenticated()) {
         setUser(null);
-        setAccessiblePages([]);
         return;
       }
       const data = await graphqlQuery<MeResponse>(
@@ -142,14 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = data.auth?.me;
       if (me) {
         setUser(mapGatewayUserToAuthUser(me));
-        try {
-          const pagesData = await pagesService.getMyPages();
-          setAccessiblePages(
-            pagesData.pages.myPages.pages as GatewayPageSummary[],
-          );
-        } catch {
-          /* keep existing pages */
-        }
       } else {
         setUser(null);
       }
@@ -162,11 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser().finally(() => setLoading(false));
   }, [refreshUser]);
 
-  useEffect(() => {
-    registerAuthPagesRefreshHandler((pages) => setAccessiblePages(pages));
-    return () => registerAuthPagesRefreshHandler(null);
-  }, []);
-
   const login = async (
     email: string,
     password: string,
@@ -177,10 +153,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authService.login(
       { email, password },
       {
-        pageType:
-          options?.pageType !== undefined
-            ? options.pageType
-            : DEFAULT_AUTH_PAGE_TYPE,
         geolocation: geo ?? null,
       },
     );
@@ -202,7 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: result.user.role,
       user_type: result.user.userType,
     });
-    setAccessiblePages(result.pages);
     refreshUser().catch(() => undefined);
     router.push(ROUTES.DASHBOARD);
   };
@@ -224,7 +195,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: result.user.role,
       user_type: result.user.userType,
     });
-    setAccessiblePages(result.pages);
     refreshUser().catch(() => undefined);
     router.push(ROUTES.DASHBOARD);
   };
@@ -238,10 +208,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authService.register(
       { name, email, password },
       {
-        pageType:
-          options?.pageType !== undefined
-            ? options.pageType
-            : DEFAULT_AUTH_PAGE_TYPE,
         geolocation:
           (options?.geolocation as GeolocationInput | null | undefined) ??
           buildClientGeolocationHint() ??
@@ -256,7 +222,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: result.user.role,
       user_type: result.user.userType,
     });
-    setAccessiblePages(result.pages);
     refreshUser().catch(() => undefined);
     router.push(ROUTES.DASHBOARD);
   };
@@ -275,7 +240,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     clearTokens();
     setUser(null);
-    setAccessiblePages([]);
     toast.info("You have been signed out.");
     router.push(ROUTES.LOGIN);
   };
@@ -284,7 +248,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        accessiblePages,
         loading,
         twoFactorChallenge,
         login,

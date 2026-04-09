@@ -3,7 +3,10 @@ import type {
   CreateContact360ExportInput,
   CreateContact360ImportInput,
 } from "@/graphql/generated/types";
-import { parseStatusPayload } from "@/lib/jobs/statusPayload";
+import {
+  normalizeEmailSatelliteStatus,
+  parseStatusPayload,
+} from "@/lib/jobs/statusPayload";
 
 const JOB_FIELDS = `
   id
@@ -59,6 +62,9 @@ export interface JobRow {
 
 function mapJob(r: JobRow): Job {
   const parsed = parseStatusPayload(r.statusPayload);
+  const live = normalizeEmailSatelliteStatus(parsed.liveStatus);
+  const displayStatus =
+    r.sourceService === "email_server" && live ? live : r.status;
   const fromResponse =
     r.responsePayload &&
     typeof r.responsePayload === "object" &&
@@ -78,7 +84,7 @@ function mapJob(r: JobRow): Job {
     jobId: r.jobId,
     userId: r.userId,
     type: r.jobType,
-    status: r.status,
+    status: displayStatus,
     sourceService: r.sourceService,
     jobFamily: r.jobFamily,
     jobSubtype: r.jobSubtype,

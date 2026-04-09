@@ -18,25 +18,6 @@ export type {
   SubscriptionPlan as Subscription,
 } from "@/graphql/generated/types";
 
-// ─── Dynamic page / CMS ───────────────────────────────────────────────────────
-
-export interface DynamicPage {
-  id: string;
-  slug: string;
-  title: string;
-  description?: string;
-  featureKey: string;
-  isPublished: boolean;
-  content: DynamicPageBlock[];
-  meta: Record<string, unknown>;
-}
-
-export interface DynamicPageBlock {
-  id: string;
-  type: "text" | "chart" | "table" | "stat" | "embed";
-  data: Record<string, unknown>;
-}
-
 // ─── API response wrappers ────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {

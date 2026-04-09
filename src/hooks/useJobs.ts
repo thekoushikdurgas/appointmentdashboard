@@ -148,6 +148,19 @@ export function useJobs(
     };
   }, [cachedList, filterKey, fetchJobs]);
 
+  /** Cached dashboard mode otherwise refreshes every 5 min; email jobs need live progress. */
+  useEffect(() => {
+    if (!cachedList) return;
+    const hasActiveEmail = jobs.some(
+      (j) => j.sourceService === "email_server" && !j.isTerminal,
+    );
+    if (!hasActiveEmail) return;
+    const id = setInterval(() => {
+      void fetchJobs(true);
+    }, ACTIVE_POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [cachedList, jobs, fetchJobs]);
+
   const retry = async (jobId: string) => {
     await jobsService.retry(jobId);
     await fetchJobs(true);

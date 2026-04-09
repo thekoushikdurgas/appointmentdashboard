@@ -14,7 +14,6 @@ import {
   AUTH_REQUEST_PASSWORD_RESET_MUTATION,
   AUTH_RESET_PASSWORD_MUTATION,
 } from "@/graphql/authOperations";
-import { DEFAULT_AUTH_PAGE_TYPE } from "@/lib/authDefaults";
 
 export interface AuthCredentials {
   email: string;
@@ -28,8 +27,6 @@ export interface AuthRegisterCredentials {
 }
 
 export interface AuthMutationOptions {
-  /** When set, filters `pages` in the payload per gateway (docs | marketing | dashboard). */
-  pageType?: string | null;
   geolocation?: GeolocationInput | null;
 }
 
@@ -66,13 +63,6 @@ function mapUserInfo(u: GatewayUserInfo): UserBasic {
   };
 }
 
-function variablesForAuthMutations(pageType?: string | null): {
-  pageType: string | null;
-} {
-  const pt = pageType === undefined ? DEFAULT_AUTH_PAGE_TYPE : pageType;
-  return { pageType: pt };
-}
-
 export const authService = {
   login: async (input: AuthCredentials, options?: AuthMutationOptions) => {
     const geo = options?.geolocation ?? undefined;
@@ -82,7 +72,6 @@ export const authService = {
         password: input.password,
         ...(geo ? { geolocation: geo } : {}),
       },
-      ...variablesForAuthMutations(options?.pageType),
     };
     const data = await graphqlMutation<LoginResult>(
       AUTH_LOGIN_MUTATION,
@@ -93,14 +82,12 @@ export const authService = {
       accessToken,
       refreshToken,
       user,
-      pages,
       twoFactorRequired,
       challengeToken,
     } = data.auth.login;
     return {
       tokens: { accessToken, refreshToken },
       user: mapUserInfo(user),
-      pages: pages ?? [],
       twoFactorRequired: twoFactorRequired ?? false,
       challengeToken: challengeToken ?? null,
     };
@@ -109,7 +96,7 @@ export const authService = {
   completeTwoFactorLogin: async (
     challengeToken: string,
     code: string,
-    options?: AuthMutationOptions,
+    _options?: AuthMutationOptions,
   ) => {
     const data = await graphqlMutation<{
       auth: { completeTwoFactorLogin: GatewayAuthPayload };
@@ -117,16 +104,14 @@ export const authService = {
       AUTH_COMPLETE_TWO_FACTOR_MUTATION,
       {
         input: { challengeToken, code },
-        ...variablesForAuthMutations(options?.pageType),
       },
       { skipAuth: true, showToastOnError: false },
     );
-    const { accessToken, refreshToken, user, pages } =
+    const { accessToken, refreshToken, user } =
       data.auth.completeTwoFactorLogin;
     return {
       tokens: { accessToken, refreshToken },
       user: mapUserInfo(user),
-      pages: pages ?? [],
     };
   },
 
@@ -142,18 +127,16 @@ export const authService = {
         password: input.password,
         ...(geo ? { geolocation: geo } : {}),
       },
-      ...variablesForAuthMutations(options?.pageType),
     };
     const data = await graphqlMutation<RegisterResult>(
       AUTH_REGISTER_MUTATION,
       variables,
       { skipAuth: true, showToastOnError: true },
     );
-    const { accessToken, refreshToken, user, pages } = data.auth.register;
+    const { accessToken, refreshToken, user } = data.auth.register;
     return {
       tokens: { accessToken, refreshToken },
       user: mapUserInfo(user),
-      pages: pages ?? [],
     };
   },
 
