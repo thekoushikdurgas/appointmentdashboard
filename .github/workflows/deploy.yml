@@ -25,7 +25,8 @@ jobs:
           port: 22
           script: |
             set -e
-            cd /opt/contact360/app
+            # App repo clone on EC2 (e.g. /home/ubuntu/appointmentdashboard when EC2_USER=ubuntu)
+            cd "$HOME/appointmentdashboard"
             BRANCH="${{ github.ref_name }}"
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
