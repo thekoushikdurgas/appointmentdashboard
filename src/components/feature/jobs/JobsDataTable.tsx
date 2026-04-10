@@ -143,8 +143,14 @@ export interface JobsDataTableProps {
   onTerminateConnectra: (jobId: string) => void;
   onResume: (jobId: string) => void;
   onResumeConnectra: (jobId: string) => void;
-  /** Raw S3 object key or HTTPS URL; parent may presign keys via GraphQL. */
-  onDownloadOutput: (outputUrl: string) => void | Promise<void>;
+  /**
+   * Download completed job CSV: parent should call ``jobOutputCsvDownloadUrl`` first,
+   * then fall back to presigning ``fallbackOutput`` when needed.
+   */
+  onDownloadOutput: (
+    jobId: string,
+    fallbackOutput?: string | null,
+  ) => void | Promise<void>;
   renderDetailPanel: (jobId: string) => React.ReactNode;
 }
 
@@ -486,16 +492,17 @@ export function JobsDataTable({
                       </td>
                       <td className="c360-jobs-dt__action-cell">
                         {job.isTerminal &&
-                          isSuccessfulTerminalJobStatus(job.status) &&
-                          job.outputFile &&
-                          job.outputFile.trim().length > 0 && (
+                          isSuccessfulTerminalJobStatus(job.status) && (
                             <button
                               type="button"
                               className="c360-jobs-dt__download-icon"
                               aria-label="Download CSV"
                               title="Download CSV"
                               onClick={() =>
-                                void onDownloadOutput(job.outputFile!)
+                                void onDownloadOutput(
+                                  job.jobId,
+                                  job.outputFile ?? null,
+                                )
                               }
                             >
                               <Download size={18} strokeWidth={2} />
@@ -592,14 +599,15 @@ export function JobsDataTable({
                                 </button>
                               )}
                               {job.isTerminal &&
-                                isSuccessfulTerminalJobStatus(job.status) &&
-                                job.outputFile &&
-                                job.outputFile.trim().length > 0 && (
+                                isSuccessfulTerminalJobStatus(job.status) && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item"
                                     onClick={() =>
-                                      void onDownloadOutput(job.outputFile!)
+                                      void onDownloadOutput(
+                                        job.jobId,
+                                        job.outputFile ?? null,
+                                      )
                                     }
                                   >
                                     Download CSV
