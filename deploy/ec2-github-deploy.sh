@@ -48,9 +48,9 @@ if [ -f "$APP_DIR/docker-compose.prod.yml" ]; then
   run_docker compose -f "$APP_DIR/docker-compose.prod.yml" down --remove-orphans 2>/dev/null || true
 fi
 
-# Anything still listening on 3000 (e.g. old next-server)
+# Anything still listening on 3000 (e.g. old next-server). fuser prints PIDs to stdout — silence it.
 if command -v fuser >/dev/null 2>&1; then
-  sudo fuser -k 3000/tcp 2>/dev/null || true
+  sudo fuser -k 3000/tcp >/dev/null 2>&1 || true
 elif command -v lsof >/dev/null 2>&1; then
   for p in $(sudo lsof -t -iTCP:3000 -sTCP:LISTEN 2>/dev/null || true); do
     [ -n "${p:-}" ] || continue
@@ -63,6 +63,14 @@ elif command -v lsof >/dev/null 2>&1; then
   done
 fi
 sleep 1
+
+# Docker/npm as root often leave root-owned node_modules → npm ci EACCES
+print_step "Fix ownership of app directory (required after Docker or sudo npm)"
+if ! sudo chown -R "$(id -un):$(id -gn)" "$APP_DIR"; then
+  print_error "sudo chown failed. On the server run once (replace user/path):"
+  print_error "  sudo chown -R ubuntu:ubuntu /home/ubuntu/appointmentdashboard"
+  exit 1
+fi
 
 print_step "Preflight (Node, npm, PM2, ecosystem)"
 require_command node "Install Node and run deploy/ec2-setup.sh once."

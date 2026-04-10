@@ -18,6 +18,8 @@ Requires on the instance: **Node + npm + PM2** (run `sudo ./deploy/ec2-setup.sh`
 
 If you previously used **Docker** on the same host, this script runs **`docker compose … down`** when `docker-compose.prod.yml` exists so port **3000** is free for PM2.
 
+After Docker (or any root-owned `node_modules`), the script runs **`sudo chown -R $(whoami) $APP_DIR`** before `npm ci`. The deploy user needs **passwordless sudo** for that `chown` (or fix ownership once by hand).
+
 ## Required files in app root
 
 - `package.json`, `next.config.*`, `ecosystem.config.js` (committed in this repo).
