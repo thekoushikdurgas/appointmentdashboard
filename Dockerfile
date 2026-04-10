@@ -2,8 +2,9 @@
 # ─── Stage 1: Dependencies ───────────────────────────────────────────────────
 FROM node:22-alpine AS deps
 WORKDIR /app
+# react-simple-maps@3 peers only declare React 16–18; this app uses React 19. --legacy-peer-deps matches root .npmrc / local installs.
 COPY package.json package-lock.json* ./
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts --legacy-peer-deps
 
 # ─── Stage 2: Builder ────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
