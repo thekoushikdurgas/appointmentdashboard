@@ -33,8 +33,15 @@ jobs:
             echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
             echo "NEXT_PUBLIC_GRAPHQL_URL=${{ secrets.NEXT_PUBLIC_GRAPHQL_URL }}" >> .env.local
             echo "NEXT_PUBLIC_JOBS_S3_BUCKET=${{ secrets.NEXT_PUBLIC_JOBS_S3_BUCKET }}" >> .env.local
-            docker compose -f docker-compose.prod.yml up --build -d
-            docker image prune -f
+            # Non-interactive SSH often has a minimal PATH; Docker is usually in /usr/bin.
+            export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+            if command -v docker >/dev/null 2>&1; then
+              docker compose -f docker-compose.prod.yml up --build -d
+              docker image prune -f
+            else
+              sudo docker compose -f docker-compose.prod.yml up --build -d
+              sudo docker image prune -f
+            fi
             echo "Deployment complete: $(date)"
 
       - name: Health check
