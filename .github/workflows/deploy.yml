@@ -49,6 +49,8 @@ jobs:
                 exit 127
               fi
             }
+            # Stop/remove previous stack so host port 3000 is free (avoids "address already in use")
+            run_docker compose -f docker-compose.prod.yml down --remove-orphans
             run_docker compose -f docker-compose.prod.yml up --build -d
             run_docker image prune -f
             echo "Deployment complete: $(date)"
