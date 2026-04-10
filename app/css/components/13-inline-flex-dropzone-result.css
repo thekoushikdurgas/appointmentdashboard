@@ -36,6 +36,12 @@
   border-color: var(--c360-primary);
 }
 
+.c360-dropzone[data-busy="true"] {
+  opacity: 0.72;
+  cursor: wait;
+  pointer-events: none;
+}
+
 .c360-dropzone__icon {
   color: var(--c360-text-muted);
   margin: 0 auto var(--c360-spacing-3);

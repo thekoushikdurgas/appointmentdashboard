@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type TabsVariant = "underline" | "contained" | "filter";
+type TabsVariant = "underline" | "contained" | "filter" | "dashboard";
 
 interface TabsContextValue {
   activeTab: string;
@@ -133,7 +133,7 @@ export function TabsContent({
   if (!ctx) throw new Error("TabsContent must be inside Tabs");
   if (ctx.activeTab !== value) return null;
   return (
-    <div role="tabpanel" className={cn(className)}>
+    <div role="tabpanel" className={cn("c360-tabs__panel", className)}>
       {children}
     </div>
   );

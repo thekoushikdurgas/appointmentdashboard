@@ -37,7 +37,8 @@ type Domain =
   | "jobs"
   | "linkedin"
   | "email"
-  | "storage";
+  | "storage"
+  | "billing";
 
 type ErrWithParsed = Error & {
   parsedError?: ReturnType<typeof parseGraphQLError>;

@@ -1,51 +1,27 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Upload, Info, Copy } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { Badge } from "@/components/ui/Badge";
 import {
   billingService,
   type PaymentInstructions,
 } from "@/services/graphql/billingService";
 import { toast } from "sonner";
 import { parseOperationError } from "@/lib/errorParser";
+import { uploadPaymentReceiptImage } from "@/lib/uploadPaymentReceipt";
+import {
+  ManualPaymentInstructions,
+  ManualPaymentInstructionsFooter,
+} from "@/components/feature/billing/ManualPaymentInstructions";
+import { PaymentReceiptDropzone } from "@/components/feature/billing/PaymentReceiptDropzone";
 
 /** Avoid `| null>` in generics — TSX parses `null>` as JSX and trips no-unescaped-entities. */
 type NullableInstructions = PaymentInstructions | null;
 type NullableString = string | null;
-
-async function copyToClipboard(label: string, value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success(`${label} copied`);
-  } catch {
-    toast.error("Could not copy — try selecting the text manually.");
-  }
-}
-
-function CopyableField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="c360-detail-row">
-      <span className="c360-section-label">{label}</span>
-      <div className="c360-billing-instruction-row__value">
-        <span>{value}</span>
-        <button
-          type="button"
-          className="c360-billing-copy-btn"
-          aria-label={`Copy ${label}`}
-          title="Copy"
-          onClick={() => void copyToClipboard(label, value)}
-        >
-          <Copy size={14} strokeWidth={2} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export interface BillingPaymentProofFormProps {
   onSubmitted?: () => void;
@@ -54,17 +30,19 @@ export interface BillingPaymentProofFormProps {
 export function BillingPaymentProofForm({
   onSubmitted,
 }: BillingPaymentProofFormProps) {
-  const [instructions, setInstructions] =
-    useState<NullableInstructions>(null);
+  const [instructions, setInstructions] = useState<NullableInstructions>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(true);
   const [instructionsError, setInstructionsError] =
     useState<NullableString>(null);
 
   const [screenshotKey, setScreenshotKey] = useState("");
+  const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [creditsToAdd, setCreditsToAdd] = useState("");
   const [planTier, setPlanTier] = useState("");
   const [planPeriod, setPlanPeriod] = useState("monthly");
+  const [addonPackageId, setAddonPackageId] = useState("");
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<NullableString>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -79,7 +57,7 @@ export function BillingPaymentProofForm({
       })
       .catch((err: unknown) => {
         setInstructions(null);
-        setInstructionsError(parseOperationError(err, "jobs").userMessage);
+        setInstructionsError(parseOperationError(err, "billing").userMessage);
       })
       .finally(() => setLoadingInstructions(false));
   }, []);
@@ -88,9 +66,26 @@ export function BillingPaymentProofForm({
     void loadInstructions();
   }, [loadInstructions]);
 
+  const onPickReceiptFile = async (file: File) => {
+    setUploadingFile(true);
+    setError(null);
+    try {
+      const key = await uploadPaymentReceiptImage(file);
+      setScreenshotKey(key);
+      setReceiptFileName(file.name);
+      toast.success("Receipt uploaded — key filled in below.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!screenshotKey.trim()) {
-      setError("Screenshot S3 key is required.");
+      setError("Upload a receipt image or enter the screenshot S3 key.");
       return;
     }
     const amountNum = parseFloat(amount);
@@ -103,6 +98,17 @@ export function BillingPaymentProofForm({
       setError("Please enter a valid credits-to-add value.");
       return;
     }
+    const addon = addonPackageId.trim();
+    const tier = planTier.trim();
+    const period = planPeriod.trim();
+    if (addon && (tier || period)) {
+      setError("Use either add-on package or plan fields, not both.");
+      return;
+    }
+    if ((tier || period) && !(tier && period)) {
+      setError("Set both plan tier and period, or leave both empty.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
@@ -110,14 +116,15 @@ export function BillingPaymentProofForm({
         screenshotS3Key: screenshotKey.trim(),
         amount: amountNum,
         creditsToAdd: creditsNum,
-        planTier: planTier.trim() || undefined,
-        planPeriod: planPeriod || undefined,
+        planTier: tier || undefined,
+        planPeriod: tier && period ? period : undefined,
+        addonPackageId: addon || undefined,
       });
       setSubmitted(true);
       toast.success("Payment proof submitted — awaiting admin review.");
       onSubmitted?.();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = parseOperationError(e, "billing").userMessage;
       setError(msg);
       toast.error(msg);
     } finally {
@@ -130,7 +137,7 @@ export function BillingPaymentProofForm({
       <Card>
         <Alert variant="success" title="Proof submitted">
           Your payment proof has been submitted and is awaiting admin review.
-          You will receive credits once the payment is approved.
+          You will receive credits or your plan once the payment is approved.
         </Alert>
       </Card>
     );
@@ -139,96 +146,31 @@ export function BillingPaymentProofForm({
   return (
     <Card title="Submit payment proof">
       <div className="c360-section-stack">
-        {loadingInstructions ? (
-          <div className="c360-text-center c360-p-4">
-            <span className="c360-spinner" />
-            <p className="c360-text-muted c360-text-sm c360-mt-2">
-              Loading payment details…
-            </p>
-          </div>
-        ) : instructionsError ? (
-          <Alert variant="danger" title="Could not load payment details">
-            <p className="c360-mb-3">{instructionsError}</p>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => void loadInstructions()}
-            >
-              Retry
-            </Button>
-          </Alert>
-        ) : instructions ? (
-          <Alert variant="info" title="Pay with UPI (manual transfer)">
-            <p className="c360-text-sm c360-text-muted c360-mb-3">
-              Use these details in your UPI app, then upload your receipt
-              screenshot below.
-            </p>
-            <div className="c360-section-stack">
-              {instructions.upiId ? (
-                <div className="c360-detail-row">
-                  <span className="c360-section-label">UPI ID</span>
-                  <div className="c360-billing-instruction-row__value">
-                    <Badge color="blue">{instructions.upiId}</Badge>
-                    <button
-                      type="button"
-                      className="c360-billing-copy-btn"
-                      aria-label="Copy UPI ID"
-                      title="Copy UPI ID"
-                      onClick={() =>
-                        void copyToClipboard("UPI ID", instructions.upiId)
-                      }
-                    >
-                      <Copy size={14} strokeWidth={2} />
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-              {instructions.phoneNumber ? (
-                <CopyableField label="Phone" value={instructions.phoneNumber} />
-              ) : null}
-              {instructions.email ? (
-                <CopyableField label="Email" value={instructions.email} />
-              ) : null}
-              {!instructions.upiId &&
-                !instructions.phoneNumber &&
-                !instructions.email && (
-                  <p className="c360-text-sm c360-text-muted">
-                    No UPI ID or contact fields are set. Ask your administrator
-                    to configure payment instructions on the gateway.
-                  </p>
-                )}
-              {instructions.qrCodeDownloadUrl ? (
-                <div className="c360-pt-2">
-                  <a
-                    href={instructions.qrCodeDownloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="c360-link"
-                  >
-                    Download QR code
-                  </a>
-                </div>
-              ) : null}
-            </div>
-          </Alert>
-        ) : (
-          <Alert variant="warning" title="No payment instructions">
-            Payment instructions have not been configured by the admin yet.
-          </Alert>
-        )}
+        <ManualPaymentInstructions
+          instructions={instructions}
+          loading={loadingInstructions}
+          error={instructionsError}
+          onRetry={() => void loadInstructions()}
+        />
 
-        <div className="c360-flex c360-gap-2 c360-items-center c360-text-xs c360-text-muted">
-          <Info size={12} />
-          After paying, upload your screenshot to S3 and enter the key below.
-        </div>
+        <ManualPaymentInstructionsFooter />
 
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error ? <Alert variant="danger">{error}</Alert> : null}
+
+        <PaymentReceiptDropzone
+          uploading={uploadingFile}
+          statusLabel={
+            receiptFileName ??
+            (screenshotKey.trim() ? "Receipt ready (S3 key set)" : null)
+          }
+          onFile={(f) => void onPickReceiptFile(f)}
+        />
 
         <Input
           label="Screenshot S3 key *"
           value={screenshotKey}
           onChange={(e) => setScreenshotKey(e.target.value)}
-          placeholder="receipts/my-payment.png"
+          placeholder="Filled automatically after upload, or paste a key"
         />
         <Input
           label="Amount paid *"
@@ -245,10 +187,16 @@ export function BillingPaymentProofForm({
           placeholder="1000"
         />
         <Input
+          label="Add-on package id (optional)"
+          value={addonPackageId}
+          onChange={(e) => setAddonPackageId(e.target.value)}
+          placeholder="e.g. small — leave empty if paying for a plan"
+        />
+        <Input
           label="Plan tier (optional)"
           value={planTier}
           onChange={(e) => setPlanTier(e.target.value)}
-          placeholder="starter"
+          placeholder="e.g. 5k"
         />
         <Input
           label="Plan period"

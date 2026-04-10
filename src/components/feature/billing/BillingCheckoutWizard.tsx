@@ -1,48 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CheckCircle, Upload } from "lucide-react";
 import { applyVars } from "@/lib/applyCssVars";
-import { CheckCircle, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { Radio, RadioGroup } from "@/components/ui/Radio";
 import { Input } from "@/components/ui/Input";
+import { Alert } from "@/components/ui/Alert";
 import type { BillingPlanCard } from "./BillingPlanCards";
 import { cn } from "@/lib/utils";
+import type {
+  AddonPackage,
+  PaymentInstructions,
+} from "@/services/graphql/billingService";
+import { ManualPaymentInstructions } from "@/components/feature/billing/ManualPaymentInstructions";
+import { uploadPaymentReceiptImage } from "@/lib/uploadPaymentReceipt";
+import { PaymentReceiptDropzone } from "@/components/feature/billing/PaymentReceiptDropzone";
+import { toast } from "sonner";
 
-const CHECKOUT_STEPS = ["Select Plan", "Payment Method", "Confirm"];
-
-interface BillingCheckoutWizardProps {
-  plans: BillingPlanCard[];
-  effectivePlan: string;
-  selectedPlanId: string | null;
-  onSelectPlan: (id: string) => void;
-  onConfirm: (planId: string, period: string) => Promise<void>;
-}
+const STEPS = ["Product", "Pay (UPI)", "Receipt"];
 
 type BillingPeriod = "monthly" | "quarterly" | "yearly";
 
+export interface BillingCheckoutWizardProps {
+  plans: BillingPlanCard[];
+  addons: AddonPackage[];
+  effectivePlan: string;
+  selectedPlanId: string | null;
+  onSelectPlan: (id: string) => void;
+  paymentInstructions: PaymentInstructions | null;
+  paymentInstructionsLoading: boolean;
+  paymentInstructionsError: string | null;
+  onRetryPaymentInstructions: () => void;
+  onSubmitPaymentRequest: (payload: {
+    amount: number;
+    screenshotS3Key: string;
+    creditsToAdd: number;
+    planTier?: string;
+    planPeriod?: string;
+    addonPackageId?: string;
+  }) => Promise<void>;
+}
+
 export function BillingCheckoutWizard({
   plans,
+  addons,
   effectivePlan,
   selectedPlanId,
   onSelectPlan,
-  onConfirm,
+  paymentInstructions,
+  paymentInstructionsLoading,
+  paymentInstructionsError,
+  onRetryPaymentInstructions,
+  onSubmitPaymentRequest,
 }: BillingCheckoutWizardProps) {
   const [step, setStep] = useState(1);
+  const [checkoutKind, setCheckoutKind] = useState<"plan" | "addon">("plan");
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [selectedAddonId, setSelectedAddonId] = useState<string | null>(null);
+  const [screenshotKey, setScreenshotKey] = useState("");
+  const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedPlanId) {
+      setCheckoutKind("plan");
+    }
+  }, [selectedPlanId]);
 
   const selectedPlanData = plans.find((p) => p.id === selectedPlanId);
+  const selectedAddon = addons.find((a) => a.id === selectedAddonId);
 
   const priceForPeriod = (
-    p: (typeof plans)[0] | undefined,
+    p: BillingPlanCard | undefined,
     period: BillingPeriod,
   ) => {
     if (!p) return null;
@@ -51,26 +85,115 @@ export function BillingCheckoutWizard({
     return period === "monthly" ? p.price : null;
   };
 
-  const handleNext = async () => {
-    if (step < 3) {
-      setStep((s) => s + 1);
-      return;
+  const creditsForPeriod = (
+    p: BillingPlanCard | undefined,
+    period: BillingPeriod,
+  ) => {
+    if (!p) return null;
+    const c = p.creditsByPeriod?.[period];
+    return typeof c === "number" && Number.isFinite(c) ? c : null;
+  };
+
+  const derivedAmount = (): number | null => {
+    if (checkoutKind === "plan" && selectedPlanData) {
+      return priceForPeriod(selectedPlanData, billingPeriod);
     }
-    if (!selectedPlanId) return;
-    setLoading(true);
-    try {
-      await onConfirm(selectedPlanId, billingPeriod);
-      setStep(1);
-    } finally {
-      setLoading(false);
+    if (checkoutKind === "addon" && selectedAddon) {
+      return selectedAddon.price;
+    }
+    return null;
+  };
+
+  const derivedCredits = (): number | null => {
+    if (checkoutKind === "plan" && selectedPlanData) {
+      return creditsForPeriod(selectedPlanData, billingPeriod);
+    }
+    if (checkoutKind === "addon" && selectedAddon) {
+      return selectedAddon.credits;
+    }
+    return null;
+  };
+
+  const canAdvanceFromStep1 =
+    checkoutKind === "plan"
+      ? Boolean(selectedPlanId && selectedPlanId !== effectivePlan)
+      : Boolean(selectedAddonId);
+
+  const handleNext = () => {
+    setFormError(null);
+    if (step < 3) {
+      if (step === 1 && !canAdvanceFromStep1) return;
+      setStep((s) => s + 1);
     }
   };
 
+  const onPickReceiptFile = async (file: File) => {
+    setUploadingFile(true);
+    setFormError(null);
+    try {
+      const key = await uploadPaymentReceiptImage(file);
+      setScreenshotKey(key);
+      setReceiptFileName(file.name);
+      toast.success("Receipt uploaded.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setFormError(msg);
+      toast.error(msg);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const amt = derivedAmount();
+    const creds = derivedCredits();
+    if (amt == null || creds == null) {
+      setFormError("Could not read amount or credits from your selection.");
+      return;
+    }
+    if (!screenshotKey.trim()) {
+      setFormError("Upload a receipt image or enter the S3 key.");
+      return;
+    }
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await onSubmitPaymentRequest({
+        amount: amt,
+        screenshotS3Key: screenshotKey.trim(),
+        creditsToAdd: creds,
+        planTier:
+          checkoutKind === "plan" && selectedPlanId
+            ? selectedPlanId
+            : undefined,
+        planPeriod:
+          checkoutKind === "plan" && selectedPlanId ? billingPeriod : undefined,
+        addonPackageId:
+          checkoutKind === "addon" && selectedAddonId
+            ? selectedAddonId
+            : undefined,
+      });
+      setStep(1);
+      setScreenshotKey("");
+      setReceiptFileName(null);
+      setSelectedAddonId(null);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const upgradePlans = plans.filter((p) => p.id !== effectivePlan);
+
   return (
-    <Card title="Checkout" subtitle="Complete your plan upgrade">
+    <Card
+      title="Checkout (manual UPI)"
+      subtitle="Choose a plan or add-on, pay via UPI, then submit proof for admin approval"
+    >
       <div className="c360-mb-6">
         <div className="c360-wizard-step-row">
-          {CHECKOUT_STEPS.map((label, i) => (
+          {STEPS.map((label, i) => (
             <div key={label} className="c360-wizard-step-col">
               <div
                 className={cn(
@@ -97,173 +220,189 @@ export function BillingCheckoutWizard({
 
       {step === 1 && (
         <div>
-          <p className="c360-page-subtitle c360-mb-4">
-            Choose the plan you want to upgrade to:
+          <p className="c360-page-subtitle c360-mb-3">
+            What are you paying for?
           </p>
           <RadioGroup
-            name="billing-period"
+            name="checkout-kind"
             horizontal
-            value={billingPeriod}
-            onChange={(v) => setBillingPeriod(v as BillingPeriod)}
+            value={checkoutKind}
+            onChange={(v) => {
+              setCheckoutKind(v as "plan" | "addon");
+              setFormError(null);
+            }}
             className="c360-mb-4"
           >
-            <Radio value="monthly" label="Monthly" />
-            <Radio value="quarterly" label="Quarterly" />
-            <Radio value="yearly" label="Yearly" />
+            <Radio value="plan" label="Upgrade plan" />
+            <Radio value="addon" label="Add-on credits" />
           </RadioGroup>
-          <div className="c360-section-stack">
-            {plans
-              .filter((p) => p.id !== effectivePlan)
-              .map((p) => (
+
+          {checkoutKind === "plan" && (
+            <>
+              <RadioGroup
+                name="billing-period-checkout"
+                horizontal
+                value={billingPeriod}
+                onChange={(v) => setBillingPeriod(v as BillingPeriod)}
+                className="c360-mb-4"
+              >
+                <Radio value="monthly" label="Monthly" />
+                <Radio value="quarterly" label="Quarterly" />
+                <Radio value="yearly" label="Yearly" />
+              </RadioGroup>
+              <div className="c360-section-stack">
+                {upgradePlans.map((p) => (
+                  <div
+                    key={p.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onSelectPlan(p.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectPlan(p.id);
+                      }
+                    }}
+                    className={cn(
+                      "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
+                      selectedPlanId === p.id &&
+                        "c360-billing-checkout-plan-row--selected",
+                    )}
+                  >
+                    <div
+                      className="c360-billing-checkout-plan-icon"
+                      ref={(el) =>
+                        applyVars(el, {
+                          "--c360-billing-plan-icon-bg": p.bg,
+                          "--c360-billing-plan-icon-fg": p.color,
+                        })
+                      }
+                    >
+                      {p.icon}
+                    </div>
+                    <div className="c360-flex-1">
+                      <div className="c360-font-semibold">{p.name}</div>
+                      <div className="c360-dropzone__hint">
+                        {(() => {
+                          const pr = priceForPeriod(p, billingPeriod);
+                          const cr = creditsForPeriod(p, billingPeriod);
+                          if (typeof pr === "number")
+                            return `$${pr.toFixed(2)} · ${cr != null ? `${cr.toLocaleString()} credits` : "credits from catalog"}`;
+                          return typeof p.price === "number"
+                            ? `$${p.price}/mo`
+                            : "See summary on next step";
+                        })()}
+                      </div>
+                    </div>
+                    {selectedPlanId === p.id && (
+                      <CheckCircle size={18} color="var(--c360-primary)" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {checkoutKind === "addon" && (
+            <div className="c360-section-stack">
+              {addons.map((a) => (
                 <div
-                  key={p.id}
-                  onClick={() => onSelectPlan(p.id)}
+                  key={a.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedAddonId(a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedAddonId(a.id);
+                    }
+                  }}
                   className={cn(
                     "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
-                    selectedPlanId === p.id &&
+                    selectedAddonId === a.id &&
                       "c360-billing-checkout-plan-row--selected",
                   )}
                 >
-                  <div
-                    className="c360-billing-checkout-plan-icon"
-                    ref={(el) =>
-                      applyVars(el, {
-                        "--c360-billing-plan-icon-bg": p.bg,
-                        "--c360-billing-plan-icon-fg": p.color,
-                      })
-                    }
-                  >
-                    {p.icon}
-                  </div>
                   <div className="c360-flex-1">
-                    <div className="c360-font-semibold">{p.name}</div>
+                    <div className="c360-font-semibold">{a.name}</div>
                     <div className="c360-dropzone__hint">
-                      {(() => {
-                        const pr = priceForPeriod(p, billingPeriod);
-                        if (typeof pr === "number")
-                          return `$${pr.toFixed(2)}/${billingPeriod === "monthly" ? "mo" : billingPeriod === "quarterly" ? "qtr" : "yr"}`;
-                        return typeof p.price === "number"
-                          ? `$${p.price}/mo`
-                          : "Custom";
-                      })()}
+                      ${a.price.toFixed(2)} · {a.credits.toLocaleString()}{" "}
+                      credits
                     </div>
                   </div>
-                  {selectedPlanId === p.id && (
+                  {selectedAddonId === a.id && (
                     <CheckCircle size={18} color="var(--c360-primary)" />
                   )}
                 </div>
               ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
       {step === 2 && (
-        <div>
-          <div className="c360-flex c360-gap-3 c360-mb-4">
-            {["card", "bank_transfer"].map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setPaymentMethod(m)}
-                className={cn(
-                  "c360-type-btn c360-p-4",
-                  paymentMethod === m && "c360-type-btn--active",
-                )}
-              >
-                {m === "card" ? "Credit / Debit Card" : "Bank Transfer"}
-              </button>
-            ))}
-          </div>
-          {paymentMethod === "card" && (
-            <div className="c360-section-stack">
-              <Input
-                label="Card Number"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(e.target.value)}
-                placeholder="1234 5678 9012 3456"
-                maxLength={19}
-              />
-              <Input
-                label="Cardholder Name"
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                placeholder="John Doe"
-              />
-              <div className="c360-form-grid">
-                <Input
-                  label="Expiry"
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  placeholder="MM/YY"
-                />
-                <Input
-                  label="CVV"
-                  value={cardCvv}
-                  onChange={(e) => setCardCvv(e.target.value)}
-                  placeholder="123"
-                  maxLength={4}
-                />
-              </div>
-            </div>
-          )}
-          {paymentMethod === "bank_transfer" && (
-            <div className="c360-result-box c360-result-box--neutral">
+        <div className="c360-section-stack">
+          <div className="c360-result-box c360-result-box--neutral">
+            <p className="c360-text-sm c360-mb-1">
+              <strong>Your selection</strong>
+            </p>
+            {checkoutKind === "plan" && selectedPlanData ? (
               <p className="c360-page-subtitle">
-                Use UPI or bank details from the Billing → Plans tab (payment
-                instructions from your workspace), or complete payment proof
-                there after transfer.
+                {selectedPlanData.name} ({billingPeriod}) —{" "}
+                <strong>
+                  ${derivedAmount() != null ? derivedAmount()!.toFixed(2) : "—"}
+                </strong>
+                {derivedCredits() != null
+                  ? ` · ${derivedCredits()!.toLocaleString()} credits`
+                  : null}
               </p>
-            </div>
-          )}
+            ) : checkoutKind === "addon" && selectedAddon ? (
+              <p className="c360-page-subtitle">
+                {selectedAddon.name} —{" "}
+                <strong>${selectedAddon.price.toFixed(2)}</strong> ·{" "}
+                {selectedAddon.credits.toLocaleString()} credits
+              </p>
+            ) : (
+              <p className="c360-text-muted c360-text-sm">Nothing selected.</p>
+            )}
+          </div>
+          <ManualPaymentInstructions
+            embedded
+            instructions={paymentInstructions}
+            loading={paymentInstructionsLoading}
+            error={paymentInstructionsError}
+            onRetry={onRetryPaymentInstructions}
+          />
         </div>
       )}
 
-      {step === 3 && selectedPlanData && (
-        <div className="c360-text-center c360-billing-checkout-confirm-wrap">
-          <div className="c360-billing-checkout-confirm-icon-circle">
-            <Zap size={28} color="var(--c360-primary)" />
-          </div>
-          <h3 className="c360-billing-checkout-confirm-title">
-            Confirm your upgrade
-          </h3>
-          <p className="c360-page-subtitle c360-mb-4">
-            You&apos;re upgrading to <strong>{selectedPlanData.name}</strong>
-            {priceForPeriod(selectedPlanData, billingPeriod) != null ? (
-              <>
-                {" "}
-                (
-                <strong>
-                  {billingPeriod === "monthly"
-                    ? "Monthly"
-                    : billingPeriod === "quarterly"
-                      ? "Quarterly"
-                      : "Yearly"}
-                </strong>
-                ) for{" "}
-                <strong>
-                  ${priceForPeriod(selectedPlanData, billingPeriod)?.toFixed(2)}
-                </strong>
-              </>
-            ) : selectedPlanData.price !== null ? (
-              <>
-                {" "}
-                for <strong>${selectedPlanData.price}/month</strong>
-              </>
-            ) : (
-              <> — pricing from your workspace admin.</>
-            )}
+      {step === 3 && (
+        <div className="c360-section-stack">
+          <p className="c360-page-subtitle c360-mb-2">
+            Upload your payment receipt. Amount and credits are taken from your
+            selection:{" "}
+            <strong>
+              ${derivedAmount() != null ? derivedAmount()!.toFixed(2) : "—"} /{" "}
+              {derivedCredits() != null
+                ? `${derivedCredits()!.toLocaleString()} credits`
+                : "—"}
+            </strong>
           </p>
-          <div className="c360-result-box c360-result-box--neutral c360-text-left c360-mb-4">
-            {selectedPlanData.features.map((f) => (
-              <div
-                key={f}
-                className="c360-flex c360-items-center c360-gap-2 c360-billing-checkout-feature-row"
-              >
-                <CheckCircle size={14} color="var(--c360-success)" />
-                {f}
-              </div>
-            ))}
-          </div>
+          {formError ? <Alert variant="danger">{formError}</Alert> : null}
+          <PaymentReceiptDropzone
+            uploading={uploadingFile}
+            statusLabel={
+              receiptFileName ??
+              (screenshotKey.trim() ? "Receipt ready (S3 key set)" : null)
+            }
+            onFile={(f) => void onPickReceiptFile(f)}
+          />
+          <Input
+            label="Screenshot S3 key *"
+            value={screenshotKey}
+            onChange={(e) => setScreenshotKey(e.target.value)}
+            placeholder="Auto-filled after upload"
+          />
         </div>
       )}
 
@@ -273,13 +412,22 @@ export function BillingCheckoutWizard({
             Back
           </Button>
         )}
-        <Button
-          loading={loading}
-          disabled={step === 1 && !selectedPlanId}
-          onClick={handleNext}
-        >
-          {step === 3 ? "Confirm & Pay" : "Next"}
-        </Button>
+        {step < 3 ? (
+          <Button
+            disabled={step === 1 && !canAdvanceFromStep1}
+            onClick={() => void handleNext()}
+          >
+            Next
+          </Button>
+        ) : (
+          <Button
+            loading={submitting}
+            leftIcon={<Upload size={14} />}
+            onClick={() => void handleSubmit()}
+          >
+            Submit payment request
+          </Button>
+        )}
       </div>
     </Card>
   );

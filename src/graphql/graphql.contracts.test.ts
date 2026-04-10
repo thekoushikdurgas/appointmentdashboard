@@ -45,6 +45,7 @@ describe("GraphQL operation contracts (static)", () => {
     expect(s).toContain("subscriptionStatus");
     expect(s).toContain("upiId");
     expect(s).toContain("paymentSubmissions(status:");
+    expect(s).toContain("myPaymentSubmissions(status:");
     expect(s).toContain("approvePayment(submissionId:");
     expect(s).toContain("declinePayment(input:");
     expect(s).toContain("UpdatePaymentInstructionsInput");

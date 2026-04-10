@@ -1,5 +1,6 @@
 import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
 
+/** Wallet + plan; API returns unlimited-style values only for SuperAdmin. */
 export interface BillingInfoRow {
   credits: number;
   creditsUsed: number;
@@ -82,6 +83,10 @@ export interface PaymentInstructions {
   qrCodeS3Key?: string | null;
   qrCodeBucketId?: string | null;
   qrCodeDownloadUrl?: string | null;
+}
+
+export interface PaymentReceiptUploadResult {
+  fileKey: string;
 }
 
 export interface PaymentSubmission {
@@ -240,6 +245,32 @@ const PAYMENT_INSTRUCTIONS_QUERY = `query PaymentInstructions {
   }
 }`;
 
+const MY_PAYMENT_SUBMISSIONS_QUERY = `query MyPaymentSubmissions($status: String, $limit: Int!, $offset: Int!) {
+  billing {
+    myPaymentSubmissions(status: $status, limit: $limit, offset: $offset) {
+      items {
+        id
+        amount
+        screenshotS3Key
+        creditsToAdd
+        status
+        planTier
+        planPeriod
+        addonPackageId
+        createdAt
+        reviewedAt
+        declineReason
+        screenshotDownloadUrl
+      }
+      total
+      limit
+      offset
+      hasNext
+      hasPrevious
+    }
+  }
+}`;
+
 const PAYMENT_SUBMISSIONS_QUERY = `query PaymentSubmissions($status: String, $limit: Int!, $offset: Int!) {
   billing {
     paymentSubmissions(status: $status, limit: $limit, offset: $offset) {
@@ -380,6 +411,14 @@ const DECLINE_PAYMENT = `mutation DeclinePayment($input: DeclinePaymentInput!) {
   }
 }`;
 
+const UPLOAD_PAYMENT_RECEIPT_PHOTO = `mutation UploadPaymentReceiptPhoto($input: UploadPaymentReceiptPhotoInput!) {
+  billing {
+    uploadPaymentReceiptPhoto(input: $input) {
+      fileKey
+    }
+  }
+}`;
+
 const SUBMIT_PAYMENT_PROOF = `mutation SubmitPaymentProof($input: SubmitPaymentProofInput!) {
   billing {
     submitPaymentProof(input: $input) {
@@ -427,6 +466,19 @@ export const billingService = {
     graphqlQuery<{
       billing: { paymentInstructions: PaymentInstructions | null };
     }>(PAYMENT_INSTRUCTIONS_QUERY),
+
+  getMyPaymentSubmissions: (args?: {
+    status?: string | null;
+    limit?: number;
+    offset?: number;
+  }) =>
+    graphqlQuery<{
+      billing: { myPaymentSubmissions: PaymentSubmissionConnection };
+    }>(MY_PAYMENT_SUBMISSIONS_QUERY, {
+      status: args?.status ?? null,
+      limit: args?.limit ?? 50,
+      offset: args?.offset ?? 0,
+    }),
 
   getPaymentSubmissions: (args?: {
     status?: string | null;
@@ -528,6 +580,14 @@ export const billingService = {
       DECLINE_PAYMENT,
       { input },
     ),
+
+  uploadPaymentReceiptPhoto: (input: {
+    imageBase64: string;
+    mimeType: string;
+  }) =>
+    graphqlMutation<{
+      billing: { uploadPaymentReceiptPhoto: PaymentReceiptUploadResult };
+    }>(UPLOAD_PAYMENT_RECEIPT_PHOTO, { input }),
 
   submitPaymentProof: (input: {
     amount: number;

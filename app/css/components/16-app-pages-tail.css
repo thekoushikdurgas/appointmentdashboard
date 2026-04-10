@@ -1196,6 +1196,9 @@
   background: var(--c360-surface-hover, rgba(0, 0, 0, 0.06));
   color: var(--c360-text);
 }
+.c360-billing-request-row {
+  border: 1px solid var(--c360-border);
+}
 .c360-code-inline {
   font-family: monospace;
   font-size: var(--c360-text-xs);

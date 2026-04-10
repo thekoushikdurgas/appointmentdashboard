@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Star,
   CreditCard,
@@ -8,14 +8,19 @@ import {
   History,
   Package,
   Upload,
+  ClipboardList,
 } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Badge } from "@/components/ui/Badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useRole } from "@/context/RoleContext";
-import { billingService } from "@/services/graphql/billingService";
+import {
+  billingService,
+  type PaymentInstructions,
+} from "@/services/graphql/billingService";
 import { useBilling } from "@/hooks/useBilling";
 import { toast } from "sonner";
+import { parseOperationError } from "@/lib/errorParser";
 import {
   BillingPlanCards,
   type BillingPlanCard,
@@ -24,8 +29,12 @@ import { BillingCheckoutWizard } from "@/components/feature/billing/BillingCheck
 import { BillingInvoiceList } from "@/components/feature/billing/BillingInvoiceList";
 import { BillingCreditSummary } from "@/components/feature/billing/BillingCreditSummary";
 import { BillingPaymentProofForm } from "@/components/feature/billing/BillingPaymentProofForm";
+import { BillingMyPaymentRequests } from "@/components/feature/billing/BillingMyPaymentRequests";
 import type { InvoiceData } from "@/components/shared/InvoiceCard";
 import { Progress } from "@/components/ui/Progress";
+import { Alert } from "@/components/ui/Alert";
+
+const SUBSCRIPTION_END_WARNING_DAYS = 7;
 
 const SAMPLE_INVOICE: InvoiceData = {
   invoiceNumber: "INV-2026-0042",
@@ -67,7 +76,6 @@ export default function BillingPage() {
     invoicePageSize,
     setInvoicePage,
     loading: billingLoading,
-    subscribe: hookSubscribe,
     purchaseAddon: hookPurchaseAddon,
     refresh: refreshBilling,
   } = useBilling();
@@ -98,6 +106,11 @@ export default function BillingPage() {
             quarterly: quarterly?.price,
             yearly: yearly?.price,
           },
+          creditsByPeriod: {
+            monthly: monthly?.credits,
+            quarterly: quarterly?.credits,
+            yearly: yearly?.credits,
+          },
           features,
           bg: a.bg,
           color: a.color,
@@ -114,6 +127,28 @@ export default function BillingPage() {
   const [activeTab, setActiveTab] = useState("plans");
   const [purchasingAddon, setPurchasingAddon] = useState<string | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [paymentInstructions, setPaymentInstructions] =
+    useState<PaymentInstructions | null>(null);
+  const [payInstrLoading, setPayInstrLoading] = useState(true);
+  const [payInstrError, setPayInstrError] = useState<string | null>(null);
+  const [requestsRefresh, setRequestsRefresh] = useState(0);
+
+  const loadPaymentInstructions = useCallback(() => {
+    setPayInstrLoading(true);
+    setPayInstrError(null);
+    billingService
+      .getPaymentInstructions()
+      .then((r) => setPaymentInstructions(r.billing.paymentInstructions))
+      .catch((err: unknown) => {
+        setPaymentInstructions(null);
+        setPayInstrError(parseOperationError(err, "billing").userMessage);
+      })
+      .finally(() => setPayInstrLoading(false));
+  }, []);
+
+  useEffect(() => {
+    void loadPaymentInstructions();
+  }, [loadPaymentInstructions]);
 
   useEffect(() => {
     if (billingInfo) {
@@ -124,19 +159,44 @@ export default function BillingPage() {
 
   const effectivePlan = (livePlan ?? plan).toLowerCase();
 
+  const subscriptionPeriodBanner = useMemo(() => {
+    if (!billingInfo?.subscriptionEndsAt) return null;
+    const tier = (billingInfo.subscriptionPlan || "free").toLowerCase();
+    if (tier === "free" || tier === "unlimited") return null;
+    const end = new Date(billingInfo.subscriptionEndsAt);
+    if (Number.isNaN(end.getTime())) return null;
+    const daysLeft = Math.ceil((end.getTime() - Date.now()) / 86400000);
+    return { end, daysLeft };
+  }, [billingInfo]);
+
   const handleSelectPlan = (planId: string) => {
     setSelectedPlanId(planId);
     setActiveTab("checkout");
   };
 
-  const handleCheckoutConfirm = async (planId: string, period: string) => {
-    await hookSubscribe(planId, period);
-    toast.success("Subscription updated successfully!");
+  const handleSubmitPaymentRequest = async (payload: {
+    amount: number;
+    screenshotS3Key: string;
+    creditsToAdd: number;
+    planTier?: string;
+    planPeriod?: string;
+    addonPackageId?: string;
+  }) => {
+    await billingService.submitPaymentProof({
+      amount: payload.amount,
+      screenshotS3Key: payload.screenshotS3Key,
+      creditsToAdd: payload.creditsToAdd,
+      planTier: payload.planTier,
+      planPeriod: payload.planPeriod,
+      addonPackageId: payload.addonPackageId,
+    });
+    toast.success(
+      "Payment request submitted. An admin will review and apply your plan or credits.",
+    );
     await refreshBilling();
-    const d = await billingService.getBillingInfo();
-    setLivePlan(d.billing.billing.subscriptionPlan);
-    setActiveTab("plans");
+    setRequestsRefresh((k) => k + 1);
     setSelectedPlanId(null);
+    setActiveTab("requests");
   };
 
   const handlePurchaseAddon = async (packageId: string) => {
@@ -182,6 +242,49 @@ export default function BillingPage() {
               <Progress value={billingInfo.usagePercentage} />
             </div>
           )}
+          {subscriptionPeriodBanner && (
+            <div className="c360-mt-3 c360-max-w-720">
+              <Alert
+                variant={
+                  subscriptionPeriodBanner.daysLeft <=
+                  SUBSCRIPTION_END_WARNING_DAYS
+                    ? "warning"
+                    : "info"
+                }
+                title="Current billing period"
+              >
+                <p className="c360-m-0">
+                  Your paid period ends on{" "}
+                  <strong>
+                    {subscriptionPeriodBanner.end.toLocaleDateString(
+                      undefined,
+                      {
+                        dateStyle: "long",
+                      },
+                    )}
+                  </strong>
+                  {subscriptionPeriodBanner.daysLeft >= 0 &&
+                    subscriptionPeriodBanner.daysLeft <=
+                      SUBSCRIPTION_END_WARNING_DAYS && (
+                      <>
+                        {" "}
+                        (
+                        {subscriptionPeriodBanner.daysLeft === 0
+                          ? "last day"
+                          : `${subscriptionPeriodBanner.daysLeft} day${
+                              subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
+                            } left`}
+                        ).
+                      </>
+                    )}
+                </p>
+                <p className="c360-mt-2 c360-mb-0 c360-text-muted c360-text-sm">
+                  When this period ends, your plan returns to Free and any
+                  remaining plan credits and add-on balance are reset to zero.
+                </p>
+              </Alert>
+            </div>
+          )}
         </div>
         <div className="c360-billing-page__header-aside">
           {billingLoading && <span className="c360-spinner c360-spinner--20" />}
@@ -195,13 +298,16 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} variant="dashboard">
         <TabsList>
           <TabsTrigger value="plans" icon={<Star size={14} />}>
             Plans
           </TabsTrigger>
           <TabsTrigger value="checkout" icon={<CreditCard size={14} />}>
             Checkout
+          </TabsTrigger>
+          <TabsTrigger value="requests" icon={<ClipboardList size={14} />}>
+            Requests
           </TabsTrigger>
           <TabsTrigger value="invoice" icon={<Receipt size={14} />}>
             Invoice
@@ -233,11 +339,20 @@ export default function BillingPage() {
         <TabsContent value="checkout">
           <BillingCheckoutWizard
             plans={PLANS}
+            addons={addons}
             effectivePlan={effectivePlan}
             selectedPlanId={selectedPlanId}
             onSelectPlan={setSelectedPlanId}
-            onConfirm={handleCheckoutConfirm}
+            paymentInstructions={paymentInstructions}
+            paymentInstructionsLoading={payInstrLoading}
+            paymentInstructionsError={payInstrError}
+            onRetryPaymentInstructions={() => void loadPaymentInstructions()}
+            onSubmitPaymentRequest={handleSubmitPaymentRequest}
           />
+        </TabsContent>
+
+        <TabsContent value="requests">
+          <BillingMyPaymentRequests refreshKey={requestsRefresh} />
         </TabsContent>
 
         <TabsContent value="invoice">
@@ -270,7 +385,12 @@ export default function BillingPage() {
         </TabsContent>
 
         <TabsContent value="payment-proof">
-          <BillingPaymentProofForm onSubmitted={() => void refreshBilling()} />
+          <BillingPaymentProofForm
+            onSubmitted={() => {
+              void refreshBilling();
+              setRequestsRefresh((k) => k + 1);
+            }}
+          />
         </TabsContent>
       </Tabs>
     </DashboardPageLayout>

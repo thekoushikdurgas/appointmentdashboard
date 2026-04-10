@@ -45,6 +45,36 @@
   font-weight: 600;
 }
 
+.c360-tabs__tab:focus-visible {
+  outline: 2px solid var(--c360-primary);
+  outline-offset: 2px;
+}
+
+/* Panel region below tab list (vertical rhythm comes from .c360-tabs gap) */
+.c360-tabs__panel {
+  width: 100%;
+  align-self: stretch;
+}
+
+/* Dashboard: full-width strip, start-aligned tabs, horizontal scroll when many labels */
+.c360-tabs--dashboard {
+  align-items: stretch;
+  width: 100%;
+}
+.c360-tabs--dashboard .c360-tabs__list {
+  width: 100%;
+  max-width: 100%;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.c360-tabs--dashboard .c360-tabs__tab {
+  flex-shrink: 0;
+}
+
 /* Contained variant */
 .c360-tabs--contained .c360-tabs__list {
   border-bottom: none;
