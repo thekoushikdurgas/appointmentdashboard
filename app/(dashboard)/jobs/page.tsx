@@ -67,41 +67,12 @@ async function openSchedulerExportDownload(output: string): Promise<void> {
   }
 }
 
-/** Prefer server-derived presign from job payloads; fall back to S3 presign of ``outputFile``. */
-async function openJobOutputDownload(
-  jobId: string,
-  fallbackOutput?: string | null,
-): Promise<void> {
-  try {
-    const url = await jobsService.getJobOutputCsvDownloadUrl(jobId);
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-      return;
-    }
-  } catch (e) {
-    if (fallbackOutput?.trim()) {
-      await openSchedulerExportDownload(fallbackOutput.trim());
-      return;
-    }
-    toast.error(parseOperationError(e, "jobs").userMessage);
-    return;
-  }
-  if (fallbackOutput?.trim()) {
-    await openSchedulerExportDownload(fallbackOutput.trim());
-    return;
-  }
-  toast.error("No download link available for this job yet.");
-}
-
 function JobDetailPanel({
   jobId,
-  onRequestDownload,
+  onDownload,
 }: {
   jobId: string;
-  onRequestDownload: (
-    jobId: string,
-    fallbackOutput?: string | null,
-  ) => void | Promise<void>;
+  onDownload: (output: string) => void | Promise<void>;
 }) {
   const { job, loading, error, polling } = useJobDetail(jobId);
 
@@ -126,7 +97,10 @@ function JobDetailPanel({
     isSuccessfulTerminalJobStatus(job.status) && job.progress === 0
       ? 100
       : job.progress;
-  const canDownload = isSuccessfulTerminalJobStatus(job.status);
+  const canDownload =
+    job.outputFile &&
+    job.outputFile.trim().length > 0 &&
+    isSuccessfulTerminalJobStatus(job.status);
 
   return (
     <div className="c360-job-detail-panel">
@@ -205,6 +179,14 @@ function JobDetailPanel({
             <dd className="c360-font-mono c360-text-xs">{job.inputFile}</dd>
           </div>
         )}
+        {job.exportOutputBasePath && (
+          <div className="c360-job-detail-full">
+            <dt>Export output folder</dt>
+            <dd className="c360-font-mono c360-text-xs">
+              {job.exportOutputBasePath}
+            </dd>
+          </div>
+        )}
         {job.outputFile && (
           <div className="c360-job-detail-full">
             <dt>Output file</dt>
@@ -218,9 +200,7 @@ function JobDetailPanel({
                   variant="secondary"
                   size="sm"
                   leftIcon={<Download size={16} />}
-                  onClick={() =>
-                    void onRequestDownload(job.jobId, job.outputFile ?? null)
-                  }
+                  onClick={() => void onDownload(job.outputFile!)}
                 >
                   Download CSV
                 </Button>
@@ -461,13 +441,13 @@ export default function JobsPage() {
             onTerminateConnectra={(jobId) => void terminateConnectra(jobId)}
             onResume={(jobId) => void resume(jobId)}
             onResumeConnectra={(jobId) => void resumeConnectra(jobId)}
-            onDownloadOutput={(jid, fallback) =>
-              void openJobOutputDownload(jid, fallback)
+            onDownloadOutput={(output) =>
+              void openSchedulerExportDownload(output)
             }
             renderDetailPanel={(jobId) => (
               <JobDetailPanel
                 jobId={jobId}
-                onRequestDownload={openJobOutputDownload}
+                onDownload={openSchedulerExportDownload}
               />
             )}
           />

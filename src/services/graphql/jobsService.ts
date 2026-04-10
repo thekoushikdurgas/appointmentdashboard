@@ -22,6 +22,8 @@ const JOB_FIELDS = `
   requestPayload
   responsePayload
   statusPayload
+  outputObjectKey
+  exportOutputBasePath
   createdAt
   updatedAt
 `;
@@ -40,6 +42,8 @@ const JOB_LIST_FIELDS = `
   jobFamily
   jobSubtype
   statusPayload
+  outputObjectKey
+  exportOutputBasePath
   createdAt
   updatedAt
 `;
@@ -58,6 +62,8 @@ export interface Job {
   processed: number;
   inputFile?: string;
   outputFile?: string;
+  /** Logical ``{userId}/{output_prefix}/`` for export/finder/verify jobs (API). */
+  exportOutputBasePath?: string;
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
@@ -76,6 +82,8 @@ export interface JobRow {
   requestPayload?: unknown | null;
   responsePayload?: unknown | null;
   statusPayload?: unknown | null;
+  outputObjectKey?: string | null;
+  exportOutputBasePath?: string | null;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -110,6 +118,15 @@ function mapJob(r: JobRow): Job {
           : undefined
     : undefined;
 
+  const apiOutputKey =
+    typeof r.outputObjectKey === "string" && r.outputObjectKey.trim()
+      ? r.outputObjectKey.trim()
+      : undefined;
+  const exportPath =
+    typeof r.exportOutputBasePath === "string" && r.exportOutputBasePath.trim()
+      ? r.exportOutputBasePath.trim()
+      : undefined;
+
   const progress = deriveDisplayProgressPercent(displayStatus, {
     progress: parsed.progress,
     total: parsed.total,
@@ -128,7 +145,8 @@ function mapJob(r: JobRow): Job {
     progress,
     total: parsed.total,
     processed: parsed.processed,
-    outputFile: parsed.outputFile ?? outputFromResponse,
+    outputFile: apiOutputKey ?? parsed.outputFile ?? outputFromResponse,
+    exportOutputBasePath: exportPath,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt ?? "",
     error: parsed.error,
@@ -155,12 +173,6 @@ const JOB_ONE = `query JobGateway($jobId: ID!) {
     job(jobId: $jobId) {
       ${JOB_FIELDS}
     }
-  }
-}`;
-
-const JOB_OUTPUT_CSV_DOWNLOAD_URL = `query JobOutputCsvDownloadUrl($jobId: ID!) {
-  jobs {
-    jobOutputCsvDownloadUrl(jobId: $jobId)
   }
 }`;
 
@@ -358,34 +370,6 @@ export const jobsService = {
       jobs: { job: JobRow };
     }>(JOB_ONE, { jobId });
     return mapJob(data.jobs.job);
-  },
-
-  /**
-   * Presigned GET (or direct HTTPS) for a completed job’s output CSV from stored payloads.
-   * Returns null when the job is not completed, has no output, or the gateway schema is older
-   * (missing ``jobOutputCsvDownloadUrl``) — callers should fall back to ``s3FileDownloadUrl``.
-   */
-  getJobOutputCsvDownloadUrl: async (
-    jobId: string,
-  ): Promise<string | null> => {
-    try {
-      const data = await graphqlQuery<{
-        jobs: { jobOutputCsvDownloadUrl: string | null };
-      }>(JOB_OUTPUT_CSV_DOWNLOAD_URL, { jobId }, { showToastOnError: false });
-      const url = data.jobs.jobOutputCsvDownloadUrl;
-      return typeof url === "string" && url.length > 0 ? url : null;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const m = msg.toLowerCase();
-      if (
-        m.includes("cannot query field") &&
-        (m.includes("joboutputcsvdownloadurl") ||
-          m.includes("job_output_csv_download_url"))
-      ) {
-        return null;
-      }
-      throw e;
-    }
   },
 
   retry: (jobId: string) =>

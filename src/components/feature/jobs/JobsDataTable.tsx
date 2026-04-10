@@ -143,14 +143,8 @@ export interface JobsDataTableProps {
   onTerminateConnectra: (jobId: string) => void;
   onResume: (jobId: string) => void;
   onResumeConnectra: (jobId: string) => void;
-  /**
-   * Download completed job CSV: parent should call ``jobOutputCsvDownloadUrl`` first,
-   * then fall back to presigning ``fallbackOutput`` when needed.
-   */
-  onDownloadOutput: (
-    jobId: string,
-    fallbackOutput?: string | null,
-  ) => void | Promise<void>;
+  /** Raw S3 object key or HTTPS URL; parent may presign keys via GraphQL. */
+  onDownloadOutput: (outputUrl: string) => void | Promise<void>;
   renderDetailPanel: (jobId: string) => React.ReactNode;
 }
 
@@ -491,24 +485,25 @@ export function JobsDataTable({
                         {formatJobIdShort(job.jobId)}
                       </td>
                       <td className="c360-jobs-dt__action-cell">
-                        {job.isTerminal &&
-                          isSuccessfulTerminalJobStatus(job.status) && (
-                            <button
-                              type="button"
-                              className="c360-jobs-dt__download-icon"
-                              aria-label="Download CSV"
-                              title="Download CSV"
-                              onClick={() =>
-                                void onDownloadOutput(
-                                  job.jobId,
-                                  job.outputFile ?? null,
-                                )
-                              }
-                            >
-                              <Download size={18} strokeWidth={2} />
-                            </button>
-                          )}
-                        <Popover
+                        <div className="c360-flex c360-items-center c360-justify-end c360-gap-1 c360-flex-wrap">
+                          {job.isTerminal &&
+                            isSuccessfulTerminalJobStatus(job.status) &&
+                            job.outputFile &&
+                            job.outputFile.trim().length > 0 && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="c360-whitespace-nowrap"
+                                leftIcon={<Download size={14} />}
+                                onClick={() =>
+                                  void onDownloadOutput(job.outputFile!)
+                                }
+                              >
+                                Download CSV
+                              </Button>
+                            )}
+                          <Popover
                           align="end"
                           width={220}
                           trigger={
@@ -599,15 +594,14 @@ export function JobsDataTable({
                                 </button>
                               )}
                               {job.isTerminal &&
-                                isSuccessfulTerminalJobStatus(job.status) && (
+                                isSuccessfulTerminalJobStatus(job.status) &&
+                                job.outputFile &&
+                                job.outputFile.trim().length > 0 && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item"
                                     onClick={() =>
-                                      void onDownloadOutput(
-                                        job.jobId,
-                                        job.outputFile ?? null,
-                                      )
+                                      void onDownloadOutput(job.outputFile!)
                                     }
                                   >
                                     Download CSV
@@ -616,6 +610,7 @@ export function JobsDataTable({
                             </div>
                           }
                         />
+                        </div>
                       </td>
                     </tr>
                     {expanded && (

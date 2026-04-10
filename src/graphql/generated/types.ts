@@ -2705,11 +2705,13 @@ export type Savings = {
 export type SchedulerJob = {
   createdAt: Scalars["DateTime"]["output"];
   dagPayload?: Maybe<Scalars["JSON"]["output"]>;
+  exportOutputBasePath?: Maybe<Scalars["String"]["output"]>;
   id: Scalars["ID"]["output"];
   jobFamily: Scalars["String"]["output"];
   jobId: Scalars["ID"]["output"];
   jobSubtype?: Maybe<Scalars["String"]["output"]>;
   jobType: Scalars["String"]["output"];
+  outputObjectKey?: Maybe<Scalars["String"]["output"]>;
   requestPayload?: Maybe<Scalars["JSON"]["output"]>;
   responsePayload?: Maybe<Scalars["JSON"]["output"]>;
   sourceService: Scalars["String"]["output"];
