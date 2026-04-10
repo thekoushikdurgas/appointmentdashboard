@@ -3,7 +3,8 @@ name: Deploy Contact360 App
 on:
   push:
     branches:
-      - dashboard
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,8 +26,9 @@ jobs:
           script: |
             set -e
             cd /opt/contact360/app
-            git fetch origin dashboard
-            git reset --hard origin/dashboard
+            BRANCH="${{ github.ref_name }}"
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
             echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
             echo "NEXT_PUBLIC_GRAPHQL_URL=${{ secrets.NEXT_PUBLIC_GRAPHQL_URL }}" >> .env.local
             echo "NEXT_PUBLIC_JOBS_S3_BUCKET=${{ secrets.NEXT_PUBLIC_JOBS_S3_BUCKET }}" >> .env.local
