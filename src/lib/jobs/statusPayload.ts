@@ -68,7 +68,12 @@ function unwrapStatusPayload(
     (Object.prototype.hasOwnProperty.call(inner, "progress_percent") ||
       Object.prototype.hasOwnProperty.call(inner, "status") ||
       Object.prototype.hasOwnProperty.call(inner, "processed_rows") ||
-      Object.prototype.hasOwnProperty.call(inner, "job_type"))
+      Object.prototype.hasOwnProperty.call(inner, "job_type") ||
+      Object.prototype.hasOwnProperty.call(inner, "output_csv_key") ||
+      Object.prototype.hasOwnProperty.call(inner, "outputCsvKey") ||
+      Object.prototype.hasOwnProperty.call(inner, "s3_key") ||
+      Object.prototype.hasOwnProperty.call(inner, "download_url") ||
+      Object.prototype.hasOwnProperty.call(inner, "downloadUrl"))
   ) {
     return inner as Record<string, unknown>;
   }

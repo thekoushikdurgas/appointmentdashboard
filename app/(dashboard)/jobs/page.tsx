@@ -30,6 +30,7 @@ import { JobsDataTable } from "@/components/feature/jobs/JobsDataTable";
 import { toast } from "sonner";
 import { parseOperationError } from "@/lib/errorParser";
 import {
+  EXPORT_STREAM_JOB_TYPES,
   exportOutputBasePathForDisplay,
   getJobProgressBarTone,
   isSuccessfulTerminalJobStatus,
@@ -55,19 +56,65 @@ const JOB_FAMILY_OPTIONS = [
   { value: "company_job", label: "Company Jobs" },
 ];
 
+function openUrlInNewTabPreservingUserGesture(url: string): void {
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function exportCsvFilenameFromKey(outputKey: string): string {
+  const tail = outputKey.includes("/")
+    ? outputKey.slice(outputKey.lastIndexOf("/") + 1)
+    : outputKey;
+  const t = tail.trim();
+  if (!t) return "export.csv";
+  return t.toLowerCase().endsWith(".csv") ? t : `${t}.csv`;
+}
+
+/**
+ * Prefer blob download via fetch when S3 CORS allows it (reliable file save).
+ * Falls back to opening the presigned URL in a new tab.
+ */
 async function openSchedulerExportDownload(output: string): Promise<void> {
   const o = output.trim();
   if (/^https?:\/\//i.test(o)) {
-    window.open(o, "_blank", "noopener,noreferrer");
+    openUrlInNewTabPreservingUserGesture(o);
     return;
   }
   try {
     const data = await s3Service.getDownloadUrl(o);
     const url = data.s3?.s3FileDownloadUrl?.downloadUrl;
-    if (typeof url === "string" && url.length > 0) {
-      window.open(url, "_blank", "noopener,noreferrer");
-    } else {
+    if (typeof url !== "string" || url.length === 0) {
       toast.error("Could not get download link for this file.");
+      return;
+    }
+
+    const safeName = exportCsvFilenameFromKey(o);
+
+    try {
+      const res = await fetch(url, { method: "GET", mode: "cors" });
+      if (res.ok) {
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = safeName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } else {
+        toast.error(
+          `Could not download file (storage HTTP ${res.status}). It may be missing or permissions may deny access.`,
+        );
+        openUrlInNewTabPreservingUserGesture(url);
+      }
+    } catch {
+      openUrlInNewTabPreservingUserGesture(url);
     }
   } catch (e) {
     toast.error(parseOperationError(e, "storage").userMessage);
@@ -216,19 +263,31 @@ function JobDetailPanel({
         )}
         {exportFolderDisplay && (
           <div className="c360-job-detail-full">
-            <dt>Output path (your storage / exports)</dt>
+            <dt>Output path (your user id / exports)</dt>
             <dd>
               <div className="c360-font-mono c360-text-xs">
                 {exportFolderDisplay}
               </div>
               <p className="c360-text-xs c360-text-muted c360-mt-1 c360-mb-0">
-                Finder, verifier, pattern, and Contact360 export jobs write
-                under this folder; object keys below are relative to your user
-                id unless already absolute.
+                Finder, verifier, pattern, and Contact360 export jobs write CSVs
+                under this folder in your bucket (logical path{" "}
+                <code className="c360-font-mono">{`{your-user-id}/exports/`}</code>
+                ). Satellite payloads use bucket-relative{" "}
+                <code className="c360-font-mono">exports/…</code>; the same
+                files appear under the path above.
               </p>
             </dd>
           </div>
         )}
+        {job.storedOutputPrefix &&
+          EXPORT_STREAM_JOB_TYPES.has(job.type) && (
+            <div className="c360-job-detail-full">
+              <dt>Output prefix (stored on job)</dt>
+              <dd className="c360-font-mono c360-text-xs">
+                {job.storedOutputPrefix}
+              </dd>
+            </div>
+          )}
         {job.outputFile && (
           <div className="c360-job-detail-full">
             <dt>Output file</dt>

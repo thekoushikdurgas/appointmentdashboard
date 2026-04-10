@@ -68,6 +68,8 @@ export interface Job {
   updatedAt: string;
   completedAt?: string;
   error?: string;
+  /** ``request_payload.output_prefix`` when job was loaded with ``requestPayload`` (detail). */
+  storedOutputPrefix?: string;
 }
 
 export interface JobRow {
@@ -127,6 +129,16 @@ function mapJob(r: JobRow): Job {
       ? r.exportOutputBasePath.trim()
       : undefined;
 
+  let storedOutputPrefix: string | undefined;
+  if (
+    r.requestPayload &&
+    typeof r.requestPayload === "object" &&
+    !Array.isArray(r.requestPayload)
+  ) {
+    const op = (r.requestPayload as Record<string, unknown>).output_prefix;
+    if (typeof op === "string" && op.trim()) storedOutputPrefix = op.trim();
+  }
+
   const progress = deriveDisplayProgressPercent(displayStatus, {
     progress: parsed.progress,
     total: parsed.total,
@@ -145,8 +157,10 @@ function mapJob(r: JobRow): Job {
     progress,
     total: parsed.total,
     processed: parsed.processed,
-    outputFile: apiOutputKey ?? parsed.outputFile ?? outputFromResponse,
+    // Prefer live ``statusPayload`` (GraphQL resolver) over DB-only ``outputObjectKey``.
+    outputFile: parsed.outputFile ?? apiOutputKey ?? outputFromResponse,
     exportOutputBasePath: exportPath,
+    storedOutputPrefix,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt ?? "",
     error: parsed.error,

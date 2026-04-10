@@ -97,6 +97,7 @@ export function parseGraphQLError(
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 const GRAPHQL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+
 const MAX_RETRY_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY = 1000;
 
@@ -207,7 +208,8 @@ export async function graphqlRequest<T = unknown>(
     const client = createGraphQLClient(token);
 
     try {
-      return await client.request<T>(query, variables);
+      const result = await client.request<T>(query, variables);
+      return result;
     } catch (error: unknown) {
       if (error && typeof error === "object" && "response" in error) {
         const gqlError = error as {
@@ -226,7 +228,8 @@ export async function graphqlRequest<T = unknown>(
           if (newToken) {
             const retryClient = createGraphQLClient(newToken);
             try {
-              return await retryClient.request<T>(query, variables);
+              const retryResult = await retryClient.request<T>(query, variables);
+              return retryResult;
             } catch {
               clearTokens();
               if (typeof window !== "undefined")

@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { jobsService, type Job } from "@/services/graphql/jobsService";
-
-const TERMINAL_STATUSES = [
-  "completed",
-  "failed",
-  "cancelled",
-  "error",
-  "success",
-];
+import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
 
 function isTerminal(status: string): boolean {
-  return TERMINAL_STATUSES.some((s) => status.toLowerCase().includes(s));
+  const u = status.toUpperCase();
+  if (isSuccessfulTerminalJobStatus(status)) return true;
+  return (
+    u === "FAILED" ||
+    u === "CANCELLED" ||
+    u === "CANCELED" ||
+    u === "ERROR"
+  );
 }
 
 export interface UseJobDetailReturn {

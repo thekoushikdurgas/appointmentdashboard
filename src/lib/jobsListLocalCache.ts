@@ -5,8 +5,8 @@
 
 import type { MappedJob } from "@/lib/jobs/jobsMapper";
 
-const CACHE_VERSION = 1 as const;
-const KEY_PREFIX = "c360:jobsList:v1:";
+const CACHE_VERSION = 2 as const;
+const KEY_PREFIX = "c360:jobsList:v2:";
 const MAX_JSON_CHARS = 4_000_000;
 
 export interface JobsListFilterKeyParts {
