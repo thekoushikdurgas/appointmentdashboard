@@ -1,92 +1,18 @@
-----------------------------------------
-  Same as npm run typecheck (tsc --noEmit); duplicates removed vs older bat.
-  Running: npm run typecheck
+# Deploy log analysis (resolved in repo)
 
-> contact360-app@0.1.0 typecheck
-> tsc --noEmit
+## Real failure
+- Docker: "failed to bind host port 0.0.0.0:3000/tcp: address already in use"
+- Cause: `docker compose down` only stops Compose containers. A host process was still listening on :3000.
+- Evidence: `ss` / `lsof` showed `next-server` (Next.js) on PID holding *:3000 — e.g. an old `next start` / PM2 / systemd unit outside Docker.
 
-src/components/feature/companies/CompanyCard.tsx:74:32 - error TS2322: Type '{ children: string; key: string; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
-  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+## Fix applied
+- `.github/workflows/deploy.yml`: after `compose down`, free TCP 3000 via `sudo fuser -k 3000/tcp` (or `lsof` + `kill` fallback), then `compose up`.
 
-74               <Badge key={ind} variant="outline" size="sm">
-                                  ~~~~~~~
+## Not errors (informational)
+- Lines prefixed `err:` from docker compose (Stopping/Removing/Creating) are normal stderr from the CLI.
+- Next.js build: "Experiments (use with caution)" — expected when `experimental` is set in `next.config.ts`.
+- npm "New major version available" — optional global npm upgrade; does not fail the build.
 
-src/components/feature/companies/CompanyCard.tsx:79:22 - error TS2322: Type '{ children: (string | number)[]; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
-  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
-
-79               <Badge variant="outline" size="sm">
-                        ~~~~~~~
-
-src/components/feature/companies/CompanyCard.tsx:104:15 - error TS2322: Type '"xs"' is not assignable to type 'ButtonSize | undefined'.
-
-104               size="xs"
-                  ~~~~
-
-  src/components/ui/Button.tsx:11:3
-    11   size?: ButtonSize;
-         ~~~~
-    The expected type comes from property 'size' which is declared here on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'
-
-src/components/feature/companies/CompanyCard.tsx:113:15 - error TS2322: Type '"xs"' is not assignable to type 'ButtonSize | undefined'.
-
-113               size="xs"
-                  ~~~~
-
-  src/components/ui/Button.tsx:11:3
-    11   size?: ButtonSize;
-         ~~~~
-    The expected type comes from property 'size' which is declared here on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'
-
-src/lib/errorParser.ts:86:5 - error TS2881: This expression is never nullish.
-
-86     httpStatus === 404 ??
-       ~~~~~~~~~~~~~~~~~~
-
-src/lib/errorParser.ts:87:5 - error TS2881: This expression is never nullish.
-
-87     code === "ERR_JOB_NOT_FOUND" ??
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-src/lib/errorParser.ts:92:5 - error TS2881: This expression is never nullish.
-
-92     httpStatus === 400 ??
-       ~~~~~~~~~~~~~~~~~~
-
-src/lib/errorParser.ts:93:5 - error TS2881: This expression is never nullish.
-
-93     httpStatus === 422 ??
-       ~~~~~~~~~~~~~~~~~~
-
-src/lib/errorParser.ts:94:5 - error TS2881: This expression is never nullish.
-
-94     !!(fieldErrors && Object.keys(fieldErrors).length > 0) ??
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-src/lib/errorParser.ts:98:60 - error TS2881: This expression is never nullish.
-
-98   const isPermission = parsedGraphQL?.isPermissionError ?? httpStatus === 403 ?? false;
-                                                              ~~~~~~~~~~~~~~~~~~
-
-
-Found 10 errors in 2 files.
-
-Errors  Files
-     4  src/components/feature/companies/CompanyCard.tsx:74
-     6  src/lib/errorParser.ts:86
-  X Type check failed
-  ✓ Compiled successfully in 33.6s
-  Running TypeScript  ..Failed to type check.
-
-./src/components/feature/companies/CompanyCard.tsx:74:32
-Type error: Type '{ children: string; key: string; variant: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
-  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
-
-  72 |           <div className="c360-badge-row c360-mt-2 c360-flex-wrap">
-  73 |             {company.industries.slice(0, 3).map((ind) => (
-> 74 |               <Badge key={ind} variant="outline" size="sm">
-     |                                ^
-  75 |                 {ind}
-  76 |               </Badge>
-  77 |             ))}
-Next.js build worker exited with code: 1 and signal: null
-  X Build failed
+## EC2 hygiene (recommended once)
+- Disable or remove any non-Docker service that runs Next on port 3000 (systemd, PM2, screen) so only Docker publishes :3000.
+- Optional: `sudo apt-get install -y psmisc` if `fuser` is missing (rare on Ubuntu server images).

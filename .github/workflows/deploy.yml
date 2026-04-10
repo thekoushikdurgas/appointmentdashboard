@@ -49,8 +49,23 @@ jobs:
                 exit 127
               fi
             }
-            # Stop/remove previous stack so host port 3000 is free (avoids "address already in use")
+            # Stop/remove Compose stack (frees containers using 3000)
             run_docker compose -f docker-compose.prod.yml down --remove-orphans
+            # Host-run Next (e.g. next-server on :3000) is NOT stopped by compose down; free the port for Docker publish.
+            if command -v fuser >/dev/null 2>&1; then
+              sudo fuser -k 3000/tcp 2>/dev/null || true
+            elif command -v lsof >/dev/null 2>&1; then
+              for p in $(sudo lsof -t -iTCP:3000 -sTCP:LISTEN 2>/dev/null || true); do
+                [ -n "${p:-}" ] || continue
+                sudo kill -TERM "$p" 2>/dev/null || true
+              done
+              sleep 2
+              for p in $(sudo lsof -t -iTCP:3000 -sTCP:LISTEN 2>/dev/null || true); do
+                [ -n "${p:-}" ] || continue
+                sudo kill -KILL "$p" 2>/dev/null || true
+              done
+            fi
+            sleep 1
             run_docker compose -f docker-compose.prod.yml up --build -d
             run_docker image prune -f
             echo "Deployment complete: $(date)"
