@@ -3,10 +3,12 @@
 import { useRef, useCallback } from "react";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAllowedReceiptImageFile } from "@/lib/paymentReceiptImage";
 import { toast } from "sonner";
 
-const ACCEPT_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
-const ACCEPT_ATTR = "image/jpeg,image/png,image/webp";
+/** Hint only — browsers may still send pjpeg/octet-stream; validation uses isAllowedReceiptImageFile */
+const ACCEPT_ATTR =
+  "image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,application/octet-stream,.jpg,.jpeg,.png,.webp";
 
 export interface PaymentReceiptDropzoneProps {
   uploading: boolean;
@@ -25,8 +27,10 @@ export function PaymentReceiptDropzone({
   const handleFile = useCallback(
     (file: File | null | undefined) => {
       if (!file) return;
-      if (!ACCEPT_TYPES.includes(file.type as (typeof ACCEPT_TYPES)[number])) {
-        toast.error("Please use a JPEG, PNG, or WebP image.");
+      if (!isAllowedReceiptImageFile(file)) {
+        toast.error(
+          "Please use a JPEG, PNG, or WebP image (e.g. .jpg, .jpeg, .png, .webp).",
+        );
         return;
       }
       onFile(file);
