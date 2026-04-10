@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import {
   InvoiceCard,
   InvoicePrintActions,
@@ -40,6 +41,10 @@ function mapInvoiceToPrintable(inv: Invoice): InvoiceData {
   };
 }
 
+function isManualPaymentInvoiceId(id: string): boolean {
+  return id.startsWith("PS-");
+}
+
 export function BillingInvoiceList({
   invoices,
   totalInvoices,
@@ -54,6 +59,12 @@ export function BillingInvoiceList({
 
   return (
     <>
+      <p className="c360-text-muted c360-text-sm c360-mb-2">
+        Subscription billing and approved manual UPI payments both appear here as
+        invoices. Rows with ID starting with{" "}
+        <span className="c360-font-mono">PS-</span> are manual payments
+        confirmed by our team.
+      </p>
       <p className="c360-page-subtitle c360-mb-4">
         {totalInvoices} invoice(s) total (page {invoicePage} of {totalPages}).
       </p>
@@ -96,7 +107,16 @@ export function BillingInvoiceList({
             <tbody>
               {invoices.map((inv) => (
                 <tr key={inv.id}>
-                  <td className="c360-text-sm">{inv.id}</td>
+                  <td className="c360-text-sm">
+                    <span className="c360-inline-flex c360-items-center c360-gap-2 c360-flex-wrap">
+                      <span className="c360-font-mono">{inv.id}</span>
+                      {isManualPaymentInvoiceId(inv.id) ? (
+                        <Badge color="secondary" size="sm">
+                          Manual
+                        </Badge>
+                      ) : null}
+                    </span>
+                  </td>
                   <td className="c360-text-sm c360-text-muted">
                     {formatDate(inv.createdAt)}
                   </td>
