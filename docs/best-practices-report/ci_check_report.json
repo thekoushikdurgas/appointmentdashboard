@@ -1,0 +1,761 @@
+{
+  "generatedAt": "2026-04-10T20:49:11.497Z",
+  "summary": {
+    "total_points": 86,
+    "passed": 85,
+    "failed": 1,
+    "score": 98.8
+  },
+  "categories": {
+    "Project Structure": {
+      "passed": 9,
+      "total": 9,
+      "percentage": 100
+    },
+    "Security": {
+      "passed": 9,
+      "total": 9,
+      "percentage": 100
+    },
+    "Code Organization": {
+      "passed": 6,
+      "total": 6,
+      "percentage": 100
+    },
+    "Quality Tooling": {
+      "passed": 7,
+      "total": 7,
+      "percentage": 100
+    },
+    "Testing": {
+      "passed": 10,
+      "total": 10,
+      "percentage": 100
+    },
+    "Performance": {
+      "passed": 9,
+      "total": 9,
+      "percentage": 100
+    },
+    "Deployment": {
+      "passed": 8,
+      "total": 8,
+      "percentage": 100
+    },
+    "Styling / CSS": {
+      "passed": 5,
+      "total": 5,
+      "percentage": 100
+    },
+    "TypeScript Discipline": {
+      "passed": 7,
+      "total": 7,
+      "percentage": 100
+    },
+    "Code Architecture": {
+      "passed": 6,
+      "total": 7,
+      "percentage": 85.7
+    },
+    "GraphQL & API Contract": {
+      "passed": 5,
+      "total": 5,
+      "percentage": 100
+    },
+    "Error Handling & UX": {
+      "passed": 4,
+      "total": 4,
+      "percentage": 100
+    }
+  },
+  "results": [
+    {
+      "point_number": 1,
+      "category": "Project Structure",
+      "description": "app/ directory exists (App Router)",
+      "passed": true,
+      "message": "app/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 2,
+      "category": "Project Structure",
+      "description": "package.json defines lint, typecheck, and build scripts",
+      "passed": true,
+      "message": "lint: true, typecheck: true, build: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 3,
+      "category": "Project Structure",
+      "description": "next.config file present",
+      "passed": true,
+      "message": "Found next.config.ts",
+      "severity": "info"
+    },
+    {
+      "point_number": 4,
+      "category": "Project Structure",
+      "description": "tsconfig.json enables strict mode",
+      "passed": true,
+      "message": "strict: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 5,
+      "category": "Project Structure",
+      "description": "README.md exists with substantive content (>= 200 chars)",
+      "passed": true,
+      "message": "README length 6073",
+      "severity": "info"
+    },
+    {
+      "point_number": 6,
+      "category": "Project Structure",
+      "description": ".gitignore excludes node_modules and env files",
+      "passed": true,
+      "message": ".gitignore looks good",
+      "severity": "info"
+    },
+    {
+      "point_number": 7,
+      "category": "Project Structure",
+      "description": "scripts/ directory for maintenance tooling",
+      "passed": true,
+      "message": "scripts/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 8,
+      "category": "Project Structure",
+      "description": "package.json is private (npm publish safety)",
+      "passed": true,
+      "message": "private: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 9,
+      "category": "Security",
+      "description": ".env.example or .env.production.example documents required variables",
+      "passed": true,
+      "message": "Env template file present",
+      "severity": "info"
+    },
+    {
+      "point_number": 10,
+      "category": "Security",
+      "description": "Env template mentions NEXT_PUBLIC_ variables where applicable",
+      "passed": true,
+      "message": "NEXT_PUBLIC_ documented",
+      "severity": "info"
+    },
+    {
+      "point_number": 11,
+      "category": "Security",
+      "description": "No obvious hardcoded secrets in app/ and src/ (heuristic scan)",
+      "passed": true,
+      "message": "No high-risk patterns matched",
+      "severity": "info"
+    },
+    {
+      "point_number": 12,
+      "category": "Security",
+      "description": "next.config disables X-Powered-By header",
+      "passed": true,
+      "message": "poweredByHeader: false recommended",
+      "severity": "info"
+    },
+    {
+      "point_number": 13,
+      "category": "Code Organization",
+      "description": "src/ directory for shared application code",
+      "passed": true,
+      "message": "src/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 14,
+      "category": "Code Organization",
+      "description": "src/components/ for UI composition",
+      "passed": true,
+      "message": "src/components present",
+      "severity": "info"
+    },
+    {
+      "point_number": 15,
+      "category": "Code Organization",
+      "description": "Root app/layout exists",
+      "passed": true,
+      "message": "app/layout found",
+      "severity": "info"
+    },
+    {
+      "point_number": 16,
+      "category": "Code Organization",
+      "description": "GraphQL codegen config (codegen.ts or similar)",
+      "passed": true,
+      "message": "codegen.ts present",
+      "severity": "info"
+    },
+    {
+      "point_number": 17,
+      "category": "Code Organization",
+      "description": "src/lib or src/utils for shared helpers",
+      "passed": true,
+      "message": "Found lib/ or utils/",
+      "severity": "info"
+    },
+    {
+      "point_number": 18,
+      "category": "Code Organization",
+      "description": "Colocated tests under src/ (*.test.* or *.spec.*)",
+      "passed": true,
+      "message": "1 test files under src/",
+      "severity": "info"
+    },
+    {
+      "point_number": 19,
+      "category": "Quality Tooling",
+      "description": "ESLint config present (.eslintrc.json or eslint.config.*)",
+      "passed": true,
+      "message": "ESLint config file",
+      "severity": "info"
+    },
+    {
+      "point_number": 20,
+      "category": "Quality Tooling",
+      "description": "Prettier in devDependencies",
+      "passed": true,
+      "message": "prettier ^3.3.3",
+      "severity": "info"
+    },
+    {
+      "point_number": 21,
+      "category": "Quality Tooling",
+      "description": "ESLint in devDependencies",
+      "passed": true,
+      "message": "eslint ^8.57.0",
+      "severity": "info"
+    },
+    {
+      "point_number": 22,
+      "category": "Quality Tooling",
+      "description": "Husky + prepare script for git hooks",
+      "passed": true,
+      "message": "prepare runs husky",
+      "severity": "info"
+    },
+    {
+      "point_number": 23,
+      "category": "Quality Tooling",
+      "description": "TypeScript in devDependencies",
+      "passed": true,
+      "message": "typescript ^5.6.3",
+      "severity": "info"
+    },
+    {
+      "point_number": 24,
+      "category": "Quality Tooling",
+      "description": "lint-staged configured in package.json",
+      "passed": true,
+      "message": "lint-staged present",
+      "severity": "info"
+    },
+    {
+      "point_number": 25,
+      "category": "Testing",
+      "description": "Vitest test script in package.json",
+      "passed": true,
+      "message": "vitest run --passWithNoTests",
+      "severity": "info"
+    },
+    {
+      "point_number": 26,
+      "category": "Testing",
+      "description": "vitest.config.ts (or .mts) present",
+      "passed": true,
+      "message": "Vitest config file",
+      "severity": "info"
+    },
+    {
+      "point_number": 27,
+      "category": "Testing",
+      "description": "@playwright/test in devDependencies",
+      "passed": true,
+      "message": "Playwright devDependency present",
+      "severity": "info"
+    },
+    {
+      "point_number": 28,
+      "category": "Testing",
+      "description": "e2e/ directory for Playwright specs",
+      "passed": true,
+      "message": "e2e/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 29,
+      "category": "Testing",
+      "description": "Playwright config file (playwright.config.*)",
+      "passed": true,
+      "message": "playwright.config found",
+      "severity": "info"
+    },
+    {
+      "point_number": 30,
+      "category": "Performance",
+      "description": "Uses next/image in app or src (optimized images)",
+      "passed": true,
+      "message": "next/image in use",
+      "severity": "info"
+    },
+    {
+      "point_number": 31,
+      "category": "Performance",
+      "description": "next.config defines images.* (remotePatterns or domains)",
+      "passed": true,
+      "message": "images.remotePatterns or domains configured",
+      "severity": "info"
+    },
+    {
+      "point_number": 32,
+      "category": "Performance",
+      "description": "Standalone output for container deploy (output: 'standalone')",
+      "passed": true,
+      "message": "next.config output standalone",
+      "severity": "info"
+    },
+    {
+      "point_number": 33,
+      "category": "Performance",
+      "description": "Some dynamic import() usage for code-splitting",
+      "passed": true,
+      "message": "2 files use import()",
+      "severity": "info"
+    },
+    {
+      "point_number": 34,
+      "category": "Performance",
+      "description": "Edge routing: middleware.ts or proxy.ts (Next 16 — proxy-only when both would conflict)",
+      "passed": true,
+      "message": "proxy.ts present (Next 16 edge routing)",
+      "severity": "info"
+    },
+    {
+      "point_number": 35,
+      "category": "Deployment",
+      "description": "Dockerfile present",
+      "passed": true,
+      "message": "Dockerfile found",
+      "severity": "info"
+    },
+    {
+      "point_number": 36,
+      "category": "Deployment",
+      "description": "docker-compose*.yml at repo root (optional if Dockerfile only)",
+      "passed": true,
+      "message": "Found docker-compose.prod.yml, docker-compose.yml",
+      "severity": "info"
+    },
+    {
+      "point_number": 37,
+      "category": "Deployment",
+      "description": ".github/workflows present",
+      "passed": true,
+      "message": "CI/CD workflows dir exists",
+      "severity": "info"
+    },
+    {
+      "point_number": 38,
+      "category": "Deployment",
+      "description": "public/ for static assets",
+      "passed": true,
+      "message": "public/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 39,
+      "category": "Quality Tooling",
+      "description": "next and react declared in dependencies",
+      "passed": true,
+      "message": "next + react present",
+      "severity": "info"
+    },
+    {
+      "point_number": 40,
+      "category": "Project Structure",
+      "description": "proxy.ts for dev routing (Next 16 / Contact360 pattern)",
+      "passed": true,
+      "message": "proxy.ts present",
+      "severity": "info"
+    },
+    {
+      "point_number": 41,
+      "category": "Styling / CSS",
+      "description": "app/globals.css exists and imports core + components layers",
+      "passed": true,
+      "message": "globals.css chains design-system layers",
+      "severity": "info"
+    },
+    {
+      "point_number": 42,
+      "category": "Styling / CSS",
+      "description": "app/css/components.css barrels numbered partials (>=10 @import ./components/)",
+      "passed": true,
+      "message": "19 partial @imports",
+      "severity": "info"
+    },
+    {
+      "point_number": 43,
+      "category": "Styling / CSS",
+      "description": "No Tailwind config at app root (custom CSS policy)",
+      "passed": true,
+      "message": "No tailwind.config.* (expected)",
+      "severity": "info"
+    },
+    {
+      "point_number": 44,
+      "category": "Styling / CSS",
+      "description": "app/css/core.css design tokens present",
+      "passed": true,
+      "message": "core.css with --c360-* variables",
+      "severity": "info"
+    },
+    {
+      "point_number": 45,
+      "category": "Styling / CSS",
+      "description": "src/ files with inline style={{ }} at or below threshold (1; config max_inline_style_files)",
+      "passed": true,
+      "message": "1 file(s) with style={{ (limit 1)",
+      "severity": "info"
+    },
+    {
+      "point_number": 46,
+      "category": "TypeScript Discipline",
+      "description": "tsconfig.json enables noUnusedLocals",
+      "passed": true,
+      "message": "noUnusedLocals: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 47,
+      "category": "TypeScript Discipline",
+      "description": "tsconfig.json enables noUnusedParameters",
+      "passed": true,
+      "message": "noUnusedParameters: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 48,
+      "category": "TypeScript Discipline",
+      "description": "tsconfig.json enables noImplicitReturns",
+      "passed": true,
+      "message": "noImplicitReturns: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 49,
+      "category": "TypeScript Discipline",
+      "description": "tsconfig.json enables noFallthroughCasesInSwitch",
+      "passed": true,
+      "message": "noFallthroughCasesInSwitch: true",
+      "severity": "info"
+    },
+    {
+      "point_number": 50,
+      "category": "TypeScript Discipline",
+      "description": "tsconfig path alias \"@/*\" (or \"@/…\") defined",
+      "passed": true,
+      "message": "paths include @/*",
+      "severity": "info"
+    },
+    {
+      "point_number": 51,
+      "category": "TypeScript Discipline",
+      "description": ": any / as any / any[] count in src/ (excl. graphql/generated) ≤ 20 (config max_any_count)",
+      "passed": true,
+      "message": "0 match(es) (limit 20)",
+      "severity": "info"
+    },
+    {
+      "point_number": 52,
+      "category": "TypeScript Discipline",
+      "description": "src/types/ shared type definitions directory exists",
+      "passed": true,
+      "message": "src/types/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 53,
+      "category": "Code Architecture",
+      "description": "src/services/graphql/ contains domain *Service.ts files",
+      "passed": true,
+      "message": "23 *Service.ts files",
+      "severity": "info"
+    },
+    {
+      "point_number": 54,
+      "category": "Code Architecture",
+      "description": "src/hooks/ directory for custom hooks",
+      "passed": true,
+      "message": "src/hooks/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 55,
+      "category": "Code Architecture",
+      "description": "src/context/ for global cross-cutting React state",
+      "passed": true,
+      "message": "src/context/ present",
+      "severity": "info"
+    },
+    {
+      "point_number": 56,
+      "category": "Code Architecture",
+      "description": "src/components/feature/ groups UI by domain (multiple subfolders)",
+      "passed": true,
+      "message": "20 feature subfolders",
+      "severity": "info"
+    },
+    {
+      "point_number": 57,
+      "category": "Code Architecture",
+      "description": "src/services/graphql/index.ts barrel re-exports services",
+      "passed": true,
+      "message": "Barrel present",
+      "severity": "info"
+    },
+    {
+      "point_number": 58,
+      "category": "Code Architecture",
+      "description": "console.log( occurrences in src/ ≤ 10 (config max_console_logs)",
+      "passed": true,
+      "message": "0 console.log (limit 10)",
+      "severity": "info"
+    },
+    {
+      "point_number": 59,
+      "category": "Code Architecture",
+      "description": "localStorage only in tokenManager.ts (+ optional localstorage_allow_files in config)",
+      "passed": false,
+      "message": "localStorage also in: src/lib/jobsListLocalCache.ts, src/lib/s3FilesLocalCache.ts, src/lib/ttlLocalStorageCache.ts — allowlist in .next-checker-config.json or consolidate storage",
+      "severity": "warning"
+    },
+    {
+      "point_number": 60,
+      "category": "GraphQL & API Contract",
+      "description": "src/graphql/generated/types.ts (codegen output) exists",
+      "passed": true,
+      "message": "Generated types present",
+      "severity": "info"
+    },
+    {
+      "point_number": 61,
+      "category": "GraphQL & API Contract",
+      "description": "package.json defines \"codegen\" script",
+      "passed": true,
+      "message": "codegen script present",
+      "severity": "info"
+    },
+    {
+      "point_number": 62,
+      "category": "GraphQL & API Contract",
+      "description": "src/graphql/*Operations.ts files colocate GraphQL operations",
+      "passed": true,
+      "message": "10 *Operations.ts files",
+      "severity": "info"
+    },
+    {
+      "point_number": 63,
+      "category": "GraphQL & API Contract",
+      "description": "graphqlClient.ts exports parseGraphQLError (centralized API errors)",
+      "passed": true,
+      "message": "parseGraphQLError exported",
+      "severity": "info"
+    },
+    {
+      "point_number": 64,
+      "category": "GraphQL & API Contract",
+      "description": "src/lib/tokenManager.ts isolates JWT storage",
+      "passed": true,
+      "message": "tokenManager.ts present",
+      "severity": "info"
+    },
+    {
+      "point_number": 65,
+      "category": "Security",
+      "description": "src/context/AuthContext.tsx exists",
+      "passed": true,
+      "message": "AuthContext present",
+      "severity": "info"
+    },
+    {
+      "point_number": 66,
+      "category": "Security",
+      "description": "src/context/RoleContext.tsx exists (RBAC / plan features)",
+      "passed": true,
+      "message": "RoleContext present",
+      "severity": "info"
+    },
+    {
+      "point_number": 67,
+      "category": "Security",
+      "description": "process.env used only in src/lib/config.ts (centralized public config)",
+      "passed": true,
+      "message": "No process.env outside config.ts in src/",
+      "severity": "info"
+    },
+    {
+      "point_number": 68,
+      "category": "Security",
+      "description": "src/lib/featureAccess.ts for plan / feature gating",
+      "passed": true,
+      "message": "featureAccess.ts present",
+      "severity": "info"
+    },
+    {
+      "point_number": 69,
+      "category": "Security",
+      "description": ".env.example documents NEXT_PUBLIC_* and API/GraphQL URLs",
+      "passed": true,
+      "message": ".env.example covers API/GraphQL + NEXT_PUBLIC_",
+      "severity": "info"
+    },
+    {
+      "point_number": 70,
+      "category": "Error Handling & UX",
+      "description": "parseGraphQLError defined for consistent GraphQL error shape",
+      "passed": true,
+      "message": "parseGraphQLError present",
+      "severity": "info"
+    },
+    {
+      "point_number": 71,
+      "category": "Error Handling & UX",
+      "description": "sonner toast library in dependencies (user feedback)",
+      "passed": true,
+      "message": "sonner ^2.0.7",
+      "severity": "info"
+    },
+    {
+      "point_number": 72,
+      "category": "Error Handling & UX",
+      "description": "src/components/shared/DataState.tsx for loading/empty/error states",
+      "passed": true,
+      "message": "DataState present",
+      "severity": "info"
+    },
+    {
+      "point_number": 73,
+      "category": "Error Handling & UX",
+      "description": "src/components/shared/Skeleton.tsx for loading placeholders",
+      "passed": true,
+      "message": "Skeleton present",
+      "severity": "info"
+    },
+    {
+      "point_number": 74,
+      "category": "Testing",
+      "description": "package.json defines test:coverage (Vitest coverage)",
+      "passed": true,
+      "message": "test:coverage present",
+      "severity": "info"
+    },
+    {
+      "point_number": 75,
+      "category": "Testing",
+      "description": "pre-push script runs typecheck, lint, and test",
+      "passed": true,
+      "message": "pre-push chains typecheck + lint + test",
+      "severity": "info"
+    },
+    {
+      "point_number": 76,
+      "category": "Testing",
+      "description": "ci script runs lint, typecheck, test, and build",
+      "passed": true,
+      "message": "ci script covers core gates",
+      "severity": "info"
+    },
+    {
+      "point_number": 77,
+      "category": "Testing",
+      "description": "Colocated tests under src/graphql/ (contract / operation tests)",
+      "passed": true,
+      "message": "1 test file(s) in src/graphql/",
+      "severity": "info"
+    },
+    {
+      "point_number": 78,
+      "category": "Testing",
+      "description": "e2e/ contains at least one Playwright spec",
+      "passed": true,
+      "message": "1 spec(s)",
+      "severity": "info"
+    },
+    {
+      "point_number": 79,
+      "category": "Performance",
+      "description": "build:analyze script for bundle analysis",
+      "passed": true,
+      "message": "build:analyze present",
+      "severity": "info"
+    },
+    {
+      "point_number": 80,
+      "category": "Performance",
+      "description": "@tanstack/react-virtual for large lists",
+      "passed": true,
+      "message": "react-virtual ^3.13.18",
+      "severity": "info"
+    },
+    {
+      "point_number": 81,
+      "category": "Performance",
+      "description": "web-vitals dependency for client metrics",
+      "passed": true,
+      "message": "web-vitals ^4.2.4",
+      "severity": "info"
+    },
+    {
+      "point_number": 82,
+      "category": "Performance",
+      "description": "clean script removes .next / build artifacts",
+      "passed": true,
+      "message": "clean script present",
+      "severity": "info"
+    },
+    {
+      "point_number": 83,
+      "category": "Deployment",
+      "description": ".husky/pre-push hook file exists",
+      "passed": true,
+      "message": ".husky/pre-push present",
+      "severity": "info"
+    },
+    {
+      "point_number": 84,
+      "category": "Deployment",
+      "description": "lint-staged configured in package.json",
+      "passed": true,
+      "message": "lint-staged present",
+      "severity": "info"
+    },
+    {
+      "point_number": 85,
+      "category": "Deployment",
+      "description": ".gitignore excludes reports/ (generated checker reports)",
+      "passed": true,
+      "message": "reports/ ignored",
+      "severity": "info"
+    },
+    {
+      "point_number": 86,
+      "category": "Deployment",
+      "description": "ci script includes check:best-practices",
+      "passed": true,
+      "message": "ci runs check:best-practices",
+      "severity": "info"
+    }
+  ]
+}

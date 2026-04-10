@@ -1,0 +1,118 @@
+========================================================================
+CONTACT360 — CSS INVENTORY (custom design system + hygiene report)
+Generated: 2026-04-10T20:49:11.562Z
+========================================================================
+
+## 1) Package.json — Tailwind / PostCSS related
+  (none) — no tailwindcss / @tailwindcss / postcss packages listed.
+
+## 2) Config files (Tailwind / PostCSS)
+  (none) — no tailwind.config.* or postcss.config.* at app root.
+
+## 3) App entry CSS graph (globals.css → @import chain)
+  Entry: app/globals.css
+  @import ./css/core.css → app/css/core.css
+  @import ./css/layout.css → app/css/layout.css
+  @import ./css/components.css → app/css/components.css
+  @import ./css/utilities.css → app/css/utilities.css
+  @import ./css/vendor.css → app/css/vendor.css
+  @import ./css/responsive.css → app/css/responsive.css
+  @import ./components/01-button.css → app/css/components/01-button.css
+  @import ./components/02-form-controls.css → app/css/components/02-form-controls.css
+  @import ./components/03-media-accordion-card-badge.css → app/css/components/03-media-accordion-card-badge.css
+  @import ./components/04-tabs-modal-progress.css → app/css/components/04-tabs-modal-progress.css
+  @import ./components/05-checkbox-radio-table-alert.css → app/css/components/05-checkbox-radio-table-alert.css
+  @import ./components/06-popover-dialogs.css → app/css/components/06-popover-dialogs.css
+  @import ./components/07-page-layout-patterns.css → app/css/components/07-page-layout-patterns.css
+  @import ./components/08-animation.css → app/css/components/08-animation.css
+  @import ./components/09-chat-ui.css → app/css/components/09-chat-ui.css
+  @import ./components/10-profile-billing-checkout.css → app/css/components/10-profile-billing-checkout.css
+  @import ./components/11-email-campaign-widgets.css → app/css/components/11-email-campaign-widgets.css
+  @import ./components/12-filter-company-monospace.css → app/css/components/12-filter-company-monospace.css
+  @import ./components/13-inline-flex-dropzone-result.css → app/css/components/13-inline-flex-dropzone-result.css
+  @import ./components/14-form-wizards-search.css → app/css/components/14-form-wizards-search.css
+  @import ./components/15-code-ads-activity-widgets.css → app/css/components/15-code-ads-activity-widgets.css
+  @import ./components/19-contacts-and-sequences.css → app/css/components/19-contacts-and-sequences.css
+  @import ./components/16-app-pages-tail.css → app/css/components/16-app-pages-tail.css
+  @import ./components/18-app-dynamic-maps-widgets.css → app/css/components/18-app-dynamic-maps-widgets.css
+  @import ./components/17-onboarding-tour.css → app/css/components/17-onboarding-tour.css
+
+## 4) All .css files under app/ (size + ~.c360 rule lines)
+    46898 B   2097 lines  ~ 347 .c360…  app/css/components/16-app-pages-tail.css
+    25610 B   1049 lines  ~ 144 .c360…  app/css/layout.css
+    20722 B    853 lines  ~ 156 .c360…  app/css/components/15-code-ads-activity-widgets.css
+    19924 B    980 lines  ~ 208 .c360…  app/css/utilities.css
+    11935 B    343 lines  ~  52 .c360…  app/css/components/07-page-layout-patterns.css
+    10142 B    406 lines  ~  61 .c360…  app/css/components/05-checkbox-radio-table-alert.css
+     9778 B    429 lines  ~  70 .c360…  app/css/components/10-profile-billing-checkout.css
+     8691 B    316 lines  ~   0 .c360…  app/css/core.css
+     8322 B    360 lines  ~  58 .c360…  app/css/components/18-app-dynamic-maps-widgets.css
+     7919 B    290 lines  ~  45 .c360…  app/css/components/06-popover-dialogs.css
+     7594 B    350 lines  ~  46 .c360…  app/css/components/09-chat-ui.css
+     7586 B    286 lines  ~  43 .c360…  app/css/components/04-tabs-modal-progress.css
+     7040 B    275 lines  ~  46 .c360…  app/css/components/03-media-accordion-card-badge.css
+     6617 B    172 lines  ~  22 .c360…  app/css/components/14-form-wizards-search.css
+     5596 B    211 lines  ~  33 .c360…  app/css/components/13-inline-flex-dropzone-result.css
+     3594 B    160 lines  ~  17 .c360…  app/css/components/17-onboarding-tour.css
+     3161 B    116 lines  ~  18 .c360…  app/css/components/01-button.css
+     3159 B    133 lines  ~  20 .c360…  app/css/components/02-form-controls.css
+     3151 B    141 lines  ~   0 .c360…  app/css/responsive.css
+     3001 B     73 lines  ~   9 .c360…  app/css/components/11-email-campaign-widgets.css
+     2944 B    124 lines  ~  18 .c360…  app/css/vendor.css
+     2509 B     53 lines  ~   6 .c360…  app/css/components/12-filter-company-monospace.css
+     2445 B     80 lines  ~  14 .c360…  app/css/components/19-contacts-and-sequences.css
+     1179 B     23 lines  ~   0 .c360…  app/css/components.css
+      695 B     17 lines  ~   1 .c360…  app/css/components/08-animation.css
+      600 B     17 lines  ~   0 .c360…  app/globals.css
+
+## 5) components.css barrel (numbered partials)
+  @import "./components/01-button.css";
+  @import "./components/02-form-controls.css";
+  @import "./components/03-media-accordion-card-badge.css";
+  @import "./components/04-tabs-modal-progress.css";
+  @import "./components/05-checkbox-radio-table-alert.css";
+  @import "./components/06-popover-dialogs.css";
+  @import "./components/07-page-layout-patterns.css";
+  @import "./components/08-animation.css";
+  @import "./components/09-chat-ui.css";
+  @import "./components/10-profile-billing-checkout.css";
+  @import "./components/11-email-campaign-widgets.css";
+  @import "./components/12-filter-company-monospace.css";
+  @import "./components/13-inline-flex-dropzone-result.css";
+  @import "./components/14-form-wizards-search.css";
+  @import "./components/15-code-ads-activity-widgets.css";
+  @import "./components/19-contacts-and-sequences.css";
+  @import "./components/16-app-pages-tail.css";
+  @import "./components/18-app-dynamic-maps-widgets.css";
+  @import "./components/17-onboarding-tour.css";
+
+## 6) External <link rel="stylesheet"> in TSX/JSX
+  (none found in scanned app/ + src/)
+
+## 7) Tailwind-related signals (twMerge, @tailwind, sm:/md: variants)
+  - src/components/feature/jobs/StartJobFromS3Modal.tsx  (responsive variant (sm:/md:/…))
+
+## 8) Inline styles (React style={{ … }} and style="…")
+  Files with inline style: 2 (sorted by inline style count, descending).
+  Total lines matching style={{ or style=": React blocks ~2, HTML attr ~0
+
+  Files with inline style (first 80 paths):
+  - src/components/feature/jobs/JobsDataTable.tsx  (react=1, htmlAttr=0)  lines: 447
+  - src/components/shared/WorldMap.tsx  (react=1, htmlAttr=0)  lines: 105
+
+## 8b) Inline style blocks — design-system variable hint (--c360-*)
+  Opening lines with style={{ (same count as §8): 2.
+  Blocks where `--c360-` appears within the next 10 lines: 0 (likely token / variable bridge to CSS).
+  Blocks with no `--c360-` in that window: 2 (often portals, maps, library geometry, or plain left/top/transform).
+  Total `--c360-` substring matches in scanned TSX/JSX (includes style + rare strings): ~144
+
+## 9) Suggested workflow (unique classes + custom CSS)
+  - Prefer c360-<feature>-<element> or existing utilities in utilities.css.
+  - Replace style={{}} with classes; keep dynamic values as minimal inline.
+  - New feature CSS: add to the smallest relevant components/NN-*.css or utilities.
+  - Large partials (e.g. layout.css, utilities.css, or app-page bundles): split by domain into new NN-* files
+    and add @import lines to components.css (see 18-app-dynamic-maps-widgets.css for a recent split).
+
+========================================================================
+Full report written to: reports/css-inventory.txt
+========================================================================
