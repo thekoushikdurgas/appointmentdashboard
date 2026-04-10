@@ -31,5 +31,16 @@ jobs:
             echo "NEXT_PUBLIC_GRAPHQL_URL=${{ secrets.NEXT_PUBLIC_GRAPHQL_URL }}" >> .env.local
             echo "NEXT_PUBLIC_JOBS_S3_BUCKET=${{ secrets.NEXT_PUBLIC_JOBS_S3_BUCKET }}" >> .env.local
             docker compose -f docker-compose.prod.yml up --build -d
-            docker system prune -f --volumes
+            docker image prune -f
             echo "Deployment complete: $(date)"
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            curl -sf --connect-timeout 15 http://127.0.0.1:3000/ || exit 1

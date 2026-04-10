@@ -1,0 +1,10 @@
+# Production stack for EC2: Next.js standalone image (see Dockerfile).
+# Build-time/public env vars come from .env.local (written by GitHub Actions deploy).
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    restart: unless-stopped
