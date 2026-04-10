@@ -780,6 +780,10 @@
 .c360-jobs-dt__menu-item--danger {
   color: var(--c360-danger, #c62828);
 }
+.c360-jobs-dt__menu-item--primary {
+  font-weight: 600;
+  color: var(--c360-primary, var(--c360-text));
+}
 .c360-jobs-dt__footer {
   display: flex;
   flex-wrap: wrap;

@@ -1799,10 +1799,17 @@ export type JobMutationTerminateJobArgs = {
 export type JobQuery = {
   job: SchedulerJob;
   jobs: JobConnection;
+  /** Presigned URL (or direct HTTPS) for a job CSV output; null if no output key yet. */
+  jobOutputCsvDownloadUrl?: Maybe<S3DownloadUrlResponse>;
 };
 
 export type JobQueryJobArgs = {
   jobId: Scalars["ID"]["input"];
+};
+
+export type JobQueryJobOutputCsvDownloadUrlArgs = {
+  jobId: Scalars["ID"]["input"];
+  expiresIn?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type JobQueryJobsArgs = {

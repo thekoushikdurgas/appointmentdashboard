@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useS3Files } from "@/hooks/useS3Files";
+import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
 import { jobsService } from "@/services/graphql/jobsService";
 import {
@@ -24,7 +25,10 @@ import type {
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
 import { parseEmailServiceError } from "@/lib/emailErrors";
-import { normalizeExportOutputPrefix } from "@/lib/jobs/exportOutputPrefix";
+import {
+  normalizeExportOutputPrefix,
+  stripStorageIdOutputPrefix,
+} from "@/lib/jobs/exportOutputPrefix";
 
 export type StartJobFromS3JobKind =
   | "email_finder"
@@ -124,6 +128,8 @@ export function StartJobFromS3Modal({
   initialVerifyEmailColumn,
   initialVerifyProvider,
 }: StartJobFromS3ModalProps) {
+  const { user } = useAuth();
+  const storageId = user?.id?.trim() ?? null;
   const { isSuperAdmin } = useRole();
   const { files, bucketName, loading, error, refresh, getFileSchema } =
     useS3Files(undefined);
@@ -174,7 +180,8 @@ export function StartJobFromS3Modal({
     if (!isOpen) return;
     void refresh();
     setSelectedKey(initialFile?.key ?? "");
-    setOutputPrefix("exports/");
+    const uid = user?.id?.trim();
+    setOutputPrefix(uid ? `${uid}/exports/` : "exports/");
     setImportBucket("");
     resetMappings();
     const resolvedKind: StartJobFromS3JobKind =
@@ -198,7 +205,19 @@ export function StartJobFromS3Modal({
     initialJobKind,
     initialVerifyEmailColumn,
     initialVerifyProvider,
+    user?.id,
   ]);
+
+  /** Late auth: upgrade short defaults to full logical path once ``user.id`` is available. */
+  useEffect(() => {
+    if (!isOpen || !storageId) return;
+    setOutputPrefix((prev) => {
+      const t = prev.trim();
+      if (t === "exports/") return `${storageId}/exports/`;
+      if (t === "imports/") return `${storageId}/imports/`;
+      return prev;
+    });
+  }, [isOpen, storageId]);
 
   useEffect(() => {
     if (!isOpen || !bucketName) return;
@@ -215,6 +234,31 @@ export function StartJobFromS3Modal({
       setJobKind("email_finder");
     }
   }, [isSuperAdmin, jobKind]);
+
+  /** Connectra imports default to ``imports/`` in the API; avoid leaving email ``exports/`` in the field. */
+  useEffect(() => {
+    if (jobKind === "import_contact" || jobKind === "import_company") {
+      setOutputPrefix((prev) => {
+        const t = prev.trim();
+        const shortEx = "exports/";
+        const fullEx = storageId ? `${storageId}/exports/` : shortEx;
+        if (t === "" || t === shortEx || t === fullEx) {
+          return storageId ? `${storageId}/imports/` : "imports/";
+        }
+        return prev;
+      });
+    } else {
+      setOutputPrefix((prev) => {
+        const t = prev.trim();
+        const shortIm = "imports/";
+        const fullIm = storageId ? `${storageId}/imports/` : shortIm;
+        if (t === "" || t === shortIm || t === fullIm) {
+          return storageId ? `${storageId}/exports/` : "exports/";
+        }
+        return prev;
+      });
+    }
+  }, [jobKind, storageId]);
 
   useEffect(() => {
     if (!isOpen || !selectedKey.trim()) {
@@ -286,6 +330,24 @@ export function StartJobFromS3Modal({
   const isEmailVerify = jobKind === "email_verify";
   const isEmailPattern = jobKind === "email_pattern";
 
+  /** Full logical folder under the user’s storage id (matches Jobs detail “output path”). */
+  const logicalOutputFolderPreview = useMemo(() => {
+    if (!storageId) return { path: null as string | null, invalid: false };
+    if (isImport) {
+      const rest =
+        stripStorageIdOutputPrefix(outputPrefix, storageId) || "imports/";
+      const q = rest.endsWith("/") ? rest : `${rest}/`;
+      return { path: `${storageId}/${q}`, invalid: false };
+    }
+    try {
+      const rest = stripStorageIdOutputPrefix(outputPrefix, storageId);
+      const norm = normalizeExportOutputPrefix(rest);
+      return { path: `${storageId}/${norm}`, invalid: false };
+    } catch {
+      return { path: null, invalid: outputPrefix.trim().length > 0 };
+    }
+  }, [storageId, isImport, outputPrefix]);
+
   const tabularOk =
     !listMatch || isAllowedTabularFilename(listMatch.filename || "");
 
@@ -338,7 +400,8 @@ export function StartJobFromS3Modal({
         jobKind === "email_pattern"
       ) {
         try {
-          exportPrefix = normalizeExportOutputPrefix(outputPrefix);
+          const forApi = stripStorageIdOutputPrefix(outputPrefix, storageId);
+          exportPrefix = normalizeExportOutputPrefix(forApi);
         } catch (e) {
           toast.error(
             e instanceof Error ? e.message : "Invalid S3 output prefix.",
@@ -383,11 +446,14 @@ export function StartJobFromS3Modal({
         });
       } else if (jobKind === "import_contact") {
         const csvColumns = buildImportCsvColumns();
+        const rawOp = outputPrefix.trim() || undefined;
         const res = await jobsService.createContact360Import({
           s3Bucket: importBucket.trim(),
           s3Key: selectedKey.trim(),
           importTarget: "contact",
-          outputPrefix: outputPrefix.trim() || undefined,
+          outputPrefix: rawOp
+            ? stripStorageIdOutputPrefix(rawOp, storageId) || undefined
+            : undefined,
           ...(csvColumns ? { csvColumns } : {}),
         });
         toast.success(
@@ -395,11 +461,14 @@ export function StartJobFromS3Modal({
         );
       } else {
         const csvColumns = buildImportCsvColumns();
+        const rawOpCo = outputPrefix.trim() || undefined;
         const res = await jobsService.createContact360Import({
           s3Bucket: importBucket.trim(),
           s3Key: selectedKey.trim(),
           importTarget: "company",
-          outputPrefix: outputPrefix.trim() || undefined,
+          outputPrefix: rawOpCo
+            ? stripStorageIdOutputPrefix(rawOpCo, storageId) || undefined
+            : undefined,
           ...(csvColumns ? { csvColumns } : {}),
         });
         toast.success(
@@ -705,23 +774,79 @@ export function StartJobFromS3Modal({
         )}
 
         <Input
-          label={isImport ? "Output prefix (optional)" : "Output prefix *"}
+          label={
+            isImport
+              ? "Output prefix (optional)"
+              : "Output prefix (your storage id + folder) *"
+          }
           value={outputPrefix}
           onChange={(e) => setOutputPrefix(e.target.value)}
-          placeholder="exports/"
+          placeholder={
+            isImport
+              ? storageId
+                ? `${storageId}/imports/`
+                : "imports/"
+              : storageId
+                ? `${storageId}/exports/`
+                : "exports/"
+          }
         />
-        {!isImport && (
+        {storageId && logicalOutputFolderPreview.path && (
           <p className="c360-text-xs c360-text-muted c360-mb-1">
-            Exports are stored under{" "}
-            <code className="c360-font-mono">exports/</code> in your user
-            bucket; values are normalized on create (same rules as the API).
+            CSV output is written under{" "}
+            <code className="c360-font-mono c360-break-all">
+              {logicalOutputFolderPreview.path}
+            </code>
+            . On start, your storage id is stripped and a bucket-relative{" "}
+            <code className="c360-font-mono">output_prefix</code> is sent (e.g.{" "}
+            <code className="c360-font-mono">exports/…</code>
+            {!isImport && ", normalized like the API"}).
           </p>
         )}
-        <p className="c360-text-xs c360-text-muted">
-          Request payloads include the S3 key above, output prefix, and column
-          maps as sent to email.server (finder/verify/pattern) or Connectra{" "}
-          <code className="c360-text-xs">insert_csv_file</code>.
-        </p>
+        {!storageId && (
+          <p className="c360-text-xs c360-text-muted c360-mb-1">
+            Sign in to see the full path under your storage id; the value above
+            is still sent as{" "}
+            <code className="c360-font-mono">output_prefix</code>.
+          </p>
+        )}
+        {!isImport && logicalOutputFolderPreview.invalid && (
+          <p className="c360-text-xs c360-text-danger c360-mb-1">
+            This prefix cannot be normalized (e.g. contains &quot;..&quot;). Fix
+            it to match API rules.
+          </p>
+        )}
+        {!isImport && (
+          <p className="c360-text-xs c360-text-muted c360-mb-1">
+            Default <code className="c360-font-mono">exports/</code> matches
+            email finder, verify, and pattern jobs; subfolders like{" "}
+            <code className="c360-font-mono">run1</code> become{" "}
+            <code className="c360-font-mono">exports/run1/</code> when you start
+            the job.
+          </p>
+        )}
+        {isImport && (
+          <p className="c360-text-xs c360-text-muted c360-mb-1">
+            Connectra imports default to{" "}
+            <code className="c360-font-mono">imports/</code> (not{" "}
+            <code className="c360-font-mono">exports/</code>) when you switch to
+            this job type.
+          </p>
+        )}
+        {isImport ? (
+          <p className="c360-text-xs c360-text-muted">
+            This job calls Connectra{" "}
+            <code className="c360-text-xs">insert_csv_file</code> with the
+            bucket, S3 key, optional{" "}
+            <code className="c360-text-xs">csv_columns</code>, and output
+            prefix.
+          </p>
+        ) : (
+          <p className="c360-text-xs c360-text-muted">
+            This job calls email.server (finder, verify, or pattern S3) with the
+            input CSV key, normalized output prefix, and column maps above.
+          </p>
+        )}
         <div className="c360-modal-actions">
           <Button variant="secondary" onClick={onClose}>
             Cancel

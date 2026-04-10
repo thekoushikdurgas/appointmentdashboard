@@ -1,17 +1,37 @@
 import type { Job } from "@/services/graphql/jobsService";
 
+/** Satellite job types that write CSV under ``{userId}/{output_prefix}/`` (default ``exports/``). */
+export const EXPORT_STREAM_JOB_TYPES = new Set([
+  "email_finder_export_stream",
+  "email_verify_export_stream",
+  "email_pattern_export_stream",
+  "contact360_export_stream",
+]);
+
+/**
+ * Logical export folder: API field when present, else ``{userId}/exports/`` for stream export jobs.
+ */
+export function exportOutputBasePathForDisplay(
+  job: Pick<Job, "userId" | "type" | "exportOutputBasePath">,
+): string | undefined {
+  const fromApi = job.exportOutputBasePath?.trim();
+  if (fromApi) return fromApi;
+  const uid = job.userId?.trim();
+  if (!uid || !EXPORT_STREAM_JOB_TYPES.has(job.type)) return undefined;
+  return `${uid}/exports/`;
+}
+
 /**
  * Full logical path under the user's storage id for export jobs (UI only).
  * Presign/download must keep using the relative ``outputFile`` from the API.
  */
-export function logicalJobOutputDisplayPath(job: Pick<
-  Job,
-  "userId" | "outputFile" | "exportOutputBasePath"
->): string | undefined {
+export function logicalJobOutputDisplayPath(
+  job: Pick<Job, "userId" | "outputFile" | "exportOutputBasePath" | "type">,
+): string | undefined {
   const raw = job.outputFile?.trim();
   if (!raw) return undefined;
   if (/^https?:\/\//i.test(raw)) return raw;
-  if (!job.exportOutputBasePath?.trim()) return raw;
+  if (!exportOutputBasePathForDisplay(job)) return raw;
   const uid = job.userId.trim();
   if (uid && raw.startsWith(`${uid}/`)) return raw;
   return `${uid}/${raw}`;

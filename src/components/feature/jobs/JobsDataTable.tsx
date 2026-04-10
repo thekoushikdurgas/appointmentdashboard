@@ -61,6 +61,10 @@ function categoryLabel(job: MappedJob): string {
   return job.jobSubtype || job.jobFamily || "—";
 }
 
+function canDownloadJobCsv(job: MappedJob): boolean {
+  return isSuccessfulTerminalJobStatus(job.status) && !!job.outputFile?.trim();
+}
+
 type SortKey = "created" | "type" | "status" | "progress";
 type SortDir = "asc" | "desc";
 
@@ -486,23 +490,22 @@ export function JobsDataTable({
                       </td>
                       <td className="c360-jobs-dt__action-cell">
                         <div className="c360-flex c360-items-center c360-justify-end c360-gap-1 c360-flex-wrap">
-                          {job.isTerminal &&
-                            isSuccessfulTerminalJobStatus(job.status) &&
-                            job.outputFile &&
-                            job.outputFile.trim().length > 0 && (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                className="c360-whitespace-nowrap"
-                                leftIcon={<Download size={14} />}
-                                onClick={() =>
-                                  void onDownloadOutput(job.outputFile!)
-                                }
-                              >
-                                Download CSV
-                              </Button>
-                            )}
+                          {canDownloadJobCsv(job) && (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
+                              className="c360-whitespace-nowrap"
+                              leftIcon={<Download size={14} />}
+                              aria-label="Download CSV via presigned URL for output key"
+                              title="Presigned download for job output CSV"
+                              onClick={() =>
+                                void onDownloadOutput(job.outputFile!)
+                              }
+                            >
+                              Download CSV
+                            </Button>
+                          )}
                           <Popover
                             align="end"
                             width={220}
@@ -517,6 +520,17 @@ export function JobsDataTable({
                             }
                             content={
                               <div className="c360-jobs-dt__menu">
+                                {canDownloadJobCsv(job) && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--primary"
+                                    onClick={() =>
+                                      void onDownloadOutput(job.outputFile!)
+                                    }
+                                  >
+                                    Download CSV
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   className="c360-jobs-dt__menu-item"
@@ -593,20 +607,6 @@ export function JobsDataTable({
                                       : "Retry"}
                                   </button>
                                 )}
-                                {job.isTerminal &&
-                                  isSuccessfulTerminalJobStatus(job.status) &&
-                                  job.outputFile &&
-                                  job.outputFile.trim().length > 0 && (
-                                    <button
-                                      type="button"
-                                      className="c360-jobs-dt__menu-item"
-                                      onClick={() =>
-                                        void onDownloadOutput(job.outputFile!)
-                                      }
-                                    >
-                                      Download CSV
-                                    </button>
-                                  )}
                               </div>
                             }
                           />

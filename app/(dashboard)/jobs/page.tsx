@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   RefreshCw,
   Loader2,
@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ReviewList } from "@/components/shared/ReviewList";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobDetail } from "@/hooks/useJobDetail";
 import { jobsService } from "@/services/graphql/jobsService";
@@ -29,11 +30,15 @@ import { JobsDataTable } from "@/components/feature/jobs/JobsDataTable";
 import { toast } from "sonner";
 import { parseOperationError } from "@/lib/errorParser";
 import {
+  exportOutputBasePathForDisplay,
   getJobProgressBarTone,
   isSuccessfulTerminalJobStatus,
   logicalJobOutputDisplayPath,
 } from "@/lib/jobs/jobsUtils";
-import { normalizeExportOutputPrefix } from "@/lib/jobs/exportOutputPrefix";
+import {
+  normalizeExportOutputPrefix,
+  stripStorageIdOutputPrefix,
+} from "@/lib/jobs/exportOutputPrefix";
 
 const EXPORT_TYPE_OPTIONS = [
   { value: "contacts", label: "Contacts" },
@@ -100,10 +105,9 @@ function JobDetailPanel({
       ? 100
       : job.progress;
   const canDownload =
-    job.outputFile &&
-    job.outputFile.trim().length > 0 &&
-    isSuccessfulTerminalJobStatus(job.status);
+    !!job.outputFile?.trim() && isSuccessfulTerminalJobStatus(job.status);
 
+  const exportFolderDisplay = exportOutputBasePathForDisplay(job);
   const outputDisplayPath = logicalJobOutputDisplayPath(job);
   const outputRelativeKey = job.outputFile?.trim();
   const showRelativeKeyHint =
@@ -113,11 +117,33 @@ function JobDetailPanel({
 
   return (
     <div className="c360-job-detail-panel">
-      {polling && (
-        <span className="c360-job-detail-polling">
-          <Loader2 size={12} className="spinning" />
-          Live polling…
-        </span>
+      {(polling || canDownload) && (
+        <div
+          className={cn(
+            "c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-mb-2",
+            polling && canDownload && "c360-justify-between",
+            canDownload && !polling && "c360-justify-end",
+          )}
+        >
+          {polling && (
+            <span className="c360-job-detail-polling c360-mb-0">
+              <Loader2 size={12} className="spinning" />
+              Live polling…
+            </span>
+          )}
+          {canDownload && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Download size={16} />}
+              aria-label="Download CSV via presigned URL"
+              onClick={() => void onDownload(job.outputFile!)}
+            >
+              Download CSV
+            </Button>
+          )}
+        </div>
       )}
       <p className="c360-job-detail-meta-line" aria-label="Job summary">
         {[
@@ -188,16 +214,17 @@ function JobDetailPanel({
             <dd className="c360-font-mono c360-text-xs">{job.inputFile}</dd>
           </div>
         )}
-        {job.exportOutputBasePath && (
+        {exportFolderDisplay && (
           <div className="c360-job-detail-full">
-            <dt>Export output folder</dt>
+            <dt>Output path (your storage / exports)</dt>
             <dd>
               <div className="c360-font-mono c360-text-xs">
-                {job.exportOutputBasePath}
+                {exportFolderDisplay}
               </div>
               <p className="c360-text-xs c360-text-muted c360-mt-1 c360-mb-0">
-                CSV keys from the job are relative to your storage id above; the
-                line below shows the full logical path.
+                Finder, verifier, pattern, and Contact360 export jobs write
+                under this folder; object keys below are relative to your user
+                id unless already absolute.
               </p>
             </dd>
           </div>
@@ -211,20 +238,15 @@ function JobDetailPanel({
               </span>
               {showRelativeKeyHint && (
                 <p className="c360-text-xs c360-text-muted c360-mt-1 c360-mb-0">
-                  Object key (for download):{" "}
-                  <span className="c360-font-mono">{outputRelativeKey}</span>
+                  Same CSV — not a different file. The path above shows your
+                  storage id plus the object key so it matches how folders are
+                  shown above. Download and presign use the bucket-relative key{" "}
+                  <code className="c360-font-mono c360-text-xs">
+                    {outputRelativeKey}
+                  </code>{" "}
+                  (your user id is already the bucket scope, so the key omits
+                  it).
                 </p>
-              )}
-              {canDownload && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<Download size={16} />}
-                  onClick={() => void onDownload(job.outputFile!)}
-                >
-                  Download CSV
-                </Button>
               )}
             </dd>
           </div>
@@ -241,6 +263,8 @@ function JobDetailPanel({
 }
 
 export default function JobsPage() {
+  const { user } = useAuth();
+  const storageId = user?.id?.trim() ?? null;
   const [familyFilter, setFamilyFilter] = useState("");
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const {
@@ -275,6 +299,17 @@ export default function JobsPage() {
   const [c360OutputPrefix, setC360OutputPrefix] = useState("exports/");
   const [c360VqlJson, setC360VqlJson] = useState("{}");
 
+  /** New Export modal: default field to full logical ``{userId}/exports/`` once id is known. */
+  useEffect(() => {
+    if (!exportOpen || !storageId) return;
+    setEmailOutputPrefix((p) =>
+      p.trim() === "exports/" ? `${storageId}/exports/` : p,
+    );
+    setC360OutputPrefix((p) =>
+      p.trim() === "exports/" ? `${storageId}/exports/` : p,
+    );
+  }, [exportOpen, storageId]);
+
   const handleCreateExport = async () => {
     setCreating(true);
     try {
@@ -287,7 +322,9 @@ export default function JobsPage() {
         }
         let outputPrefix: string;
         try {
-          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+          outputPrefix = normalizeExportOutputPrefix(
+            stripStorageIdOutputPrefix(emailOutputPrefix, storageId),
+          );
         } catch (e) {
           toast.error(
             e instanceof Error ? e.message : "Invalid S3 output prefix.",
@@ -307,7 +344,9 @@ export default function JobsPage() {
         }
         let outputPrefix: string;
         try {
-          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+          outputPrefix = normalizeExportOutputPrefix(
+            stripStorageIdOutputPrefix(emailOutputPrefix, storageId),
+          );
         } catch (e) {
           toast.error(
             e instanceof Error ? e.message : "Invalid S3 output prefix.",
@@ -327,7 +366,9 @@ export default function JobsPage() {
         }
         let outputPrefix: string;
         try {
-          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+          outputPrefix = normalizeExportOutputPrefix(
+            stripStorageIdOutputPrefix(emailOutputPrefix, storageId),
+          );
         } catch (e) {
           toast.error(
             e instanceof Error ? e.message : "Invalid S3 output prefix.",
@@ -362,7 +403,9 @@ export default function JobsPage() {
         }
         let outputPrefix: string;
         try {
-          outputPrefix = normalizeExportOutputPrefix(c360OutputPrefix);
+          outputPrefix = normalizeExportOutputPrefix(
+            stripStorageIdOutputPrefix(c360OutputPrefix, storageId),
+          );
         } catch (e) {
           toast.error(
             e instanceof Error ? e.message : "Invalid S3 output prefix.",
@@ -543,17 +586,18 @@ export default function JobsPage() {
                 placeholder="uploads/abc.csv"
               />
               <Input
-                label="S3 output prefix"
+                label="S3 output prefix (your storage id + folder)"
                 value={emailOutputPrefix}
                 onChange={(e) => setEmailOutputPrefix(e.target.value)}
-                placeholder="exports/"
+                placeholder={storageId ? `${storageId}/exports/` : "exports/"}
               />
               <p className="c360-text-xs c360-text-muted c360-mt-1">
-                Output is written under your user bucket using a path under{" "}
-                <code className="c360-font-mono">exports/</code>. Other values
-                are normalized when the job starts (e.g.{" "}
-                <code className="c360-font-mono">run1</code> →{" "}
-                <code className="c360-font-mono">exports/run1/</code>).
+                Default matches Jobs:{" "}
+                <code className="c360-font-mono c360-break-all">
+                  {storageId ? `${storageId}/exports/` : "…/exports/"}
+                </code>
+                . On create, your id is stripped and a bucket-relative prefix is
+                sent (normalized like the API).
               </p>
               {exportType === "email_pattern" && (
                 <div className="c360-section-stack c360-text-sm">
@@ -607,15 +651,17 @@ export default function JobsPage() {
           {(exportType === "contacts" || exportType === "companies") && (
             <>
               <Input
-                label="S3 output prefix"
+                label="S3 output prefix (your storage id + folder)"
                 value={c360OutputPrefix}
                 onChange={(e) => setC360OutputPrefix(e.target.value)}
-                placeholder="exports/"
+                placeholder={storageId ? `${storageId}/exports/` : "exports/"}
               />
               <p className="c360-text-xs c360-text-muted c360-mt-1">
-                Same as email exports: files land under{" "}
-                <code className="c360-font-mono">exports/</code> in your storage
-                namespace; prefixes are normalized on create.
+                Same as email exports: default{" "}
+                <code className="c360-font-mono c360-break-all">
+                  {storageId ? `${storageId}/exports/` : "…/exports/"}
+                </code>
+                ; id is stripped before normalize on create.
               </p>
               <Tabs defaultValue="quick">
                 <TabsList>

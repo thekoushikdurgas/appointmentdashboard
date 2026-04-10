@@ -143,6 +143,11 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
 
   const liveStatus = str(p, "status", "job_status", "state");
 
+  const dataBlock =
+    typeof p.data === "object" && p.data !== null && !Array.isArray(p.data)
+      ? (p.data as Record<string, unknown>)
+      : null;
+
   const outputFile =
     str(
       p,
@@ -161,6 +166,16 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
           "output_csv_key",
           "outputCsvKey",
           "download_url",
+        )
+      : undefined) ??
+    (dataBlock
+      ? str(
+          dataBlock,
+          "s3_key",
+          "output_csv_key",
+          "outputCsvKey",
+          "download_url",
+          "downloadUrl",
         )
       : undefined) ??
     (typeof p.result === "object" && p.result !== null

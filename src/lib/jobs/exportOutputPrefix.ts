@@ -3,6 +3,26 @@
 const DEFAULT_EXPORT_ROOT = "exports/";
 const MAX_LEN = 500;
 
+/**
+ * If the value is a full logical path ``{storageId}/rest``, return ``rest`` for API
+ * ``output_prefix`` (bucket-relative). Id segment match is case-insensitive.
+ */
+export function stripStorageIdOutputPrefix(
+  raw: string,
+  storageId: string | null,
+): string {
+  const t = raw.trim();
+  if (!storageId || !t) return t;
+  const p = `${storageId.trim()}/`;
+  if (
+    t.length >= p.length &&
+    t.slice(0, p.length).toLowerCase() === p.toLowerCase()
+  ) {
+    return t.slice(p.length);
+  }
+  return t;
+}
+
 export function normalizeExportOutputPrefix(raw: string): string {
   let v = (raw ?? "").trim();
   if (!v) return DEFAULT_EXPORT_ROOT;
