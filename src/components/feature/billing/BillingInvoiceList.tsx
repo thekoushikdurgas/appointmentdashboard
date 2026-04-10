@@ -60,8 +60,8 @@ export function BillingInvoiceList({
   return (
     <>
       <p className="c360-text-muted c360-text-sm c360-mb-2">
-        Subscription billing and approved manual UPI payments both appear here as
-        invoices. Rows with ID starting with{" "}
+        Subscription billing and approved manual UPI payments both appear here
+        as invoices. Rows with ID starting with{" "}
         <span className="c360-font-mono">PS-</span> are manual payments
         confirmed by our team.
       </p>

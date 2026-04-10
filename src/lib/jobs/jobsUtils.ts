@@ -1,5 +1,22 @@
 import type { Job } from "@/services/graphql/jobsService";
 
+/**
+ * Full logical path under the user's storage id for export jobs (UI only).
+ * Presign/download must keep using the relative ``outputFile`` from the API.
+ */
+export function logicalJobOutputDisplayPath(job: Pick<
+  Job,
+  "userId" | "outputFile" | "exportOutputBasePath"
+>): string | undefined {
+  const raw = job.outputFile?.trim();
+  if (!raw) return undefined;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (!job.exportOutputBasePath?.trim()) return raw;
+  const uid = job.userId.trim();
+  if (uid && raw.startsWith(`${uid}/`)) return raw;
+  return `${uid}/${raw}`;
+}
+
 /** True when the job reached a successful terminal state (incl. Connectra ``succeeded``). */
 export function isSuccessfulTerminalJobStatus(displayStatus: string): boolean {
   const u = displayStatus.toUpperCase();

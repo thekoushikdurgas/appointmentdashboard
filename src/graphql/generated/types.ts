@@ -229,6 +229,7 @@ export type AdminMutation = {
   deleteUser: Scalars["Boolean"]["output"];
   promoteToAdmin: User;
   promoteToSuperAdmin: User;
+  runSubscriptionExpirySweep: Scalars["Int"]["output"];
   updateLog: LogEntry;
   updateUserCredits: User;
   updateUserRole: User;
@@ -260,6 +261,11 @@ export type AdminMutationPromoteToAdminArgs = {
 
 export type AdminMutationPromoteToSuperAdminArgs = {
   input: PromoteToSuperAdminInput;
+};
+
+export type AdminMutationRunSubscriptionExpirySweepArgs = {
+  limit?: Scalars["Int"]["input"];
+  maxBatches?: Scalars["Int"]["input"];
 };
 
 export type AdminMutationUpdateLogArgs = {
@@ -456,6 +462,7 @@ export type BillingMutation = {
   updatePaymentInstructions: PaymentInstructions;
   updatePlan: UpdatePlanResult;
   updatePlanPeriod: CreatePlanPeriodResult;
+  uploadPaymentReceiptPhoto: PaymentReceiptUploadResult;
 };
 
 export type BillingMutationApprovePaymentArgs = {
@@ -524,10 +531,15 @@ export type BillingMutationUpdatePlanPeriodArgs = {
   tier: Scalars["String"]["input"];
 };
 
+export type BillingMutationUploadPaymentReceiptPhotoArgs = {
+  input: UploadPaymentReceiptPhotoInput;
+};
+
 export type BillingQuery = {
   addons: Array<AddonPackage>;
   billing: BillingInfo;
   invoices: InvoiceConnection;
+  myPaymentSubmissions: PaymentSubmissionConnection;
   paymentInstructions?: Maybe<PaymentInstructions>;
   paymentSubmissions: PaymentSubmissionConnection;
   plans: Array<SubscriptionPlan>;
@@ -535,6 +547,12 @@ export type BillingQuery = {
 
 export type BillingQueryInvoicesArgs = {
   pagination?: InputMaybe<InvoicePaginationInput>;
+};
+
+export type BillingQueryMyPaymentSubmissionsArgs = {
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
+  status?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type BillingQueryPaymentSubmissionsArgs = {
@@ -2230,6 +2248,10 @@ export type PaymentInstructions = {
   upiId: Scalars["String"]["output"];
 };
 
+export type PaymentReceiptUploadResult = {
+  fileKey: Scalars["String"]["output"];
+};
+
 export type PaymentSubmission = {
   addonPackageId?: Maybe<Scalars["String"]["output"]>;
   amount: Scalars["Float"]["output"];
@@ -3075,6 +3097,11 @@ export type UploadMutationInitiateUploadArgs = {
 
 export type UploadMutationRegisterPartArgs = {
   input: RegisterPartInput;
+};
+
+export type UploadPaymentReceiptPhotoInput = {
+  imageBase64: Scalars["String"]["input"];
+  mimeType: Scalars["String"]["input"];
 };
 
 export type UploadQuery = {

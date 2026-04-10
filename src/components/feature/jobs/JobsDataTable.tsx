@@ -504,112 +504,112 @@ export function JobsDataTable({
                               </Button>
                             )}
                           <Popover
-                          align="end"
-                          width={220}
-                          trigger={
-                            <button
-                              type="button"
-                              className="c360-jobs-dt__action-btn"
-                              aria-label={`Actions for ${job.typeLabel}`}
-                            >
-                              <MoreHorizontal size={20} />
-                            </button>
-                          }
-                          content={
-                            <div className="c360-jobs-dt__menu">
+                            align="end"
+                            width={220}
+                            trigger={
                               <button
                                 type="button"
-                                className="c360-jobs-dt__menu-item"
-                                onClick={() => onToggleExpand(job.jobId)}
+                                className="c360-jobs-dt__action-btn"
+                                aria-label={`Actions for ${job.typeLabel}`}
                               >
-                                {expanded ? "Hide details" : "View details"}
+                                <MoreHorizontal size={20} />
                               </button>
-                              {job.canPause && (
+                            }
+                            content={
+                              <div className="c360-jobs-dt__menu">
                                 <button
                                   type="button"
                                   className="c360-jobs-dt__menu-item"
-                                  onClick={() => onPause(job.jobId)}
+                                  onClick={() => onToggleExpand(job.jobId)}
                                 >
-                                  Pause
+                                  {expanded ? "Hide details" : "View details"}
                                 </button>
-                              )}
-                              {job.canPauseConnectra && (
-                                <button
-                                  type="button"
-                                  className="c360-jobs-dt__menu-item"
-                                  onClick={() => onPauseConnectra(job.jobId)}
-                                >
-                                  Pause (sync)
-                                </button>
-                              )}
-                              {job.status === "PAUSED" &&
-                                job.sourceService === "email_server" && (
+                                {job.canPause && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item"
-                                    onClick={() => onResume(job.jobId)}
+                                    onClick={() => onPause(job.jobId)}
                                   >
-                                    Resume
+                                    Pause
                                   </button>
                                 )}
-                              {job.canResumeConnectra && (
-                                <button
-                                  type="button"
-                                  className="c360-jobs-dt__menu-item"
-                                  onClick={() => onResumeConnectra(job.jobId)}
-                                >
-                                  Resume (sync)
-                                </button>
-                              )}
-                              {job.canCancel && (
-                                <button
-                                  type="button"
-                                  className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--danger"
-                                  onClick={() => onCancel(job.jobId)}
-                                >
-                                  Cancel
-                                </button>
-                              )}
-                              {job.canTerminateConnectra && (
-                                <button
-                                  type="button"
-                                  className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--danger"
-                                  onClick={() =>
-                                    onTerminateConnectra(job.jobId)
-                                  }
-                                >
-                                  Terminate (sync)
-                                </button>
-                              )}
-                              {job.canRetry && (
-                                <button
-                                  type="button"
-                                  className="c360-jobs-dt__menu-item"
-                                  disabled={retryingJobId === job.jobId}
-                                  onClick={() => void onRetry(job.jobId)}
-                                >
-                                  {retryingJobId === job.jobId
-                                    ? "Retrying…"
-                                    : "Retry"}
-                                </button>
-                              )}
-                              {job.isTerminal &&
-                                isSuccessfulTerminalJobStatus(job.status) &&
-                                job.outputFile &&
-                                job.outputFile.trim().length > 0 && (
+                                {job.canPauseConnectra && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item"
+                                    onClick={() => onPauseConnectra(job.jobId)}
+                                  >
+                                    Pause (sync)
+                                  </button>
+                                )}
+                                {job.status === "PAUSED" &&
+                                  job.sourceService === "email_server" && (
+                                    <button
+                                      type="button"
+                                      className="c360-jobs-dt__menu-item"
+                                      onClick={() => onResume(job.jobId)}
+                                    >
+                                      Resume
+                                    </button>
+                                  )}
+                                {job.canResumeConnectra && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item"
+                                    onClick={() => onResumeConnectra(job.jobId)}
+                                  >
+                                    Resume (sync)
+                                  </button>
+                                )}
+                                {job.canCancel && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--danger"
+                                    onClick={() => onCancel(job.jobId)}
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                                {job.canTerminateConnectra && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--danger"
                                     onClick={() =>
-                                      void onDownloadOutput(job.outputFile!)
+                                      onTerminateConnectra(job.jobId)
                                     }
                                   >
-                                    Download CSV
+                                    Terminate (sync)
                                   </button>
                                 )}
-                            </div>
-                          }
-                        />
+                                {job.canRetry && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item"
+                                    disabled={retryingJobId === job.jobId}
+                                    onClick={() => void onRetry(job.jobId)}
+                                  >
+                                    {retryingJobId === job.jobId
+                                      ? "Retrying…"
+                                      : "Retry"}
+                                  </button>
+                                )}
+                                {job.isTerminal &&
+                                  isSuccessfulTerminalJobStatus(job.status) &&
+                                  job.outputFile &&
+                                  job.outputFile.trim().length > 0 && (
+                                    <button
+                                      type="button"
+                                      className="c360-jobs-dt__menu-item"
+                                      onClick={() =>
+                                        void onDownloadOutput(job.outputFile!)
+                                      }
+                                    >
+                                      Download CSV
+                                    </button>
+                                  )}
+                              </div>
+                            }
+                          />
                         </div>
                       </td>
                     </tr>

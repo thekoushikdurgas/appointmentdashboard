@@ -24,6 +24,7 @@ import type {
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
 import { parseEmailServiceError } from "@/lib/emailErrors";
+import { normalizeExportOutputPrefix } from "@/lib/jobs/exportOutputPrefix";
 
 export type StartJobFromS3JobKind =
   | "email_finder"
@@ -330,10 +331,26 @@ export function StartJobFromS3Modal({
     setSubmitting(true);
     try {
       const bucket = bucketName?.trim() || undefined;
+      let exportPrefix: string | undefined;
+      if (
+        jobKind === "email_finder" ||
+        jobKind === "email_verify" ||
+        jobKind === "email_pattern"
+      ) {
+        try {
+          exportPrefix = normalizeExportOutputPrefix(outputPrefix);
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : "Invalid S3 output prefix.",
+          );
+          setSubmitting(false);
+          return;
+        }
+      }
       if (jobKind === "email_finder") {
         await jobsService.createEmailFinderExport({
           inputCsvKey: selectedKey.trim(),
-          outputPrefix: outputPrefix.trim(),
+          outputPrefix: exportPrefix!,
           ...(bucket ? { s3Bucket: bucket } : {}),
           csvColumns: {
             firstName: finderFirstName.trim() || "first_name",
@@ -344,7 +361,7 @@ export function StartJobFromS3Modal({
       } else if (jobKind === "email_verify") {
         await jobsService.createEmailVerifyExport({
           inputCsvKey: selectedKey.trim(),
-          outputPrefix: outputPrefix.trim(),
+          outputPrefix: exportPrefix!,
           ...(bucket ? { s3Bucket: bucket } : {}),
           provider: verifyProvider || undefined,
           csvColumns: {
@@ -354,7 +371,7 @@ export function StartJobFromS3Modal({
       } else if (jobKind === "email_pattern") {
         await jobsService.createEmailPatternExport({
           inputCsvKey: selectedKey.trim(),
-          outputPrefix: outputPrefix.trim(),
+          outputPrefix: exportPrefix!,
           ...(bucket ? { s3Bucket: bucket } : {}),
           csvColumns: {
             companyUuid: patternCompanyUuid.trim() || "company_uuid",
@@ -693,6 +710,13 @@ export function StartJobFromS3Modal({
           onChange={(e) => setOutputPrefix(e.target.value)}
           placeholder="exports/"
         />
+        {!isImport && (
+          <p className="c360-text-xs c360-text-muted c360-mb-1">
+            Exports are stored under{" "}
+            <code className="c360-font-mono">exports/</code> in your user
+            bucket; values are normalized on create (same rules as the API).
+          </p>
+        )}
         <p className="c360-text-xs c360-text-muted">
           Request payloads include the S3 key above, output prefix, and column
           maps as sent to email.server (finder/verify/pattern) or Connectra{" "}

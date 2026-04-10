@@ -31,7 +31,9 @@ import { parseOperationError } from "@/lib/errorParser";
 import {
   getJobProgressBarTone,
   isSuccessfulTerminalJobStatus,
+  logicalJobOutputDisplayPath,
 } from "@/lib/jobs/jobsUtils";
+import { normalizeExportOutputPrefix } from "@/lib/jobs/exportOutputPrefix";
 
 const EXPORT_TYPE_OPTIONS = [
   { value: "contacts", label: "Contacts" },
@@ -101,6 +103,13 @@ function JobDetailPanel({
     job.outputFile &&
     job.outputFile.trim().length > 0 &&
     isSuccessfulTerminalJobStatus(job.status);
+
+  const outputDisplayPath = logicalJobOutputDisplayPath(job);
+  const outputRelativeKey = job.outputFile?.trim();
+  const showRelativeKeyHint =
+    outputDisplayPath &&
+    outputRelativeKey &&
+    outputDisplayPath !== outputRelativeKey;
 
   return (
     <div className="c360-job-detail-panel">
@@ -182,8 +191,14 @@ function JobDetailPanel({
         {job.exportOutputBasePath && (
           <div className="c360-job-detail-full">
             <dt>Export output folder</dt>
-            <dd className="c360-font-mono c360-text-xs">
-              {job.exportOutputBasePath}
+            <dd>
+              <div className="c360-font-mono c360-text-xs">
+                {job.exportOutputBasePath}
+              </div>
+              <p className="c360-text-xs c360-text-muted c360-mt-1 c360-mb-0">
+                CSV keys from the job are relative to your storage id above; the
+                line below shows the full logical path.
+              </p>
             </dd>
           </div>
         )}
@@ -192,8 +207,14 @@ function JobDetailPanel({
             <dt>Output file</dt>
             <dd className="c360-job-detail-output">
               <span className="c360-font-mono c360-text-xs">
-                {job.outputFile}
+                {outputDisplayPath ?? job.outputFile}
               </span>
+              {showRelativeKeyHint && (
+                <p className="c360-text-xs c360-text-muted c360-mt-1 c360-mb-0">
+                  Object key (for download):{" "}
+                  <span className="c360-font-mono">{outputRelativeKey}</span>
+                </p>
+              )}
               {canDownload && (
                 <Button
                   type="button"
@@ -264,9 +285,18 @@ export default function JobsPage() {
           );
           return;
         }
+        let outputPrefix: string;
+        try {
+          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : "Invalid S3 output prefix.",
+          );
+          return;
+        }
         await jobsService.createEmailFinderExport({
           inputCsvKey: emailInputCsvKey.trim(),
-          outputPrefix: emailOutputPrefix.trim(),
+          outputPrefix,
         });
       } else if (exportType === "email_verify") {
         if (!emailInputCsvKey.trim() || !emailOutputPrefix.trim()) {
@@ -275,9 +305,18 @@ export default function JobsPage() {
           );
           return;
         }
+        let outputPrefix: string;
+        try {
+          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : "Invalid S3 output prefix.",
+          );
+          return;
+        }
         await jobsService.createEmailVerifyExport({
           inputCsvKey: emailInputCsvKey.trim(),
-          outputPrefix: emailOutputPrefix.trim(),
+          outputPrefix,
         });
       } else if (exportType === "email_pattern") {
         if (!emailInputCsvKey.trim() || !emailOutputPrefix.trim()) {
@@ -286,9 +325,18 @@ export default function JobsPage() {
           );
           return;
         }
+        let outputPrefix: string;
+        try {
+          outputPrefix = normalizeExportOutputPrefix(emailOutputPrefix);
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : "Invalid S3 output prefix.",
+          );
+          return;
+        }
         await jobsService.createEmailPatternExport({
           inputCsvKey: emailInputCsvKey.trim(),
-          outputPrefix: emailOutputPrefix.trim(),
+          outputPrefix,
           csvColumns: {
             companyUuid: patternCompanyUuidCol.trim() || "company_uuid",
             email: patternEmailCol.trim() || "email",
@@ -312,9 +360,18 @@ export default function JobsPage() {
           toast.error("Set an output prefix for the export.");
           return;
         }
+        let outputPrefix: string;
+        try {
+          outputPrefix = normalizeExportOutputPrefix(c360OutputPrefix);
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : "Invalid S3 output prefix.",
+          );
+          return;
+        }
         const service = exportType === "companies" ? "company" : "contact";
         await jobsService.createContact360Export({
-          outputPrefix: c360OutputPrefix.trim(),
+          outputPrefix,
           service,
           vql,
         });
@@ -491,6 +548,13 @@ export default function JobsPage() {
                 onChange={(e) => setEmailOutputPrefix(e.target.value)}
                 placeholder="exports/"
               />
+              <p className="c360-text-xs c360-text-muted c360-mt-1">
+                Output is written under your user bucket using a path under{" "}
+                <code className="c360-font-mono">exports/</code>. Other values
+                are normalized when the job starts (e.g.{" "}
+                <code className="c360-font-mono">run1</code> →{" "}
+                <code className="c360-font-mono">exports/run1/</code>).
+              </p>
               {exportType === "email_pattern" && (
                 <div className="c360-section-stack c360-text-sm">
                   <p className="c360-text-xs c360-text-muted c360-mb-2">
@@ -548,6 +612,11 @@ export default function JobsPage() {
                 onChange={(e) => setC360OutputPrefix(e.target.value)}
                 placeholder="exports/"
               />
+              <p className="c360-text-xs c360-text-muted c360-mt-1">
+                Same as email exports: files land under{" "}
+                <code className="c360-font-mono">exports/</code> in your storage
+                namespace; prefixes are normalized on create.
+              </p>
               <Tabs defaultValue="quick">
                 <TabsList>
                   <TabsTrigger value="quick">Quick</TabsTrigger>
