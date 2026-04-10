@@ -25,23 +25,32 @@ jobs:
           port: 22
           script: |
             set -e
-            # App repo clone on EC2 (e.g. /home/ubuntu/appointmentdashboard when EC2_USER=ubuntu)
-            cd "/home/ubuntu/appointmentdashboard"
+            cd "$HOME/appointmentdashboard"
             BRANCH="${{ github.ref_name }}"
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
             echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
             echo "NEXT_PUBLIC_GRAPHQL_URL=${{ secrets.NEXT_PUBLIC_GRAPHQL_URL }}" >> .env.local
             echo "NEXT_PUBLIC_JOBS_S3_BUCKET=${{ secrets.NEXT_PUBLIC_JOBS_S3_BUCKET }}" >> .env.local
-            # Non-interactive SSH often has a minimal PATH; Docker is usually in /usr/bin.
             export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
-            if command -v docker >/dev/null 2>&1; then
-              docker compose -f docker-compose.prod.yml up --build -d
-              docker image prune -f
-            else
-              sudo docker compose -f docker-compose.prod.yml up --build -d
-              sudo docker image prune -f
-            fi
+            run_docker() {
+              if command -v docker >/dev/null 2>&1; then
+                docker "$@"
+              elif [ -x /usr/bin/docker ]; then
+                /usr/bin/docker "$@"
+              elif sudo test -x /usr/bin/docker 2>/dev/null; then
+                sudo /usr/bin/docker "$@"
+              else
+                echo "ERROR: Docker is not installed on this EC2 host (no docker on PATH, not at /usr/bin/docker)." >&2
+                echo "Install Engine + Compose plugin, then re-run deploy. Example (Ubuntu):" >&2
+                echo "  curl -fsSL https://get.docker.com | sudo sh" >&2
+                echo "  sudo apt-get update && sudo apt-get install -y docker-compose-plugin" >&2
+                echo '  sudo usermod -aG docker $USER   # optional; log out/in so docker works without sudo' >&2
+                exit 127
+              fi
+            }
+            run_docker compose -f docker-compose.prod.yml up --build -d
+            run_docker image prune -f
             echo "Deployment complete: $(date)"
 
       - name: Health check
