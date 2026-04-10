@@ -14,6 +14,10 @@ import {
 import { toast } from "sonner";
 import { parseOperationError } from "@/lib/errorParser";
 
+/** Avoid `| null>` in generics — TSX parses `null>` as JSX and trips no-unescaped-entities. */
+type NullableInstructions = PaymentInstructions | null;
+type NullableString = string | null;
+
 async function copyToClipboard(label: string, value: string) {
   try {
     await navigator.clipboard.writeText(value);
@@ -50,13 +54,11 @@ export interface BillingPaymentProofFormProps {
 export function BillingPaymentProofForm({
   onSubmitted,
 }: BillingPaymentProofFormProps) {
-  const [instructions, setInstructions] = useState<PaymentInstructions | null>(
-    null,
-  );
+  const [instructions, setInstructions] =
+    useState<NullableInstructions>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(true);
-  const [instructionsError, setInstructionsError] = useState<string | null>(
-    null,
-  );
+  const [instructionsError, setInstructionsError] =
+    useState<NullableString>(null);
 
   const [screenshotKey, setScreenshotKey] = useState("");
   const [amount, setAmount] = useState("");
@@ -64,7 +66,7 @@ export function BillingPaymentProofForm({
   const [planTier, setPlanTier] = useState("");
   const [planPeriod, setPlanPeriod] = useState("monthly");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<NullableString>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const loadInstructions = useCallback(() => {
