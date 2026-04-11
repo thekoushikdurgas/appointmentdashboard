@@ -1,0 +1,53 @@
+/* VQL builder — namespaced c360-vql-* */
+
+.c360-vql-group {
+  border-radius: var(--c360-radius-md, 8px);
+  padding: 0.75rem;
+}
+
+.c360-vql-group--and {
+  border: 1px solid var(--c360-border-subtle, #e5e7eb);
+  background: var(--c360-surface-1, #fafafa);
+}
+
+.c360-vql-group--or {
+  border: 1px solid var(--c360-border-warning, #fcd34d);
+  background: rgba(252, 211, 77, 0.08);
+}
+
+.c360-vql-row {
+  align-items: flex-start;
+}
+
+.c360-vql-tabs {
+  flex-wrap: wrap;
+}
+
+.c360-vql-preview {
+  width: 100%;
+}
+
+.c360-vql-json-preview {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: var(--c360-surface-2, #f4f4f5);
+  border: 1px solid var(--c360-border-subtle, #e5e7eb);
+}
+
+.c360-vql-sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.c360-vql-col-grid {
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.c360-vql-text-extras {
+  width: 100%;
+}
+
+.c360-vql-subgroup {
+  margin-top: 0.25rem;
+}

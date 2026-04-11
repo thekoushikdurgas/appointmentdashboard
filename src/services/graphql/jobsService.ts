@@ -24,6 +24,8 @@ const JOB_FIELDS = `
   statusPayload
   outputObjectKey
   exportOutputBasePath
+  processedRows
+  totalRows
   createdAt
   updatedAt
 `;
@@ -86,12 +88,22 @@ export interface JobRow {
   statusPayload?: unknown | null;
   outputObjectKey?: string | null;
   exportOutputBasePath?: string | null;
+  processedRows?: number | null;
+  totalRows?: number | null;
   createdAt: string;
   updatedAt: string | null;
 }
 
 function mapJob(r: JobRow): Job {
   const parsed = parseStatusPayload(r.statusPayload);
+  const totalFromApi =
+    typeof r.totalRows === "number" && r.totalRows > 0
+      ? r.totalRows
+      : parsed.total;
+  const processedFromApi =
+    typeof r.processedRows === "number" && r.processedRows >= 0
+      ? r.processedRows
+      : parsed.processed;
   const live = normalizeEmailSatelliteStatus(parsed.liveStatus);
   /** Connectra (sync_server) exposes live status on GET /common/jobs/:uuid — same as email.server. */
   const useLiveStatus =
@@ -141,8 +153,8 @@ function mapJob(r: JobRow): Job {
 
   const progress = deriveDisplayProgressPercent(displayStatus, {
     progress: parsed.progress,
-    total: parsed.total,
-    processed: parsed.processed,
+    total: totalFromApi,
+    processed: processedFromApi,
   });
 
   return {
@@ -155,8 +167,8 @@ function mapJob(r: JobRow): Job {
     jobFamily: r.jobFamily,
     jobSubtype: r.jobSubtype,
     progress,
-    total: parsed.total,
-    processed: parsed.processed,
+    total: totalFromApi,
+    processed: processedFromApi,
     // Prefer live ``statusPayload`` (GraphQL resolver) over DB-only ``outputObjectKey``.
     outputFile: parsed.outputFile ?? apiOutputKey ?? outputFromResponse,
     exportOutputBasePath: exportPath,

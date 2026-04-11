@@ -40,23 +40,22 @@ import {
   readContactsSortPreference,
   writeContactsSortPreference,
 } from "@/lib/contactsListCache";
-import dynamic from "next/dynamic";
-import type {
-  VQLFilters,
-  VQLQuery,
-} from "@/components/contacts/VQLQueryBuilder";
-import type {
-  VqlConditionInput,
-  VqlFilterInput,
-} from "@/graphql/generated/types";
-
-const VQLQueryBuilder = dynamic(
-  () =>
-    import("@/components/contacts/VQLQueryBuilder").then(
-      (m) => m.VQLQueryBuilder,
-    ),
-  { ssr: false },
-);
+import {
+  countDraftConditions,
+  draftToVqlQueryInput,
+  emptyDraftCondition,
+  emptyDraftGroup,
+  type DraftCondition,
+  type DraftGroup,
+  type DraftQuery,
+  type DraftSort,
+} from "@/lib/vqlDraft";
+import {
+  defaultCompanySelectWhenPopulate,
+  selectColumnsFromVisibleColumns,
+  visibleColumnsNeedCompanyPopulate,
+} from "@/lib/contactsColumnVql";
+import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 
 const STATUS_MAP: Record<string, string> = {
   Verified: "VALID",
@@ -71,6 +70,27 @@ const SORT_MAP: Record<string, { field: string; direction: "asc" | "desc" }> = {
   name_asc: { field: "firstName", direction: "asc" },
   name_desc: { field: "firstName", direction: "desc" },
 };
+
+const SORT_LABELS: Record<string, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  name_asc: "Name A→Z",
+  name_desc: "Name Z→A",
+};
+
+function sortByToDraftSort(sortBy: string): DraftSort[] {
+  const s = SORT_MAP[sortBy] ?? SORT_MAP.newest;
+  return [{ field: s.field, direction: s.direction }];
+}
+
+function sidebarCond(
+  field: string,
+  operator: string,
+  value: string,
+): DraftCondition {
+  const c = emptyDraftCondition();
+  return { ...c, field, operator, value };
+}
 
 const CONTACT_TABS = [
   { value: "total", label: "Total" },
@@ -92,32 +112,6 @@ function loadVisibleColumns(): ContactsDataTableColumnId[] {
   } catch {
     return [...CONTACTS_DT_DEFAULT_COLUMNS];
   }
-}
-
-/** Map UI builder `VQLQuery` to GraphQL `VqlFilterInput` (same rules as handleVqlApply). */
-function vqlQueryToFilterInput(
-  query: VQLQuery | null,
-): VqlFilterInput | undefined {
-  const filters = query?.filters as VQLFilters | undefined;
-  if (!filters) return undefined;
-  const isCond = (
-    c: unknown,
-  ): c is { field: string; operator: string; value: string | null } =>
-    typeof c === "object" &&
-    c !== null &&
-    "field" in c &&
-    typeof (c as { field: string }).field === "string";
-  const conditions: VqlConditionInput[] = [
-    ...(filters.and ?? []).filter(isCond),
-    ...(filters.or ?? []).filter(isCond),
-  ].map((c) => ({
-    field: c.field,
-    operator: c.operator,
-    value: c.value as unknown as VqlConditionInput["value"],
-  }));
-  if (conditions.length === 0) return undefined;
-  const useAllOf = (filters.and?.length ?? 0) > 0;
-  return useAllOf ? { allOf: [{ conditions }] } : { anyOf: [{ conditions }] };
 }
 
 export default function ContactsPage() {
@@ -153,7 +147,9 @@ export default function ContactsPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [vqlOpen, setVqlOpen] = useState(false);
-  const [activeVqlQuery, setActiveVqlQuery] = useState<VQLQuery | null>(null);
+  const [advancedListDraft, setAdvancedListDraft] = useState<DraftQuery | null>(
+    null,
+  );
   const [facetValues, setFacetValues] = useState<Record<string, string>>({});
   const { sections: filterSections, loadFilterData } = useContactFilters();
   const { isSuperAdmin } = useRole();
@@ -201,13 +197,36 @@ export default function ContactsPage() {
     });
   }, []);
 
-  const handleVqlApply = (query: VQLQuery) => {
-    setActiveVqlQuery(query);
-    /* `useEffect` + `applyFilters` builds VQL (incl. sort, tabs, facets) — avoids double fetch. */
-  };
+  const handleVqlApply = useCallback((draft: DraftQuery) => {
+    setAdvancedListDraft(structuredClone(draft));
+  }, []);
 
   const clearVqlQuery = useCallback(() => {
-    setActiveVqlQuery(null);
+    setAdvancedListDraft(null);
+  }, []);
+
+  const advancedVqlRuleCount = advancedListDraft
+    ? countDraftConditions(advancedListDraft.rootGroup)
+    : 0;
+
+  const hasAdvancedBuilderState = useMemo(() => {
+    if (!advancedListDraft) return false;
+    return (
+      advancedVqlRuleCount > 0 ||
+      advancedListDraft.sort.length > 0 ||
+      advancedListDraft.selectColumns.length > 0 ||
+      advancedListDraft.companyPopulate
+    );
+  }, [advancedListDraft, advancedVqlRuleCount]);
+
+  const resetVisibleColumns = useCallback(() => {
+    const next = [...CONTACTS_DT_DEFAULT_COLUMNS];
+    setVisibleColumns(next);
+    try {
+      localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const toggleSelect = (id: string) =>
@@ -224,95 +243,75 @@ export default function ContactsPage() {
     setExpandedRow((prev) => (prev === id ? null : id));
 
   const applyFilters = useCallback(() => {
-    const conditions: Array<{
-      field: string;
-      operator: string;
-      value: unknown;
-    }> = [];
-
+    const sidebar: DraftCondition[] = [];
     if (activeTab === "net_new") {
       const d = new Date();
       d.setDate(d.getDate() - 7);
-      conditions.push({
-        field: "createdAt",
-        operator: "gte",
-        value: d.toISOString(),
-      });
+      sidebar.push(sidebarCond("created_at", "gte", d.toISOString()));
     } else if (activeTab === "do_not_contact") {
-      conditions.push({
-        field: "status",
-        operator: "eq",
-        value: "do_not_contact",
-      });
+      sidebar.push(sidebarCond("status", "eq", "do_not_contact"));
     }
-
     if (search.trim()) {
-      conditions.push({
-        field: "email",
-        operator: "contains",
-        value: search.trim(),
-      });
+      sidebar.push(sidebarCond("email", "contains", search.trim()));
     }
     if (statusFilter !== "All" && STATUS_MAP[statusFilter]) {
-      conditions.push({
-        field: "emailStatus",
-        operator: "eq",
-        value: STATUS_MAP[statusFilter],
-      });
+      sidebar.push(sidebarCond("email_status", "eq", STATUS_MAP[statusFilter]));
     }
-
     for (const [key, val] of Object.entries(facetValues)) {
       if (val != null && String(val).trim() !== "") {
-        conditions.push({
-          field: key,
-          operator: "eq",
-          value: String(val).trim(),
-        });
+        sidebar.push(sidebarCond(key, "eq", String(val).trim()));
       }
     }
-
-    const sort = SORT_MAP[sortBy] ?? SORT_MAP.newest;
-    const baseFilter: VqlFilterInput | undefined =
-      conditions.length > 0
-        ? { conditions: conditions as VqlConditionInput[] }
-        : undefined;
-    const advFilter = vqlQueryToFilterInput(activeVqlQuery);
-
-    if (advFilter && baseFilter) {
-      applyVqlQuery({
-        filters: { allOf: [baseFilter, advFilter] },
-        sortBy: sort.field,
-        sortDirection: sort.direction,
-      });
-      return;
+    const rootItems: Array<DraftCondition | DraftGroup> = [...sidebar];
+    if (
+      advancedListDraft &&
+      countDraftConditions(advancedListDraft.rootGroup) > 0
+    ) {
+      rootItems.push(structuredClone(advancedListDraft.rootGroup));
     }
-    if (advFilter && !baseFilter) {
-      applyVqlQuery({
-        filters: advFilter,
-        sortBy: sort.field,
-        sortDirection: sort.direction,
-      });
-      return;
-    }
-
-    applyVqlQuery({
-      filters: baseFilter,
-      sortBy: sort.field,
-      sortDirection: sort.direction,
-    });
+    const merged: DraftQuery = {
+      rootGroup: { ...emptyDraftGroup("and"), items: rootItems },
+      sort:
+        advancedListDraft?.sort?.length && advancedListDraft.sort.length > 0
+          ? advancedListDraft.sort
+          : sortByToDraftSort(sortBy),
+      selectColumns:
+        advancedListDraft?.selectColumns?.length &&
+        advancedListDraft.selectColumns.length > 0
+          ? advancedListDraft.selectColumns
+          : selectColumnsFromVisibleColumns(visibleColumns),
+      companyPopulate:
+        !!advancedListDraft?.companyPopulate ||
+        visibleColumnsNeedCompanyPopulate(visibleColumns),
+      companySelectColumns:
+        advancedListDraft?.companySelectColumns?.length &&
+        advancedListDraft.companySelectColumns.length > 0
+          ? advancedListDraft.companySelectColumns
+          : visibleColumnsNeedCompanyPopulate(visibleColumns)
+            ? defaultCompanySelectWhenPopulate()
+            : [],
+    };
+    applyVqlQuery(draftToVqlQueryInput(merged, "contact"));
   }, [
     search,
     statusFilter,
     sortBy,
     activeTab,
     facetValues,
-    activeVqlQuery,
+    advancedListDraft,
+    visibleColumns,
     applyVqlQuery,
   ]);
 
   useEffect(() => {
     applyFilters();
   }, [applyFilters]);
+
+  const sortChipLabel =
+    sortBy !== "newest" ? `Sort: ${SORT_LABELS[sortBy] ?? sortBy}` : null;
+  const hiddenColumnCount = CONTACTS_DT_COLUMN_IDS.filter(
+    (id) => !visibleColumns.includes(id),
+  ).length;
 
   const filtersSidebar = useMemo(
     () => (
@@ -331,11 +330,14 @@ export default function ContactsPage() {
         onSectionExpand={loadFilterData}
         activeTab={activeTab}
         onActiveTabChange={setActiveTab}
-        activeVqlQuery={activeVqlQuery}
+        advancedVqlRuleCount={advancedVqlRuleCount}
         onClearVql={clearVqlQuery}
         onOpenAdvanced={() => setVqlOpen(true)}
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
+        sortChipLabel={sortChipLabel}
+        hiddenColumnCount={hiddenColumnCount}
+        onResetVisibleColumns={resetVisibleColumns}
       />
     ),
     [
@@ -346,10 +348,13 @@ export default function ContactsPage() {
       facetValues,
       loadFilterData,
       activeTab,
-      activeVqlQuery,
+      advancedVqlRuleCount,
       visibleColumns,
       toggleColumn,
       clearVqlQuery,
+      sortChipLabel,
+      hiddenColumnCount,
+      resetVisibleColumns,
     ],
   );
 
@@ -366,9 +371,9 @@ export default function ContactsPage() {
               leftIcon={<Filter size={16} />}
               onClick={() => setVqlOpen(true)}
             >
-              {activeVqlQuery ? "Edit Filters" : "Advanced Filter"}
+              {hasAdvancedBuilderState ? "Edit Filters" : "Advanced Filter"}
             </Button>
-            {activeVqlQuery && (
+            {hasAdvancedBuilderState ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -377,7 +382,7 @@ export default function ContactsPage() {
               >
                 ✕ Clear
               </Button>
-            )}
+            ) : null}
             <Button
               variant="secondary"
               size="sm"
@@ -431,17 +436,19 @@ export default function ContactsPage() {
         />
       </Modal>
 
-      <VQLQueryBuilder
+      <VqlBuilderModal
         open={vqlOpen}
         onClose={() => setVqlOpen(false)}
         onApply={handleVqlApply}
-        initialQuery={activeVqlQuery}
+        entityType="contact"
+        initialDraft={advancedListDraft ?? undefined}
       />
 
       <ContactExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
         vqlForExport={exportVql}
+        visibleColumnIds={visibleColumns}
       />
 
       <Tabs

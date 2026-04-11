@@ -28,6 +28,7 @@ export const CONTACTS_LIST_QUERY = `
         total
         limit
         offset
+        nextSearchAfter
       }
     }
   }

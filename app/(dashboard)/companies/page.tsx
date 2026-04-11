@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -12,6 +12,7 @@ import {
   Download,
   Upload,
   RefreshCw,
+  Filter,
 } from "lucide-react";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -21,9 +22,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
 import { PageHeader } from "@/components/patterns/PageHeader";
-import { SearchBar } from "@/components/patterns/SearchBar";
 import { Pagination } from "@/components/patterns/Pagination";
-import { Select } from "@/components/ui/Select";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -32,7 +31,19 @@ import { companiesService } from "@/services/graphql/companiesService";
 import { useRole } from "@/context/RoleContext";
 import { CompanyExportModal } from "@/components/feature/companies/CompanyExportModal";
 import { CompanyImportModal } from "@/components/feature/companies/CompanyImportModal";
-import type { CreateCompanyInput } from "@/graphql/generated/types";
+import { CompaniesFilterSidebar } from "@/components/feature/companies/CompaniesFilterSidebar";
+import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
+import {
+  countDraftConditions,
+  draftGroupToVqlFilter,
+  draftToVqlQueryInput,
+  type DraftQuery,
+} from "@/lib/vqlDraft";
+import type {
+  CreateCompanyInput,
+  VqlConditionInput,
+  VqlFilterInput,
+} from "@/graphql/generated/types";
 import { toast } from "sonner";
 
 type ViewMode = "list" | "card";
@@ -49,13 +60,105 @@ export default function CompaniesPage() {
     error,
     exportVql,
     refresh,
+    applyVqlQuery,
   } = useCompanies();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [facetValues, setFacetValues] = useState<Record<string, string>>({});
+  const [vqlOpen, setVqlOpen] = useState(false);
+  const [advancedCompanyDraft, setAdvancedCompanyDraft] =
+    useState<DraftQuery | null>(null);
   const { sections: filterSections, loadFilterData } = useCompanyFilters();
   const { isSuperAdmin } = useRole();
+
+  const facetFilter = useMemo((): VqlFilterInput | undefined => {
+    const conditions: VqlConditionInput[] = [];
+    for (const [key, val] of Object.entries(facetValues)) {
+      if (val != null && String(val).trim() !== "") {
+        conditions.push({
+          field: key,
+          operator: "eq",
+          value: String(val).trim() as unknown as VqlConditionInput["value"],
+        });
+      }
+    }
+    if (conditions.length === 0) return undefined;
+    return { conditions };
+  }, [facetValues]);
+
+  useEffect(() => {
+    const parts: VqlFilterInput[] = [];
+    if (facetFilter) parts.push(facetFilter);
+    if (advancedCompanyDraft) {
+      const g = draftGroupToVqlFilter(
+        advancedCompanyDraft.rootGroup,
+        "company",
+      );
+      if (g) parts.push(g);
+    }
+    const filters: VqlFilterInput | undefined =
+      parts.length === 0
+        ? undefined
+        : parts.length === 1
+          ? parts[0]
+          : { allOf: parts };
+    const extra = advancedCompanyDraft
+      ? draftToVqlQueryInput(advancedCompanyDraft, "company")
+      : {};
+    applyVqlQuery({
+      ...extra,
+      filters,
+    });
+  }, [facetFilter, advancedCompanyDraft, applyVqlQuery]);
+
+  const advancedVqlRuleCount = advancedCompanyDraft
+    ? countDraftConditions(advancedCompanyDraft.rootGroup)
+    : 0;
+
+  const hasAdvancedBuilderState = useMemo(() => {
+    if (!advancedCompanyDraft) return false;
+    return (
+      advancedVqlRuleCount > 0 ||
+      advancedCompanyDraft.sort.length > 0 ||
+      advancedCompanyDraft.selectColumns.length > 0
+    );
+  }, [advancedCompanyDraft, advancedVqlRuleCount]);
+
+  const handleCompanyVqlApply = useCallback((d: DraftQuery) => {
+    setAdvancedCompanyDraft(structuredClone(d));
+  }, []);
+
+  const clearCompanyVql = useCallback(() => {
+    setAdvancedCompanyDraft(null);
+  }, []);
+
+  const filtersSidebar = useMemo(
+    () => (
+      <CompaniesFilterSidebar
+        search={search}
+        onSearchChange={setSearch}
+        filterSections={filterSections}
+        facetValues={facetValues}
+        onFacetChange={(key, val) =>
+          setFacetValues((prev) => ({ ...prev, [key]: val }))
+        }
+        onSectionExpand={loadFilterData}
+        advancedVqlRuleCount={advancedVqlRuleCount}
+        onClearVql={clearCompanyVql}
+        onOpenAdvanced={() => setVqlOpen(true)}
+      />
+    ),
+    [
+      search,
+      setSearch,
+      filterSections,
+      facetValues,
+      loadFilterData,
+      advancedVqlRuleCount,
+      clearCompanyVql,
+    ],
+  );
 
   type CreateCompanyForm = {
     name: string;
@@ -114,17 +217,30 @@ export default function CompaniesPage() {
   };
 
   return (
-    <DataPageLayout>
+    <DataPageLayout filters={filtersSidebar}>
       <PageHeader
         title="Companies"
         subtitle={`${total.toLocaleString()} companies`}
         actions={
           <>
-            <SearchBar
-              value={search}
-              onChange={setSearch}
-              placeholder="Search companies..."
-            />
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Filter size={16} />}
+              onClick={() => setVqlOpen(true)}
+            >
+              {hasAdvancedBuilderState ? "Edit Filters" : "Advanced Filter"}
+            </Button>
+            {hasAdvancedBuilderState ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearCompanyVql}
+                title="Clear advanced filters"
+              >
+                ✕ Clear
+              </Button>
+            ) : null}
             {/* View mode toggle */}
             <div className="c360-view-toggle">
               <button
@@ -185,47 +301,13 @@ export default function CompaniesPage() {
         vqlForExport={exportVql}
       />
 
-      {/* Dynamic facet filters */}
-      {filterSections.length > 0 && (
-        <div className="c360-filter-bar--facets c360-mb-4">
-          {filterSections.map((section) => (
-            <div key={section.filterKey} className="c360-filter-facet">
-              <label className="c360-filter-facet__label">
-                {section.displayName}
-              </label>
-              <Select
-                value={facetValues[section.filterKey] ?? ""}
-                onChange={(e) =>
-                  setFacetValues((prev) => ({
-                    ...prev,
-                    [section.filterKey]: e.target.value,
-                  }))
-                }
-                onFocus={() => {
-                  if (!section.options.length && !section.loading) {
-                    void loadFilterData(section.filterKey);
-                  }
-                }}
-                options={[
-                  {
-                    value: "",
-                    label: section.loading ? "Loading…" : "Any",
-                  },
-                  ...section.options.map((o) => ({
-                    value: o.value,
-                    label:
-                      o.count != null
-                        ? `${o.displayValue} (${o.count})`
-                        : o.displayValue,
-                  })),
-                ]}
-                fullWidth={false}
-                className="c360-min-w-140 c360-text-sm"
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      <VqlBuilderModal
+        open={vqlOpen}
+        onClose={() => setVqlOpen(false)}
+        onApply={handleCompanyVqlApply}
+        entityType="company"
+        initialDraft={advancedCompanyDraft ?? undefined}
+      />
 
       {error &&
         (() => {

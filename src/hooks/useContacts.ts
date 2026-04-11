@@ -22,6 +22,7 @@ function schedulePrefetchNextPage(
   pageSize: number,
   total: number,
 ): void {
+  if (currentPage >= 10) return;
   const nextPage = currentPage + 1;
   if (nextPage < 2 || (nextPage - 1) * pageSize >= total) return;
   const nextKey = contactsListCacheKey(vqlQuery, nextPage, pageSize);
@@ -51,6 +52,8 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
     initialQuery ?? {},
   );
   const fetchSeq = useRef(0);
+  /** ``searchAfter`` to use when requesting page ``P`` (``P > 10``). */
+  const cursorsForPageRef = useRef<Map<number, string[]>>(new Map());
 
   const setPageSize = useCallback((n: number) => {
     const next = Math.min(
@@ -64,9 +67,10 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
   const loadContacts = useCallback(
     async (opts?: { force?: boolean }) => {
       pruneExpiredContactsListCaches();
+      const useListCache = page <= 10;
       const cacheKey = contactsListCacheKey(vqlQuery, page, pageSize);
 
-      if (!opts?.force) {
+      if (useListCache && !opts?.force) {
         const cached = readContactsListCache(cacheKey);
         if (cached) {
           setContacts(cached.items);
@@ -76,7 +80,7 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
           schedulePrefetchNextPage(vqlQuery, page, pageSize, cached.total);
           return;
         }
-      } else {
+      } else if (opts?.force) {
         clearAllContactsListCaches();
       }
 
@@ -84,18 +88,31 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
       setLoading(true);
       setError(null);
       try {
-        const offset = (page - 1) * pageSize;
+        const cursor =
+          page > 10 ? cursorsForPageRef.current.get(page) : undefined;
+        const useCursor = page > 10 && !!cursor?.length;
+        const offset = useCursor ? 0 : (page - 1) * pageSize;
         const query: VqlQueryInput = {
+          ...vqlQuery,
           limit: pageSize,
           offset,
-          ...vqlQuery,
+          ...(useCursor && cursor ? { searchAfter: cursor } : {}),
         };
-        const { items, total: t } = await contactsService.list(query);
+        const {
+          items,
+          total: t,
+          nextSearchAfter,
+        } = await contactsService.list(query);
         if (seq !== fetchSeq.current) return;
         setContacts(items);
         setTotal(t);
-        writeContactsListCache(cacheKey, items, t);
-        schedulePrefetchNextPage(vqlQuery, page, pageSize, t);
+        if (nextSearchAfter?.length) {
+          cursorsForPageRef.current.set(page + 1, nextSearchAfter);
+        }
+        if (useListCache) {
+          writeContactsListCache(cacheKey, items, t);
+          schedulePrefetchNextPage(vqlQuery, page, pageSize, t);
+        }
       } catch (err) {
         if (seq !== fetchSeq.current) return;
         const msg =
@@ -115,6 +132,8 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
   }, [loadContacts]);
 
   const applyVqlQuery = useCallback((q: Partial<VqlQueryInput>) => {
+    clearAllContactsListCaches();
+    cursorsForPageRef.current.clear();
     setVqlQuery(q);
     setPage(1);
   }, []);
@@ -125,8 +144,11 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
       ...(vqlQuery as VqlQueryInput),
       limit: EXPORT_VQL_LIMIT,
       offset: 0,
+      searchAfter: undefined,
     };
   }, [vqlQuery]);
+
+  const hasMore = page * pageSize < total;
 
   const refresh = useCallback(
     () => loadContacts({ force: true }),
@@ -146,5 +168,6 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
     exportVql,
     applyVqlQuery,
     refresh,
+    hasMore,
   };
 }

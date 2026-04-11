@@ -72,6 +72,11 @@ export function useJobPoller(
         const job = await jobsService.get(jobId);
         if (cancelledRef.current) return;
         setJobStatus(job.status);
+        setJobProgress(
+          typeof job.progress === "number" && !Number.isNaN(job.progress)
+            ? job.progress
+            : null,
+        );
         if (isTerminalStatus(job.status)) {
           setPolling(false);
           cancelledRef.current = true;

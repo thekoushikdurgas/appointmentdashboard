@@ -16,13 +16,6 @@ import {
   CONTACTS_DT_COLUMN_LABELS,
   type ContactsDataTableColumnId,
 } from "@/components/feature/contacts/ContactsDataTable";
-import type { VQLQuery } from "@/components/contacts/VQLQueryBuilder";
-
-function vqlConditionCount(query: VQLQuery | null): number {
-  if (!query?.filters) return 0;
-  const f = query.filters as { and?: unknown[]; or?: unknown[] };
-  return (f.and?.length ?? 0) + (f.or?.length ?? 0);
-}
 
 export interface ContactsFilterSidebarProps {
   search: string;
@@ -37,11 +30,16 @@ export interface ContactsFilterSidebarProps {
   onSectionExpand: (key: string) => void;
   activeTab: string;
   onActiveTabChange: (tab: string) => void;
-  activeVqlQuery: VQLQuery | null;
+  /** Rules from the advanced VQL modal only (not sidebar/tab/facet). */
+  advancedVqlRuleCount: number;
   onClearVql: () => void;
   onOpenAdvanced: () => void;
   visibleColumns: ContactsDataTableColumnId[];
   onToggleColumn: (id: ContactsDataTableColumnId) => void;
+  /** Non-null when sort differs from default — label for chip. */
+  sortChipLabel?: string | null;
+  hiddenColumnCount: number;
+  onResetVisibleColumns: () => void;
 }
 
 export function ContactsFilterSidebar({
@@ -57,14 +55,15 @@ export function ContactsFilterSidebar({
   onSectionExpand,
   activeTab,
   onActiveTabChange,
-  activeVqlQuery,
+  advancedVqlRuleCount,
   onClearVql,
   onOpenAdvanced,
   visibleColumns,
   onToggleColumn,
+  sortChipLabel,
+  hiddenColumnCount,
+  onResetVisibleColumns,
 }: ContactsFilterSidebarProps) {
-  const vqlCount = vqlConditionCount(activeVqlQuery);
-
   const facetActiveCount = useMemo(
     () =>
       Object.values(facetValues).filter(
@@ -84,19 +83,22 @@ export function ContactsFilterSidebar({
 
   const sortActiveCount = sortBy !== "newest" ? 1 : 0;
 
+  const columnChipActive = hiddenColumnCount > 0 ? 1 : 0;
+
   const totalActiveCount = useMemo(() => {
     let n = listScopeCount;
     if (search.trim()) n += 1;
-    if (vqlCount > 0) n += 1;
+    if (advancedVqlRuleCount > 0) n += 1;
+    if (sortActiveCount > 0) n += 1;
+    n += columnChipActive;
     return n;
-  }, [listScopeCount, search, vqlCount]);
-
-  const hiddenColumnCount = useMemo(
-    () =>
-      CONTACTS_DT_COLUMN_IDS.filter((id) => !visibleColumns.includes(id))
-        .length,
-    [visibleColumns],
-  );
+  }, [
+    listScopeCount,
+    search,
+    advancedVqlRuleCount,
+    sortActiveCount,
+    columnChipActive,
+  ]);
 
   const clearFacets = useCallback(() => {
     for (const s of filterSections) {
@@ -158,12 +160,28 @@ export function ContactsFilterSidebar({
         });
       }
     }
-    if (vqlCount > 0) {
+    if (advancedVqlRuleCount > 0) {
       out.push({
         key: "vql",
         label:
-          vqlCount === 1 ? "Advanced: 1 rule" : `Advanced: ${vqlCount} rules`,
+          advancedVqlRuleCount === 1
+            ? "Advanced: 1 rule"
+            : `Advanced: ${advancedVqlRuleCount} rules`,
         onRemove: onClearVql,
+      });
+    }
+    if (sortChipLabel) {
+      out.push({
+        key: "sort-chip",
+        label: sortChipLabel,
+        onRemove: () => onSortChange("newest"),
+      });
+    }
+    if (hiddenColumnCount > 0) {
+      out.push({
+        key: "cols-chip",
+        label: `Columns: ${visibleColumns.length} visible`,
+        onRemove: onResetVisibleColumns,
       });
     }
     return out;
@@ -173,12 +191,17 @@ export function ContactsFilterSidebar({
     statusFilter,
     facetValues,
     filterSections,
-    vqlCount,
+    advancedVqlRuleCount,
+    sortChipLabel,
+    hiddenColumnCount,
+    visibleColumns.length,
     onSearchChange,
     onActiveTabChange,
     onStatusChange,
     onFacetChange,
     onClearVql,
+    onSortChange,
+    onResetVisibleColumns,
   ]);
 
   return (
@@ -314,11 +337,11 @@ export function ContactsFilterSidebar({
           className="c360-contacts-filters__advanced-btn"
           onClick={onOpenAdvanced}
         >
-          {activeVqlQuery && vqlCount > 0
+          {advancedVqlRuleCount > 0
             ? "Edit advanced filter"
             : "Advanced filter"}
         </Button>
-        {activeVqlQuery && vqlCount > 0 ? (
+        {advancedVqlRuleCount > 0 ? (
           <Button type="button" variant="ghost" size="sm" onClick={onClearVql}>
             Clear advanced
           </Button>

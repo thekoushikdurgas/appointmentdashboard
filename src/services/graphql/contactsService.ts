@@ -101,6 +101,8 @@ export interface ContactListResult {
   total: number;
   limit: number;
   offset: number;
+  /** Pass as ``searchAfter`` on the next request (cursor mode). */
+  nextSearchAfter?: string[] | null;
 }
 
 async function fetchConnection(
@@ -111,6 +113,7 @@ async function fetchConnection(
         total: number;
         limit: number;
         offset: number;
+        nextSearchAfter?: string[] | null;
       };
     };
   }>,
@@ -122,6 +125,7 @@ async function fetchConnection(
     total: conn.total,
     limit: conn.limit,
     offset: conn.offset,
+    nextSearchAfter: conn.nextSearchAfter ?? null,
   };
 }
 

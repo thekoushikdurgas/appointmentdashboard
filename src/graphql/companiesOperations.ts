@@ -26,6 +26,7 @@ export const COMPANIES_LIST_QUERY = `
         total
         limit
         offset
+        nextSearchAfter
       }
     }
   }

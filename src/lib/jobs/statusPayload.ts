@@ -144,7 +144,11 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
           "rows_processed",
         )
       : null);
-  const totalRows = num(p, "total_rows", "totalRows", "total", "row_count");
+  const totalRows =
+    num(p, "total_rows", "totalRows", "total", "row_count") ??
+    (jobResponse
+      ? num(jobResponse, "total_rows", "totalRows", "total", "row_count")
+      : null);
 
   const liveStatus = str(p, "status", "job_status", "state");
 

@@ -85,6 +85,7 @@ export interface CompanyListResult {
   total: number;
   limit: number;
   offset: number;
+  nextSearchAfter?: string[] | null;
 }
 
 export interface CompanyContactRow {
@@ -125,6 +126,7 @@ export const companiesService = {
           total: number;
           limit: number;
           offset: number;
+          nextSearchAfter?: string[] | null;
         };
       };
     }>(COMPANIES_LIST_QUERY, { query: query ?? {} });
@@ -134,6 +136,7 @@ export const companiesService = {
       total: conn.total,
       limit: conn.limit,
       offset: conn.offset,
+      nextSearchAfter: conn.nextSearchAfter ?? null,
     };
   },
 

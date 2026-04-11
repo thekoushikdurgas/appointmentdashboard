@@ -12,8 +12,10 @@ export function buildCompanyListVql(
   pageSize: number,
   search: string,
   extra: Partial<VqlQueryInput>,
+  opts?: { searchAfter?: string[] | null },
 ): VqlQueryInput {
-  const offset = (page - 1) * pageSize;
+  const useCursor = !!opts?.searchAfter?.length;
+  const offset = useCursor ? 0 : (page - 1) * pageSize;
   const trimmed = search.trim();
   const searchBlock: VqlFilterInput | undefined = trimmed
     ? {
@@ -37,10 +39,14 @@ export function buildCompanyListVql(
     filters = baseFilters;
   }
 
+  const { searchAfter: _ignore, ...rest } = extra as VqlQueryInput;
   return {
-    ...(extra as VqlQueryInput),
+    ...(rest as VqlQueryInput),
     limit: pageSize,
     offset,
+    ...(useCursor && opts?.searchAfter?.length
+      ? { searchAfter: opts.searchAfter }
+      : {}),
     filters,
   };
 }
