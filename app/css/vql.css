@@ -23,6 +23,39 @@
   flex-wrap: wrap;
 }
 
+.c360-vql-tab {
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--c360-radius-md) var(--c360-radius-md) 0 0;
+  background: transparent;
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--c360-transition-fast),
+    border-color var(--c360-transition-fast),
+    background var(--c360-transition-fast);
+}
+
+.c360-vql-tab:hover {
+  color: var(--c360-text);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-vql-tab--active {
+  color: var(--c360-primary);
+  border-bottom-color: var(--c360-primary);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-vql-tab--inactive {
+  color: var(--c360-text-muted);
+}
+
 .c360-vql-preview {
   width: 100%;
 }

@@ -6,9 +6,10 @@ import {
   Download,
   Trash2,
   Mail,
-  Filter,
   Upload,
   Globe,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -17,7 +18,6 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { parseOperationError } from "@/lib/errorParser";
 import { PageHeader } from "@/components/patterns/PageHeader";
 import { WorldMap } from "@/components/shared/WorldMap";
@@ -56,6 +56,9 @@ import {
   visibleColumnsNeedCompanyPopulate,
 } from "@/lib/contactsColumnVql";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
+import { DataToolbar } from "@/components/patterns/DataToolbar";
+import { useIsDesktop } from "@/hooks/common/useBreakpoint";
+import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
 
 const STATUS_MAP: Record<string, string> = {
   Verified: "VALID",
@@ -151,7 +154,19 @@ export default function ContactsPage() {
     null,
   );
   const [facetValues, setFacetValues] = useState<Record<string, string>>({});
-  const { sections: filterSections, loadFilterData } = useContactFilters();
+  const {
+    sections: filterSections,
+    loadFilterData,
+    refetchFiltersMetadata,
+  } = useContactFilters();
+  const isDesktop = useIsDesktop();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
+    "comfortable",
+  );
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [filtersRefreshing, setFiltersRefreshing] = useState(false);
   const { isSuperAdmin } = useRole();
   const [importOpen, setImportOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<
@@ -165,6 +180,10 @@ export default function ContactsPage() {
   useEffect(() => {
     writeContactsSortPreference(sortBy);
   }, [sortBy]);
+
+  useEffect(() => {
+    if (isDesktop) setMobileFiltersOpen(false);
+  }, [isDesktop]);
 
   const verifiedOnPage = useMemo(
     () =>
@@ -313,6 +332,52 @@ export default function ContactsPage() {
     (id) => !visibleColumns.includes(id),
   ).length;
 
+  const toolbarActiveCount = useMemo(
+    () =>
+      getContactsToolbarActiveCount({
+        activeTab,
+        statusFilter,
+        facetValues,
+        search,
+        advancedVqlRuleCount,
+        sortBy,
+        hiddenColumnCount,
+      }),
+    [
+      activeTab,
+      statusFilter,
+      facetValues,
+      search,
+      advancedVqlRuleCount,
+      sortBy,
+      hiddenColumnCount,
+    ],
+  );
+
+  const handleRefreshFilters = useCallback(async () => {
+    setFiltersRefreshing(true);
+    try {
+      await refetchFiltersMetadata();
+    } finally {
+      setFiltersRefreshing(false);
+    }
+  }, [refetchFiltersMetadata]);
+
+  const handleAiSearch = useCallback(() => {
+    if (process.env.NEXT_PUBLIC_CONTACTS_AI_SEARCH === "1") {
+      setAiSearching(true);
+      try {
+        toast.info("AI filter integration is not wired yet.");
+      } finally {
+        setAiSearching(false);
+      }
+      return;
+    }
+    toast.info(
+      "AI-assisted filtering is not enabled. Set NEXT_PUBLIC_CONTACTS_AI_SEARCH=1 when the API is available.",
+    );
+  }, []);
+
   const filtersSidebar = useMemo(
     () => (
       <ContactsFilterSidebar
@@ -338,6 +403,16 @@ export default function ContactsPage() {
         sortChipLabel={sortChipLabel}
         hiddenColumnCount={hiddenColumnCount}
         onResetVisibleColumns={resetVisibleColumns}
+        onRefreshFilters={handleRefreshFilters}
+        filtersRefreshing={filtersRefreshing}
+        filterDrawerTitleId="c360-filter-drawer-title"
+        onCloseDrawer={
+          isDesktop ? undefined : () => setMobileFiltersOpen(false)
+        }
+        aiQuery={aiQuery}
+        onAiQueryChange={setAiQuery}
+        onAiSearch={handleAiSearch}
+        aiSearching={aiSearching}
       />
     ),
     [
@@ -355,70 +430,112 @@ export default function ContactsPage() {
       sortChipLabel,
       hiddenColumnCount,
       resetVisibleColumns,
+      handleRefreshFilters,
+      filtersRefreshing,
+      isDesktop,
+      aiQuery,
+      handleAiSearch,
+      aiSearching,
     ],
   );
 
+  const toolbarEl = (
+    <DataToolbar
+      cssPrefix="c360-toolbar"
+      tabs={CONTACT_TABS.map((t) => ({
+        value: t.value,
+        label: t.label,
+      }))}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      totalCount={total}
+      viewModes={[
+        { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
+        { value: "compact", label: "Compact", icon: List },
+      ]}
+      viewMode={tableDensity}
+      onViewModeChange={(m) => setTableDensity(m as "comfortable" | "compact")}
+      filterConfig={{
+        activeCount: toolbarActiveCount,
+        onOpen: () => setMobileFiltersOpen(true),
+        show: !isDesktop,
+      }}
+      actions={[
+        {
+          label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
+          onClick: () => setVqlOpen(true),
+          variant: "secondary" as const,
+        },
+        ...(hasAdvancedBuilderState
+          ? [
+              {
+                label: "Clear advanced",
+                onClick: clearVqlQuery,
+                variant: "ghost" as const,
+              },
+            ]
+          : []),
+        {
+          label: "Export",
+          onClick: () => setExportOpen(true),
+          icon: Download,
+          variant: "secondary" as const,
+        },
+        ...(isSuperAdmin
+          ? [
+              {
+                label: "Import",
+                onClick: () => setImportOpen(true),
+                icon: Upload,
+                variant: "secondary" as const,
+              },
+            ]
+          : []),
+        {
+          label: "Map view",
+          onClick: () => setMapModalOpen(true),
+          icon: Globe,
+          variant: "secondary" as const,
+        },
+        {
+          label: "Add contact",
+          onClick: () => setCreateOpen(true),
+          icon: Plus,
+          variant: "primary" as const,
+        },
+      ]}
+    />
+  );
+
+  const metadataEl = (
+    <div className="c360-contacts-metadata">
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Total (list)</span>
+        <span className="c360-contacts-metadata__value">
+          {total.toLocaleString()}
+        </span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Verified on page</span>
+        <span className="c360-contacts-metadata__value">{verifiedOnPage}</span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Rows this page</span>
+        <span className="c360-contacts-metadata__value">{contacts.length}</span>
+      </div>
+    </div>
+  );
+
   return (
-    <DataPageLayout filters={filtersSidebar} className="c360-contacts-page">
-      <PageHeader
-        title="Contacts"
-        subtitle={`${total.toLocaleString()} contacts`}
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<Filter size={16} />}
-              onClick={() => setVqlOpen(true)}
-            >
-              {hasAdvancedBuilderState ? "Edit Filters" : "Advanced Filter"}
-            </Button>
-            {hasAdvancedBuilderState ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearVqlQuery}
-                title="Clear advanced filters"
-              >
-                ✕ Clear
-              </Button>
-            ) : null}
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<Download size={16} />}
-              onClick={() => setExportOpen(true)}
-            >
-              Export
-            </Button>
-            {isSuperAdmin && (
-              <Button
-                variant="secondary"
-                size="sm"
-                leftIcon={<Upload size={16} />}
-                onClick={() => setImportOpen(true)}
-              >
-                Import
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<Globe size={16} />}
-              onClick={() => setMapModalOpen(true)}
-            >
-              Map View
-            </Button>
-            <Button
-              size="sm"
-              leftIcon={<Plus size={16} />}
-              onClick={() => setCreateOpen(true)}
-            >
-              Add Contact
-            </Button>
-          </>
-        }
-      />
+    <DataPageLayout
+      filters={filtersSidebar}
+      toolbar={toolbarEl}
+      metadata={metadataEl}
+      mobileFiltersOpen={mobileFiltersOpen}
+      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+      className="c360-contacts-page"
+    >
+      <PageHeader title="Contacts" />
 
       <Modal
         isOpen={mapModalOpen}
@@ -451,39 +568,8 @@ export default function ContactsPage() {
         visibleColumnIds={visibleColumns}
       />
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        variant="dashboard"
-        className="c360-mb-4"
-      >
-        <TabsList>
-          {CONTACT_TABS.map((t) => (
-            <TabsTrigger key={t.value} value={t.value}>
-              {t.label}
-              {t.value === "total" ? ` (${total.toLocaleString()})` : null}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
-      <div className="c360-stat-grid c360-mb-4">
-        <div className="c360-stat-tile">
-          <div className="c360-stat-tile__label">Total (list)</div>
-          <div className="c360-stat-tile__value">{total.toLocaleString()}</div>
-        </div>
-        <div className="c360-stat-tile">
-          <div className="c360-stat-tile__label">Verified on page</div>
-          <div className="c360-stat-tile__value">{verifiedOnPage}</div>
-        </div>
-        <div className="c360-stat-tile">
-          <div className="c360-stat-tile__label">Rows this page</div>
-          <div className="c360-stat-tile__value">{contacts.length}</div>
-        </div>
-      </div>
-
       {selected.length > 0 && (
-        <div className="c360-floating-bar">
+        <div className="c360-floating-bar c360-floating-bar--kit">
           <span>
             <strong>{selected.length}</strong> selected
           </span>
@@ -564,6 +650,7 @@ export default function ContactsPage() {
             onToggleColumn={toggleColumn}
             showToolbarSearch={false}
             showColumnPicker={false}
+            density={tableDensity}
           />
         </div>
       </Card>

@@ -9,6 +9,7 @@
 /* Google Fonts loaded in app/layout.tsx via next/font */
 
 @import "./css/core.css";
+@import "./css/dashboard-kit.css";
 @import "./css/layout.css";
 @import "./css/components.css";
 @import "./css/utilities.css";

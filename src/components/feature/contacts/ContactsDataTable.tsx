@@ -160,6 +160,8 @@ export interface ContactsDataTableProps {
   showToolbarSearch?: boolean;
   /** When false, hide the Columns popover (e.g. column picker lives in the left filter sidebar). */
   showColumnPicker?: boolean;
+  /** appointment-d1-style table density (toolbar view toggle). */
+  density?: "comfortable" | "compact";
 }
 
 export function ContactsDataTable({
@@ -185,6 +187,7 @@ export function ContactsDataTable({
   onToggleColumn,
   showToolbarSearch = true,
   showColumnPicker = true,
+  density = "comfortable",
 }: ContactsDataTableProps) {
   const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
   const hasCol = useCallback(
@@ -267,7 +270,12 @@ export function ContactsDataTable({
     ) : null;
 
   return (
-    <div className="c360-contacts-dt">
+    <div
+      className={cn(
+        "c360-contacts-dt",
+        density === "compact" && "c360-contacts-dt--compact",
+      )}
+    >
       <div className="c360-contacts-dt__toolbar">
         <div className="c360-contacts-dt__toolbar-left">
           <span className="c360-contacts-dt__toolbar-label">Show</span>

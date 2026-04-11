@@ -10,6 +10,8 @@ import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import {
   CONTACTS_DT_COLUMN_IDS,
@@ -40,6 +42,17 @@ export interface ContactsFilterSidebarProps {
   sortChipLabel?: string | null;
   hiddenColumnCount: number;
   onResetVisibleColumns: () => void;
+  /** Refetch filter definitions (clears TTL cache). */
+  onRefreshFilters?: () => void | Promise<void>;
+  filtersRefreshing?: boolean;
+  /** Mobile drawer: close control + `id` for `aria-labelledby` on dialog. */
+  filterDrawerTitleId?: string;
+  onCloseDrawer?: () => void;
+  /** Secondary “AI” query line (appointment-d1-style); `aiQuery` is separate from email search when used. */
+  aiQuery?: string;
+  onAiQueryChange?: (value: string) => void;
+  onAiSearch?: () => void;
+  aiSearching?: boolean;
 }
 
 export function ContactsFilterSidebar({
@@ -63,6 +76,14 @@ export function ContactsFilterSidebar({
   sortChipLabel,
   hiddenColumnCount,
   onResetVisibleColumns,
+  onRefreshFilters,
+  filtersRefreshing = false,
+  filterDrawerTitleId,
+  onCloseDrawer,
+  aiQuery = "",
+  onAiQueryChange,
+  onAiSearch,
+  aiSearching = false,
 }: ContactsFilterSidebarProps) {
   const facetActiveCount = useMemo(
     () =>
@@ -204,16 +225,100 @@ export function ContactsFilterSidebar({
     onResetVisibleColumns,
   ]);
 
+  const showAiRow = Boolean(onAiQueryChange && onAiSearch);
+
   return (
     <div className="c360-contacts-filters">
-      <div className="c360-contacts-filters__head">
-        <h2 className="c360-contacts-filters__title">Filters</h2>
-        {totalActiveCount > 0 ? (
-          <span className="c360-contacts-filters__head-count" aria-hidden>
-            {totalActiveCount}
-          </span>
-        ) : null}
+      <div className="c360-contacts-filters__head-row">
+        <div className="c360-contacts-filters__head-text">
+          <div className="c360-contacts-filters__head">
+            <h2
+              className="c360-contacts-filters__title"
+              id={filterDrawerTitleId}
+            >
+              Filters
+            </h2>
+            {totalActiveCount > 0 ? (
+              <span className="c360-contacts-filters__head-count" aria-hidden>
+                {totalActiveCount}
+              </span>
+            ) : null}
+          </div>
+          <p className="c360-contacts-filters__subtitle">
+            {totalActiveCount} active
+          </p>
+        </div>
+        <div className="c360-contacts-filters__head-actions">
+          {totalActiveCount > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="c360-contacts-filters__clear-text"
+              onClick={clearAll}
+            >
+              CLEAR
+            </Button>
+          ) : null}
+          {onRefreshFilters ? (
+            <button
+              type="button"
+              className="c360-contacts-filters__icon-btn"
+              title="Refresh filter definitions"
+              aria-label="Refresh filter definitions"
+              disabled={filtersRefreshing}
+              onClick={() => void onRefreshFilters()}
+            >
+              <RefreshCw
+                size={16}
+                className={cn(filtersRefreshing && "c360-spin")}
+                aria-hidden
+              />
+            </button>
+          ) : null}
+          {onCloseDrawer ? (
+            <button
+              type="button"
+              className="c360-contacts-filters__icon-btn"
+              title="Close filters"
+              aria-label="Close filters"
+              onClick={onCloseDrawer}
+            >
+              <X size={18} aria-hidden />
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {showAiRow ? (
+        <div className="c360-contacts-filters__ai-row">
+          <div className="c360-contacts-filters__ai-input-wrap">
+            <Sparkles size={16} className="c360-text-muted" aria-hidden />
+            <input
+              type="text"
+              className="c360-contacts-filters__ai-input"
+              placeholder="Ask AI: 'VPs in tech with >100 employees'"
+              value={aiQuery}
+              onChange={(e) => onAiQueryChange?.(e.target.value)}
+              aria-label="AI-assisted filter prompt"
+            />
+            <button
+              type="button"
+              className="c360-contacts-filters__ai-btn"
+              title="Run AI filter"
+              aria-label="Run AI filter"
+              disabled={aiSearching || !aiQuery.trim()}
+              onClick={() => onAiSearch?.()}
+            >
+              {aiSearching ? (
+                <Loader2 size={14} className="c360-spin" aria-hidden />
+              ) : (
+                <Sparkles size={14} aria-hidden />
+              )}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="c360-contacts-filters__search">
         <Input
@@ -244,18 +349,6 @@ export function ContactsFilterSidebar({
             </button>
           ))}
         </div>
-      ) : null}
-
-      {totalActiveCount > 0 ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="c360-contacts-filters__clear-all"
-          onClick={clearAll}
-        >
-          Clear all filters
-        </Button>
       ) : null}
 
       <ContactsCollapsibleFilterSection

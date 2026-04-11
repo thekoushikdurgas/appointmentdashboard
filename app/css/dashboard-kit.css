@@ -1,0 +1,368 @@
+/* Dashboard UI kit alignment — toolbar, data drawer, contacts chrome
+ * Reference: docs/frontend/ideas/Dashboard ui kit (card / nav-tab rhythm)
+ */
+
+:root {
+  /* Kit-adjacent surfaces (toolbar strip, drawer) */
+  --c360-kit-toolbar-bg: var(--c360-bg-elevated);
+  --c360-kit-toolbar-border: var(--c360-border);
+  --c360-kit-shadow-soft: 0 0 40px rgba(82, 63, 105, 0.08);
+  --c360-kit-tab-active-border: var(--c360-primary);
+  --c360-z-drawer: 200;
+  --c360-z-drawer-backdrop: 199;
+}
+
+/* ─── Data layout: toolbar + metadata slots ─────────────────────────────── */
+.c360-data-layout--with-toolbar .c360-data-layout__content {
+  gap: var(--c360-spacing-4);
+}
+
+.c360-data-layout__toolbar {
+  flex-shrink: 0;
+}
+
+.c360-data-layout__metadata {
+  flex-shrink: 0;
+}
+
+.c360-data-layout__pagination {
+  flex-shrink: 0;
+}
+
+/* ─── Generic / Data toolbar (appointment-d1-style) ───────────────────── */
+.c360-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  background: var(--c360-kit-toolbar-bg);
+  border: 1px solid var(--c360-kit-toolbar-border);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-kit-shadow-soft);
+}
+
+.c360-toolbar__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--c360-spacing-1);
+  min-height: 2.25rem;
+}
+
+.c360-toolbar__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  border-radius: var(--c360-radius-md) var(--c360-radius-md) 0 0;
+  transition:
+    color var(--c360-transition-fast),
+    border-color var(--c360-transition-fast),
+    background var(--c360-transition-fast);
+}
+
+.c360-toolbar__tab:hover {
+  color: var(--c360-text);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-toolbar__tab--active {
+  color: var(--c360-primary);
+  border-bottom-color: var(--c360-kit-tab-active-border);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-toolbar__tab-count {
+  font-size: var(--c360-text-xs);
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-toolbar__filter-btn {
+  gap: var(--c360-spacing-2);
+}
+
+.c360-toolbar__filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--c360-primary);
+  border-radius: var(--c360-radius-full);
+}
+
+.c360-toolbar__view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  overflow: hidden;
+}
+
+.c360-toolbar__view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-toolbar__view-btn:hover {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-text);
+}
+
+.c360-toolbar__view-btn--active {
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-toolbar__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--c360-border-strong);
+  margin: 0 var(--c360-spacing-1);
+}
+
+.c360-toolbar__action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-2);
+}
+
+/* ─── Mobile filter drawer ──────────────────────────────────────────────── */
+.c360-data-layout__drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--c360-z-drawer-backdrop);
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: var(--c360-bg-overlay);
+  cursor: pointer;
+}
+
+.c360-data-layout__drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--c360-z-drawer);
+  width: min(100vw - 40px, 380px);
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--c360-bg-elevated);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  animation: c360-drawer-in 0.2s ease-out;
+}
+
+@keyframes c360-drawer-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.c360-data-layout__drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--c360-spacing-4);
+}
+
+/* ─── Contacts metadata strip (kit card rhythm) ───────────────────────── */
+.c360-contacts-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-4);
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+}
+
+.c360-contacts-metadata__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.c360-contacts-metadata__label {
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c360-text-muted);
+}
+
+.c360-contacts-metadata__value {
+  font-size: var(--c360-text-lg);
+  font-weight: 700;
+  color: var(--c360-text);
+}
+
+/* ─── Sidebar header (d1-style actions) ───────────────────────────────── */
+.c360-contacts-filters__head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  padding-bottom: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-2);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-contacts-filters__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.c360-contacts-filters__subtitle {
+  margin: 0;
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.c360-contacts-filters__head-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--c360-spacing-1);
+}
+
+.c360-contacts-filters__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-bg-elevated);
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-contacts-filters__icon-btn:hover:not(:disabled) {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+}
+
+.c360-contacts-filters__icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.c360-contacts-filters__clear-text {
+  font-size: var(--c360-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* AI search row */
+.c360-contacts-filters__ai-row {
+  position: relative;
+  margin-bottom: var(--c360-spacing-4);
+}
+
+.c360-contacts-filters__ai-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  background: var(--c360-bg-elevated);
+  box-shadow: var(--c360-kit-shadow-soft);
+}
+
+.c360-contacts-filters__ai-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--c360-font-primary);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+  outline: none;
+}
+
+.c360-contacts-filters__ai-input::placeholder {
+  color: var(--c360-text-light);
+}
+
+.c360-contacts-filters__ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+  cursor: pointer;
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-contacts-filters__ai-btn:hover:not(:disabled) {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-contacts-filters__ai-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Floating selection bar — kit card shadow */
+.c360-floating-bar--kit {
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-kit-shadow-soft);
+}

@@ -6,9 +6,13 @@ import type {
   ContactFilter,
   ContactFilterData,
 } from "@/graphql/generated/types";
-import { readTTLCache, writeTTLCache } from "@/lib/ttlLocalStorageCache";
+import {
+  clearTTLCache,
+  readTTLCache,
+  writeTTLCache,
+} from "@/lib/ttlLocalStorageCache";
 
-const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v1";
+export const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v1";
 const CONTACT_FILTERS_TTL_MS = 30 * 60 * 1000;
 
 export interface FilterSection {
@@ -24,6 +28,8 @@ export interface UseContactFiltersReturn {
   filtersLoading: boolean;
   sections: FilterSection[];
   loadFilterData: (filterKey: string) => Promise<void>;
+  /** Clear TTL cache and refetch filter definitions from the API. */
+  refetchFiltersMetadata: () => Promise<void>;
 }
 
 export function useContactFilters(): UseContactFiltersReturn {
@@ -100,5 +106,27 @@ export function useContactFilters(): UseContactFiltersReturn {
     loading: sectionData[f.filterKey]?.loading ?? false,
   }));
 
-  return { filters, filtersLoading, sections, loadFilterData };
+  const refetchFiltersMetadata = useCallback(async () => {
+    clearTTLCache(CONTACT_FILTERS_CACHE_KEY);
+    setSectionData({});
+    setFiltersLoading(true);
+    try {
+      const res = await contactsService.getFilters();
+      const items = res.contacts.filters.items;
+      setFilters(items);
+      writeTTLCache(CONTACT_FILTERS_CACHE_KEY, items, CONTACT_FILTERS_TTL_MS);
+    } catch {
+      setFilters([]);
+    } finally {
+      setFiltersLoading(false);
+    }
+  }, []);
+
+  return {
+    filters,
+    filtersLoading,
+    sections,
+    loadFilterData,
+    refetchFiltersMetadata,
+  };
 }

@@ -541,6 +541,11 @@
   min-height: calc(100vh - var(--c360-topbar-height) - 48px);
 }
 
+/* Mobile / drawer: filters live in overlay; main column only */
+.c360-data-layout--content-only {
+  grid-template-columns: 1fr;
+}
+
 .c360-data-layout__filters {
   background: var(--c360-bg-elevated);
   border-radius: var(--c360-radius-lg);

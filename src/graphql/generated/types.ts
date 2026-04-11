@@ -777,6 +777,8 @@ export type CompanyBasic = {
 export type CompanyConnection = {
   items: Array<Company>;
   limit: Scalars["Int"]["output"];
+  /** Pass as search_after on the next request; from last row cursor. */
+  nextSearchAfter?: Maybe<Array<Scalars["String"]["output"]>>;
   offset: Scalars["Int"]["output"];
   total: Scalars["Int"]["output"];
 };
@@ -979,6 +981,8 @@ export type ContactBasic = {
 export type ContactConnection = {
   items: Array<Contact>;
   limit: Scalars["Int"]["output"];
+  /** Pass as search_after on the next request; from last row cursor. */
+  nextSearchAfter?: Maybe<Array<Scalars["String"]["output"]>>;
   offset: Scalars["Int"]["output"];
   total: Scalars["Int"]["output"];
 };
@@ -2740,12 +2744,14 @@ export type SchedulerJob = {
   jobSubtype?: Maybe<Scalars["String"]["output"]>;
   jobType: Scalars["String"]["output"];
   outputObjectKey?: Maybe<Scalars["String"]["output"]>;
+  processedRows?: Maybe<Scalars["Int"]["output"]>;
   requestPayload?: Maybe<Scalars["JSON"]["output"]>;
   responsePayload?: Maybe<Scalars["JSON"]["output"]>;
   sourceService: Scalars["String"]["output"];
   status: Scalars["String"]["output"];
   statusPayload?: Maybe<Scalars["JSON"]["output"]>;
   timelinePayload?: Maybe<Scalars["JSON"]["output"]>;
+  totalRows?: Maybe<Scalars["Int"]["output"]>;
   updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   userId: Scalars["ID"]["output"];
 };
@@ -3335,7 +3341,11 @@ export type UserSubscriptionCount = {
 
 export type VqlConditionInput = {
   field: Scalars["String"]["input"];
+  fuzzy?: InputMaybe<Scalars["Boolean"]["input"]>;
+  matchOperator?: InputMaybe<Scalars["String"]["input"]>;
   operator: Scalars["String"]["input"];
+  searchType?: InputMaybe<Scalars["String"]["input"]>;
+  slop?: InputMaybe<Scalars["Int"]["input"]>;
   value: Scalars["JSON"]["input"];
 };
 

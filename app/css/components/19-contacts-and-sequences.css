@@ -82,6 +82,17 @@
    CONTACTS DATATABLE — kit-aligned (Dashboard UI kit: ecom-customers, datatable)
    Mirrors jobs table tokens; uses --c360-* from core.css
 ══════════════════════════════════════════════════════════════════════════════ */
+.c360-contacts-dt--compact .c360-contacts-dt__table th,
+.c360-contacts-dt--compact .c360-contacts-dt__table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.c360-contacts-dt--compact .c360-contacts-dt__toolbar {
+  padding-top: var(--c360-spacing-2);
+  padding-bottom: var(--c360-spacing-2);
+}
+
 .c360-contacts-dt {
   display: flex;
   flex-direction: column;
@@ -512,10 +523,8 @@
 .c360-contacts-filters__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--c360-spacing-2);
-  padding-bottom: var(--c360-spacing-2);
-  border-bottom: 1px solid var(--c360-border);
 }
 .c360-contacts-filters__title {
   margin: 0;
