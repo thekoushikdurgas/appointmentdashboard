@@ -8,10 +8,7 @@ function isTerminal(status: string): boolean {
   const u = status.toUpperCase();
   if (isSuccessfulTerminalJobStatus(status)) return true;
   return (
-    u === "FAILED" ||
-    u === "CANCELLED" ||
-    u === "CANCELED" ||
-    u === "ERROR"
+    u === "FAILED" || u === "CANCELLED" || u === "CANCELED" || u === "ERROR"
   );
 }
 

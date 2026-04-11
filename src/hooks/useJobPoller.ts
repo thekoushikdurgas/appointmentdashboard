@@ -25,6 +25,8 @@ export interface UseJobPollerOptions {
 
 export interface UseJobPollerResult {
   jobStatus: string | null;
+  /** Last polled job progress 0–100 from `jobsService.get`, if available. */
+  jobProgress: number | null;
   polling: boolean;
   isTerminal: boolean;
   startPolling: (jobId: string, initialStatus?: string) => void;
@@ -43,6 +45,7 @@ export function useJobPoller(
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [jobProgress, setJobProgress] = useState<number | null>(null);
   const [polling, setPolling] = useState(false);
 
   const cancelledRef = useRef(false);
@@ -97,6 +100,7 @@ export function useJobPoller(
 
   const startPolling = useCallback((id: string, initialStatus?: string) => {
     setJobStatus(initialStatus ?? null);
+    setJobProgress(null);
     setJobId(id);
   }, []);
 
@@ -104,10 +108,18 @@ export function useJobPoller(
     cancelledRef.current = true;
     setJobId(null);
     setJobStatus(null);
+    setJobProgress(null);
     setPolling(false);
   }, []);
 
   const isTerminal = !!jobStatus && isTerminalStatus(jobStatus);
 
-  return { jobStatus, polling, isTerminal, startPolling, reset };
+  return {
+    jobStatus,
+    jobProgress,
+    polling,
+    isTerminal,
+    startPolling,
+    reset,
+  };
 }

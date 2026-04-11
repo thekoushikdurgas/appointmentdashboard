@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ChevronDown,
   ChevronRight,
+  Columns3,
   ExternalLink,
   Loader2,
   Mail,
@@ -28,6 +29,42 @@ const PAGE_SIZE_OPTIONS = [
   { value: "50", label: "50" },
   { value: "100", label: "100" },
 ];
+
+/** Toggleable data columns (checkbox + expand are always shown). */
+export const CONTACTS_DT_COLUMN_IDS = [
+  "ref",
+  "added",
+  "name",
+  "title",
+  "region",
+  "status",
+  "company",
+  "email",
+  "action",
+] as const;
+
+export type ContactsDataTableColumnId =
+  (typeof CONTACTS_DT_COLUMN_IDS)[number];
+
+export const CONTACTS_DT_DEFAULT_COLUMNS: ContactsDataTableColumnId[] = [
+  ...CONTACTS_DT_COLUMN_IDS,
+];
+
+/** Human labels for column picker (contacts sidebar, table popover). */
+export const CONTACTS_DT_COLUMN_LABELS: Record<
+  ContactsDataTableColumnId,
+  string
+> = {
+  ref: "Contact ref",
+  added: "Added",
+  name: "Name",
+  title: "Title",
+  region: "Region",
+  status: "Status",
+  company: "Company",
+  email: "Email",
+  action: "Action",
+};
 
 function hashContactRef(id: string): string {
   let h = 0;
@@ -77,19 +114,19 @@ function emailStatusLabel(status?: string): string {
 
 function SortCaret({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
   return (
-    <span className="c360-jobs-dt__sort-carets" aria-hidden>
+    <span className="c360-contacts-dt__sort-carets" aria-hidden>
       <span
         className={cn(
-          "c360-jobs-dt__sort-caret",
-          active && dir === "asc" && "c360-jobs-dt__sort-caret--on",
+          "c360-contacts-dt__sort-caret",
+          active && dir === "asc" && "c360-contacts-dt__sort-caret--on",
         )}
       >
         ▲
       </span>
       <span
         className={cn(
-          "c360-jobs-dt__sort-caret",
-          active && dir === "desc" && "c360-jobs-dt__sort-caret--on",
+          "c360-contacts-dt__sort-caret",
+          active && dir === "desc" && "c360-contacts-dt__sort-caret--on",
         )}
       >
         ▼
@@ -117,6 +154,13 @@ export interface ContactsDataTableProps {
   expandedRow: string | null;
   onToggleExpand: (id: string) => void;
   onRetry?: () => void;
+  /** Which data columns to show (checkbox + expand always on). */
+  visibleColumns?: ContactsDataTableColumnId[];
+  onToggleColumn?: (columnId: ContactsDataTableColumnId) => void;
+  /** When false, hide the toolbar search field (e.g. search lives in the left filter sidebar). */
+  showToolbarSearch?: boolean;
+  /** When false, hide the Columns popover (e.g. column picker lives in the left filter sidebar). */
+  showColumnPicker?: boolean;
 }
 
 export function ContactsDataTable({
@@ -138,7 +182,25 @@ export function ContactsDataTable({
   expandedRow,
   onToggleExpand,
   onRetry,
+  visibleColumns: visibleColumnsProp,
+  onToggleColumn,
+  showToolbarSearch = true,
+  showColumnPicker = true,
 }: ContactsDataTableProps) {
+  const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
+  const hasCol = useCallback(
+    (id: ContactsDataTableColumnId) => visibleColumns.includes(id),
+    [visibleColumns],
+  );
+
+  const colSpan = useMemo(() => {
+    let n = 2;
+    for (const id of CONTACTS_DT_COLUMN_IDS) {
+      if (hasCol(id)) n += 1;
+    }
+    return n;
+  }, [hasCol]);
+
   const allPageSelected =
     contacts.length > 0 && contacts.every((c) => selected.includes(c.id));
   const somePageSelected =
@@ -165,36 +227,79 @@ export function ContactsDataTable({
     [error],
   );
 
+  const columnsMenu =
+    showColumnPicker && onToggleColumn != null ? (
+      <Popover
+        align="start"
+        width={240}
+        trigger={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            leftIcon={<Columns3 size={16} aria-hidden />}
+            className="c360-contacts-dt__columns-btn"
+          >
+            Columns
+          </Button>
+        }
+        content={
+          <div
+            className="c360-contacts-dt__columns-menu"
+            role="group"
+            aria-label="Visible columns"
+          >
+            <p className="c360-contacts-dt__columns-hint">
+              Show or hide table columns
+            </p>
+            {CONTACTS_DT_COLUMN_IDS.map((id) => (
+              <Checkbox
+                key={id}
+                size="sm"
+                label={CONTACTS_DT_COLUMN_LABELS[id]}
+                checked={hasCol(id)}
+                onChange={() => onToggleColumn(id)}
+                disabled={hasCol(id) && visibleColumns.length <= 1}
+              />
+            ))}
+          </div>
+        }
+      />
+    ) : null;
+
   return (
-    <div className="c360-jobs-dt c360-jobs-dt--contacts">
-      <div className="c360-jobs-dt__toolbar">
-        <div className="c360-jobs-dt__toolbar-left">
-          <span className="c360-jobs-dt__toolbar-label">Show</span>
+    <div className="c360-contacts-dt">
+      <div className="c360-contacts-dt__toolbar">
+        <div className="c360-contacts-dt__toolbar-left">
+          <span className="c360-contacts-dt__toolbar-label">Show</span>
           <Select
             options={PAGE_SIZE_OPTIONS}
             value={String(pageSize)}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             fullWidth={false}
-            className="c360-jobs-dt__page-size"
+            className="c360-contacts-dt__page-size"
           />
-          <span className="c360-jobs-dt__toolbar-label">entries</span>
+          <span className="c360-contacts-dt__toolbar-label">entries</span>
+          {columnsMenu}
         </div>
-        <div className="c360-jobs-dt__toolbar-right">
-          <span className="c360-jobs-dt__toolbar-label">Search:</span>
-          <Input
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Filter by email, name…"
-            className="c360-jobs-dt__search"
-          />
-        </div>
+        {showToolbarSearch ? (
+          <div className="c360-contacts-dt__toolbar-right">
+            <span className="c360-contacts-dt__toolbar-label">Search:</span>
+            <Input
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Filter by email, name…"
+              className="c360-contacts-dt__search"
+            />
+          </div>
+        ) : null}
       </div>
 
-      <div className="c360-jobs-dt__scroll">
-        <table className="c360-jobs-dt__table">
+      <div className="c360-contacts-dt__scroll">
+        <table className="c360-contacts-dt__table">
           <thead>
             <tr>
-              <th className="c360-jobs-dt__th--checkbox">
+              <th className="c360-contacts-dt__th--checkbox">
                 <Checkbox
                   size="sm"
                   checked={allPageSelected}
@@ -203,46 +308,52 @@ export function ContactsDataTable({
                   aria-label="Select all on this page"
                 />
               </th>
-              <th className="c360-jobs-dt__th--narrow" aria-hidden />
-              <th>Contact ref</th>
-              <th>
-                <button
-                  type="button"
-                  className="c360-jobs-dt__th-btn"
-                  onClick={toggleDateSort}
-                >
-                  Added
-                  <SortCaret
-                    active={sortBy === "newest" || sortBy === "oldest"}
-                    dir={dateSortDir}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  type="button"
-                  className="c360-jobs-dt__th-btn"
-                  onClick={toggleNameSort}
-                >
-                  Name
-                  <SortCaret
-                    active={sortBy === "name_asc" || sortBy === "name_desc"}
-                    dir={nameSortDir}
-                  />
-                </button>
-              </th>
-              <th>Title</th>
-              <th>Region</th>
-              <th>Status</th>
-              <th>Company</th>
-              <th>Email</th>
-              <th className="c360-jobs-dt__th--action">Action</th>
+              <th className="c360-contacts-dt__th--narrow" aria-hidden />
+              {hasCol("ref") ? <th>Contact ref</th> : null}
+              {hasCol("added") ? (
+                <th>
+                  <button
+                    type="button"
+                    className="c360-contacts-dt__th-btn"
+                    onClick={toggleDateSort}
+                  >
+                    Added
+                    <SortCaret
+                      active={sortBy === "newest" || sortBy === "oldest"}
+                      dir={dateSortDir}
+                    />
+                  </button>
+                </th>
+              ) : null}
+              {hasCol("name") ? (
+                <th>
+                  <button
+                    type="button"
+                    className="c360-contacts-dt__th-btn"
+                    onClick={toggleNameSort}
+                  >
+                    Name
+                    <SortCaret
+                      active={sortBy === "name_asc" || sortBy === "name_desc"}
+                      dir={nameSortDir}
+                    />
+                  </button>
+                </th>
+              ) : null}
+              {hasCol("title") ? <th>Title</th> : null}
+              {hasCol("region") ? <th>Region</th> : null}
+              {hasCol("status") ? <th>Status</th> : null}
+              {hasCol("company") ? <th>Company</th> : null}
+              {hasCol("email") ? <th>Email</th> : null}
+              {hasCol("action") ? (
+                <th className="c360-contacts-dt__th--action">Action</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
             {loading && contacts.length === 0 ? (
               <tr>
-                <td colSpan={11} className="c360-jobs-dt__loading">
+                <td colSpan={colSpan} className="c360-contacts-dt__loading">
                   <Loader2 size={20} className="c360-spin" />
                   <span>Loading contacts…</span>
                 </td>
@@ -250,8 +361,8 @@ export function ContactsDataTable({
             ) : error ? (
               <tr>
                 <td
-                  colSpan={11}
-                  className="c360-jobs-dt__empty c360-text-danger"
+                  colSpan={colSpan}
+                  className="c360-contacts-dt__empty c360-text-danger"
                 >
                   {errorMsg}
                   {onRetry ? (
@@ -269,7 +380,7 @@ export function ContactsDataTable({
               </tr>
             ) : contacts.length === 0 ? (
               <tr>
-                <td colSpan={11} className="c360-jobs-dt__empty">
+                <td colSpan={colSpan} className="c360-contacts-dt__empty">
                   No contacts found
                 </td>
               </tr>
@@ -281,9 +392,9 @@ export function ContactsDataTable({
                   <Fragment key={contact.id}>
                     <tr
                       className={cn(
-                        "c360-jobs-dt__row",
-                        rowIndex % 2 === 1 && "c360-jobs-dt__row--alt",
-                        expanded && "c360-jobs-dt__row--expanded",
+                        "c360-contacts-dt__row",
+                        rowIndex % 2 === 1 && "c360-contacts-dt__row--alt",
+                        expanded && "c360-contacts-dt__row--expanded",
                       )}
                     >
                       <td onClick={(e) => e.stopPropagation()}>
@@ -297,8 +408,8 @@ export function ContactsDataTable({
                       <td>
                         <button
                           type="button"
-                          className="c360-jobs-dt__expand"
-                          aria-expanded={expanded}
+                          className="c360-contacts-dt__expand"
+                          aria-expanded={expanded ? "true" : "false"}
                           aria-label={
                             expanded ? "Collapse details" : "Expand details"
                           }
@@ -311,113 +422,131 @@ export function ContactsDataTable({
                           )}
                         </button>
                       </td>
-                      <td>
-                        <strong className="c360-jobs-dt__job-ref">
-                          {hashContactRef(contact.id)}
-                        </strong>
-                      </td>
-                      <td className="c360-jobs-dt__muted">
-                        {formatCheckInDate(contact.createdAt)}
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="c360-contacts-dt__name-btn"
-                          onClick={() => onToggleExpand(contact.id)}
+                      {hasCol("ref") ? (
+                        <td>
+                          <strong className="c360-contacts-dt__job-ref">
+                            {hashContactRef(contact.id)}
+                          </strong>
+                        </td>
+                      ) : null}
+                      {hasCol("added") ? (
+                        <td className="c360-contacts-dt__muted">
+                          {formatCheckInDate(contact.createdAt)}
+                        </td>
+                      ) : null}
+                      {hasCol("name") ? (
+                        <td>
+                          <button
+                            type="button"
+                            className="c360-contacts-dt__name-btn"
+                            onClick={() => onToggleExpand(contact.id)}
+                          >
+                            <Image
+                              src={getAvatarUrl(contact.name, 32)}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="c360-contact-avatar"
+                            />
+                            <span className="c360-contacts-dt__task-link c360-text-left">
+                              {contact.name}
+                            </span>
+                          </button>
+                        </td>
+                      ) : null}
+                      {hasCol("title") ? (
+                        <td className="c360-contacts-dt__muted">
+                          {contact.title || "—"}
+                        </td>
+                      ) : null}
+                      {hasCol("region") ? (
+                        <td
+                          className="c360-contacts-dt__muted c360-contacts-dt__truncate"
+                          title={contact.location || contact.country || ""}
                         >
-                          <Image
-                            src={getAvatarUrl(contact.name, 32)}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="c360-contact-avatar"
-                          />
-                          <span className="c360-jobs-dt__task-link c360-text-left">
-                            {contact.name}
-                          </span>
-                        </button>
-                      </td>
-                      <td className="c360-jobs-dt__muted">
-                        {contact.title || "—"}
-                      </td>
-                      <td
-                        className="c360-jobs-dt__muted c360-contacts-dt__truncate"
-                        title={contact.location || contact.country || ""}
-                      >
-                        {contact.location || contact.country || "—"}
-                      </td>
-                      <td>
-                        <span
-                          className={cn(
-                            "c360-jobs-dt__pill",
-                            `c360-jobs-dt__pill--${tone}`,
-                          )}
-                        >
+                          {contact.location || contact.country || "—"}
+                        </td>
+                      ) : null}
+                      {hasCol("status") ? (
+                        <td>
                           <span
-                            className="c360-jobs-dt__pill-dot"
-                            aria-hidden
-                          />
-                          {emailStatusLabel(contact.emailStatus)}
-                        </span>
-                      </td>
-                      <td
-                        className="c360-jobs-dt__muted c360-contacts-dt__truncate"
-                        title={contact.company || ""}
-                      >
-                        {contact.company || "—"}
-                      </td>
-                      <td
-                        className="c360-contacts-dt__email c360-text-xs"
-                        title={contact.email || ""}
-                      >
-                        {contact.email || "—"}
-                      </td>
-                      <td className="c360-jobs-dt__action-cell">
-                        <Popover
-                          align="end"
-                          width={200}
-                          trigger={
-                            <button
-                              type="button"
-                              className="c360-jobs-dt__action-btn"
-                              aria-label={`Actions for ${contact.name}`}
-                            >
-                              <MoreHorizontal size={20} />
-                            </button>
-                          }
-                          content={
-                            <div className="c360-jobs-dt__menu">
-                              <Link
-                                href={contactDetailRoute(contact.id)}
-                                className="c360-jobs-dt__menu-link"
-                              >
-                                <ExternalLink size={14} aria-hidden />
-                                View profile
-                              </Link>
+                            className={cn(
+                              "c360-contacts-dt__pill",
+                              `c360-contacts-dt__pill--${tone}`,
+                            )}
+                          >
+                            <span
+                              className="c360-contacts-dt__pill-dot"
+                              aria-hidden
+                            />
+                            {emailStatusLabel(contact.emailStatus)}
+                          </span>
+                        </td>
+                      ) : null}
+                      {hasCol("company") ? (
+                        <td
+                          className="c360-contacts-dt__muted c360-contacts-dt__truncate"
+                          title={contact.company || ""}
+                        >
+                          {contact.company || "—"}
+                        </td>
+                      ) : null}
+                      {hasCol("email") ? (
+                        <td
+                          className="c360-contacts-dt__email c360-text-xs"
+                          title={contact.email || ""}
+                        >
+                          {contact.email || "—"}
+                        </td>
+                      ) : null}
+                      {hasCol("action") ? (
+                        <td className="c360-contacts-dt__action-cell">
+                          <Popover
+                            align="end"
+                            width={200}
+                            trigger={
                               <button
                                 type="button"
-                                className="c360-jobs-dt__menu-item"
-                                onClick={() => onToggleExpand(contact.id)}
+                                className="c360-contacts-dt__action-btn"
+                                aria-label={`Actions for ${contact.name}`}
                               >
-                                {expanded ? "Hide details" : "View details"}
+                                <MoreHorizontal size={20} />
                               </button>
-                              {contact.email ? (
-                                <a
-                                  href={`mailto:${contact.email}`}
-                                  className="c360-jobs-dt__menu-link"
+                            }
+                            content={
+                              <div className="c360-contacts-dt__menu">
+                                <Link
+                                  href={contactDetailRoute(contact.id)}
+                                  className="c360-contacts-dt__menu-link"
                                 >
-                                  <Mail size={14} aria-hidden />
-                                  Compose email
-                                </a>
-                              ) : null}
-                            </div>
-                          }
-                        />
-                      </td>
+                                  <ExternalLink size={14} aria-hidden />
+                                  View profile
+                                </Link>
+                                <button
+                                  type="button"
+                                  className="c360-contacts-dt__menu-item"
+                                  onClick={() => onToggleExpand(contact.id)}
+                                >
+                                  {expanded ? "Hide details" : "View details"}
+                                </button>
+                                {contact.email ? (
+                                  <a
+                                    href={`mailto:${contact.email}`}
+                                    className="c360-contacts-dt__menu-link"
+                                  >
+                                    <Mail size={14} aria-hidden />
+                                    Compose email
+                                  </a>
+                                ) : null}
+                              </div>
+                            }
+                          />
+                        </td>
+                      ) : null}
                     </tr>
-                    {expanded && (
-                      <ContactDetailPanel contact={contact} colSpan={11} />
-                    )}
+                    {expanded ? (
+                      <ContactDetailPanel contact={contact} colSpan={colSpan} />
+                    ) : null}
                   </Fragment>
                 );
               })
@@ -426,11 +555,11 @@ export function ContactsDataTable({
         </table>
       </div>
 
-      <div className="c360-jobs-dt__footer">
-        <p className="c360-jobs-dt__footer-text">
+      <div className="c360-contacts-dt__footer">
+        <p className="c360-contacts-dt__footer-text">
           Showing {showingFrom} to {showingTo} of {total} entries
         </p>
-        <div className="c360-jobs-dt__pager">
+        <div className="c360-contacts-dt__pager">
           <Button
             variant="ghost"
             size="sm"
@@ -439,7 +568,7 @@ export function ContactsDataTable({
           >
             Previous
           </Button>
-          <span className="c360-jobs-dt__footer-text">
+          <span className="c360-contacts-dt__footer-text">
             Page {safePage} of {pageCount}
           </span>
           <Button

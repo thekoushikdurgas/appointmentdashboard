@@ -48,7 +48,8 @@ export function useCompanyDetail(id: string): UseCompanyDetailReturn {
       const c = await companiesService.get(id);
       setCompany(c);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load company");
+      const errMsg = e instanceof Error ? e.message : "Failed to load company";
+      setError(errMsg);
       setCompany(null);
     } finally {
       setLoading(false);

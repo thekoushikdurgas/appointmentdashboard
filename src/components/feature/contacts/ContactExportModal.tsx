@@ -34,7 +34,7 @@ export function ContactExportModal({
   > | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const { jobStatus, polling, isTerminal, startPolling, reset } =
+  const { jobStatus, jobProgress, polling, isTerminal, startPolling, reset } =
     useJobPoller();
 
   useEffect(() => {
@@ -87,7 +87,11 @@ export function ContactExportModal({
     }
   };
 
-  const progressValue = isTerminal ? 100 : 0;
+  const progressValue = isTerminal
+    ? 100
+    : jobProgress != null && jobProgress > 0
+      ? jobProgress
+      : 0;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Export contacts" size="md">
@@ -155,7 +159,7 @@ export function ContactExportModal({
             <ProgressBar
               value={progressValue}
               tone={isTerminal ? "success" : "primary"}
-              animated={polling && progressValue === 0}
+              animated={polling && !isTerminal && progressValue === 0}
               label="Export progress"
               showValue={progressValue > 0}
             />

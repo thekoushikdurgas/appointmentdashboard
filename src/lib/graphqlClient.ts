@@ -228,7 +228,10 @@ export async function graphqlRequest<T = unknown>(
           if (newToken) {
             const retryClient = createGraphQLClient(newToken);
             try {
-              const retryResult = await retryClient.request<T>(query, variables);
+              const retryResult = await retryClient.request<T>(
+                query,
+                variables,
+              );
               return retryResult;
             } catch {
               clearTokens();

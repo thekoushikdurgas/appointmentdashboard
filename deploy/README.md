@@ -1,20 +1,21 @@
 # EC2 deploy scripts (Contact360 dashboard)
 
-| Script                  | Who runs              | Purpose                                                                 |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------- |
-| `ec2-setup.sh`          | `sudo`                | One-time server: Node 20, PM2, nginx, UFW.                              |
-| `ec2-deploy.sh`         | app user (`ubuntu`) | Interactive first deploy: `npm install`, `next build`, PM2 start.     |
-| `ec2-update.sh`         | app user              | Interactive update: `git pull`, rebuild, `pm2 reload`.                  |
-| `ec2-github-deploy.sh`  | app user / CI         | **Non-interactive** PM2 deploy (npm ci, build, PM2). Used by GitHub Actions; stops legacy Docker compose on :3000 if present. |
-| `lib.sh`                | _(sourced)_           | Shared helpers — **do not execute directly**.                           |
+| Script                 | Who runs            | Purpose                                                                                                                       |
+| ---------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ec2-setup.sh`         | `sudo`              | One-time server: Node 20, PM2, nginx, UFW.                                                                                    |
+| `ec2-deploy.sh`        | app user (`ubuntu`) | Interactive first deploy: `npm install`, `next build`, PM2 start.                                                             |
+| `ec2-update.sh`        | app user            | Interactive update: `git pull`, rebuild, `pm2 reload`.                                                                        |
+| `ec2-github-deploy.sh` | app user / CI       | **Non-interactive** PM2 deploy (npm ci, build, PM2). Used by GitHub Actions; stops legacy Docker compose on :3000 if present. |
+| `lib.sh`               | _(sourced)_         | Shared helpers — **do not execute directly**.                                                                                 |
 
-## GitHub Actions (`.github/workflows/deploy.yml`)
+## GitHub Actions
 
-1. SSH to EC2, `git fetch` / `reset` to the pushed branch.
-2. Writes `.env.production` from repository secrets (`NEXT_PUBLIC_*`).
-3. Runs **`bash deploy/ec2-github-deploy.sh`** — no Docker: `npm ci --legacy-peer-deps`, `next build`, `pm2 start` via `ecosystem.config.js`.
+- **Monorepo** (git root = `contact360/`): workflow is **`/.github/workflows/deploy-contact360-app.yml`**. It runs on pushes under `contact360.io/app/**`. Set repository variable **`EC2_APP_PATH`** to the absolute clone path on EC2 if not using the default **`$HOME/appointmentdashboard`**.
+- **Standalone** (this folder is the repo root): **`contact360.io/app/.github/workflows/deploy.yml`** — deploys on every push to `main`.
 
-Requires on the instance: **Node + npm + PM2** (run `sudo ./deploy/ec2-setup.sh` once), clone at e.g. `$HOME/appointmentdashboard`, and `chmod +x deploy/*.sh` optional (`bash` does not require it).
+Steps: SSH to EC2 → `git fetch` / `reset` → write `.env.production` from secrets (`NEXT_PUBLIC_*`) → **`bash deploy/ec2-github-deploy.sh`** (`npm ci --legacy-peer-deps`, `next build`, PM2 via `ecosystem.config.js`, no Docker in the hot path).
+
+Requires on the instance: **Node + npm + PM2** (run `sudo ./deploy/ec2-setup.sh` once), app cloned at **`EC2_APP_PATH`** (or `$HOME/appointmentdashboard`), and `chmod +x deploy/*.sh` optional (`bash` does not require it).
 
 If you previously used **Docker** on the same host, this script runs **`docker compose … down`** when `docker-compose.prod.yml` exists so port **3000** is free for PM2.
 

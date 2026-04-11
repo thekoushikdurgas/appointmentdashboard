@@ -47,9 +47,10 @@ export function ContactImportModal({
   > | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const { jobStatus, polling, isTerminal, startPolling, reset } = useJobPoller({
-    onCompleted: onImported,
-  });
+  const { jobStatus, jobProgress, polling, isTerminal, startPolling, reset } =
+    useJobPoller({
+      onCompleted: onImported,
+    });
 
   useEffect(() => {
     if (isOpen) {
@@ -119,7 +120,11 @@ export function ContactImportModal({
     }
   };
 
-  const progressValue = isTerminal ? 100 : 0;
+  const progressValue = isTerminal
+    ? 100
+    : jobProgress != null && jobProgress > 0
+      ? jobProgress
+      : 0;
 
   return (
     <Modal
@@ -234,7 +239,7 @@ export function ContactImportModal({
                 <ProgressBar
                   value={progressValue}
                   tone={isTerminal ? "success" : "primary"}
-                  animated={polling && progressValue === 0}
+                  animated={polling && !isTerminal && progressValue === 0}
                   label="Import progress"
                   showValue={progressValue > 0}
                 />

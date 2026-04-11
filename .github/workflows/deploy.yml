@@ -1,3 +1,6 @@
+# Use this file ONLY if this directory is the Git repository root (standalone dashboard repo).
+# For the Contact360 monorepo, GitHub runs: repo_root/.github/workflows/deploy-contact360-app.yml
+
 name: Deploy Contact360 App
 
 on:
@@ -23,7 +26,9 @@ jobs:
           command_timeout: 40m
           script: |
             set -e
-            cd "$HOME/appointmentdashboard"
+            APP_DIR="${{ vars.EC2_APP_PATH }}"
+            if [ -z "$APP_DIR" ]; then APP_DIR="$HOME/appointmentdashboard"; fi
+            cd "$APP_DIR"
             BRANCH="${{ github.ref_name }}"
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"

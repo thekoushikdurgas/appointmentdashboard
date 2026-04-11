@@ -818,7 +818,7 @@
   text-align: left;
   max-width: 260px;
 }
-.c360-contacts-dt__name-btn .c360-jobs-dt__task-link {
+.c360-contacts-dt__name-btn .c360-contacts-dt__task-link {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;

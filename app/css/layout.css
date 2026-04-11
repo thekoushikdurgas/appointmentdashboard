@@ -352,8 +352,8 @@
 }
 
 .c360-page {
-  max-width: var(--c360-content-max-width);
-  margin: 0 auto;
+  /* max-width: var(--c360-content-max-width); */
+  /* margin: 0 auto; */
   padding: var(--c360-container-padding);
   animation: c360-fade-in 200ms ease forwards;
 }

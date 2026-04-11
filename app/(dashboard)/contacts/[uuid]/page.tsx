@@ -73,8 +73,11 @@ export default function ContactDetailPage({ params }: PageProps) {
         if (!cancelled) setContact(c);
       })
       .catch((e) => {
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : "Failed to load contact");
+        if (!cancelled) {
+          setError(
+            e instanceof Error ? e.message : "Failed to load contact",
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

@@ -279,15 +279,14 @@ function JobDetailPanel({
             </dd>
           </div>
         )}
-        {job.storedOutputPrefix &&
-          EXPORT_STREAM_JOB_TYPES.has(job.type) && (
-            <div className="c360-job-detail-full">
-              <dt>Output prefix (stored on job)</dt>
-              <dd className="c360-font-mono c360-text-xs">
-                {job.storedOutputPrefix}
-              </dd>
-            </div>
-          )}
+        {job.storedOutputPrefix && EXPORT_STREAM_JOB_TYPES.has(job.type) && (
+          <div className="c360-job-detail-full">
+            <dt>Output prefix (stored on job)</dt>
+            <dd className="c360-font-mono c360-text-xs">
+              {job.storedOutputPrefix}
+            </dd>
+          </div>
+        )}
         {job.outputFile && (
           <div className="c360-job-detail-full">
             <dt>Output file</dt>
