@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Plus, Download, Trash2, Mail, Filter, Upload, Globe } from "lucide-react";
+import {
+  Plus,
+  Download,
+  Trash2,
+  Mail,
+  Filter,
+  Upload,
+  Globe,
+} from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -87,7 +95,9 @@ function loadVisibleColumns(): ContactsDataTableColumnId[] {
 }
 
 /** Map UI builder `VQLQuery` to GraphQL `VqlFilterInput` (same rules as handleVqlApply). */
-function vqlQueryToFilterInput(query: VQLQuery | null): VqlFilterInput | undefined {
+function vqlQueryToFilterInput(
+  query: VQLQuery | null,
+): VqlFilterInput | undefined {
   const filters = query?.filters as VQLFilters | undefined;
   if (!filters) return undefined;
   const isCond = (
@@ -107,9 +117,7 @@ function vqlQueryToFilterInput(query: VQLQuery | null): VqlFilterInput | undefin
   }));
   if (conditions.length === 0) return undefined;
   const useAllOf = (filters.and?.length ?? 0) > 0;
-  return useAllOf
-    ? { allOf: [{ conditions }] }
-    : { anyOf: [{ conditions }] };
+  return useAllOf ? { allOf: [{ conditions }] } : { anyOf: [{ conditions }] };
 }
 
 export default function ContactsPage() {
@@ -178,7 +186,9 @@ export default function ContactsPage() {
       } else {
         next = [...prev, id];
       }
-      const ordered = CONTACTS_DT_COLUMN_IDS.filter((col) => next.includes(col));
+      const ordered = CONTACTS_DT_COLUMN_IDS.filter((col) =>
+        next.includes(col),
+      );
       try {
         localStorage.setItem(
           VISIBLE_COLUMNS_STORAGE_KEY,
@@ -196,9 +206,9 @@ export default function ContactsPage() {
     /* `useEffect` + `applyFilters` builds VQL (incl. sort, tabs, facets) — avoids double fetch. */
   };
 
-  const clearVqlQuery = () => {
+  const clearVqlQuery = useCallback(() => {
     setActiveVqlQuery(null);
-  };
+  }, []);
 
   const toggleSelect = (id: string) =>
     setSelected((prev) =>
@@ -444,9 +454,7 @@ export default function ContactsPage() {
           {CONTACT_TABS.map((t) => (
             <TabsTrigger key={t.value} value={t.value}>
               {t.label}
-              {t.value === "total"
-                ? ` (${total.toLocaleString()})`
-                : null}
+              {t.value === "total" ? ` (${total.toLocaleString()})` : null}
             </TabsTrigger>
           ))}
         </TabsList>

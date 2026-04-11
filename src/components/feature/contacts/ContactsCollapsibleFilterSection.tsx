@@ -29,10 +29,7 @@ export function ContactsCollapsibleFilterSection({
 
   return (
     <div
-      className={cn(
-        baseClass,
-        (isOpen || hasActive) && `${baseClass}--active`,
-      )}
+      className={cn(baseClass, (isOpen || hasActive) && `${baseClass}--active`)}
     >
       <button
         type="button"

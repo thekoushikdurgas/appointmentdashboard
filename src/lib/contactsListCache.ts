@@ -17,7 +17,11 @@ export type ContactsListCachedPayload = {
   savedAt: number;
 };
 
-function fingerprint(vql: Partial<VqlQueryInput>, page: number, pageSize: number): string {
+function fingerprint(
+  vql: Partial<VqlQueryInput>,
+  page: number,
+  pageSize: number,
+): string {
   return JSON.stringify({ vql, page, pageSize });
 }
 
@@ -96,10 +100,7 @@ export function pruneExpiredContactsListCaches(
       const raw = localStorage.getItem(k);
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { savedAt?: number };
-      if (
-        typeof parsed.savedAt !== "number" ||
-        now - parsed.savedAt > ttlMs
-      ) {
+      if (typeof parsed.savedAt !== "number" || now - parsed.savedAt > ttlMs) {
         localStorage.removeItem(k);
       }
     } catch {

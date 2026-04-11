@@ -67,8 +67,9 @@ export function ContactsFilterSidebar({
 
   const facetActiveCount = useMemo(
     () =>
-      Object.values(facetValues).filter((v) => v != null && String(v).trim() !== "")
-        .length,
+      Object.values(facetValues).filter(
+        (v) => v != null && String(v).trim() !== "",
+      ).length,
     [facetValues],
   );
 
@@ -91,7 +92,9 @@ export function ContactsFilterSidebar({
   }, [listScopeCount, search, vqlCount]);
 
   const hiddenColumnCount = useMemo(
-    () => CONTACTS_DT_COLUMN_IDS.filter((id) => !visibleColumns.includes(id)).length,
+    () =>
+      CONTACTS_DT_COLUMN_IDS.filter((id) => !visibleColumns.includes(id))
+        .length,
     [visibleColumns],
   );
 
@@ -100,12 +103,6 @@ export function ContactsFilterSidebar({
       onFacetChange(s.filterKey, "");
     }
   }, [filterSections, onFacetChange]);
-
-  const clearListScope = useCallback(() => {
-    onActiveTabChange("total");
-    onStatusChange("All");
-    clearFacets();
-  }, [clearFacets, onActiveTabChange, onStatusChange]);
 
   const clearAll = useCallback(() => {
     onSearchChange("");
@@ -165,9 +162,7 @@ export function ContactsFilterSidebar({
       out.push({
         key: "vql",
         label:
-          vqlCount === 1
-            ? "Advanced: 1 rule"
-            : `Advanced: ${vqlCount} rules`,
+          vqlCount === 1 ? "Advanced: 1 rule" : `Advanced: ${vqlCount} rules`,
         onRemove: onClearVql,
       });
     }
@@ -209,7 +204,10 @@ export function ContactsFilterSidebar({
       </div>
 
       {chips.length > 0 ? (
-        <div className="c360-contacts-filters__chips" aria-label="Active filters">
+        <div
+          className="c360-contacts-filters__chips"
+          aria-label="Active filters"
+        >
           {chips.map((c) => (
             <button
               key={c.key}
@@ -242,9 +240,7 @@ export function ContactsFilterSidebar({
         count={statusFilter !== "All" ? 1 : 0}
         defaultOpen
         onClear={
-          statusFilter !== "All"
-            ? () => onStatusChange("All")
-            : undefined
+          statusFilter !== "All" ? () => onStatusChange("All") : undefined
         }
       >
         <ContactFilterEmailStatus
@@ -258,9 +254,7 @@ export function ContactsFilterSidebar({
         title="Sort"
         count={sortActiveCount}
         defaultOpen
-        onClear={
-          sortActiveCount > 0 ? () => onSortChange("newest") : undefined
-        }
+        onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
       >
         <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
       </ContactsCollapsibleFilterSection>
@@ -274,7 +268,9 @@ export function ContactsFilterSidebar({
             title={section.displayName}
             count={has ? 1 : 0}
             defaultOpen={has}
-            onClear={has ? () => onFacetChange(section.filterKey, "") : undefined}
+            onClear={
+              has ? () => onFacetChange(section.filterKey, "") : undefined
+            }
           >
             <ContactFilterFacetField
               section={section}

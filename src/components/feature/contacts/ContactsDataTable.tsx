@@ -43,8 +43,7 @@ export const CONTACTS_DT_COLUMN_IDS = [
   "action",
 ] as const;
 
-export type ContactsDataTableColumnId =
-  (typeof CONTACTS_DT_COLUMN_IDS)[number];
+export type ContactsDataTableColumnId = (typeof CONTACTS_DT_COLUMN_IDS)[number];
 
 export const CONTACTS_DT_DEFAULT_COLUMNS: ContactsDataTableColumnId[] = [
   ...CONTACTS_DT_COLUMN_IDS,

@@ -422,7 +422,9 @@
   font-weight: 500;
   color: var(--c360-text-muted);
   cursor: pointer;
-  transition: color var(--c360-transition-fast), background var(--c360-transition-fast),
+  transition:
+    color var(--c360-transition-fast),
+    background var(--c360-transition-fast),
     border-color var(--c360-transition-fast);
   font-family: var(--c360-font-primary);
 }
@@ -661,11 +663,15 @@
 .c360-contact-filter-email-status .c360-status-btn-group {
   width: 100%;
 }
-.c360-contacts-filters .c360-contacts-filter-section__content .c360-filter-facet {
+.c360-contacts-filters
+  .c360-contacts-filter-section__content
+  .c360-filter-facet {
   min-width: 0;
   width: 100%;
 }
-.c360-contacts-filters .c360-contacts-filter-section__content .c360-contact-filter-select {
+.c360-contacts-filters
+  .c360-contacts-filter-section__content
+  .c360-contact-filter-select {
   min-width: 0;
   width: 100%;
   max-width: 100%;
