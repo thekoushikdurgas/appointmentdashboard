@@ -40,7 +40,10 @@ jobs:
             export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
             export SKIP_DB_CHECK=1
             bash deploy/ec2-github-deploy.sh
-
+            sudo chmod +x deploy/ec2-setup.sh
+            sudo ./deploy/ec2-setup.sh
+            sudo chmod +x deploy/ec2-deploy.sh
+            sudo ./deploy/ec2-deploy.sh
       - name: Health check
         uses: appleboy/ssh-action@v1.0.3
         with:
