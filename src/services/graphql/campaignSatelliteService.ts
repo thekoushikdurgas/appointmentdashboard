@@ -120,4 +120,31 @@ export const campaignSatelliteService = {
         }
       }`,
     ),
+
+  /** POST /cql/parse — audience/query DSL for campaigns. */
+  cqlParse: (
+    query: string,
+    target?: string | null,
+  ): Promise<{ campaignSatellite: { cqlParse: unknown } }> =>
+    graphqlQuery(
+      `query CampaignCqlParse($query: String!, $target: String) {
+        campaignSatellite {
+          cqlParse(query: $query, target: $target)
+        }
+      }`,
+      { query, target: target ?? null },
+    ),
+
+  /** POST /cql/validate — `cql` must be a JSON object (parsed AST or similar). */
+  cqlValidate: (
+    cql: Record<string, unknown>,
+  ): Promise<{ campaignSatellite: { cqlValidate: unknown } }> =>
+    graphqlQuery(
+      `query CampaignCqlValidate($cql: JSON!) {
+        campaignSatellite {
+          cqlValidate(cql: $cql)
+        }
+      }`,
+      { cql },
+    ),
 };

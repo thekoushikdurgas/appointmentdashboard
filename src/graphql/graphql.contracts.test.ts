@@ -2,6 +2,11 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { AUTH_PAYLOAD_USER_FIELDS } from "./authSelections";
+import {
+  emptyDraftCondition,
+  emptyDraftGroup,
+  emptyDraftQuery,
+} from "@/lib/vqlDraft";
 import { describe, expect, it } from "vitest";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -209,5 +214,24 @@ describe("GraphQL operation contracts (static)", () => {
     expect(s).not.toMatch(/saveProfiles\s*\(/);
     expect(s).not.toContain("summary {");
     expect(s).toContain("toSatelliteProfileJson");
+  });
+});
+
+describe("vqlDraft helpers", () => {
+  it("emptyDraftQuery has empty sort and columns", () => {
+    const q = emptyDraftQuery();
+    expect(q.sort).toEqual([]);
+    expect(q.selectColumns).toEqual([]);
+    expect(q.rootGroup.items).toEqual([]);
+  });
+
+  it("emptyDraftGroup defaults to and", () => {
+    const g = emptyDraftGroup();
+    expect(g.logic).toBe("and");
+  });
+
+  it("emptyDraftCondition uses eq", () => {
+    const c = emptyDraftCondition();
+    expect(c.operator).toBe("eq");
   });
 });

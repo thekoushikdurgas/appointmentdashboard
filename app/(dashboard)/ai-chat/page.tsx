@@ -1,5 +1,7 @@
 "use client";
 
+/** AI Chat — GraphQL aiChats; streaming/SSE contract: see `docs/AI-CHAT.md` and monorepo EVENTS-BOUNDARY.md */
+
 import { useEffect, useRef, KeyboardEvent, useState } from "react";
 import {
   Send,

@@ -5,7 +5,8 @@ User-facing dashboard SPA for [app.contact360.io](https://app.contact360.io).
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
 - **Styling:** Custom CSS with Dashboard UI kit design tokens (**no Tailwind** — intentional; see below)
 - **API:** GraphQL via `graphql-request` → `contact360.io/api`
-- **Deploy:** EC2 `54.160.179.222` + Docker + Nginx → `app.contact360.io`
+- **Deploy:** EC2 **`54.160.179.222`** (HTTP) and **`app.contact360.io`** (HTTPS recommended); reverse proxy (nginx) → `next start` on port **3000** (or Docker). Gateway: **`api.contact360.io`** — must allow **CORS** for `https://app.contact360.io` (and `http://localhost:3000` for dev) via `ALLOWED_ORIGINS` on the API.
+- **Admin / logs:** Operations UI lives in [contact360.io/admin](https://admin.contact360.io) (separate repo); optional `NEXT_PUBLIC_ADMIN_URL` links from Settings.
 
 ## Quick start
 
@@ -20,10 +21,12 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable                              | Description           | Default                    |
-| ------------------------------------- | --------------------- | -------------------------- |
-| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `http://api.contact360.io` |
-| `NEXT_PUBLIC_GRAPHQL_URL`             | Full GraphQL endpoint | `${API_URL}/graphql`       |
+| Variable                              | Description           | Default                     |
+| ------------------------------------- | --------------------- | --------------------------- |
+| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `https://api.contact360.io` (prod build) |
+| `NEXT_PUBLIC_GRAPHQL_URL`             | Full GraphQL endpoint | `${API_URL}/graphql` in prod; dev uses `/graphql` rewrite |
+| `GRAPHQL_UPSTREAM_URL`                | Dev proxy target only | `https://api.contact360.io` |
+| `NEXT_PUBLIC_APP_URL`                 | Canonical app URL     | `https://app.contact360.io` (optional) |
 | `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `appointment360uploads`    |
 | `NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED` | Enable export feature | `false`                    |
 
@@ -37,8 +40,11 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run lint`                 | ESLint                                                                                                                     |
 | `npm run typecheck`            | TypeScript check                                                                                                           |
 | `npm run test`                 | Vitest unit tests                                                                                                          |
+| `npm run test:e2e`             | Playwright (`e2e/smoke.spec.ts`, `e2e/auth-guard.spec.ts`)                                                                  |
 | `npm run check:best-practices` | Scored Next.js hygiene checklist (JSON under `reports/`; run `node scripts/check-best-practices.mjs --help`)               |
 | `npm run css:inventory`        | CSS design-system report: `@import` graph, `.c360-*` inventory, inline `style={{}}` hotspots → `reports/css-inventory.txt` |
+| `npm run health:smoke`         | `GET` gateway `/health` (override with `API_HEALTH_URL`) |
+| `npm run codegen`              | Introspect GraphQL schema → `src/graphql/generated/types.ts` (requires a reachable gateway; set `CODEGEN_SCHEMA_URL` or run when `https://api.contact360.io/graphql` is up) |
 
 Runs as part of `npm run ci` (after tests: `css:inventory`, then `check:best-practices`, then `build`). Options mirror the Django `check_best_practices` flow in `contact360.io/2`: `--category`, `--output`, `--format`, `--threshold` (default 80), `--no-fail`. Optional overrides: [.next-checker-config.json](.next-checker-config.json).
 
@@ -52,13 +58,24 @@ Runs as part of `npm run ci` (after tests: `css:inventory`, then `check:best-pra
 - **Reports:** `npm run css:inventory` (also step `[0]` in `codebase_state.bat`) writes `reports/css-inventory.txt` for audits and CI artifacts.
 - **Deeper guide:** [docs/CSS.md](docs/CSS.md) — interpreting the inventory report, splitting partials, and checker thresholds.
 
+## Internal docs (app)
+
+- `docs/DIALOG-PATTERNS.md` — Sonner vs SweetAlert policy
+- `docs/AI-CHAT.md` — AI transport notes
+
 ## Git setup
 
 ```bash
-git remote add origin https://github.com/thekoushikdurgas/appointment.git
+git remote add origin https://github.com/thekoushikdurgas/appointmentdashboard.git
 git branch -M dashboard
+git commit -m "Your message"
 git push -u origin dashboard
 ```
+
+## Security notes
+
+- Serve the app over **HTTPS** in production; the default API base is **`https://api.contact360.io`** so the browser does not block mixed content.
+- If you must use `http://` for the API, set `NEXT_PUBLIC_API_URL` explicitly (not recommended for HTTPS sites).
 
 ## Docker deploy
 

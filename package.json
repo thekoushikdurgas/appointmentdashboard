@@ -25,6 +25,7 @@
     "ci": "npm run lint && npm run typecheck && npm run test && npm run css:inventory && npm run check:best-practices && npm run build",
     "check:best-practices": "node scripts/check-best-practices.mjs",
     "codegen": "graphql-codegen --config codegen.ts",
+    "health:smoke": "node scripts/health-smoke.mjs",
     "css:inventory": "node scripts/css-inventory.mjs"
   },
   "dependencies": {

@@ -12,6 +12,12 @@
   font-family: monospace;
 }
 
+/* Campaign CQL validate textarea — min height without inline styles */
+.c360-textarea-json-block {
+  min-height: 160px;
+  width: 100%;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    AD / PROMO SLIDES
 ══════════════════════════════════════════════════════════════════════════════ */

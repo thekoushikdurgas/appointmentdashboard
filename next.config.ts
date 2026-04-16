@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     let upstream = (
       process.env.GRAPHQL_UPSTREAM_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      "http://api.contact360.io"
+      "https://api.contact360.io"
     ).replace(/\/$/, "");
     // Never rewrite /graphql to the Next dev server itself (causes proxy loop + ENOBUFS / 500).
     try {

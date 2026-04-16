@@ -4,10 +4,13 @@
  * GraphQL endpoint aligns with contact360.io/api (FastAPI + Strawberry).
  */
 
-/** Production app is HTTPS; browser blocks http:// API calls (mixed content). */
+/**
+ * Production builds must use HTTPS for the API when the app is served over HTTPS
+ * (mixed content blocks http:// fetches). Override with NEXT_PUBLIC_API_URL.
+ */
 const defaultApiBase =
   process.env.NODE_ENV === "production"
-    ? "http://api.contact360.io"
+    ? "https://api.contact360.io"
     : "http://api.contact360.io";
 
 const _apiBase = process.env.NEXT_PUBLIC_API_URL || defaultApiBase;

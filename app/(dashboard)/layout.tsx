@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Protected shell: unauthenticated users are redirected to login (see ROUTES.LOGIN).
+ * Pair with `AuthContext` + `graphqlClient` token refresh for session continuity.
+ */
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";

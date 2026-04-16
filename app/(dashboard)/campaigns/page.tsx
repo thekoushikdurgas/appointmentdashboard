@@ -30,6 +30,7 @@ import { useState } from "react";
 import type { CampaignListStatus } from "@/lib/campaignListMapping";
 import { campaignsService } from "@/services/graphql/campaignsService";
 import { toast } from "sonner";
+import { CqlPlaygroundCard } from "@/components/feature/campaigns/CqlPlaygroundCard";
 
 const STATUS_COLOR: Record<
   CampaignListStatus,
@@ -301,6 +302,10 @@ export default function CampaignsPage() {
           >
             <ReviewList reviews={[]} entityName="campaigns" />
           </Card>
+        </div>
+
+        <div className="c360-mt-6">
+          <CqlPlaygroundCard />
         </div>
       </div>
     </DashboardPageLayout>

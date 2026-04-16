@@ -8,6 +8,7 @@ export const ROUTES = {
   CONTACTS: "/contacts",
   COMPANIES: "/companies",
   EMAIL: "/email",
+  PHONE: "/phone",
   JOBS: "/jobs",
   FILES: "/files",
   LINKEDIN: "/linkedin",

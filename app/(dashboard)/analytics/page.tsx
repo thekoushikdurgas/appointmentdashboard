@@ -5,6 +5,7 @@ import { BarChart3, Gauge } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { AnalyticsUsageTab } from "@/components/feature/analytics/AnalyticsUsageTab";
 import { AnalyticsPerformancePanel } from "@/components/feature/analytics/AnalyticsPerformancePanel";
+import { Alert } from "@/components/ui/Alert";
 import { cn } from "@/lib/utils";
 
 type AnalyticsTab = "performance" | "usage";
@@ -33,6 +34,11 @@ export default function AnalyticsPage() {
             </p>
           </div>
         </div>
+
+        <Alert variant="info" className="c360-mb-4">
+          Lead scoring and predictive charts are not wired to a dedicated gateway
+          field yet; this page focuses on RUM and product usage only.
+        </Alert>
 
         <div className="c360-tabs c360-mb-4">
           <div

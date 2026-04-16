@@ -5,6 +5,7 @@ export * from "./twoFactorService";
 export * from "./billingService";
 export * from "./usageService";
 export * from "./emailService";
+export * from "./phoneService";
 export * from "./jobsService";
 export * from "./s3Service";
 export * from "./contactsService";

@@ -69,6 +69,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
         icon: "Tool",
         children: [
           { href: ROUTES.EMAIL, label: "Email", icon: "Mail" },
+          { href: ROUTES.PHONE, label: "Phone", icon: "Phone" },
           { href: ROUTES.JOBS, label: "Jobs", icon: "Briefcase" },
           { href: ROUTES.FILES, label: "Files", icon: "FolderOpen" },
           { href: ROUTES.LINKEDIN, label: "LinkedIn", icon: "Linkedin" },
