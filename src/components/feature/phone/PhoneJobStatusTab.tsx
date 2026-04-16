@@ -43,7 +43,10 @@ export function PhoneJobStatusTab() {
   };
 
   return (
-    <Card title="Job status" subtitle="GET /jobs/:id/status via gateway phone.phoneJobStatus">
+    <Card
+      title="Job status"
+      subtitle="GET /jobs/:id/status via gateway phone.phoneJobStatus"
+    >
       <form onSubmit={load} className="c360-section-stack c360-max-w-520">
         <Input
           label="Job ID"

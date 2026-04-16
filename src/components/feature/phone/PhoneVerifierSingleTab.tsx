@@ -29,7 +29,10 @@ export function PhoneVerifierSingleTab() {
       title="Phone verifier"
       subtitle="Gateway maps to phone.server verifier (input uses email per API schema)"
     >
-      <form onSubmit={handleSubmit} className="c360-section-stack c360-max-w-520">
+      <form
+        onSubmit={handleSubmit}
+        className="c360-section-stack c360-max-w-520"
+      >
         <Input
           label="Email"
           type="email"

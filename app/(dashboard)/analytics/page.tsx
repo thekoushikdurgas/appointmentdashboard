@@ -36,8 +36,8 @@ export default function AnalyticsPage() {
         </div>
 
         <Alert variant="info" className="c360-mb-4">
-          Lead scoring and predictive charts are not wired to a dedicated gateway
-          field yet; this page focuses on RUM and product usage only.
+          Lead scoring and predictive charts are not wired to a dedicated
+          gateway field yet; this page focuses on RUM and product usage only.
         </Alert>
 
         <div className="c360-tabs c360-mb-4">

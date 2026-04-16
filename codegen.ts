@@ -2,12 +2,12 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 /**
  * Introspects the Strawberry gateway and emits TypeScript schema types.
- * Run with API up: `CODEGEN_SCHEMA_URL=https://api.contact360.io/graphql npm run codegen`
+ * Run with API up: `CODEGEN_SCHEMA_URL=http://api.contact360.io/graphql npm run codegen`
  */
 const schema =
   process.env.CODEGEN_SCHEMA_URL ||
   process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-  "https://api.contact360.io/graphql";
+  "http://api.contact360.io/graphql";
 
 const config: CodegenConfig = {
   schema,

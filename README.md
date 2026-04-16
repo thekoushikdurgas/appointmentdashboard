@@ -21,29 +21,29 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable                              | Description           | Default                     |
-| ------------------------------------- | --------------------- | --------------------------- |
-| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `https://api.contact360.io` (prod build) |
+| Variable                              | Description           | Default                                                   |
+| ------------------------------------- | --------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`                 | Backend base URL      | `https://api.contact360.io` (prod build)                  |
 | `NEXT_PUBLIC_GRAPHQL_URL`             | Full GraphQL endpoint | `${API_URL}/graphql` in prod; dev uses `/graphql` rewrite |
-| `GRAPHQL_UPSTREAM_URL`                | Dev proxy target only | `https://api.contact360.io` |
-| `NEXT_PUBLIC_APP_URL`                 | Canonical app URL     | `https://app.contact360.io` (optional) |
-| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `appointment360uploads`    |
-| `NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED` | Enable export feature | `false`                    |
+| `GRAPHQL_UPSTREAM_URL`                | Dev proxy target only | `https://api.contact360.io`                               |
+| `NEXT_PUBLIC_APP_URL`                 | Canonical app URL     | `https://app.contact360.io` (optional)                    |
+| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `appointment360uploads`                                   |
+| `NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED` | Enable export feature | `false`                                                   |
 
 ## Commands
 
-| Command                        | Purpose                                                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                  | Development server                                                                                                         |
-| `npm run build`                | Production build                                                                                                           |
-| `npm run start`                | Start production server                                                                                                    |
-| `npm run lint`                 | ESLint                                                                                                                     |
-| `npm run typecheck`            | TypeScript check                                                                                                           |
-| `npm run test`                 | Vitest unit tests                                                                                                          |
-| `npm run test:e2e`             | Playwright (`e2e/smoke.spec.ts`, `e2e/auth-guard.spec.ts`)                                                                  |
-| `npm run check:best-practices` | Scored Next.js hygiene checklist (JSON under `reports/`; run `node scripts/check-best-practices.mjs --help`)               |
-| `npm run css:inventory`        | CSS design-system report: `@import` graph, `.c360-*` inventory, inline `style={{}}` hotspots → `reports/css-inventory.txt` |
-| `npm run health:smoke`         | `GET` gateway `/health` (override with `API_HEALTH_URL`) |
+| Command                        | Purpose                                                                                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                  | Development server                                                                                                                                                          |
+| `npm run build`                | Production build                                                                                                                                                            |
+| `npm run start`                | Start production server                                                                                                                                                     |
+| `npm run lint`                 | ESLint                                                                                                                                                                      |
+| `npm run typecheck`            | TypeScript check                                                                                                                                                            |
+| `npm run test`                 | Vitest unit tests                                                                                                                                                           |
+| `npm run test:e2e`             | Playwright (`e2e/smoke.spec.ts`, `e2e/auth-guard.spec.ts`)                                                                                                                  |
+| `npm run check:best-practices` | Scored Next.js hygiene checklist (JSON under `reports/`; run `node scripts/check-best-practices.mjs --help`)                                                                |
+| `npm run css:inventory`        | CSS design-system report: `@import` graph, `.c360-*` inventory, inline `style={{}}` hotspots → `reports/css-inventory.txt`                                                  |
+| `npm run health:smoke`         | `GET` gateway `/health` (override with `API_HEALTH_URL`)                                                                                                                    |
 | `npm run codegen`              | Introspect GraphQL schema → `src/graphql/generated/types.ts` (requires a reachable gateway; set `CODEGEN_SCHEMA_URL` or run when `https://api.contact360.io/graphql` is up) |
 
 Runs as part of `npm run ci` (after tests: `css:inventory`, then `check:best-practices`, then `build`). Options mirror the Django `check_best_practices` flow in `contact360.io/2`: `--category`, `--output`, `--format`, `--threshold` (default 80), `--no-fail`. Optional overrides: [.next-checker-config.json](.next-checker-config.json).

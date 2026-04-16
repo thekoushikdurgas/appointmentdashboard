@@ -615,6 +615,31 @@ export type BulkEmailVerifierResponse = {
   validCount: Scalars["Int"]["output"];
 };
 
+export type BulkPhoneFinderInput = {
+  items: Array<BulkPhoneFinderItemInput>;
+};
+
+export type BulkPhoneFinderItemInput = {
+  domain: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type BulkPhonePatternPredictInput = {
+  items: Array<BulkPhonePatternPredictItemInput>;
+};
+
+export type BulkPhonePatternPredictItemInput = {
+  domain: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type BulkPhoneVerifierInput = {
+  emails: Array<Scalars["String"]["input"]>;
+  provider?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type CacheStats = {
   enabled: Scalars["Boolean"]["output"];
   hitRate: Scalars["Float"]["output"];
@@ -710,14 +735,48 @@ export type CampaignModuleMutationUpdateSequenceStepArgs = {
 };
 
 export type CampaignModuleQuery = {
+  campaign: Scalars["JSON"]["output"];
+  campaignTemplate: Scalars["JSON"]["output"];
   campaignTemplates: Scalars["JSON"]["output"];
   campaigns: Scalars["JSON"]["output"];
+  cqlParse: Scalars["JSON"]["output"];
+  cqlValidate: Scalars["JSON"]["output"];
+  renderTemplatePreview: Scalars["JSON"]["output"];
   sequence: Scalars["JSON"]["output"];
+  sequenceSteps: Scalars["JSON"]["output"];
   sequences: Scalars["JSON"]["output"];
+};
+
+export type CampaignModuleQueryCampaignArgs = {
+  id: Scalars["String"]["input"];
+};
+
+export type CampaignModuleQueryCampaignTemplateArgs = {
+  id: Scalars["String"]["input"];
+};
+
+export type CampaignModuleQueryCqlParseArgs = {
+  query: Scalars["String"]["input"];
+  target?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type CampaignModuleQueryCqlValidateArgs = {
+  cql: Scalars["JSON"]["input"];
+};
+
+export type CampaignModuleQueryRenderTemplatePreviewArgs = {
+  email?: Scalars["String"]["input"];
+  firstName?: Scalars["String"]["input"];
+  lastName?: Scalars["String"]["input"];
+  templateId: Scalars["String"]["input"];
 };
 
 export type CampaignModuleQuerySequenceArgs = {
   id: Scalars["String"]["input"];
+};
+
+export type CampaignModuleQuerySequenceStepsArgs = {
+  sequenceId: Scalars["String"]["input"];
 };
 
 export type CancelSubscriptionResult = {
@@ -1679,6 +1738,7 @@ export type HealthQuery = {
   apiHealth: ApiHealth;
   apiMetadata: ApiMetadata;
   performanceStats: PerformanceStats;
+  satelliteHealth: Array<SatellitePingResult>;
   vqlHealth: VqlHealth;
   vqlStats: VqlStats;
 };
@@ -1981,6 +2041,7 @@ export type Mutation = {
   jobs: JobMutation;
   linkedin: LinkedInMutation;
   notifications: NotificationMutation;
+  phone: PhoneMutation;
   profile: ProfileMutation;
   resume: ResumeMutation;
   s3: S3Mutation;
@@ -2321,6 +2382,111 @@ export type PerformanceTrend = {
   time: Scalars["DateTime"]["output"];
 };
 
+export type PhoneFinderInput = {
+  domain?: InputMaybe<Scalars["String"]["input"]>;
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+  website?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type PhoneMutation = {
+  addPhonePattern: PhonePatternResult;
+  addPhonePatternBulk: PhonePatternBulkAddResponse;
+};
+
+export type PhoneMutationAddPhonePatternArgs = {
+  input: PhonePatternAddInput;
+};
+
+export type PhoneMutationAddPhonePatternBulkArgs = {
+  input: PhonePatternBulkAddInput;
+};
+
+export type PhonePatternAddInput = {
+  companyUuid: Scalars["String"]["input"];
+  domain: Scalars["String"]["input"];
+  email: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type PhonePatternBulkAddInput = {
+  items: Array<PhonePatternBulkItemInput>;
+};
+
+export type PhonePatternBulkAddResponse = {
+  inserted?: Maybe<Scalars["Int"]["output"]>;
+  results: Array<PhonePatternResult>;
+  skipped?: Maybe<Scalars["Int"]["output"]>;
+  success: Scalars["Boolean"]["output"];
+  total?: Maybe<Scalars["Int"]["output"]>;
+};
+
+export type PhonePatternBulkItemInput = {
+  companyUuid: Scalars["String"]["input"];
+  domain: Scalars["String"]["input"];
+  email: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type PhonePatternPredictInput = {
+  domain: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+};
+
+export type PhonePatternResult = {
+  companyUuid: Scalars["String"]["output"];
+  contactCount?: Maybe<Scalars["Int"]["output"]>;
+  createdAt?: Maybe<Scalars["String"]["output"]>;
+  domain: Scalars["String"]["output"];
+  isAutoExtracted?: Maybe<Scalars["Boolean"]["output"]>;
+  patternFormat?: Maybe<Scalars["String"]["output"]>;
+  patternString?: Maybe<Scalars["String"]["output"]>;
+  updatedAt?: Maybe<Scalars["String"]["output"]>;
+  uuid: Scalars["String"]["output"];
+};
+
+export type PhoneQuery = {
+  findPhone: Scalars["JSON"]["output"];
+  findPhoneBulk: Scalars["JSON"]["output"];
+  phoneJobStatus: Scalars["JSON"]["output"];
+  phoneSatelliteJobs: Scalars["JSON"]["output"];
+  predictPhonePattern: Scalars["JSON"]["output"];
+  predictPhonePatternBulk: Scalars["JSON"]["output"];
+  verifyPhone: Scalars["JSON"]["output"];
+  verifyPhonesBulk: Scalars["JSON"]["output"];
+};
+
+export type PhoneQueryFindPhoneArgs = {
+  input: PhoneFinderInput;
+};
+
+export type PhoneQueryFindPhoneBulkArgs = {
+  input: BulkPhoneFinderInput;
+};
+
+export type PhoneQueryPhoneJobStatusArgs = {
+  jobId: Scalars["String"]["input"];
+};
+
+export type PhoneQueryPredictPhonePatternArgs = {
+  input: PhonePatternPredictInput;
+};
+
+export type PhoneQueryPredictPhonePatternBulkArgs = {
+  input: BulkPhonePatternPredictInput;
+};
+
+export type PhoneQueryVerifyPhoneArgs = {
+  input: SinglePhoneVerifierInput;
+};
+
+export type PhoneQueryVerifyPhonesBulkArgs = {
+  input: BulkPhoneVerifierInput;
+};
+
 export type PlanPeriod = {
   credits: Scalars["Int"]["output"];
   period: Scalars["String"]["output"];
@@ -2432,6 +2598,7 @@ export type Query = {
   jobs: JobQuery;
   notifications: NotificationQuery;
   pages: PagesQuery;
+  phone: PhoneQuery;
   profile: ProfileQuery;
   resume: ResumeQuery;
   s3: S3Query;
@@ -2653,6 +2820,13 @@ export type SalesNavigatorQuerySalesNavigatorRecordsArgs = {
   filters?: InputMaybe<SalesNavigatorFilterInput>;
 };
 
+export type SatellitePingResult = {
+  configured: Scalars["Boolean"]["output"];
+  detail?: Maybe<Scalars["String"]["output"]>;
+  name: Scalars["String"]["output"];
+  status: Scalars["String"]["output"];
+};
+
 export type SaveProfilesInput = {
   profiles: Array<Scalars["JSON"]["input"]>;
 };
@@ -2792,6 +2966,11 @@ export type SingleEmailVerifierInput = {
 export type SingleEmailVerifierResponse = {
   result: VerifiedEmailResult;
   success: Scalars["Boolean"]["output"];
+};
+
+export type SinglePhoneVerifierInput = {
+  email: Scalars["String"]["input"];
+  provider?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type SlowEndpoint = {
