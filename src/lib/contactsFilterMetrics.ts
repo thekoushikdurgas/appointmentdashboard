@@ -2,16 +2,18 @@
  * Shared counts for contacts toolbar badge and filter sidebar parity.
  */
 
-export function countFacetActive(facetValues: Record<string, string>): number {
+export function countFacetActive(
+  facetValues: Record<string, string[]>,
+): number {
   return Object.values(facetValues).filter(
-    (v) => v != null && String(v).trim() !== "",
+    (arr) => Array.isArray(arr) && arr.length > 0,
   ).length;
 }
 
 export function getContactsToolbarActiveCount(params: {
   activeTab: string;
   statusFilter: string;
-  facetValues: Record<string, string>;
+  facetValues: Record<string, string[]>;
   search: string;
   advancedVqlRuleCount: number;
   sortBy: string;

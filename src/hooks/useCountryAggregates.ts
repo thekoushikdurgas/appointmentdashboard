@@ -32,7 +32,7 @@ export function useCountryAggregates(): UseCountryAggregatesReturn {
       const res = await contactsService.filterData({
         filterKey: COUNTRY_FILTER_KEY,
       });
-      const items = res?.contacts?.filterData?.items ?? [];
+      const items = res.items ?? [];
       const mapped: CountryCount[] = [];
       for (const item of items) {
         const numericId = toNumericIso(item.value ?? "");

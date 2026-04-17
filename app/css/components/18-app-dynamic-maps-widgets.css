@@ -58,8 +58,9 @@
   transform: translateX(var(--c360-carousel-slide-offset, 0%));
 }
 .c360-carousel__slide {
-  min-width: 100%;
   flex-shrink: 0;
+  min-width: 94%;
+  margin: 0 3%;
 }
 .c360-carousel__arrow {
   position: absolute;

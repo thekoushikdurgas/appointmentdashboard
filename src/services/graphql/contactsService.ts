@@ -218,12 +218,18 @@ export const contactsService = {
       contacts: { filters: { items: ContactFilter[]; total: number } };
     }>(CONTACTS_FILTERS_QUERY),
 
-  filterData: (input: ContactFilterDataInput) =>
-    graphqlQuery<{
+  /** Paginated filter facet values; pass `page`, `limit`, `searchText` as needed. */
+  filterData: async (
+    input: ContactFilterDataInput,
+  ): Promise<{ items: ContactFilterData[]; total: number }> => {
+    const data = await graphqlQuery<{
       contacts: {
         filterData: { items: ContactFilterData[]; total: number };
       };
-    }>(CONTACT_FILTER_DATA_QUERY, { input }),
+    }>(CONTACT_FILTER_DATA_QUERY, { input });
+    const fd = data.contacts.filterData;
+    return { items: fd.items, total: fd.total };
+  },
 
   delete: (uuid: string) =>
     graphqlMutation<{ contacts: { deleteContact: boolean } }>(

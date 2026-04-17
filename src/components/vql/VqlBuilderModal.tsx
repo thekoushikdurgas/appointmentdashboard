@@ -23,6 +23,8 @@ export interface VqlBuilderModalProps {
   onApply: (draft: DraftQuery) => void;
   entityType: "contact" | "company";
   initialDraft?: DraftQuery | null;
+  /** Merged VQL actually sent for the list (sidebar + advanced + columns + paging). */
+  fullQuery?: Partial<VqlQueryInput> | null;
 }
 
 export function VqlBuilderModal({
@@ -31,6 +33,7 @@ export function VqlBuilderModal({
   onApply,
   entityType,
   initialDraft,
+  fullQuery,
 }: VqlBuilderModalProps) {
   const [tab, setTab] = useState<Tab>("filter");
   const [draft, setDraft] = useState<DraftQuery>(() => emptyDraftQuery());
@@ -165,7 +168,9 @@ export function VqlBuilderModal({
         aria-labelledby="c360-vql-tab-preview"
         hidden={tab !== "preview"}
       >
-        {tab === "preview" ? <VqlQueryPreview query={previewQuery} /> : null}
+        {tab === "preview" ? (
+          <VqlQueryPreview query={previewQuery} fullQuery={fullQuery} />
+        ) : null}
       </div>
     </Modal>
   );

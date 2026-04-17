@@ -233,10 +233,16 @@ export const companiesService = {
       companies: { filters: { items: CompanyFilter[]; total: number } };
     }>(COMPANIES_FILTERS_QUERY),
 
-  filterData: (input: CompanyFilterDataInput) =>
-    graphqlQuery<{
+  /** Paginated filter facet values; pass `page`, `limit`, `searchText` as needed. */
+  filterData: async (
+    input: CompanyFilterDataInput,
+  ): Promise<{ items: CompanyFilterData[]; total: number }> => {
+    const data = await graphqlQuery<{
       companies: {
         filterData: { items: CompanyFilterData[]; total: number };
       };
-    }>(COMPANY_FILTER_DATA_QUERY, { input }),
+    }>(COMPANY_FILTER_DATA_QUERY, { input });
+    const fd = data.companies.filterData;
+    return { items: fd.items, total: fd.total };
+  },
 };

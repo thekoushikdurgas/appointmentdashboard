@@ -287,3 +287,17 @@
   gap: var(--c360-spacing-3);
   justify-content: center;
 }
+
+/* Filter facet combobox (contacts sidebar — infinite scroll + multi-select) */
+.c360-filter-combobox__panel {
+  overflow: visible;
+}
+
+.c360-filter-combobox__trigger {
+  min-height: 36px;
+}
+
+.c360-filter-combobox__option--focus {
+  outline: 2px solid var(--c360-border);
+  outline-offset: -2px;
+}

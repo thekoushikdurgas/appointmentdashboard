@@ -26,7 +26,7 @@ function resolveGraphqlUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_GRAPHQL_URL?.trim();
   if (explicit) return explicit.replace(/\/$/, "");
   // if (process.env.NODE_ENV === "development") {
-  //   return "http://localhost:3000/graphql";
+  //   return "http://localhost:8000/graphql";
   // }
   return `${API_URL}/graphql`;
 }

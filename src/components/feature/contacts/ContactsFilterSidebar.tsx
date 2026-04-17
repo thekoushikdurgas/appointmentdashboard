@@ -3,13 +3,13 @@
 import { useCallback, useMemo } from "react";
 import {
   ContactFilterEmailStatus,
-  ContactFilterFacetField,
   ContactFilterSortSelect,
 } from "@/components/feature/contacts/ContactFilterBar";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FilterSection } from "@/hooks/useContactFilters";
@@ -27,9 +27,14 @@ export interface ContactsFilterSidebarProps {
   sortBy: string;
   onSortChange: (value: string) => void;
   filterSections: FilterSection[];
-  facetValues: Record<string, string>;
-  onFacetChange: (key: string, value: string) => void;
+  facetValues: Record<string, string[]>;
+  onFacetChange: (key: string, values: string[]) => void;
+  /** Load first page of options when a facet combobox opens. */
   onSectionExpand: (key: string) => void;
+  /** Append next page when the facet list is scrolled to the end. */
+  onLoadMoreFacet: (key: string) => void;
+  /** Debounced search within facet options. */
+  setFacetSearch: (key: string, text: string) => void;
   activeTab: string;
   onActiveTabChange: (tab: string) => void;
   /** Rules from the advanced VQL modal only (not sidebar/tab/facet). */
@@ -66,6 +71,8 @@ export function ContactsFilterSidebar({
   facetValues,
   onFacetChange,
   onSectionExpand,
+  onLoadMoreFacet,
+  setFacetSearch,
   activeTab,
   onActiveTabChange,
   advancedVqlRuleCount,
@@ -88,7 +95,7 @@ export function ContactsFilterSidebar({
   const facetActiveCount = useMemo(
     () =>
       Object.values(facetValues).filter(
-        (v) => v != null && String(v).trim() !== "",
+        (arr) => Array.isArray(arr) && arr.length > 0,
       ).length,
     [facetValues],
   );
@@ -123,7 +130,7 @@ export function ContactsFilterSidebar({
 
   const clearFacets = useCallback(() => {
     for (const s of filterSections) {
-      onFacetChange(s.filterKey, "");
+      onFacetChange(s.filterKey, []);
     }
   }, [filterSections, onFacetChange]);
 
@@ -170,14 +177,18 @@ export function ContactsFilterSidebar({
         onRemove: () => onStatusChange("All"),
       });
     }
-    for (const [key, val] of Object.entries(facetValues)) {
-      if (val != null && String(val).trim() !== "") {
+    for (const [key, vals] of Object.entries(facetValues)) {
+      if (vals != null && vals.length > 0) {
         const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
+        const summary =
+          vals.length === 1
+            ? `${label}: ${vals[0]}`
+            : `${label}: ${vals.length} selected`;
         out.push({
           key: `facet-${key}`,
-          label: `${label}: ${val}`,
-          onRemove: () => onFacetChange(key, ""),
+          label: summary,
+          onRemove: () => onFacetChange(key, []),
         });
       }
     }
@@ -376,23 +387,32 @@ export function ContactsFilterSidebar({
       </ContactsCollapsibleFilterSection>
 
       {filterSections.map((section) => {
-        const val = facetValues[section.filterKey] ?? "";
-        const has = val.trim() !== "";
+        const vals = facetValues[section.filterKey] ?? [];
+        const has = vals.length > 0;
         return (
           <ContactsCollapsibleFilterSection
             key={section.filterKey}
             title={section.displayName}
-            count={has ? 1 : 0}
+            count={has ? vals.length : 0}
             defaultOpen={has}
             onClear={
-              has ? () => onFacetChange(section.filterKey, "") : undefined
+              has ? () => onFacetChange(section.filterKey, []) : undefined
             }
           >
-            <ContactFilterFacetField
-              section={section}
-              value={val}
-              onChange={(next) => onFacetChange(section.filterKey, next)}
-              onSectionExpand={onSectionExpand}
+            <FilterCombobox
+              label={section.displayName}
+              options={section.options}
+              selectedValues={vals}
+              onSelectionChange={(next) =>
+                onFacetChange(section.filterKey, next)
+              }
+              loading={section.loading}
+              loadingMore={section.loadingMore}
+              hasMore={section.hasMore}
+              onOpen={() => onSectionExpand(section.filterKey)}
+              onLoadMore={() => onLoadMoreFacet(section.filterKey)}
+              searchText={section.searchText}
+              onSearchChange={(text) => setFacetSearch(section.filterKey, text)}
             />
           </ContactsCollapsibleFilterSection>
         );

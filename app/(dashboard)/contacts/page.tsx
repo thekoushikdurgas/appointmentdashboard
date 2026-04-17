@@ -59,6 +59,7 @@ import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
+import type { VqlQueryInput } from "@/graphql/generated/types";
 
 const STATUS_MAP: Record<string, string> = {
   Verified: "VALID",
@@ -93,6 +94,18 @@ function sidebarCond(
 ): DraftCondition {
   const c = emptyDraftCondition();
   return { ...c, field, operator, value };
+}
+
+/** One facet dimension: single value uses `eq`, multiple uses `in_list` → `in` via vqlDraft. */
+function sidebarFacetCond(
+  key: string,
+  values: string[],
+): DraftCondition | null {
+  const trimmed = values.map((v) => String(v).trim()).filter(Boolean);
+  if (trimmed.length === 0) return null;
+  if (trimmed.length === 1) return sidebarCond(key, "eq", trimmed[0]);
+  const c = emptyDraftCondition();
+  return { ...c, field: key, operator: "in_list", value: trimmed.join(",") };
 }
 
 const CONTACT_TABS = [
@@ -130,6 +143,7 @@ export default function ContactsPage() {
     error,
     applyVqlQuery,
     exportVql,
+    vqlQuery,
     refresh,
   } = useContacts();
 
@@ -153,12 +167,28 @@ export default function ContactsPage() {
   const [advancedListDraft, setAdvancedListDraft] = useState<DraftQuery | null>(
     null,
   );
-  const [facetValues, setFacetValues] = useState<Record<string, string>>({});
+  const [facetValues, setFacetValues] = useState<Record<string, string[]>>({});
   const {
     sections: filterSections,
     loadFilterData,
+    loadMoreFilterData,
+    setFilterSearch,
     refetchFiltersMetadata,
   } = useContactFilters();
+
+  const handleFacetChange = useCallback((key: string, values: string[]) => {
+    setFacetValues((prev) => ({ ...prev, [key]: values }));
+  }, []);
+
+  const mergedPreviewQuery = useMemo((): Partial<VqlQueryInput> => {
+    const offset = (page - 1) * pageSize;
+    return {
+      ...(vqlQuery as Partial<VqlQueryInput>),
+      limit: pageSize,
+      offset,
+      searchAfter: undefined,
+    };
+  }, [vqlQuery, page, pageSize]);
   const isDesktop = useIsDesktop();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
@@ -276,10 +306,10 @@ export default function ContactsPage() {
     if (statusFilter !== "All" && STATUS_MAP[statusFilter]) {
       sidebar.push(sidebarCond("email_status", "eq", STATUS_MAP[statusFilter]));
     }
-    for (const [key, val] of Object.entries(facetValues)) {
-      if (val != null && String(val).trim() !== "") {
-        sidebar.push(sidebarCond(key, "eq", String(val).trim()));
-      }
+    for (const [key, vals] of Object.entries(facetValues)) {
+      if (!vals?.length) continue;
+      const cond = sidebarFacetCond(key, vals);
+      if (cond) sidebar.push(cond);
     }
     const rootItems: Array<DraftCondition | DraftGroup> = [...sidebar];
     if (
@@ -389,10 +419,10 @@ export default function ContactsPage() {
         onSortChange={setSortBy}
         filterSections={filterSections}
         facetValues={facetValues}
-        onFacetChange={(key, val) =>
-          setFacetValues((prev) => ({ ...prev, [key]: val }))
-        }
+        onFacetChange={handleFacetChange}
         onSectionExpand={loadFilterData}
+        onLoadMoreFacet={loadMoreFilterData}
+        setFacetSearch={setFilterSearch}
         activeTab={activeTab}
         onActiveTabChange={setActiveTab}
         advancedVqlRuleCount={advancedVqlRuleCount}
@@ -436,6 +466,9 @@ export default function ContactsPage() {
       aiQuery,
       handleAiSearch,
       aiSearching,
+      handleFacetChange,
+      loadMoreFilterData,
+      setFilterSearch,
     ],
   );
 
@@ -559,6 +592,7 @@ export default function ContactsPage() {
         onApply={handleVqlApply}
         entityType="contact"
         initialDraft={advancedListDraft ?? undefined}
+        fullQuery={mergedPreviewQuery}
       />
 
       <ContactExportModal

@@ -80,7 +80,7 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
       setSectionData((prev) => ({
         ...prev,
         [filterKey]: {
-          options: res.companies.filterData.items,
+          options: res.items,
           loading: false,
         },
       }));

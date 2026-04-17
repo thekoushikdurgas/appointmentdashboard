@@ -23,6 +23,8 @@ export interface PopoverProps {
   width?: number;
   /** Extra classes on the portaled panel (e.g. sidebar flyout shadow). */
   panelClassName?: string;
+  /** Fires when the popover opens or closes (after internal state updates). */
+  onOpenChange?: (open: boolean) => void;
 }
 
 type PopoverPos = { top: number; left: number };
@@ -35,6 +37,7 @@ export function Popover({
   closeOnOutside = true,
   width = 280,
   panelClassName,
+  onOpenChange,
 }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PopoverPos | null>(null);
@@ -45,6 +48,10 @@ export function Popover({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const computePos = useCallback(() => {
     if (!triggerRef.current) return;
@@ -88,7 +95,9 @@ export function Popover({
   useEffect(() => {
     if (!open) return;
     const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
     };
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
