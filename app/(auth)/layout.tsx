@@ -5,5 +5,9 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="c360-auth-layout">{children}</div>;
+  return (
+    <div className="c360-auth-layout" suppressHydrationWarning>
+      {children}
+    </div>
+  );
 }

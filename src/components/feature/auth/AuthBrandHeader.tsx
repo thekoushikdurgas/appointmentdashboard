@@ -6,8 +6,8 @@ interface AuthBrandHeaderProps {
 
 export function AuthBrandHeader({ subtitle }: AuthBrandHeaderProps) {
   return (
-    <div className="c360-auth-shell__brand">
-      <div className="c360-auth-shell__logo">
+    <div className="c360-auth-shell__brand" suppressHydrationWarning>
+      <div className="c360-auth-shell__logo" suppressHydrationWarning>
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
           <path
             d="M7 14h14M7 9h9M7 19h11"

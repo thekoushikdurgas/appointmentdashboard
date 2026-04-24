@@ -42,6 +42,7 @@ export function Checkbox({
     <label
       className={cn("c360-checkbox", wrapperClassName)}
       htmlFor={checkboxId}
+      suppressHydrationWarning
     >
       <input
         ref={inputRef}
@@ -58,7 +59,7 @@ export function Checkbox({
         {...props}
       />
       {(label || description) && (
-        <div>
+        <div suppressHydrationWarning>
           {label && <span className="c360-checkbox__label">{label}</span>}
           {description && (
             <p className="c360-checkbox__description">{description}</p>

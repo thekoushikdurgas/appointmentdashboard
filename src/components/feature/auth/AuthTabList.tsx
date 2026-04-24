@@ -11,8 +11,11 @@ interface AuthTabListProps {
 
 export function AuthTabList({ active, onChange }: AuthTabListProps) {
   return (
-    <div className="c360-tabs c360-tabs--contained c360-auth-tabs-spaced">
-      <div className="c360-tabs__list" role="tablist">
+    <div
+      className="c360-tabs c360-tabs--contained c360-auth-tabs-spaced"
+      suppressHydrationWarning
+    >
+      <div className="c360-tabs__list" role="tablist" suppressHydrationWarning>
         <button
           type="button"
           role="tab"

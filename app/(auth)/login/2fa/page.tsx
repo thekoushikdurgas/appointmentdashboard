@@ -45,7 +45,7 @@ export default function TwoFactorLoginPage() {
   if (!twoFactorChallenge) return null;
 
   return (
-    <div className="c360-auth-card">
+    <div className="c360-auth-card" suppressHydrationWarning>
       <div className="c360-auth-header-block">
         <div className="c360-auth-header-icon">
           <ShieldCheck size={24} />

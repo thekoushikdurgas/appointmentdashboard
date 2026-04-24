@@ -50,7 +50,7 @@ function LoginPageContent() {
   );
 
   return (
-    <div className="c360-auth-card">
+    <div className="c360-auth-card" suppressHydrationWarning>
       <AuthBrandHeader subtitle={subtitle} />
       <AuthTabList active={activeTab} onChange={switchTab} />
 

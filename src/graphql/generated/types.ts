@@ -229,6 +229,7 @@ export type AdminMutation = {
   deleteUser: Scalars["Boolean"]["output"];
   promoteToAdmin: User;
   promoteToSuperAdmin: User;
+  requestDangerousOperationApproval: DangerousApprovalTicket;
   runSubscriptionExpirySweep: Scalars["Int"]["output"];
   updateLog: LogEntry;
   updateUserCredits: User;
@@ -263,6 +264,10 @@ export type AdminMutationPromoteToSuperAdminArgs = {
   input: PromoteToSuperAdminInput;
 };
 
+export type AdminMutationRequestDangerousOperationApprovalArgs = {
+  input: RequestDangerousApprovalInput;
+};
+
 export type AdminMutationRunSubscriptionExpirySweepArgs = {
   limit?: Scalars["Int"]["input"];
   maxBatches?: Scalars["Int"]["input"];
@@ -281,6 +286,7 @@ export type AdminMutationUpdateUserRoleArgs = {
 };
 
 export type AdminQuery = {
+  graphqlAuditEvents: Array<GraphQlAuditEventGql>;
   logStatistics: LogStatistics;
   logs: LogConnection;
   schedulerJobs: JobConnection;
@@ -289,6 +295,11 @@ export type AdminQuery = {
   userStats: AdminUserStats;
   users: UserConnection;
   usersWithBuckets: UserConnection;
+};
+
+export type AdminQueryGraphqlAuditEventsArgs = {
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
 };
 
 export type AdminQueryLogStatisticsArgs = {
@@ -372,7 +383,9 @@ export type ApiHealth = {
 };
 
 export type ApiMetadata = {
+  buildSha?: Maybe<Scalars["String"]["output"]>;
   docs: Scalars["String"]["output"];
+  gitRef?: Maybe<Scalars["String"]["output"]>;
   name: Scalars["String"]["output"];
   version: Scalars["String"]["output"];
 };
@@ -1310,6 +1323,12 @@ export type CreateEmailVerifyExportInput = {
   s3Bucket?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type CreateKnowledgeArticleInput = {
+  body: Scalars["String"]["input"];
+  tags?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  title: Scalars["String"]["input"];
+};
+
 export type CreateLogInput = {
   context?: InputMaybe<Scalars["JSON"]["input"]>;
   error?: InputMaybe<Scalars["JSON"]["input"]>;
@@ -1369,6 +1388,15 @@ export type CreateSequenceInput = {
   description?: InputMaybe<Scalars["String"]["input"]>;
   name: Scalars["String"]["input"];
   trigger?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type DangerousAdminOperation = "DELETE_USER" | "PROMOTE_SUPER_ADMIN";
+
+export type DangerousApprovalTicket = {
+  approvalId: Scalars["ID"]["output"];
+  expiresAt: Scalars["DateTime"]["output"];
+  operationKind: Scalars["String"]["output"];
+  targetUserId: Scalars["ID"]["output"];
 };
 
 export type DashboardPageList = {
@@ -1653,6 +1681,11 @@ export type EndpointPerformance = {
   totalRequests: Scalars["Int"]["output"];
 };
 
+export type EntitiesByUuidsResponse = {
+  companies: Scalars["JSON"]["output"];
+  contacts: Scalars["JSON"]["output"];
+};
+
 export type FeatureOverview = {
   activities: Array<Activity>;
   feature: Scalars["String"]["output"];
@@ -1723,6 +1756,15 @@ export type GetMetricsInput = {
   metricName?: InputMaybe<Scalars["String"]["input"]>;
   /** Optional start date filter */
   startDate?: InputMaybe<Scalars["DateTime"]["input"]>;
+};
+
+export type GraphQlAuditEventGql = {
+  actorUserId: Scalars["String"]["output"];
+  createdAt: Scalars["DateTime"]["output"];
+  detail?: Maybe<Scalars["JSON"]["output"]>;
+  id: Scalars["Int"]["output"];
+  operationName: Scalars["String"]["output"];
+  targetUserId?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type GraphQlNotificationPriority = "HIGH" | "LOW" | "MEDIUM" | "URGENT";
@@ -1861,9 +1903,15 @@ export type JobMutationTerminateJobArgs = {
 };
 
 export type JobQuery = {
+  deadLetterJobs: JobConnection;
   job: SchedulerJob;
   jobOutputCsvDownloadUrl?: Maybe<S3DownloadUrlResponse>;
   jobs: JobConnection;
+};
+
+export type JobQueryDeadLetterJobsArgs = {
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type JobQueryJobArgs = {
@@ -1882,6 +1930,43 @@ export type JobQueryJobsArgs = {
   offset?: InputMaybe<Scalars["Int"]["input"]>;
   relatedFileKey?: InputMaybe<Scalars["String"]["input"]>;
   status?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type KnowledgeArticle = {
+  body: Scalars["String"]["output"];
+  createdAt: Scalars["DateTime"]["output"];
+  createdByUserId?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["String"]["output"];
+  tags: Scalars["JSON"]["output"];
+  title: Scalars["String"]["output"];
+  updatedAt: Scalars["DateTime"]["output"];
+};
+
+export type KnowledgeMutation = {
+  createArticle: KnowledgeArticle;
+  deleteArticle: Scalars["Boolean"]["output"];
+  updateArticle: KnowledgeArticle;
+};
+
+export type KnowledgeMutationCreateArticleArgs = {
+  input: CreateKnowledgeArticleInput;
+};
+
+export type KnowledgeMutationDeleteArticleArgs = {
+  articleId: Scalars["ID"]["input"];
+};
+
+export type KnowledgeMutationUpdateArticleArgs = {
+  input: UpdateKnowledgeArticleInput;
+};
+
+export type KnowledgeQuery = {
+  articles: Array<KnowledgeArticle>;
+};
+
+export type KnowledgeQueryArticlesArgs = {
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
 };
 
 export type LinkedInMutation = {
@@ -2039,6 +2124,7 @@ export type Mutation = {
   contacts: ContactMutation;
   email: EmailMutation;
   jobs: JobMutation;
+  knowledge: KnowledgeMutation;
   linkedin: LinkedInMutation;
   notifications: NotificationMutation;
   phone: PhoneMutation;
@@ -2568,6 +2654,7 @@ export type PromoteToAdminInput = {
 };
 
 export type PromoteToSuperAdminInput = {
+  approvalId?: InputMaybe<Scalars["ID"]["input"]>;
   userId: Scalars["ID"]["input"];
 };
 
@@ -2596,6 +2683,7 @@ export type Query = {
   featureOverview: FeatureOverviewQuery;
   health: HealthQuery;
   jobs: JobQuery;
+  knowledge: KnowledgeQuery;
   notifications: NotificationQuery;
   pages: PagesQuery;
   phone: PhoneQuery;
@@ -2634,6 +2722,11 @@ export type RegisterPartInput = {
 export type RegisterPartResponse = {
   partNumber: Scalars["Int"]["output"];
   status: Scalars["String"]["output"];
+};
+
+export type RequestDangerousApprovalInput = {
+  operation: DangerousAdminOperation;
+  targetUserId: Scalars["ID"]["input"];
 };
 
 export type RequestPasswordResetInput = {
@@ -2806,14 +2899,25 @@ export type SalesNavigatorFilterInput = {
 
 export type SalesNavigatorMutation = {
   saveSalesNavigatorProfiles: SaveProfilesResponse;
+  scrapeSalesNavigatorHtml: ScrapeSalesNavigatorHtmlResponse;
 };
 
 export type SalesNavigatorMutationSaveSalesNavigatorProfilesArgs = {
   input: SaveProfilesInput;
 };
 
+export type SalesNavigatorMutationScrapeSalesNavigatorHtmlArgs = {
+  input: ScrapeSalesNavigatorHtmlInput;
+};
+
 export type SalesNavigatorQuery = {
+  entitiesByUuids: EntitiesByUuidsResponse;
   salesNavigatorRecords: UserScrapingConnection;
+};
+
+export type SalesNavigatorQueryEntitiesByUuidsArgs = {
+  companyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  contactUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
 };
 
 export type SalesNavigatorQuerySalesNavigatorRecordsArgs = {
@@ -2832,7 +2936,11 @@ export type SaveProfilesInput = {
 };
 
 export type SaveProfilesResponse = {
+  companyUuids: Array<Scalars["String"]["output"]>;
+  contactUuids: Array<Scalars["String"]["output"]>;
   errors: Array<Scalars["String"]["output"]>;
+  savedCompanies?: Maybe<Scalars["JSON"]["output"]>;
+  savedContacts?: Maybe<Scalars["JSON"]["output"]>;
   savedCount: Scalars["Int"]["output"];
   success: Scalars["Boolean"]["output"];
   totalProfiles: Scalars["Int"]["output"];
@@ -2928,6 +3036,26 @@ export type SchedulerJob = {
   totalRows?: Maybe<Scalars["Int"]["output"]>;
   updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   userId: Scalars["ID"]["output"];
+};
+
+export type ScrapeSalesNavigatorHtmlInput = {
+  html: Scalars["String"]["input"];
+  includeMetadata?: Scalars["Boolean"]["input"];
+  save?: Scalars["Boolean"]["input"];
+};
+
+export type ScrapeSalesNavigatorHtmlResponse = {
+  companies?: Maybe<Scalars["JSON"]["output"]>;
+  companyUuids: Array<Scalars["String"]["output"]>;
+  contactUuids: Array<Scalars["String"]["output"]>;
+  errors: Array<Scalars["String"]["output"]>;
+  pageMetadata: Scalars["JSON"]["output"];
+  profiles: Scalars["JSON"]["output"];
+  saveSummary?: Maybe<Scalars["JSON"]["output"]>;
+  savedCompanies?: Maybe<Scalars["JSON"]["output"]>;
+  savedContacts?: Maybe<Scalars["JSON"]["output"]>;
+  success: Scalars["Boolean"]["output"];
+  warnings: Array<Scalars["String"]["output"]>;
 };
 
 export type SendMessageInput = {
@@ -3175,6 +3303,13 @@ export type UpdateContactInput = {
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   status?: InputMaybe<Scalars["String"]["input"]>;
   textSearch?: InputMaybe<Scalars["String"]["input"]>;
+  title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type UpdateKnowledgeArticleInput = {
+  articleId: Scalars["ID"]["input"];
+  body?: InputMaybe<Scalars["String"]["input"]>;
+  tags?: InputMaybe<Array<Scalars["String"]["input"]>>;
   title?: InputMaybe<Scalars["String"]["input"]>;
 };
 

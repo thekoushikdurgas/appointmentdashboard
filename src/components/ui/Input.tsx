@@ -34,7 +34,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id ?? `input-${uid}`;
 
     return (
-      <div className={cn("c360-field", wrapperClassName)}>
+      <div
+        className={cn("c360-field", wrapperClassName)}
+        // Security extensions (e.g. Bitdefender) may inject `bis_*` attributes on
+        // divs before hydration, causing a false mismatch vs SSR HTML.
+        suppressHydrationWarning
+      >
         {label && (
           <label
             htmlFor={inputId}
@@ -43,7 +48,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <div className="c360-input-wrap">
+        <div className="c360-input-wrap" suppressHydrationWarning>
           {leftIcon && (
             <span className="c360-input__affix c360-input__affix--left">
               {leftIcon}

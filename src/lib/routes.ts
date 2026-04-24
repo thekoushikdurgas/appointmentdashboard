@@ -10,6 +10,7 @@ export const ROUTES = {
   EMAIL: "/email",
   PHONE: "/phone",
   JOBS: "/jobs",
+  HIRING_SIGNALS: "/hiring-signals",
   FILES: "/files",
   LINKEDIN: "/linkedin",
   ACTIVITIES: "/activities",

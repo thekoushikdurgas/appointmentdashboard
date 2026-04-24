@@ -30,6 +30,7 @@ import {
   Database,
   Brain,
   Wrench,
+  Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SIDEBAR_SECTIONS } from "@/lib/constants";
@@ -69,6 +70,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Database,
   Brain,
   Tool: Wrench,
+  Zap,
 };
 
 interface SidebarProps {

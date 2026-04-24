@@ -35,7 +35,7 @@ export default function LockScreenPage() {
   };
 
   return (
-    <div className="c360-auth-card">
+    <div className="c360-auth-card" suppressHydrationWarning>
       <div className="c360-mb-6 c360-text-center">
         <div className="c360-auth-warning-icon-wrap">
           <ShieldAlert size={32} className="c360-text-warning" />

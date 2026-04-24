@@ -23,7 +23,10 @@ function ResetPasswordForm() {
 
   if (!token || !email) {
     return (
-      <div className="c360-auth-card c360-text-center">
+      <div
+        className="c360-auth-card c360-text-center"
+        suppressHydrationWarning
+      >
         <p className="c360-text-danger c360-mb-4">
           Invalid or missing reset link. Please request a new one.
         </p>
@@ -67,7 +70,10 @@ function ResetPasswordForm() {
 
   if (done) {
     return (
-      <div className="c360-auth-card c360-text-center">
+      <div
+        className="c360-auth-card c360-text-center"
+        suppressHydrationWarning
+      >
         <div className="c360-auth-success-icon-wrap">
           <CheckCircle size={32} className="c360-text-success" />
         </div>
@@ -84,7 +90,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="c360-auth-card">
+    <div className="c360-auth-card" suppressHydrationWarning>
       <div className="c360-auth-header-block">
         <div className="c360-auth-header-icon">
           <KeyRound size={24} />

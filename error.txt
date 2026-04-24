@@ -1,15 +1,39 @@
-# Deploy log — issues found and fixes (contact360.io/app)
+# Hydration console output — analysis and resolution
 
-## 1. Error: npm EACCES on `node_modules/.bin` (fatal)
-- **Log:** `npm error code EACCES` / `permission denied, rmdir '.../node_modules/.bin'`
-- **Cause:** `node_modules` (or the repo tree) was created or modified by **root** (e.g. earlier **Docker** bind-mount builds, or `sudo npm`). The SSH user (e.g. `ubuntu`) cannot delete/replace those paths during `npm ci`.
-- **Fix (code):** `deploy/ec2-github-deploy.sh` now runs **`sudo chown -R "$(id -un):$(id -gn)" "$APP_DIR"`** after freeing port 3000 and **before** `npm ci`.
-- **Fix (server):** If `sudo chown` fails in CI, grant the deploy user **passwordless sudo** for maintenance, or run once: `sudo chown -R ubuntu:ubuntu /home/ubuntu/appointmentdashboard` (adjust user/path).
+## What was reported
 
-## 2. Warning: garbled line `15477[STEP]` in logs
-- **Cause:** `fuser -k` writes **killed PIDs to stdout**, which merged with the next `[STEP]` line.
-- **Fix (code):** Redirect **`fuser`** output to `/dev/null` in `ec2-github-deploy.sh`.
+- **Type:** React / Next.js **hydration mismatch** (server HTML vs first client render).
+- **Attribute involved:** `bis_skin_checked="1"` on many `<div>` elements (and similar `bis_*` in some builds).
 
-## 3. Not errors
-- **`err:`** lines from `git fetch` are normal stderr from Git.
-- **`Build container for appleboy/ssh-action`** is the action’s Docker image, not your app stack.
+## Root cause
+
+This is **not** a bug in the Contact360 app source. The `bis_` prefix is injected by **browser security / anti-phishing extensions** (commonly **Bitdefender** “Traffic Light” and similar) that mark or scan DOM nodes after the page loads. The server never sends that attribute, so when React hydrates, the **live DOM** can differ from the **expected** tree and React logs a warning.
+
+The official React docs list **browser extensions** as a common cause:  
+https://react.dev/link/hydration-mismatch
+
+## What we changed in the repo
+
+1. **`suppressHydrationWarning`** on app-controlled elements that were in the stack trace and on shared primitives that extensions often touch:
+   - `app/(auth)/layout.tsx` — `c360-auth-layout`
+   - All `(auth)/**` pages using `c360-auth-card` (login, forgot/reset password, lock screen, 2FA, etc.)
+   - `src/components/ui/Input.tsx` — `c360-field` and `c360-input-wrap`
+   - `src/components/ui/Checkbox.tsx` — label and label-text wrapper
+   - `AuthBrandHeader`, `AuthTabList`, `AuthLoginForm` (split/remember row), `AuthLoginFallback`
+
+   This tells React to **ignore attribute/text mismatches on those specific nodes** (typical for extension-injected attributes), without changing production behavior for real app bugs if they appear on *other* nodes.
+
+2. **Global note:** `Input` / `Checkbox` are used across the app; the same extension can in theory add attributes on dashboard pages. Suppressing on the shared wrappers reduces noise in dev for the whole product, not only `/login`.
+
+## What you should still do locally (recommended)
+
+- **Temporarily disable** the security extension (or add `localhost` / your dev host to its allow list) while developing, **or** ignore hydration warnings that still mention only `bis_*` attributes.
+- Warnings on **Next.js internal** nodes (e.g. `MetadataWrapper` / dev overlay) can still appear until the extension stops mutating the DOM. We cannot add `suppressHydrationWarning` to framework internals from app code.
+
+## If warnings persist
+
+1. Reproduce in an **incognito** window with **all extensions off**; if the warning disappears, it is environment-related.
+2. If it appears **with extensions off**, capture a new stack trace (there may be a real SSR/client split — `Date`, `Math.random`, invalid HTML nesting, etc.) and fix that in code.
+
+---
+Last updated: 2026-04-25
