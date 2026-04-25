@@ -1788,9 +1788,14 @@ export type HealthQuery = {
 
 export type HireSignalMutation = {
   triggerScrape: Scalars["JSON"]["output"];
+  triggerScrapeAndTrack: ScrapeJobType;
 };
 
 export type HireSignalMutationTriggerScrapeArgs = {
+  body?: InputMaybe<Scalars["JSON"]["input"]>;
+};
+
+export type HireSignalMutationTriggerScrapeAndTrackArgs = {
   body?: InputMaybe<Scalars["JSON"]["input"]>;
 };
 
@@ -1799,12 +1804,16 @@ export type HireSignalQuery = {
   companyJobs: Scalars["JSON"]["output"];
   connectraCompany: Scalars["JSON"]["output"];
   connectraContactsForCompany: Scalars["JSON"]["output"];
+  getScrapeJob: Scalars["JSON"]["output"];
   job: Scalars["JSON"]["output"];
   jobConnectraCompany: Scalars["JSON"]["output"];
   jobConnectraContacts: Scalars["JSON"]["output"];
   jobs: Scalars["JSON"]["output"];
+  listScrapeJobs: Scalars["JSON"]["output"];
+  refreshHireSignalRun: Scalars["JSON"]["output"];
   run: Scalars["JSON"]["output"];
   runs: Scalars["JSON"]["output"];
+  scrapeJobJobs: Scalars["JSON"]["output"];
   stats: Scalars["JSON"]["output"];
 };
 
@@ -1826,6 +1835,11 @@ export type HireSignalQueryConnectraContactsForCompanyArgs = {
   limit?: Scalars["Int"]["input"];
   page?: Scalars["Int"]["input"];
   populateCompany?: Scalars["Boolean"]["input"];
+};
+
+export type HireSignalQueryGetScrapeJobArgs = {
+  pollApify?: Scalars["Boolean"]["input"];
+  scrapeJobId: Scalars["String"]["input"];
 };
 
 export type HireSignalQueryJobArgs = {
@@ -1851,8 +1865,19 @@ export type HireSignalQueryJobsArgs = {
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
   offset?: Scalars["Int"]["input"];
+  postedAfter?: InputMaybe<Scalars["String"]["input"]>;
+  postedBefore?: InputMaybe<Scalars["String"]["input"]>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type HireSignalQueryListScrapeJobsArgs = {
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
+};
+
+export type HireSignalQueryRefreshHireSignalRunArgs = {
+  runId: Scalars["String"]["input"];
 };
 
 export type HireSignalQueryRunArgs = {
@@ -1861,6 +1886,12 @@ export type HireSignalQueryRunArgs = {
 
 export type HireSignalQueryRunsArgs = {
   limit?: Scalars["Int"]["input"];
+};
+
+export type HireSignalQueryScrapeJobJobsArgs = {
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
+  scrapeJobId: Scalars["String"]["input"];
 };
 
 export type InitiateCsvUploadInput = {
@@ -3116,6 +3147,20 @@ export type SchedulerJob = {
   totalRows?: Maybe<Scalars["Int"]["output"]>;
   updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   userId: Scalars["ID"]["output"];
+};
+
+export type ScrapeJobType = {
+  apifyRunId?: Maybe<Scalars["String"]["output"]>;
+  completedAt?: Maybe<Scalars["DateTime"]["output"]>;
+  createdAt: Scalars["DateTime"]["output"];
+  error?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["String"]["output"];
+  itemCount?: Maybe<Scalars["Int"]["output"]>;
+  jobServerResponse?: Maybe<Scalars["JSON"]["output"]>;
+  requestBody: Scalars["JSON"]["output"];
+  status: Scalars["String"]["output"];
+  updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
+  userId: Scalars["String"]["output"];
 };
 
 export type ScrapeSalesNavigatorHtmlInput = {

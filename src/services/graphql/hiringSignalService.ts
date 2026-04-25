@@ -126,11 +126,7 @@ const HIRE_SIGNAL_SCRAPE_JOB_JOBS = gql`
     $offset: Int
   ) {
     hireSignal {
-      scrapeJobJobs(
-        scrapeJobId: $scrapeJobId
-        limit: $limit
-        offset: $offset
-      )
+      scrapeJobJobs(scrapeJobId: $scrapeJobId, limit: $limit, offset: $offset)
     }
   }
 `;

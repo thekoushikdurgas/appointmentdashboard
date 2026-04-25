@@ -164,33 +164,30 @@ export default function HiringSignalsPage() {
     [loadRunsTab],
   );
 
-  const onDownloadScrapeCsv = useCallback(
-    async (scrapeJobId: string) => {
-      const id = scrapeJobId.trim();
-      if (!id) return;
-      setScrapeDownloadId(id);
-      try {
-        const res = await fetchScrapeJobJobs(id, 2000, 0);
-        const raw = res.hireSignal?.scrapeJobJobs;
-        const csv = linkedinJobsPayloadToCsv(raw);
-        if (!csv) {
-          toast.message("No rows yet", {
-            description:
-              "Wait until the run succeeds and jobs are ingested, then try again.",
-          });
-          return;
-        }
-        downloadTextFile(`hiring-signals-scrape-${id.slice(0, 8)}.csv`, csv);
-        toast.success("CSV downloaded");
-      } catch (e) {
-        const m = e instanceof Error ? e.message : "Export failed";
-        toast.error("CSV export", { description: m });
-      } finally {
-        setScrapeDownloadId(null);
+  const onDownloadScrapeCsv = useCallback(async (scrapeJobId: string) => {
+    const id = scrapeJobId.trim();
+    if (!id) return;
+    setScrapeDownloadId(id);
+    try {
+      const res = await fetchScrapeJobJobs(id, 2000, 0);
+      const raw = res.hireSignal?.scrapeJobJobs;
+      const csv = linkedinJobsPayloadToCsv(raw);
+      if (!csv) {
+        toast.message("No rows yet", {
+          description:
+            "Wait until the run succeeds and jobs are ingested, then try again.",
+        });
+        return;
       }
-    },
-    [],
-  );
+      downloadTextFile(`hiring-signals-scrape-${id.slice(0, 8)}.csv`, csv);
+      toast.success("CSV downloaded");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Export failed";
+      toast.error("CSV export", { description: m });
+    } finally {
+      setScrapeDownloadId(null);
+    }
+  }, []);
 
   const satelliteRunsRows = useMemo(() => {
     const env = asRecord(runsPayload);
@@ -268,9 +265,7 @@ export default function HiringSignalsPage() {
 
       <Tabs
         value={mainTab}
-        onValueChange={(v) =>
-          setMainTab(v as "overview" | "signals" | "runs")
-        }
+        onValueChange={(v) => setMainTab(v as "overview" | "signals" | "runs")}
         variant="dashboard"
         className="c360-mb-4"
       >
@@ -366,7 +361,9 @@ export default function HiringSignalsPage() {
                                   variant="ghost"
                                   size="sm"
                                   disabled={runActionId === rid}
-                                  onClick={() => void onRefreshSatelliteRun(rid)}
+                                  onClick={() =>
+                                    void onRefreshSatelliteRun(rid)
+                                  }
                                 >
                                   {runActionId === rid
                                     ? "Refreshing…"
@@ -433,9 +430,7 @@ export default function HiringSignalsPage() {
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  disabled={
-                                    scrapeDownloadId === sid || !apify
-                                  }
+                                  disabled={scrapeDownloadId === sid || !apify}
                                   onClick={() => void onDownloadScrapeCsv(sid)}
                                 >
                                   {scrapeDownloadId === sid
