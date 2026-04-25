@@ -1,0 +1,287 @@
+/* Contact360 — Hiring signals page (JD HTML, table row accent, avatars, drawer) */
+
+@media (min-width: 640px) {
+  .c360-hs-page-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+/* ─── Sanitized job description HTML (dangerouslySetInnerHTML) ───────────── */
+.c360-job-desc-html {
+  font-size: var(--c360-text-sm);
+  line-height: 1.6;
+  color: var(--c360-text);
+  word-break: break-word;
+}
+
+.c360-job-desc-html h1,
+.c360-job-desc-html h2,
+.c360-job-desc-html h3,
+.c360-job-desc-html h4 {
+  margin: var(--c360-spacing-4) 0 var(--c360-spacing-2);
+  font-weight: 700;
+  color: var(--c360-text);
+  line-height: 1.25;
+}
+
+.c360-job-desc-html h1 {
+  font-size: var(--c360-text-2xl);
+}
+.c360-job-desc-html h2 {
+  font-size: var(--c360-text-xl);
+}
+.c360-job-desc-html h3 {
+  font-size: var(--c360-text-lg);
+}
+.c360-job-desc-html h4 {
+  font-size: var(--c360-text-base);
+}
+
+.c360-job-desc-html p {
+  margin: 0 0 var(--c360-spacing-3);
+}
+
+.c360-job-desc-html ul,
+.c360-job-desc-html ol {
+  margin: 0 0 var(--c360-spacing-3);
+  padding-left: var(--c360-spacing-6);
+}
+
+.c360-job-desc-html li {
+  margin-bottom: var(--c360-spacing-1);
+}
+
+.c360-job-desc-html a {
+  color: var(--c360-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.c360-job-desc-html a:hover {
+  color: var(--c360-accent);
+}
+
+.c360-job-desc-html blockquote {
+  margin: var(--c360-spacing-3) 0;
+  padding: var(--c360-spacing-3) var(--c360-spacing-4);
+  border-left: 4px solid var(--c360-primary);
+  background: var(--c360-bg-secondary);
+  font-style: italic;
+  color: var(--c360-text-muted);
+}
+
+.c360-job-desc-html code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  background: var(--c360-bg-secondary);
+  border-radius: var(--c360-radius-sm);
+}
+
+.c360-job-desc-html pre {
+  margin: var(--c360-spacing-3) 0;
+  padding: var(--c360-spacing-3);
+  overflow-x: auto;
+  background: var(--c360-bg-secondary);
+  border-radius: var(--c360-radius-md);
+  font-size: var(--c360-text-xs);
+}
+
+.c360-job-desc-html pre code {
+  padding: 0;
+  background: none;
+}
+
+.c360-job-desc-html table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--c360-spacing-3) 0;
+  font-size: var(--c360-text-xs);
+}
+
+.c360-job-desc-html th,
+.c360-job-desc-html td {
+  border: 1px solid var(--c360-border);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  text-align: left;
+}
+
+.c360-job-desc-html th {
+  background: var(--c360-bg-secondary);
+  font-weight: 600;
+}
+
+/* ─── Data table row hover accent (prototype left border) ────────────────── */
+.c360-hs-row {
+  border-left: 3px solid transparent;
+  transition:
+    background-color var(--c360-transition-fast),
+    border-color var(--c360-transition-fast);
+}
+
+.c360-hs-row:hover {
+  border-left-color: var(--c360-primary);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-hs-row:last-child {
+  border-bottom-width: 0;
+}
+
+.c360-break-all {
+  word-break: break-all;
+}
+
+/* ─── Company cell: square avatar + optional logo image ──────────────────── */
+.c360-hs-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--c360-radius-md);
+  border: 1px solid var(--c360-border);
+  background: var(--c360-bg-secondary);
+  font-size: var(--c360-text-2xs);
+  font-weight: 700;
+  color: var(--c360-primary);
+  overflow: hidden;
+}
+
+.c360-hs-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Company slide-over drawer ──────────────────────────────────────────── */
+.c360-hs-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--c360-z-modal) - 1);
+  background: var(--c360-bg-overlay);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.c360-hs-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--c360-z-modal);
+  width: min(550px, 100vw);
+  max-width: 100%;
+  background: var(--c360-bg-elevated);
+  box-shadow: var(--c360-shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-hs-drawer__header {
+  flex-shrink: 0;
+  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+  border-bottom: 1px solid var(--c360-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-hs-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+}
+
+.c360-hs-drawer__footer {
+  flex-shrink: 0;
+  padding: var(--c360-spacing-4) var(--c360-spacing-6);
+  border-top: 1px solid var(--c360-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-2);
+  justify-content: flex-end;
+}
+
+.c360-hs-drawer__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--c360-radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--c360-text-3xl);
+  font-weight: 800;
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+  border: 1px solid var(--c360-border);
+}
+
+/* ─── Chart containers (recharts respects parent size) ───────────────────── */
+.c360-hs-chart {
+  width: 100%;
+  height: 260px;
+  min-height: 200px;
+}
+
+.c360-hs-chart--pie {
+  height: 280px;
+}
+
+.c360-hs-line-clamp-2,
+.c360-line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.c360-list-none {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.c360-hs-hover-primary-border:hover {
+  border-color: var(--c360-primary);
+}
+
+/* Aliases used by hiring-signals components (legacy class names) */
+.c360-text-ink {
+  color: var(--c360-text);
+}
+.c360-text-ink-muted {
+  color: var(--c360-text-muted);
+}
+.c360-border-ink-8 {
+  border-color: var(--c360-border);
+}
+.c360-border-ink-12 {
+  border-color: var(--c360-border-strong);
+}
+.c360-bg-ink-1 {
+  background: var(--c360-bg-secondary);
+}
+.c360-bg-ink-1\/30,
+.c360-bg-ink-1\/40 {
+  background: var(--c360-bg-secondary);
+}
+.c360-bg-ink-2\/15,
+.c360-bg-ink-2\/30 {
+  background: var(--c360-bg-elevated);
+}
+.c360-bg-ink-4\/40 {
+  background: var(--c360-bg-secondary);
+}
+
+@media (min-width: 1024px) {
+  .c360-hs-filters-mobile-toggle {
+    display: none !important;
+  }
+}

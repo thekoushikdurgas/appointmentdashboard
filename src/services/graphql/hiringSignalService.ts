@@ -25,6 +25,10 @@ const HIRE_SIGNAL_JOBS = gql`
     $company: String
     $location: String
     $employmentType: String
+    $seniority: String
+    $functionCategory: String
+    $postedAfter: String
+    $postedBefore: String
   ) {
     hireSignal {
       jobs(
@@ -34,6 +38,10 @@ const HIRE_SIGNAL_JOBS = gql`
         company: $company
         location: $location
         employmentType: $employmentType
+        seniority: $seniority
+        functionCategory: $functionCategory
+        postedAfter: $postedAfter
+        postedBefore: $postedBefore
       )
     }
   }
@@ -123,6 +131,11 @@ export interface JobListFilters {
   company?: string;
   location?: string;
   employmentType?: string;
+  seniority?: string;
+  functionCategory?: string;
+  /** ISO date YYYY-MM-DD or RFC3339 */
+  postedAfter?: string;
+  postedBefore?: string;
   limit: number;
   offset: number;
 }
@@ -137,6 +150,10 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
     company: filters.company || null,
     location: filters.location || null,
     employmentType: filters.employmentType || null,
+    seniority: filters.seniority || null,
+    functionCategory: filters.functionCategory || null,
+    postedAfter: filters.postedAfter || null,
+    postedBefore: filters.postedBefore || null,
   });
 }
 

@@ -1797,7 +1797,11 @@ export type HireSignalMutationTriggerScrapeArgs = {
 export type HireSignalQuery = {
   companies: Scalars["JSON"]["output"];
   companyJobs: Scalars["JSON"]["output"];
+  connectraCompany: Scalars["JSON"]["output"];
+  connectraContactsForCompany: Scalars["JSON"]["output"];
   job: Scalars["JSON"]["output"];
+  jobConnectraCompany: Scalars["JSON"]["output"];
+  jobConnectraContacts: Scalars["JSON"]["output"];
   jobs: Scalars["JSON"]["output"];
   run: Scalars["JSON"]["output"];
   runs: Scalars["JSON"]["output"];
@@ -1813,16 +1817,41 @@ export type HireSignalQueryCompanyJobsArgs = {
   limit?: Scalars["Int"]["input"];
 };
 
+export type HireSignalQueryConnectraCompanyArgs = {
+  companyUuid: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryConnectraContactsForCompanyArgs = {
+  companyUuid: Scalars["String"]["input"];
+  limit?: Scalars["Int"]["input"];
+  page?: Scalars["Int"]["input"];
+  populateCompany?: Scalars["Boolean"]["input"];
+};
+
 export type HireSignalQueryJobArgs = {
   linkedinJobId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryJobConnectraCompanyArgs = {
+  linkedinJobId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryJobConnectraContactsArgs = {
+  includePoster?: Scalars["Boolean"]["input"];
+  limit?: Scalars["Int"]["input"];
+  linkedinJobId: Scalars["String"]["input"];
+  page?: Scalars["Int"]["input"];
+  populateCompany?: Scalars["Boolean"]["input"];
 };
 
 export type HireSignalQueryJobsArgs = {
   company?: InputMaybe<Scalars["String"]["input"]>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  functionCategory?: InputMaybe<Scalars["String"]["input"]>;
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
   offset?: Scalars["Int"]["input"];
+  seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
 };
 

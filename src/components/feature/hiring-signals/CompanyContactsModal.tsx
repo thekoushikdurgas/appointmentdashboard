@@ -1,10 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Loader2, ExternalLink, Users } from "lucide-react";
+import {
+  Building2,
+  Loader2,
+  ExternalLink,
+  Users,
+  Linkedin,
+  Mail,
+  Download,
+} from "lucide-react";
+import Papa from "papaparse";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { Badge } from "@/components/ui/Badge";
+import { Progress } from "@/components/ui/Progress";
+import { MediaObject } from "@/components/ui/MediaObject";
 import {
   fetchCompanyHiringSignalJobs,
   fetchConnectraCompany,
@@ -14,6 +26,12 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import {
+  hiringSignalInitials,
+  pickCompanyDisplay,
+  pickContactDisplay,
+  connectraContactStableKey,
+} from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 function rowFromItem(item: unknown): LinkedInJobRow {
   const o = asRecord(item) ?? {};
@@ -167,6 +185,35 @@ export function CompanyContactsModal({
     };
   }, [isOpen, companyUuid, tab]);
 
+  const co = pickCompanyDisplay(cRecord);
+
+  const exportPeopleCsv = () => {
+    if (cPeople.length === 0) {
+      toast.message("Nothing to export", {
+        description: "Load contacts on the Connectra tab first.",
+      });
+      return;
+    }
+    const flat = cPeople.map((row) => {
+      const p = pickContactDisplay(row);
+      return {
+        name: p.name,
+        title: p.title,
+        email: p.email,
+        linkedin_url: p.linkedinUrl,
+      };
+    });
+    const csv = Papa.unparse(flat);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `connectra-contacts-${companyUuid.slice(0, 8)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported contacts", { description: `${flat.length} rows` });
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -174,20 +221,28 @@ export function CompanyContactsModal({
       title="Company on hiring signal"
       size="lg"
     >
-      <div className="c360-mb-3 c360-flex c360-items-start c360-gap-2 c360-text-sm c360-text-ink-muted">
-        <Building2
-          size={18}
-          className="c360-mt-0.5 c360-shrink-0"
-          aria-hidden
-        />
-        <div>
+      <div className="c360-mb-3 c360-flex c360-items-start c360-gap-3 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-2/15 c360-p-3">
+        <div className="c360-stat-card__icon" aria-hidden>
+          {hiringSignalInitials(companyName)}
+        </div>
+        <div className="c360-min-w-0 c360-flex-1">
           <p className="c360-font-medium c360-text-ink">{companyName}</p>
           {companyUuid ? (
-            <p className="c360-mono c360-text-2xs c360-text-ink-muted c360-break-all">
+            <p className="c360-font-mono c360-mt-0-5 c360-text-2xs c360-text-ink-muted c360-break-all">
               {companyUuid}
             </p>
           ) : null}
+          {tab === "connectra" && co.industry ? (
+            <Badge color="info" size="sm" className="c360-mt-2">
+              {co.industry}
+            </Badge>
+          ) : null}
         </div>
+        <Building2
+          size={20}
+          className="c360-mt-0-5 c360-shrink-0 c360-text-ink-muted"
+          aria-hidden
+        />
       </div>
 
       <Tabs
@@ -258,47 +313,140 @@ export function CompanyContactsModal({
 
         <TabsContent value="connectra">
           {cLoading ? (
-            <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
-              <Loader2 className="c360-animate-spin" size={20} />
-              Loading Connectra (job.server)…
+            <div className="c360-space-y-3" aria-busy>
+              <div className="c360-h-20 c360-animate-pulse c360-rounded c360-bg-ink-2/30" />
+              <div className="c360-h-32 c360-animate-pulse c360-rounded c360-bg-ink-2/30" />
             </div>
           ) : cErr ? (
             <p className="c360-text-sm c360-text-ink-muted" role="alert">
               {cErr}
             </p>
           ) : (
-            <div className="c360-space-y-3 c360-text-2xs c360-text-ink-muted">
-              <div>
-                <p className="c360-mb-1 c360-font-medium c360-text-ink">
+            <div className="c360-space-y-4 c360-text-2xs c360-text-ink-muted">
+              <Progress
+                value={(cRecord ? 50 : 0) + (cPeople.length > 0 ? 50 : 0)}
+                max={100}
+                size="sm"
+                color="primary"
+                label="Connectra completeness"
+                showValue
+                className="c360-mb-1"
+              />
+              <div className="c360-rounded c360-border c360-border-ink-8 c360-p-3">
+                <p className="c360-mb-2 c360-text-sm c360-font-medium c360-text-ink">
                   Company record
                 </p>
                 {cRecord ? (
-                  <pre className="c360-max-h-40 c360-overflow-auto c360-rounded c360-bg-ink-2/20 c360-p-2">
-                    {JSON.stringify(cRecord, null, 2).slice(0, 8000)}
-                  </pre>
+                  <div className="c360-space-y-1 c360-text-sm c360-text-ink">
+                    {co.name ? (
+                      <p className="c360-font-medium">{co.name}</p>
+                    ) : null}
+                    {co.website ? <p>Website: {co.website}</p> : null}
+                    {co.employees ? <p>Employees: {co.employees}</p> : null}
+                    {co.linkedinUrl ? (
+                      <a
+                        href={co.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary"
+                      >
+                        <Linkedin size={14} />
+                        Company LinkedIn
+                      </a>
+                    ) : null}
+                  </div>
                 ) : (
                   <p>None returned.</p>
                 )}
               </div>
               <div>
-                <p className="c360-mb-1 c360-font-medium c360-text-ink">
-                  People (VQL)
-                </p>
+                <div className="c360-mb-2 c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
+                  <p className="c360-text-sm c360-font-medium c360-text-ink">
+                    People (VQL) · {cPeople.length} shown
+                  </p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="c360-gap-1"
+                    onClick={exportPeopleCsv}
+                    disabled={cPeople.length === 0}
+                    leftIcon={<Download size={14} />}
+                  >
+                    Export CSV
+                  </Button>
+                </div>
                 {cPeople.length === 0 ? (
                   <p>No contacts, or list empty.</p>
                 ) : (
                   <ul
-                    className="c360-max-h-48 c360-space-y-1 c360-overflow-auto"
+                    className="c360-max-h-48 c360-space-y-2 c360-overflow-auto"
                     role="list"
                   >
-                    {cPeople.map((row, i) => (
-                      <li
-                        key={i}
-                        className="c360-font-mono c360-whitespace-pre-wrap c360-break-words c360-border c360-border-ink-8 c360-px-2 c360-py-1"
-                      >
-                        {JSON.stringify(row, null, 2).slice(0, 2000)}
-                      </li>
-                    ))}
+                    {cPeople.map((row, i) => {
+                      const p = pickContactDisplay(row);
+                      return (
+                        <li
+                          key={connectraContactStableKey(row, i)}
+                          className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1/40 c360-p-2"
+                        >
+                          <MediaObject
+                            media={
+                              <div className="c360-hs-avatar">
+                                {hiringSignalInitials(p.name)}
+                              </div>
+                            }
+                            title={
+                              <span className="c360-text-sm c360-font-medium c360-text-ink">
+                                {p.name}
+                              </span>
+                            }
+                            body={
+                              p.title ? (
+                                <span className="c360-text-2xs c360-text-ink-muted">
+                                  {p.title}
+                                </span>
+                              ) : null
+                            }
+                            actions={
+                              <div className="c360-flex c360-gap-1">
+                                {p.linkedinUrl ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="c360-p-0-5"
+                                    asChild
+                                  >
+                                    <a
+                                      href={p.linkedinUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title="LinkedIn"
+                                    >
+                                      <Linkedin size={16} />
+                                    </a>
+                                  </Button>
+                                ) : null}
+                                {p.email ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="c360-p-0-5"
+                                    asChild
+                                  >
+                                    <a href={`mailto:${p.email}`} title="Email">
+                                      <Mail size={16} />
+                                    </a>
+                                  </Button>
+                                ) : null}
+                              </div>
+                            }
+                          />
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

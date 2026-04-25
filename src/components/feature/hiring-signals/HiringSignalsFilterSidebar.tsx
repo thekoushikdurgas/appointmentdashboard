@@ -4,17 +4,73 @@ import { Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+
+const EMPLOYMENT_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "Full-time", label: "Full-time" },
+  { value: "Contract", label: "Contract" },
+  { value: "Part-time", label: "Part-time" },
+  { value: "Remote", label: "Remote" },
+];
+
+const SENIORITY_PRESET_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "Entry level", label: "Entry level" },
+  { value: "Mid-Senior", label: "Mid-Senior" },
+  { value: "Senior", label: "Senior" },
+  { value: "Director", label: "Director" },
+  { value: "VP", label: "VP" },
+  { value: "C-Suite", label: "C-Suite" },
+];
+
+const FUNCTION_PRESET_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "Engineering", label: "Engineering" },
+  { value: "Sales", label: "Sales" },
+  { value: "Marketing", label: "Marketing" },
+  { value: "Operations", label: "Operations" },
+  { value: "Finance", label: "Finance" },
+  { value: "Human Resources", label: "Human Resources" },
+  { value: "Product", label: "Product" },
+  { value: "Design", label: "Design" },
+  { value: "Legal", label: "Legal" },
+  { value: "Consulting", label: "Consulting" },
+  { value: "Other", label: "Other" },
+];
+
+export type HiringSignalFilterDraft = {
+  title: string;
+  company: string;
+  location: string;
+  employmentType: string;
+  seniorityPreset: string;
+  seniorityCustom: string;
+  functionPreset: string;
+  functionCustom: string;
+  postedAfter: string;
+  postedBefore: string;
+};
+
+export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
+  title: "",
+  company: "",
+  location: "",
+  employmentType: "",
+  seniorityPreset: "",
+  seniorityCustom: "",
+  functionPreset: "",
+  functionCustom: "",
+  postedAfter: "",
+  postedBefore: "",
+};
+
+export type HiringSignalDraftField = keyof HiringSignalFilterDraft;
 
 export interface HiringSignalsFilterSidebarProps {
-  values: {
-    title: string;
-    company: string;
-    location: string;
-    employmentType: string;
-  };
-  onChange: (field: keyof JobListFilters, value: string) => void;
+  values: HiringSignalFilterDraft;
+  onChange: (field: HiringSignalDraftField, value: string) => void;
   onApply: () => void;
   onReset: () => void;
   className?: string;
@@ -29,11 +85,14 @@ export function HiringSignalsFilterSidebar({
 }: HiringSignalsFilterSidebarProps) {
   return (
     <Card className={cn("c360-p-4 c360-h-full", className)}>
-      <div className="c360-mb-3 flex items-center justify-between">
-        <div className="c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink">
+      <div className="c360-mb-3 c360-flex c360-items-center c360-justify-between">
+        <h2
+          id="c360-filter-drawer-title"
+          className="c360-m-0 c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
+        >
           <Filter size={16} aria-hidden />
-          Filters
-        </div>
+          Refine signals
+        </h2>
         <Button
           type="button"
           variant="ghost"
@@ -50,9 +109,9 @@ export function HiringSignalsFilterSidebar({
         <div>
           <label
             htmlFor="hsf-title"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
           >
-            Title
+            Job title
           </label>
           <Input
             id="hsf-title"
@@ -65,7 +124,7 @@ export function HiringSignalsFilterSidebar({
         <div>
           <label
             htmlFor="hsf-company"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
           >
             Company
           </label>
@@ -80,7 +139,7 @@ export function HiringSignalsFilterSidebar({
         <div>
           <label
             htmlFor="hsf-loc"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
           >
             Location
           </label>
@@ -95,17 +154,106 @@ export function HiringSignalsFilterSidebar({
         <div>
           <label
             htmlFor="hsf-emp"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
           >
             Employment type
           </label>
-          <Input
+          <Select
             id="hsf-emp"
             value={values.employmentType}
             onChange={(e) => onChange("employmentType", e.target.value)}
-            placeholder="e.g. Full-time"
+            options={EMPLOYMENT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="hsf-seniority-preset"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
+          >
+            Seniority
+          </label>
+          <Select
+            id="hsf-seniority-preset"
+            value={values.seniorityPreset}
+            onChange={(e) => onChange("seniorityPreset", e.target.value)}
+            options={SENIORITY_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+          <label
+            htmlFor="hsf-seniority-custom"
+            className="c360-mt-2 c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+          >
+            Or custom (overrides preset when filled)
+          </label>
+          <Input
+            id="hsf-seniority-custom"
+            value={values.seniorityCustom}
+            onChange={(e) => onChange("seniorityCustom", e.target.value)}
+            placeholder="e.g. Principal"
             autoComplete="off"
           />
+        </div>
+        <div>
+          <label
+            htmlFor="hsf-func-preset"
+            className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
+          >
+            Function / department
+          </label>
+          <Select
+            id="hsf-func-preset"
+            value={values.functionPreset}
+            onChange={(e) => onChange("functionPreset", e.target.value)}
+            options={FUNCTION_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+          <label
+            htmlFor="hsf-func-custom"
+            className="c360-mt-2 c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+          >
+            Or custom (overrides preset when filled)
+          </label>
+          <Input
+            id="hsf-func-custom"
+            value={values.functionCustom}
+            onChange={(e) => onChange("functionCustom", e.target.value)}
+            placeholder="Matches function_category_v2"
+            autoComplete="off"
+          />
+        </div>
+        <div className="c360-grid c360-gap-2">
+          <div>
+            <label
+              htmlFor="hsf-posted-after"
+              className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
+            >
+              Posted after
+            </label>
+            <Input
+              id="hsf-posted-after"
+              type="date"
+              value={values.postedAfter}
+              onChange={(e) => onChange("postedAfter", e.target.value)}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="hsf-posted-before"
+              className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
+            >
+              Posted before
+            </label>
+            <Input
+              id="hsf-posted-before"
+              type="date"
+              value={values.postedBefore}
+              onChange={(e) => onChange("postedBefore", e.target.value)}
+            />
+          </div>
         </div>
         <Button
           type="button"

@@ -119,6 +119,10 @@ export function useHiringSignals(initial: Partial<JobListFilters> = {}) {
     company: initial.company,
     location: initial.location,
     employmentType: initial.employmentType,
+    seniority: initial.seniority,
+    functionCategory: initial.functionCategory,
+    postedAfter: initial.postedAfter,
+    postedBefore: initial.postedBefore,
     limit: initial.limit ?? 25,
     offset: initial.offset ?? 0,
   });

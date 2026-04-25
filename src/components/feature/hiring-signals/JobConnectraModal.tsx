@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Loader2, UserCircle2, Users } from "lucide-react";
+import type { CSSProperties } from "react";
+import { Building2, Loader2, UserCircle2, Users, Linkedin } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { MediaObject } from "@/components/ui/MediaObject";
 import {
   fetchJobConnectraCompany,
   fetchJobConnectraContacts,
@@ -12,6 +15,12 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import {
+  hiringSignalInitials,
+  pickCompanyDisplay,
+  pickContactDisplay,
+  connectraContactStableKey,
+} from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 type ConnectraState =
   | { kind: "idle" }
@@ -42,12 +51,6 @@ function parseJobServerJson(raw: unknown): ParseResult {
     return { ok: true, data: d as Record<string, unknown> };
   }
   return { ok: false, message: "Invalid data shape" };
-}
-
-function snippetJson(v: unknown, max = 900) {
-  const s = JSON.stringify(v, null, 2);
-  if (s.length <= max) return s;
-  return `${s.slice(0, max)}…`;
 }
 
 export interface JobConnectraModalProps {
@@ -109,6 +112,13 @@ export function JobConnectraModal({
     };
   }, [isOpen, job.linkedinJobId]);
 
+  const companyDisp =
+    state.kind === "ok" ? pickCompanyDisplay(state.company) : null;
+  const posterDisp =
+    state.kind === "ok" && state.poster
+      ? pickContactDisplay(state.poster)
+      : null;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -122,9 +132,38 @@ export function JobConnectraModal({
       </p>
 
       {state.kind === "loading" || state.kind === "idle" ? (
-        <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
-          <Loader2 className="c360-animate-spin" size={20} />
-          Loading from job.server (Connectra)…
+        <div className="c360-space-y-3 c360-py-4" aria-busy>
+          <div className="c360-flex c360-items-center c360-gap-2 c360-text-ink-muted">
+            <Loader2 className="c360-animate-spin" size={20} />
+            Loading from job.server (Connectra)…
+          </div>
+          <div
+            className="c360-skeleton"
+            style={
+              {
+                ["--c360-skeleton-h" as string]: "72px",
+                ["--c360-skeleton-w" as string]: "100%",
+              } as CSSProperties
+            }
+          />
+          <div
+            className="c360-skeleton"
+            style={
+              {
+                ["--c360-skeleton-h" as string]: "96px",
+                ["--c360-skeleton-w" as string]: "100%",
+              } as CSSProperties
+            }
+          />
+          <div
+            className="c360-skeleton"
+            style={
+              {
+                ["--c360-skeleton-h" as string]: "140px",
+                ["--c360-skeleton-w" as string]: "100%",
+              } as CSSProperties
+            }
+          />
         </div>
       ) : null}
 
@@ -148,9 +187,38 @@ export function JobConnectraModal({
               Company
             </h3>
             {state.company ? (
-              <pre className="c360-max-h-48 c360-overflow-auto c360-text-2xs c360-text-ink-muted c360-bg-ink-2/20 c360-p-2 c360-rounded">
-                {snippetJson(state.company, 8000)}
-              </pre>
+              <MediaObject
+                media={
+                  <div className="c360-stat-card__icon">
+                    {hiringSignalInitials(
+                      companyDisp?.name || job.companyName || "C",
+                    )}
+                  </div>
+                }
+                title={companyDisp?.name || job.companyName || "Company"}
+                body={
+                  <div className="c360-space-y-1 c360-text-2xs c360-text-ink-muted">
+                    {companyDisp?.website ? <p>{companyDisp.website}</p> : null}
+                    {companyDisp?.industry ? (
+                      <p className="c360-text-ink">{companyDisp.industry}</p>
+                    ) : null}
+                    {companyDisp?.employees ? (
+                      <p>~{companyDisp.employees} employees</p>
+                    ) : null}
+                    {companyDisp?.linkedinUrl ? (
+                      <a
+                        href={companyDisp.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary"
+                      >
+                        <Linkedin size={14} />
+                        LinkedIn
+                      </a>
+                    ) : null}
+                  </div>
+                }
+              />
             ) : (
               <p className="c360-text-2xs c360-text-ink-muted">
                 No company record. The job may need a completed Connectra
@@ -162,19 +230,48 @@ export function JobConnectraModal({
 
           {state.poster ? (
             <section
-              className="c360-rounded c360-border c360-border-ink-8 c360-p-3"
+              className="c360-rounded c360-border c360-border-amber-500/40 c360-bg-amber-500/5 c360-p-3"
               aria-labelledby="c360-connectra-poster"
             >
               <h3
                 id="c360-connectra-poster"
-                className="c360-mb-2 c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
+                className="c360-mb-2 c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
               >
                 <UserCircle2 size={16} aria-hidden />
                 Job poster
+                <Badge color="warning" size="sm">
+                  Highlight
+                </Badge>
               </h3>
-              <pre className="c360-max-h-40 c360-overflow-auto c360-text-2xs c360-text-ink-muted c360-bg-ink-2/20 c360-p-2 c360-rounded">
-                {snippetJson(state.poster, 6000)}
-              </pre>
+              <div className="c360-flex c360-items-center c360-gap-3">
+                <div
+                  className="c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-items-center c360-justify-center c360-rounded-lg c360-border c360-border-ink-8 c360-bg-ink-1 c360-text-2xs c360-font-semibold c360-text-primary"
+                  aria-hidden
+                >
+                  {hiringSignalInitials(posterDisp?.name || "?")}
+                </div>
+                <div className="c360-min-w-0">
+                  <p className="c360-text-sm c360-font-medium c360-text-ink">
+                    {posterDisp?.name || "Poster"}
+                  </p>
+                  {posterDisp?.title ? (
+                    <p className="c360-text-2xs c360-text-ink-muted">
+                      {posterDisp.title}
+                    </p>
+                  ) : null}
+                  {posterDisp?.linkedinUrl ? (
+                    <a
+                      href={posterDisp.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="c360-mt-1 c360-inline-flex c360-items-center c360-gap-1 c360-text-xs c360-text-primary"
+                    >
+                      <Linkedin size={14} />
+                      Profile
+                    </a>
+                  ) : null}
+                </div>
+              </div>
             </section>
           ) : null}
 
@@ -198,17 +295,58 @@ export function JobConnectraModal({
               </p>
             ) : (
               <ul
-                className="c360-max-h-[min(40vh,18rem)] c360-space-y-1 c360-overflow-auto"
+                className="c360-max-h-[min(40vh,18rem)] c360-space-y-2 c360-overflow-auto"
                 role="list"
               >
-                {state.contacts.map((row, i) => (
-                  <li
-                    key={i}
-                    className="c360-rounded c360-border c360-border-ink-8 c360-px-2 c360-py-1 c360-text-2xs c360-text-ink-muted c360-font-mono c360-whitespace-pre-wrap c360-break-words"
-                  >
-                    {snippetJson(row, 1200)}
-                  </li>
-                ))}
+                {state.contacts.map((row, i) => {
+                  const p = pickContactDisplay(row);
+                  return (
+                    <li
+                      key={connectraContactStableKey(row, i)}
+                      className="c360-rounded c360-border c360-border-ink-8 c360-p-2"
+                    >
+                      <MediaObject
+                        media={
+                          <div className="c360-hs-avatar">
+                            {hiringSignalInitials(p.name)}
+                          </div>
+                        }
+                        title={
+                          <span className="c360-text-xs c360-font-medium c360-text-ink">
+                            {p.name}
+                          </span>
+                        }
+                        body={
+                          p.title ? (
+                            <span className="c360-text-2xs c360-text-ink-muted">
+                              {p.title}
+                            </span>
+                          ) : null
+                        }
+                        actions={
+                          p.linkedinUrl ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="c360-p-0-5"
+                              asChild
+                            >
+                              <a
+                                href={p.linkedinUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="LinkedIn"
+                              >
+                                <Linkedin size={16} />
+                              </a>
+                            </Button>
+                          ) : null
+                        }
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>
