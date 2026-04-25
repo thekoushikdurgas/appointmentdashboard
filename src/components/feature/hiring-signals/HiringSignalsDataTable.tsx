@@ -1,6 +1,12 @@
 "use client";
 
-import { FileText, Building2, ExternalLink, Loader2 } from "lucide-react";
+import {
+  FileText,
+  Building2,
+  ExternalLink,
+  Link2,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
@@ -31,6 +37,8 @@ export interface HiringSignalsDataTableProps {
   onPageSizeChange: (n: number) => void;
   onOpenDescription: (row: LinkedInJobRow) => void;
   onOpenCompany: (row: LinkedInJobRow) => void;
+  /** job.server read-through: Connectra company + contacts for this LinkedIn job. */
+  onOpenConnectra: (row: LinkedInJobRow) => void;
   className?: string;
 }
 
@@ -41,6 +49,7 @@ export function HiringSignalsDataTable({
   onPageSizeChange,
   onOpenDescription,
   onOpenCompany,
+  onOpenConnectra,
   className,
 }: HiringSignalsDataTableProps) {
   return (
@@ -143,6 +152,16 @@ export function HiringSignalsDataTable({
                       <Building2 size={14} />
                     </Button>
                   ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="c360-gap-1 c360-px-2"
+                    onClick={() => onOpenConnectra(row)}
+                    title="Connectra (sync): company, people, poster"
+                  >
+                    <Link2 size={14} />
+                  </Button>
                   {row.jobUrl ? (
                     <Button
                       type="button"

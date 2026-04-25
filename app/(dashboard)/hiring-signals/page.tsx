@@ -16,6 +16,7 @@ import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/
 import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDescriptionModal";
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
+import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -53,6 +54,7 @@ export default function HiringSignalsPage() {
   const [scrapeLoading, setScrapeLoading] = useState(false);
   const [jd, setJd] = useState<LinkedInJobRow | null>(null);
   const [companyRow, setCompanyRow] = useState<LinkedInJobRow | null>(null);
+  const [connectraRow, setConnectraRow] = useState<LinkedInJobRow | null>(null);
 
   const applyFilters = useCallback(() => {
     setFilters((f) => ({
@@ -224,6 +226,7 @@ export default function HiringSignalsPage() {
           onPageSizeChange={setPageSize}
           onOpenDescription={setJd}
           onOpenCompany={setCompanyRow}
+          onOpenConnectra={setConnectraRow}
         />
       </DataPageLayout>
 
@@ -234,6 +237,13 @@ export default function HiringSignalsPage() {
           companyName={companyRow.companyName || "Company"}
           isOpen={!!companyRow}
           onClose={() => setCompanyRow(null)}
+        />
+      ) : null}
+      {connectraRow ? (
+        <JobConnectraModal
+          job={connectraRow}
+          isOpen={!!connectraRow}
+          onClose={() => setConnectraRow(null)}
         />
       ) : null}
     </DashboardPageLayout>

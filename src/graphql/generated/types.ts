@@ -1464,6 +1464,7 @@ export type DeletePlanResult = {
 };
 
 export type DeleteUserInput = {
+  approvalId?: InputMaybe<Scalars["ID"]["input"]>;
   userId: Scalars["ID"]["input"];
 };
 
@@ -1783,6 +1784,54 @@ export type HealthQuery = {
   satelliteHealth: Array<SatellitePingResult>;
   vqlHealth: VqlHealth;
   vqlStats: VqlStats;
+};
+
+export type HireSignalMutation = {
+  triggerScrape: Scalars["JSON"]["output"];
+};
+
+export type HireSignalMutationTriggerScrapeArgs = {
+  body?: InputMaybe<Scalars["JSON"]["input"]>;
+};
+
+export type HireSignalQuery = {
+  companies: Scalars["JSON"]["output"];
+  companyJobs: Scalars["JSON"]["output"];
+  job: Scalars["JSON"]["output"];
+  jobs: Scalars["JSON"]["output"];
+  run: Scalars["JSON"]["output"];
+  runs: Scalars["JSON"]["output"];
+  stats: Scalars["JSON"]["output"];
+};
+
+export type HireSignalQueryCompaniesArgs = {
+  limit?: Scalars["Int"]["input"];
+};
+
+export type HireSignalQueryCompanyJobsArgs = {
+  companyUuid: Scalars["String"]["input"];
+  limit?: Scalars["Int"]["input"];
+};
+
+export type HireSignalQueryJobArgs = {
+  linkedinJobId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryJobsArgs = {
+  company?: InputMaybe<Scalars["String"]["input"]>;
+  employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  limit?: Scalars["Int"]["input"];
+  location?: InputMaybe<Scalars["String"]["input"]>;
+  offset?: Scalars["Int"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type HireSignalQueryRunArgs = {
+  runId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryRunsArgs = {
+  limit?: Scalars["Int"]["input"];
 };
 
 export type InitiateCsvUploadInput = {
@@ -2123,6 +2172,7 @@ export type Mutation = {
   companies: CompanyMutation;
   contacts: ContactMutation;
   email: EmailMutation;
+  hireSignal: HireSignalMutation;
   jobs: JobMutation;
   knowledge: KnowledgeMutation;
   linkedin: LinkedInMutation;
@@ -2682,6 +2732,7 @@ export type Query = {
   email: EmailQuery;
   featureOverview: FeatureOverviewQuery;
   health: HealthQuery;
+  hireSignal: HireSignalQuery;
   jobs: JobQuery;
   knowledge: KnowledgeQuery;
   notifications: NotificationQuery;

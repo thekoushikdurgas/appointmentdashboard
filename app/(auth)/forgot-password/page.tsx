@@ -33,10 +33,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div
-        className="c360-auth-card c360-text-center"
-        suppressHydrationWarning
-      >
+      <div className="c360-auth-card c360-text-center" suppressHydrationWarning>
         <div className="c360-auth-success-icon-wrap">
           <CheckCircle size={32} className="c360-text-success" />
         </div>

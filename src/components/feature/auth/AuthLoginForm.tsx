@@ -70,10 +70,7 @@ export function AuthLoginForm({
         }
       />
 
-      <div
-        className="c360-auth-form__row--split"
-        suppressHydrationWarning
-      >
+      <div className="c360-auth-form__row--split" suppressHydrationWarning>
         <div className="c360-auth-form__remember" suppressHydrationWarning>
           <Checkbox
             checked={form.rememberBrowser}
