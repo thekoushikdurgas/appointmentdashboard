@@ -55,8 +55,6 @@ export function HiringSignalStatsBar({
   loading,
   className,
 }: HiringSignalStatsBarProps) {
-  const linkRate =
-    totalJobs > 0 ? Math.round((jobsWithCompany / totalJobs) * 100) : 0;
   const filterDepth =
     totalJobs > 0
       ? Math.min(100, Math.round((filterMatchTotal / totalJobs) * 100))
@@ -109,12 +107,6 @@ export function HiringSignalStatsBar({
           >
             <Building2 size={22} aria-hidden />
           </div>
-          {!loading ? (
-            <TrendChip
-              direction={linkRate >= 25 ? "up" : "down"}
-              label={`${linkRate}%`}
-            />
-          ) : null}
         </div>
         <p className="c360-stat-card__label">With company link</p>
         <p className="c360-stat-card__value">
@@ -125,11 +117,12 @@ export function HiringSignalStatsBar({
           )}
         </p>
         <Progress
-          value={linkRate}
-          max={100}
+          value={jobsWithCompany}
+          max={totalJobs || 1}
           size="sm"
-          color="success"
-          showValue={false}
+          color="primary"
+          showValue
+          label="Linked to company"
           className="c360-mt-2"
         />
         <p className="c360-text-2xs c360-text-muted c360-m-0">

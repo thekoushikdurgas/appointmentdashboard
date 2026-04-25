@@ -9,6 +9,27 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
 
+function sevenDaysAgoYmd(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** When preset is new_7d, ensure postedAfter is at least 7 days ago (stricter user dates win). */
+function effectivePostedAfter(
+  preset: "all" | "new_7d",
+  fromFilters: string | undefined,
+): string | undefined {
+  if (preset !== "new_7d") return fromFilters;
+  const seven = sevenDaysAgoYmd();
+  const u = fromFilters?.trim();
+  if (!u) return seven;
+  return u > seven ? u : seven;
+}
+
 export interface LinkedInJobRow {
   id?: string;
   linkedinJobId: string;
@@ -113,7 +134,12 @@ function parseStatsPayload(raw: unknown): {
   };
 }
 
-export function useHiringSignals(initial: Partial<JobListFilters> = {}) {
+export function useHiringSignals(
+  initial: Partial<JobListFilters> = {},
+  options?: { signalTimePreset?: "all" | "new_7d" },
+) {
+  const signalTimePreset = options?.signalTimePreset ?? "all";
+
   const [filters, setFilters] = useState<JobListFilters>({
     title: initial.title,
     company: initial.company,
@@ -123,6 +149,7 @@ export function useHiringSignals(initial: Partial<JobListFilters> = {}) {
     functionCategory: initial.functionCategory,
     postedAfter: initial.postedAfter,
     postedBefore: initial.postedBefore,
+    runId: initial.runId,
     limit: initial.limit ?? 25,
     offset: initial.offset ?? 0,
   });
@@ -142,8 +169,12 @@ export function useHiringSignals(initial: Partial<JobListFilters> = {}) {
     setLoading(true);
     setError(null);
     try {
+      const postedAfter = effectivePostedAfter(
+        signalTimePreset,
+        filters.postedAfter,
+      );
       const [jobsRes, statsRes] = await Promise.all([
-        fetchHiringSignalJobs(filters),
+        fetchHiringSignalJobs({ ...filters, postedAfter }),
         fetchHiringSignalStats(),
       ]);
       const j = parseJobListPayload(jobsRes.hireSignal?.jobs);
@@ -158,7 +189,7 @@ export function useHiringSignals(initial: Partial<JobListFilters> = {}) {
       setLoading(false);
       setStatsLoading(false);
     }
-  }, [filters]);
+  }, [filters, signalTimePreset]);
 
   useEffect(() => {
     void refetch();

@@ -29,6 +29,7 @@ const HIRE_SIGNAL_JOBS = gql`
     $functionCategory: String
     $postedAfter: String
     $postedBefore: String
+    $runId: String
   ) {
     hireSignal {
       jobs(
@@ -42,6 +43,7 @@ const HIRE_SIGNAL_JOBS = gql`
         functionCategory: $functionCategory
         postedAfter: $postedAfter
         postedBefore: $postedBefore
+        runId: $runId
       )
     }
   }
@@ -196,6 +198,8 @@ export interface JobListFilters {
   /** ISO date YYYY-MM-DD or RFC3339 */
   postedAfter?: string;
   postedBefore?: string;
+  /** Apify / job.server run id (gateway must expose `jobs(runId:)`). */
+  runId?: string;
   limit: number;
   offset: number;
 }
@@ -214,6 +218,7 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
     functionCategory: filters.functionCategory || null,
     postedAfter: filters.postedAfter || null,
     postedBefore: filters.postedBefore || null,
+    runId: filters.runId?.trim() || null,
   });
 }
 

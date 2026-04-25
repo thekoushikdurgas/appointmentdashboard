@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { RadioGroup, Radio } from "@/components/ui/Radio";
 import { triggerHireSignalScrapeAndTrack } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
 
@@ -26,6 +28,11 @@ export function RunScrapeModal({
   const [splitByLocation, setSplitByLocation] = useState(false);
   const [trigger, setTrigger] = useState("manual");
   const [submitting, setSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) setValidationError(null);
+  }, [isOpen]);
 
   const reset = useCallback(() => {
     setUrlsText(DEFAULT_URL);
@@ -33,6 +40,7 @@ export function RunScrapeModal({
     setScrapeCompany(false);
     setSplitByLocation(false);
     setTrigger("manual");
+    setValidationError(null);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -41,9 +49,10 @@ export function RunScrapeModal({
       .map((s) => s.trim())
       .filter(Boolean);
     if (lines.length === 0) {
-      toast.error("Add at least one URL");
+      setValidationError("Add at least one URL (one per line in the box below).");
       return;
     }
+    setValidationError(null);
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {
@@ -118,19 +127,28 @@ export function RunScrapeModal({
         <code className="c360-break-all">triggerScrapeAndTrack</code> (saved in
         Postgres + forwarded to job.server with your scrape parameters).
       </p>
+      {validationError ? (
+        <Alert variant="danger" className="c360-mb-3" title="Check your input">
+          {validationError}
+        </Alert>
+      ) : null}
       <div className="c360-flex c360-flex-col c360-gap-3">
-        <label className="c360-flex c360-flex-col c360-gap-1">
+        <div className="c360-flex c360-flex-col c360-gap-2">
           <span className="c360-text-2xs c360-font-medium c360-text-ink">
             Trigger
           </span>
-          <input
-            className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+          <RadioGroup
+            name="hs-trigger"
             value={trigger}
-            onChange={(e) => setTrigger(e.target.value)}
-            placeholder="manual"
-            autoComplete="off"
-          />
-        </label>
+            onChange={setTrigger}
+            horizontal
+            className="c360-flex-wrap"
+          >
+            <Radio value="manual" label="Manual" />
+            <Radio value="api" label="API" />
+            <Radio value="cron" label="Cron / scheduled" />
+          </RadioGroup>
+        </div>
         <label className="c360-flex c360-flex-col c360-gap-1">
           <span className="c360-text-2xs c360-font-medium c360-text-ink">
             URLs (one per line)

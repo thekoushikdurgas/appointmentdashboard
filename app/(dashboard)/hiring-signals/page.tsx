@@ -1,46 +1,82 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { History, RefreshCw, Play } from "lucide-react";
+import {
+  History,
+  RefreshCw,
+  Play,
+  List,
+  LayoutGrid,
+  LayoutDashboard,
+  Zap,
+} from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
-import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/patterns/Pagination";
+import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { Table, type TableColumn } from "@/components/ui/Table";
+import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { Button } from "@/components/ui/Button";
 import {
   useHiringSignals,
   type LinkedInJobRow,
 } from "@/hooks/useHiringSignals";
+import { useHireSignalRuns } from "@/hooks/useHireSignalRuns";
 import {
-  asRecord,
-  fetchHireSignalRuns,
-  fetchListScrapeJobs,
-  fetchScrapeJobJobs,
-  refreshHireSignalRun,
-} from "@/services/graphql/hiringSignalService";
+  HireSignalFilterProvider,
+  useHireSignalFilter,
+} from "@/context/HireSignalFilterContext";
 import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
-import {
-  downloadTextFile,
-  linkedinJobsPayloadToCsv,
-} from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
+import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import {
-  HiringSignalsFilterSidebar,
-  EMPTY_HIRING_SIGNAL_DRAFT,
-  type HiringSignalFilterDraft,
-  type HiringSignalDraftField,
-} from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
-import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
+  HiringSignalsDataTable,
+  HS_DT_DEFAULT_COLUMNS,
+  type HiringSignalsDataTableColumnId,
+} from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDescriptionModal";
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
 import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
 import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/HiringSignalsDashboard";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { LayoutDashboard, Zap } from "lucide-react";
+import { cn, formatDate } from "@/lib/utils";
+import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
-export default function HiringSignalsPage() {
+const RUNS_PAGE_SIZE = 10;
+
+function runStatusBadgeColor(status: string): BadgeColor {
+  const s = status.toUpperCase();
+  if (s.includes("SUCCESS") || s === "SUCCEEDED") return "success";
+  if (s.includes("RUNNING") || s.includes("PENDING")) return "warning";
+  if (
+    s.includes("FAIL") ||
+    s.includes("ERROR") ||
+    s.includes("TIME") ||
+    s.includes("ABORT")
+  )
+    return "danger";
+  return "gray";
+}
+
+function satelliteRunId(row: Record<string, unknown>): string {
+  return String(row.runId ?? row.run_id ?? row.id ?? "");
+}
+
+type HiringPageHiring = ReturnType<typeof useHiringSignals>;
+
+type HiringSignalsPageBodyProps = {
+  hiring: HiringPageHiring;
+  signalTimePreset: "all" | "new_7d";
+  setSignalTimePreset: (v: "all" | "new_7d") => void;
+};
+
+function HiringSignalsPageBody({
+  hiring,
+  signalTimePreset,
+  setSignalTimePreset,
+}: HiringSignalsPageBodyProps) {
   const {
     jobs,
     total,
@@ -54,11 +90,11 @@ export default function HiringSignalsPage() {
     setPageSize,
     refetch,
     currentPage,
-  } = useHiringSignals();
+  } = hiring;
 
-  const [draft, setDraft] = useState<HiringSignalFilterDraft>(
-    EMPTY_HIRING_SIGNAL_DRAFT,
-  );
+  const { applyFilters, activeDraftCount } = useHireSignalFilter();
+  const isDesktop = useIsDesktop();
+
   const [scrapeModalOpen, setScrapeModalOpen] = useState(false);
   const [jd, setJd] = useState<LinkedInJobRow | null>(null);
   const [companyRow, setCompanyRow] = useState<LinkedInJobRow | null>(null);
@@ -69,11 +105,33 @@ export default function HiringSignalsPage() {
     "signals",
   );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [runsLoading, setRunsLoading] = useState(false);
-  const [runsPayload, setRunsPayload] = useState<unknown>(null);
-  const [scrapeJobsPayload, setScrapeJobsPayload] = useState<unknown>(null);
-  const [runActionId, setRunActionId] = useState<string | null>(null);
-  const [scrapeDownloadId, setScrapeDownloadId] = useState<string | null>(null);
+  const [tableDensity, setTableDensity] = useState<
+    "comfortable" | "compact"
+  >("comfortable");
+  const [visibleColumns, setVisibleColumns] = useState<
+    HiringSignalsDataTableColumnId[]
+  >([...HS_DT_DEFAULT_COLUMNS]);
+  const [satellitePage, setSatellitePage] = useState(1);
+  const [trackedPage, setTrackedPage] = useState(1);
+
+  const {
+    runsLoading,
+    runActionId,
+    scrapeDownloadId,
+    satelliteRunsRows,
+    trackedScrapeRows,
+    loadRuns,
+    onRefreshRun,
+    onDownloadCsv,
+  } = useHireSignalRuns(mainTab);
+
+  useEffect(() => {
+    setSatellitePage(1);
+  }, [satelliteRunsRows.length]);
+
+  useEffect(() => {
+    setTrackedPage(1);
+  }, [trackedScrapeRows.length]);
 
   const previewJobsForDrawer = useMemo(() => {
     if (!drawerRow?.companyUuid) return [];
@@ -81,131 +139,35 @@ export default function HiringSignalsPage() {
     return jobs.filter((j) => j.companyUuid === u);
   }, [drawerRow, jobs]);
 
-  const applyFilters = useCallback(() => {
-    setFilters((f) => ({
-      ...f,
-      title: draft.title.trim() || undefined,
-      company: draft.company.trim() || undefined,
-      location: draft.location.trim() || undefined,
-      employmentType: draft.employmentType.trim() || undefined,
-      seniority:
-        draft.seniorityCustom.trim() ||
-        draft.seniorityPreset.trim() ||
-        undefined,
-      functionCategory:
-        draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
-      postedAfter: draft.postedAfter.trim() || undefined,
-      postedBefore: draft.postedBefore.trim() || undefined,
-      offset: 0,
-    }));
-    setMobileFiltersOpen(false);
-  }, [draft, setFilters]);
+  const latestSatelliteRun = satelliteRunsRows[0];
 
-  const resetFilters = useCallback(() => {
-    setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
-    setFilters((f) => ({
-      ...f,
-      title: undefined,
-      company: undefined,
-      location: undefined,
-      employmentType: undefined,
-      seniority: undefined,
-      functionCategory: undefined,
-      postedAfter: undefined,
-      postedBefore: undefined,
-      offset: 0,
-    }));
+  const drillSignalsByRun = useCallback(
+    (runId: string) => {
+      const id = runId.trim();
+      if (!id) return;
+      setFilters((f) => ({ ...f, runId: id, offset: 0 }));
+      setMainTab("signals");
+    },
+    [setFilters],
+  );
+
+  const clearRunFilter = useCallback(() => {
+    setFilters((f) => ({ ...f, runId: undefined, offset: 0 }));
   }, [setFilters]);
 
-  const onDraftField = useCallback(
-    (field: HiringSignalDraftField, value: string) => {
-      setDraft((d) => ({ ...d, [field]: value }));
+  const toggleHsColumn = useCallback(
+    (id: HiringSignalsDataTableColumnId, visible: boolean) => {
+      setVisibleColumns((prev) => {
+        const s = new Set(prev);
+        if (visible) s.add(id);
+        else s.delete(id);
+        const arr = [...s] as HiringSignalsDataTableColumnId[];
+        if (arr.length === 0) return [...HS_DT_DEFAULT_COLUMNS];
+        return arr;
+      });
     },
     [],
   );
-
-  const loadRunsTab = useCallback(async () => {
-    setRunsLoading(true);
-    try {
-      const [r, s] = await Promise.all([
-        fetchHireSignalRuns(25),
-        fetchListScrapeJobs(30, 0),
-      ]);
-      setRunsPayload(r.hireSignal?.runs ?? null);
-      setScrapeJobsPayload(s.hireSignal?.listScrapeJobs ?? null);
-    } catch (e) {
-      const m = e instanceof Error ? e.message : "Failed to load runs";
-      toast.error("Runs", { description: m });
-    } finally {
-      setRunsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (mainTab === "runs") void loadRunsTab();
-  }, [mainTab, loadRunsTab]);
-
-  const onRefreshSatelliteRun = useCallback(
-    async (runId: string) => {
-      const rid = runId.trim();
-      if (!rid) return;
-      setRunActionId(rid);
-      try {
-        await refreshHireSignalRun(rid);
-        toast.success("Run status refreshed from Apify");
-        void loadRunsTab();
-      } catch (e) {
-        const m = e instanceof Error ? e.message : "Refresh failed";
-        toast.error("Refresh run", { description: m });
-      } finally {
-        setRunActionId(null);
-      }
-    },
-    [loadRunsTab],
-  );
-
-  const onDownloadScrapeCsv = useCallback(async (scrapeJobId: string) => {
-    const id = scrapeJobId.trim();
-    if (!id) return;
-    setScrapeDownloadId(id);
-    try {
-      const res = await fetchScrapeJobJobs(id, 2000, 0);
-      const raw = res.hireSignal?.scrapeJobJobs;
-      const csv = linkedinJobsPayloadToCsv(raw);
-      if (!csv) {
-        toast.message("No rows yet", {
-          description:
-            "Wait until the run succeeds and jobs are ingested, then try again.",
-        });
-        return;
-      }
-      downloadTextFile(`hiring-signals-scrape-${id.slice(0, 8)}.csv`, csv);
-      toast.success("CSV downloaded");
-    } catch (e) {
-      const m = e instanceof Error ? e.message : "Export failed";
-      toast.error("CSV export", { description: m });
-    } finally {
-      setScrapeDownloadId(null);
-    }
-  }, []);
-
-  const satelliteRunsRows = useMemo(() => {
-    const env = asRecord(runsPayload);
-    const data = env?.data;
-    if (!Array.isArray(data)) return [];
-    return data.filter(
-      (x): x is Record<string, unknown> =>
-        !!x && typeof x === "object" && !Array.isArray(x),
-    );
-  }, [runsPayload]);
-
-  const trackedScrapeRows = useMemo(() => {
-    if (!Array.isArray(scrapeJobsPayload)) return [];
-    return scrapeJobsPayload.filter(
-      (x): x is Record<string, unknown> =>
-        !!x && typeof x === "object" && !Array.isArray(x),
-    );
-  }, [scrapeJobsPayload]);
 
   const renderStatsBar = () => (
     <HiringSignalStatsBar
@@ -215,6 +177,244 @@ export default function HiringSignalsPage() {
       pageRowCount={jobs.length}
       loading={statsLoading}
       className="c360-mb-4"
+    />
+  );
+
+  const satellitePaged = useMemo(() => {
+    const start = (satellitePage - 1) * RUNS_PAGE_SIZE;
+    return satelliteRunsRows.slice(start, start + RUNS_PAGE_SIZE);
+  }, [satelliteRunsRows, satellitePage]);
+
+  const trackedPaged = useMemo(() => {
+    const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
+    return trackedScrapeRows.slice(start, start + RUNS_PAGE_SIZE);
+  }, [trackedScrapeRows, trackedPage]);
+
+  const satelliteColumns: TableColumn<Record<string, unknown>>[] = useMemo(
+    () => [
+      {
+        key: "runId",
+        header: "Run ID",
+        render: (row) => {
+          const full = satelliteRunId(row);
+          const short = full.length > 14 ? `${full.slice(0, 14)}…` : full;
+          return (
+            <Tooltip content={full || "—"} placement="top">
+              <span className="c360-font-mono c360-text-2xs">{short || "—"}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => {
+          const st = String(row.status ?? "—");
+          return (
+            <Badge color={runStatusBadgeColor(st)} size="sm">
+              {st}
+            </Badge>
+          );
+        },
+      },
+      {
+        key: "items",
+        header: "Items",
+        align: "right",
+        render: (row) => (
+          <span>
+            {String(row.itemCount ?? row.item_count ?? "—")}
+          </span>
+        ),
+      },
+      {
+        key: "started",
+        header: "Started",
+        render: (row) =>
+          formatDate(
+            String(row.startedAt ?? row.started_at ?? "") || undefined,
+          ),
+      },
+      {
+        key: "finished",
+        header: "Finished",
+        render: (row) =>
+          formatDate(
+            String(row.finishedAt ?? row.finished_at ?? "") || undefined,
+          ),
+      },
+      {
+        key: "actions",
+        header: "",
+        align: "right",
+        render: (row) => {
+          const rid = satelliteRunId(row);
+          return (
+            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
+              {rid ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => drillSignalsByRun(rid)}
+                >
+                  Signals
+                </Button>
+              ) : null}
+              {rid ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={runActionId === rid}
+                  onClick={() => void onRefreshRun(rid)}
+                >
+                  {runActionId === rid ? "Refreshing…" : "Refresh"}
+                </Button>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [drillSignalsByRun, onRefreshRun, runActionId],
+  );
+
+  const trackedColumns: TableColumn<Record<string, unknown>>[] = useMemo(
+    () => [
+      {
+        key: "id",
+        header: "Scrape job",
+        render: (row) => {
+          const full = String(row.id ?? "");
+          const short =
+            full.length > 12 ? `${full.slice(0, 12)}…` : full || "—";
+          return (
+            <Tooltip content={full || "—"} placement="top">
+              <span className="c360-font-mono c360-text-2xs">{short}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => {
+          const st = String(row.status ?? "—");
+          return (
+            <Badge color={runStatusBadgeColor(st)} size="sm">
+              {st}
+            </Badge>
+          );
+        },
+      },
+      {
+        key: "apify",
+        header: "Apify run",
+        render: (row) => {
+          const full = String(row.apifyRunId ?? "");
+          const short =
+            full.length > 12 ? `${full.slice(0, 12)}…` : full || "—";
+          return (
+            <Tooltip content={full || "—"} placement="top">
+              <span className="c360-font-mono c360-text-2xs">{short}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: "created",
+        header: "Created",
+        render: (row) => formatDate(String(row.createdAt ?? "") || undefined),
+      },
+      {
+        key: "actions",
+        header: "",
+        align: "right",
+        render: (row) => {
+          const sid = String(row.id ?? "");
+          const apify = String(row.apifyRunId ?? "");
+          return (
+            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
+              {apify ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => drillSignalsByRun(apify)}
+                >
+                  Signals
+                </Button>
+              ) : null}
+              {sid ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={scrapeDownloadId === sid || !apify}
+                  onClick={() => void onDownloadCsv(sid)}
+                >
+                  {scrapeDownloadId === sid ? "Exporting…" : "CSV"}
+                </Button>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [drillSignalsByRun, onDownloadCsv, scrapeDownloadId],
+  );
+
+  const signalsToolbar = (
+    <DataToolbar
+      cssPrefix="c360-toolbar"
+      tabs={[
+        {
+          value: "all",
+          label: "All signals",
+          count: total,
+          showCountOnlyWhenActive: true,
+        },
+        {
+          value: "new",
+          label: "New (7 days)",
+          count: total,
+          showCountOnlyWhenActive: true,
+        },
+      ]}
+      activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
+      onTabChange={(v) =>
+        setSignalTimePreset(v === "new" ? "new_7d" : "all")
+      }
+      totalCount={total}
+      viewModes={[
+        { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
+        { value: "compact", label: "Compact", icon: List },
+      ]}
+      viewMode={tableDensity}
+      onViewModeChange={(m) =>
+        setTableDensity(m as "comfortable" | "compact")
+      }
+      filterConfig={{
+        activeCount: activeDraftCount,
+        onOpen: () => setMobileFiltersOpen(true),
+        show: !isDesktop,
+      }}
+      actions={[
+        {
+          label: "Refresh",
+          onClick: () => void refetch(),
+          icon: RefreshCw,
+          variant: "secondary",
+          disabled: loading,
+        },
+        {
+          label: "Run scrape",
+          onClick: () => setScrapeModalOpen(true),
+          icon: Play,
+          variant: "primary",
+        },
+      ]}
     />
   );
 
@@ -229,31 +429,6 @@ export default function HiringSignalsPage() {
             <span className="c360-font-medium c360-text-ink">Hire signal</span>{" "}
             in GraphQL (gateway) or the actions below.
           </p>
-        </div>
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="c360-gap-2"
-            onClick={() => void refetch()}
-            disabled={loading}
-            leftIcon={
-              <RefreshCw size={15} className={cn(loading && "c360-spin")} />
-            }
-          >
-            Refresh
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            className="c360-gap-2"
-            onClick={() => setScrapeModalOpen(true)}
-            leftIcon={<Play size={15} />}
-          >
-            Run scrape
-          </Button>
         </div>
       </div>
 
@@ -286,6 +461,9 @@ export default function HiringSignalsPage() {
             loading={loading}
             statsBar={renderStatsBar()}
             onOpenCompanyDrawer={(row) => setDrawerRow(row)}
+            latestRun={latestSatelliteRun}
+            runsLoading={runsLoading}
+            onGoToRuns={() => setMainTab("runs")}
           />
         </TabsContent>
         <TabsContent value="runs">
@@ -299,7 +477,7 @@ export default function HiringSignalsPage() {
                 variant="outline"
                 size="sm"
                 className="c360-gap-2"
-                onClick={() => void loadRunsTab()}
+                onClick={() => void loadRuns()}
                 disabled={runsLoading}
                 leftIcon={
                   <RefreshCw
@@ -316,136 +494,55 @@ export default function HiringSignalsPage() {
               <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
                 Recent Apify runs (satellite)
               </h3>
-              {runsLoading && satelliteRunsRows.length === 0 ? (
-                <p className="c360-text-sm c360-text-muted">Loading…</p>
-              ) : satelliteRunsRows.length === 0 ? (
-                <p className="c360-text-sm c360-text-muted">No runs yet.</p>
-              ) : (
-                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                  <table className="c360-w-full c360-text-left c360-text-2xs">
-                    <thead className="c360-border-b c360-border-ink-8 c360-bg-ink-1/40">
-                      <tr>
-                        <th className="c360-p-2">Run ID</th>
-                        <th className="c360-p-2">Status</th>
-                        <th className="c360-p-2">Items</th>
-                        <th className="c360-p-2">Started</th>
-                        <th className="c360-p-2" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {satelliteRunsRows.map((row) => {
-                        const rid = String(
-                          row.runId ?? row.run_id ?? row.id ?? "",
-                        );
-                        return (
-                          <tr
-                            key={rid || JSON.stringify(row).slice(0, 40)}
-                            className="c360-border-b c360-border-ink-8/80"
-                          >
-                            <td className="c360-max-w-[200px] c360-p-2 c360-font-mono c360-break-all">
-                              {rid || "—"}
-                            </td>
-                            <td className="c360-p-2">
-                              {String(row.status ?? "—")}
-                            </td>
-                            <td className="c360-p-2">
-                              {String(row.itemCount ?? row.item_count ?? "—")}
-                            </td>
-                            <td className="c360-p-2 c360-text-muted">
-                              {String(row.startedAt ?? row.started_at ?? "—")}
-                            </td>
-                            <td className="c360-p-2">
-                              {rid ? (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={runActionId === rid}
-                                  onClick={() =>
-                                    void onRefreshSatelliteRun(rid)
-                                  }
-                                >
-                                  {runActionId === rid
-                                    ? "Refreshing…"
-                                    : "Refresh"}
-                                </Button>
-                              ) : null}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                <Table<Record<string, unknown>>
+                  columns={satelliteColumns}
+                  data={satellitePaged}
+                  keyExtractor={(row) =>
+                    satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
+                  }
+                  loading={runsLoading && satelliteRunsRows.length === 0}
+                  emptyState={<p className="c360-m-0 c360-text-sm">No runs yet.</p>}
+                />
+              </div>
+              {satelliteRunsRows.length > RUNS_PAGE_SIZE ? (
+                <Pagination
+                  className="c360-hs-table-pagination"
+                  page={satellitePage}
+                  pageSize={RUNS_PAGE_SIZE}
+                  total={satelliteRunsRows.length}
+                  onPageChange={setSatellitePage}
+                />
+              ) : null}
             </section>
 
             <section>
               <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
                 Your tracked scrapes (gateway)
               </h3>
-              {runsLoading && trackedScrapeRows.length === 0 ? (
-                <p className="c360-text-sm c360-text-muted">Loading…</p>
-              ) : trackedScrapeRows.length === 0 ? (
-                <p className="c360-text-sm c360-text-muted">
-                  No tracked scrapes yet. Use <strong>Run scrape</strong> to
-                  queue one.
-                </p>
-              ) : (
-                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                  <table className="c360-w-full c360-text-left c360-text-2xs">
-                    <thead className="c360-border-b c360-border-ink-8 c360-bg-ink-1/40">
-                      <tr>
-                        <th className="c360-p-2">Scrape job</th>
-                        <th className="c360-p-2">Status</th>
-                        <th className="c360-p-2">Apify run</th>
-                        <th className="c360-p-2">Created</th>
-                        <th className="c360-p-2" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {trackedScrapeRows.map((row) => {
-                        const sid = String(row.id ?? "");
-                        const apify = String(row.apifyRunId ?? "");
-                        return (
-                          <tr
-                            key={sid}
-                            className="c360-border-b c360-border-ink-8/80"
-                          >
-                            <td className="c360-max-w-[180px] c360-p-2 c360-font-mono c360-break-all">
-                              {sid || "—"}
-                            </td>
-                            <td className="c360-p-2">
-                              {String(row.status ?? "—")}
-                            </td>
-                            <td className="c360-max-w-[160px] c360-p-2 c360-font-mono c360-break-all">
-                              {apify || "—"}
-                            </td>
-                            <td className="c360-p-2 c360-text-muted">
-                              {String(row.createdAt ?? "—")}
-                            </td>
-                            <td className="c360-p-2">
-                              {sid ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={scrapeDownloadId === sid || !apify}
-                                  onClick={() => void onDownloadScrapeCsv(sid)}
-                                >
-                                  {scrapeDownloadId === sid
-                                    ? "Exporting…"
-                                    : "CSV"}
-                                </Button>
-                              ) : null}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                <Table<Record<string, unknown>>
+                  columns={trackedColumns}
+                  data={trackedPaged}
+                  keyExtractor={(row) => String(row.id ?? JSON.stringify(row))}
+                  loading={runsLoading && trackedScrapeRows.length === 0}
+                  emptyState={
+                    <p className="c360-m-0 c360-text-sm">
+                      No tracked scrapes yet. Use <strong>Run scrape</strong> to
+                      queue one.
+                    </p>
+                  }
+                />
+              </div>
+              {trackedScrapeRows.length > RUNS_PAGE_SIZE ? (
+                <Pagination
+                  className="c360-hs-table-pagination"
+                  page={trackedPage}
+                  pageSize={RUNS_PAGE_SIZE}
+                  total={trackedScrapeRows.length}
+                  onPageChange={setTrackedPage}
+                />
+              ) : null}
             </section>
           </div>
         </TabsContent>
@@ -455,25 +552,15 @@ export default function HiringSignalsPage() {
             showFilters
             mobileFiltersOpen={mobileFiltersOpen}
             onMobileFiltersClose={() => setMobileFiltersOpen(false)}
-            toolbar={
-              <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="c360-hs-filters-mobile-toggle"
-                  onClick={() => setMobileFiltersOpen(true)}
-                >
-                  Filters
-                </Button>
-              </div>
-            }
+            toolbar={signalsToolbar}
             filters={
               <HiringSignalsFilterSidebar
-                values={draft}
-                onChange={onDraftField}
-                onApply={applyFilters}
-                onReset={resetFilters}
+                onApply={() => {
+                  applyFilters();
+                  setMobileFiltersOpen(false);
+                }}
+                appliedRunId={filters.runId}
+                onClearRunId={clearRunFilter}
               />
             }
             metadata={
@@ -515,6 +602,9 @@ export default function HiringSignalsPage() {
               onOpenCompanyDrawer={(row) => setDrawerRow(row)}
               selectedKeys={selectedKeys}
               onSelectionChange={setSelectedKeys}
+              density={tableDensity}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleHsColumn}
             />
           </DataPageLayout>
         </TabsContent>
@@ -549,9 +639,26 @@ export default function HiringSignalsPage() {
         onClose={() => setScrapeModalOpen(false)}
         onSuccess={() => {
           void refetch();
-          void loadRunsTab();
+          void loadRuns();
         }}
       />
     </DashboardPageLayout>
+  );
+}
+
+export default function HiringSignalsPage() {
+  const [signalTimePreset, setSignalTimePreset] = useState<"all" | "new_7d">(
+    "all",
+  );
+  const hiring = useHiringSignals({}, { signalTimePreset });
+
+  return (
+    <HireSignalFilterProvider setFilters={hiring.setFilters}>
+      <HiringSignalsPageBody
+        hiring={hiring}
+        signalTimePreset={signalTimePreset}
+        setSignalTimePreset={setSignalTimePreset}
+      />
+    </HireSignalFilterProvider>
   );
 }

@@ -1,19 +1,39 @@
 "use client";
 
 import { useMemo } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, History } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Progress } from "@/components/ui/Progress";
 import { HiringSignalCharts } from "@/components/feature/hiring-signals/HiringSignalCharts";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import { formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+function runStatusBadgeColor(status: string): BadgeColor {
+  const s = status.toUpperCase();
+  if (s.includes("SUCCESS") || s === "SUCCEEDED") return "success";
+  if (s.includes("RUNNING") || s.includes("PENDING")) return "warning";
+  if (
+    s.includes("FAIL") ||
+    s.includes("ERROR") ||
+    s.includes("TIME") ||
+    s.includes("ABORT")
+  )
+    return "danger";
+  return "gray";
+}
 
 export interface HiringSignalsDashboardProps {
   jobs: LinkedInJobRow[];
   loading: boolean;
   statsBar: React.ReactNode;
   onOpenCompanyDrawer: (row: LinkedInJobRow) => void;
+  /** First row from satellite runs payload (recent Apify run). */
+  latestRun?: Record<string, unknown>;
+  runsLoading?: boolean;
+  onGoToRuns?: () => void;
   className?: string;
 }
 
@@ -22,6 +42,9 @@ export function HiringSignalsDashboard({
   loading,
   statsBar,
   onOpenCompanyDrawer,
+  latestRun,
+  runsLoading,
+  onGoToRuns,
   className,
 }: HiringSignalsDashboardProps) {
   const recent = useMemo(() => {
@@ -52,8 +75,60 @@ export function HiringSignalsDashboard({
     return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
   }, [jobs]);
 
+  const latestStatus = latestRun
+    ? String(latestRun.status ?? latestRun.state ?? "—")
+    : "";
+  const latestRunning = /running|pending/i.test(latestStatus);
+  const latestStarted = String(
+    latestRun?.startedAt ?? latestRun?.started_at ?? "",
+  );
+  const latestItems = Number(
+    latestRun?.itemCount ?? latestRun?.item_count ?? 0,
+  );
+
   return (
     <div className={cn("c360-flex c360-flex-col c360-gap-6", className)}>
+      {latestRun && Object.keys(latestRun).length > 0 ? (
+        <Card title="Latest scrape run" subtitle="Most recent Apify run (job.server)">
+          <div className="c360-flex c360-flex-col c360-gap-3 sm:c360-flex-row sm:c360-items-start sm:c360-justify-between">
+            <div className="c360-min-w-0 c360-space-y-2">
+              <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+                <Badge color={runStatusBadgeColor(latestStatus)} size="sm">
+                  {latestStatus || "—"}
+                </Badge>
+                <span className="c360-text-2xs c360-text-ink-muted">
+                  {latestItems > 0
+                    ? `${latestItems.toLocaleString()} items`
+                    : "Items —"}
+                </span>
+              </div>
+              <p className="c360-m-0 c360-text-sm c360-text-ink">
+                Started{" "}
+                {latestStarted
+                  ? formatRelativeTime(new Date(latestStarted))
+                  : "—"}
+              </p>
+              {latestRunning ? (
+                <Progress indeterminate size="sm" className="c360-max-w-md" />
+              ) : null}
+            </div>
+            {onGoToRuns ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="c360-shrink-0 c360-gap-2"
+                onClick={onGoToRuns}
+                disabled={runsLoading}
+                leftIcon={<History size={14} />}
+              >
+                Open Runs tab
+              </Button>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       {statsBar}
 
       <HiringSignalCharts jobs={jobs} />
