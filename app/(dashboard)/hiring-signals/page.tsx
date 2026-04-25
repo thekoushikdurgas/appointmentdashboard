@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { RefreshCw, Play } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { History, RefreshCw, Play } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +11,18 @@ import {
   useHiringSignals,
   type LinkedInJobRow,
 } from "@/hooks/useHiringSignals";
-import { triggerHireSignalScrape } from "@/services/graphql/hiringSignalService";
+import {
+  asRecord,
+  fetchHireSignalRuns,
+  fetchListScrapeJobs,
+  fetchScrapeJobJobs,
+  refreshHireSignalRun,
+} from "@/services/graphql/hiringSignalService";
+import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
+import {
+  downloadTextFile,
+  linkedinJobsPayloadToCsv,
+} from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import {
   HiringSignalsFilterSidebar,
@@ -48,14 +59,21 @@ export default function HiringSignalsPage() {
   const [draft, setDraft] = useState<HiringSignalFilterDraft>(
     EMPTY_HIRING_SIGNAL_DRAFT,
   );
-  const [scrapeLoading, setScrapeLoading] = useState(false);
+  const [scrapeModalOpen, setScrapeModalOpen] = useState(false);
   const [jd, setJd] = useState<LinkedInJobRow | null>(null);
   const [companyRow, setCompanyRow] = useState<LinkedInJobRow | null>(null);
   const [connectraRow, setConnectraRow] = useState<LinkedInJobRow | null>(null);
   const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-  const [mainTab, setMainTab] = useState<"overview" | "signals">("signals");
+  const [mainTab, setMainTab] = useState<"overview" | "signals" | "runs">(
+    "signals",
+  );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [runsLoading, setRunsLoading] = useState(false);
+  const [runsPayload, setRunsPayload] = useState<unknown>(null);
+  const [scrapeJobsPayload, setScrapeJobsPayload] = useState<unknown>(null);
+  const [runActionId, setRunActionId] = useState<string | null>(null);
+  const [scrapeDownloadId, setScrapeDownloadId] = useState<string | null>(null);
 
   const previewJobsForDrawer = useMemo(() => {
     if (!drawerRow?.companyUuid) return [];
@@ -106,31 +124,91 @@ export default function HiringSignalsPage() {
     [],
   );
 
-  const runScrape = useCallback(async () => {
-    setScrapeLoading(true);
+  const loadRunsTab = useCallback(async () => {
+    setRunsLoading(true);
     try {
-      const res = await triggerHireSignalScrape();
-      const raw = res.hireSignal?.triggerScrape;
-      const ok =
-        raw &&
-        typeof raw === "object" &&
-        (raw as { success?: boolean }).success;
-      if (ok) {
-        toast.success("Scrape queued", {
-          description: "Poll job.server or refresh this list shortly.",
-        });
-        void refetch();
-      } else {
-        const msg = JSON.stringify(raw);
-        toast.message("Scrape response", { description: msg });
-      }
+      const [r, s] = await Promise.all([
+        fetchHireSignalRuns(25),
+        fetchListScrapeJobs(30, 0),
+      ]);
+      setRunsPayload(r.hireSignal?.runs ?? null);
+      setScrapeJobsPayload(s.hireSignal?.listScrapeJobs ?? null);
     } catch (e) {
-      const m = e instanceof Error ? e.message : "Request failed";
-      toast.error("Scrape", { description: m });
+      const m = e instanceof Error ? e.message : "Failed to load runs";
+      toast.error("Runs", { description: m });
     } finally {
-      setScrapeLoading(false);
+      setRunsLoading(false);
     }
-  }, [refetch]);
+  }, []);
+
+  useEffect(() => {
+    if (mainTab === "runs") void loadRunsTab();
+  }, [mainTab, loadRunsTab]);
+
+  const onRefreshSatelliteRun = useCallback(
+    async (runId: string) => {
+      const rid = runId.trim();
+      if (!rid) return;
+      setRunActionId(rid);
+      try {
+        await refreshHireSignalRun(rid);
+        toast.success("Run status refreshed from Apify");
+        void loadRunsTab();
+      } catch (e) {
+        const m = e instanceof Error ? e.message : "Refresh failed";
+        toast.error("Refresh run", { description: m });
+      } finally {
+        setRunActionId(null);
+      }
+    },
+    [loadRunsTab],
+  );
+
+  const onDownloadScrapeCsv = useCallback(
+    async (scrapeJobId: string) => {
+      const id = scrapeJobId.trim();
+      if (!id) return;
+      setScrapeDownloadId(id);
+      try {
+        const res = await fetchScrapeJobJobs(id, 2000, 0);
+        const raw = res.hireSignal?.scrapeJobJobs;
+        const csv = linkedinJobsPayloadToCsv(raw);
+        if (!csv) {
+          toast.message("No rows yet", {
+            description:
+              "Wait until the run succeeds and jobs are ingested, then try again.",
+          });
+          return;
+        }
+        downloadTextFile(`hiring-signals-scrape-${id.slice(0, 8)}.csv`, csv);
+        toast.success("CSV downloaded");
+      } catch (e) {
+        const m = e instanceof Error ? e.message : "Export failed";
+        toast.error("CSV export", { description: m });
+      } finally {
+        setScrapeDownloadId(null);
+      }
+    },
+    [],
+  );
+
+  const satelliteRunsRows = useMemo(() => {
+    const env = asRecord(runsPayload);
+    const data = env?.data;
+    if (!Array.isArray(data)) return [];
+    return data.filter(
+      (x): x is Record<string, unknown> =>
+        !!x && typeof x === "object" && !Array.isArray(x),
+    );
+  }, [runsPayload]);
+
+  const trackedScrapeRows = useMemo(() => {
+    if (!Array.isArray(scrapeJobsPayload)) return [];
+    return scrapeJobsPayload.filter(
+      (x): x is Record<string, unknown> =>
+        !!x && typeof x === "object" && !Array.isArray(x),
+    );
+  }, [scrapeJobsPayload]);
 
   const renderStatsBar = () => (
     <HiringSignalStatsBar
@@ -174,16 +252,10 @@ export default function HiringSignalsPage() {
             variant="primary"
             size="sm"
             className="c360-gap-2"
-            onClick={() => void runScrape()}
-            disabled={scrapeLoading}
-            leftIcon={
-              <Play
-                size={15}
-                className={cn(scrapeLoading && "c360-opacity-60")}
-              />
-            }
+            onClick={() => setScrapeModalOpen(true)}
+            leftIcon={<Play size={15} />}
           >
-            {scrapeLoading ? "Queuing…" : "Run scrape"}
+            Run scrape
           </Button>
         </div>
       </div>
@@ -196,7 +268,9 @@ export default function HiringSignalsPage() {
 
       <Tabs
         value={mainTab}
-        onValueChange={(v) => setMainTab(v as "overview" | "signals")}
+        onValueChange={(v) =>
+          setMainTab(v as "overview" | "signals" | "runs")
+        }
         variant="dashboard"
         className="c360-mb-4"
       >
@@ -207,6 +281,9 @@ export default function HiringSignalsPage() {
           <TabsTrigger value="signals" icon={<Zap size={14} />}>
             Signals
           </TabsTrigger>
+          <TabsTrigger value="runs" icon={<History size={14} />}>
+            Runs
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <HiringSignalsDashboard
@@ -215,6 +292,167 @@ export default function HiringSignalsPage() {
             statsBar={renderStatsBar()}
             onOpenCompanyDrawer={(row) => setDrawerRow(row)}
           />
+        </TabsContent>
+        <TabsContent value="runs">
+          <div className="c360-flex c360-flex-col c360-gap-6">
+            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
+              <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
+                Job.server runs &amp; your scrape history
+              </h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="c360-gap-2"
+                onClick={() => void loadRunsTab()}
+                disabled={runsLoading}
+                leftIcon={
+                  <RefreshCw
+                    size={15}
+                    className={cn(runsLoading && "c360-spin")}
+                  />
+                }
+              >
+                Reload
+              </Button>
+            </div>
+
+            <section>
+              <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
+                Recent Apify runs (satellite)
+              </h3>
+              {runsLoading && satelliteRunsRows.length === 0 ? (
+                <p className="c360-text-sm c360-text-muted">Loading…</p>
+              ) : satelliteRunsRows.length === 0 ? (
+                <p className="c360-text-sm c360-text-muted">No runs yet.</p>
+              ) : (
+                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                  <table className="c360-w-full c360-text-left c360-text-2xs">
+                    <thead className="c360-border-b c360-border-ink-8 c360-bg-ink-1/40">
+                      <tr>
+                        <th className="c360-p-2">Run ID</th>
+                        <th className="c360-p-2">Status</th>
+                        <th className="c360-p-2">Items</th>
+                        <th className="c360-p-2">Started</th>
+                        <th className="c360-p-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {satelliteRunsRows.map((row) => {
+                        const rid = String(
+                          row.runId ?? row.run_id ?? row.id ?? "",
+                        );
+                        return (
+                          <tr
+                            key={rid || JSON.stringify(row).slice(0, 40)}
+                            className="c360-border-b c360-border-ink-8/80"
+                          >
+                            <td className="c360-max-w-[200px] c360-p-2 c360-font-mono c360-break-all">
+                              {rid || "—"}
+                            </td>
+                            <td className="c360-p-2">
+                              {String(row.status ?? "—")}
+                            </td>
+                            <td className="c360-p-2">
+                              {String(row.itemCount ?? row.item_count ?? "—")}
+                            </td>
+                            <td className="c360-p-2 c360-text-muted">
+                              {String(row.startedAt ?? row.started_at ?? "—")}
+                            </td>
+                            <td className="c360-p-2">
+                              {rid ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={runActionId === rid}
+                                  onClick={() => void onRefreshSatelliteRun(rid)}
+                                >
+                                  {runActionId === rid
+                                    ? "Refreshing…"
+                                    : "Refresh"}
+                                </Button>
+                              ) : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section>
+              <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
+                Your tracked scrapes (gateway)
+              </h3>
+              {runsLoading && trackedScrapeRows.length === 0 ? (
+                <p className="c360-text-sm c360-text-muted">Loading…</p>
+              ) : trackedScrapeRows.length === 0 ? (
+                <p className="c360-text-sm c360-text-muted">
+                  No tracked scrapes yet. Use <strong>Run scrape</strong> to
+                  queue one.
+                </p>
+              ) : (
+                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                  <table className="c360-w-full c360-text-left c360-text-2xs">
+                    <thead className="c360-border-b c360-border-ink-8 c360-bg-ink-1/40">
+                      <tr>
+                        <th className="c360-p-2">Scrape job</th>
+                        <th className="c360-p-2">Status</th>
+                        <th className="c360-p-2">Apify run</th>
+                        <th className="c360-p-2">Created</th>
+                        <th className="c360-p-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trackedScrapeRows.map((row) => {
+                        const sid = String(row.id ?? "");
+                        const apify = String(row.apifyRunId ?? "");
+                        return (
+                          <tr
+                            key={sid}
+                            className="c360-border-b c360-border-ink-8/80"
+                          >
+                            <td className="c360-max-w-[180px] c360-p-2 c360-font-mono c360-break-all">
+                              {sid || "—"}
+                            </td>
+                            <td className="c360-p-2">
+                              {String(row.status ?? "—")}
+                            </td>
+                            <td className="c360-max-w-[160px] c360-p-2 c360-font-mono c360-break-all">
+                              {apify || "—"}
+                            </td>
+                            <td className="c360-p-2 c360-text-muted">
+                              {String(row.createdAt ?? "—")}
+                            </td>
+                            <td className="c360-p-2">
+                              {sid ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={
+                                    scrapeDownloadId === sid || !apify
+                                  }
+                                  onClick={() => void onDownloadScrapeCsv(sid)}
+                                >
+                                  {scrapeDownloadId === sid
+                                    ? "Exporting…"
+                                    : "CSV"}
+                                </Button>
+                              ) : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
         </TabsContent>
         <TabsContent value="signals">
           {renderStatsBar()}
@@ -309,6 +547,15 @@ export default function HiringSignalsPage() {
         previewJobs={previewJobsForDrawer}
         isOpen={!!drawerRow}
         onClose={() => setDrawerRow(null)}
+      />
+
+      <RunScrapeModal
+        isOpen={scrapeModalOpen}
+        onClose={() => setScrapeModalOpen(false)}
+        onSuccess={() => {
+          void refetch();
+          void loadRunsTab();
+        }}
       />
     </DashboardPageLayout>
   );

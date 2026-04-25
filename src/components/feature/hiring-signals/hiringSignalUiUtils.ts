@@ -125,3 +125,47 @@ export function pickCompanyDisplay(row: unknown): {
     linkedinUrl: String(o.linkedin_url ?? o.linkedinUrl ?? ""),
   };
 }
+
+/** RFC4180-style CSV from job.server ``GET /jobs`` envelope ``{ data: [...] }``. */
+export function linkedinJobsPayloadToCsv(payload: unknown): string {
+  const rec = asRecord(payload);
+  const data = rec?.data;
+  if (!Array.isArray(data) || data.length === 0) return "";
+  const rows = data.filter(
+    (x): x is Record<string, unknown> =>
+      !!x && typeof x === "object" && !Array.isArray(x),
+  );
+  const keySet = new Set<string>();
+  for (const r of rows) {
+    for (const k of Object.keys(r)) keySet.add(k);
+  }
+  const keys = [...keySet];
+  const esc = (v: unknown): string => {
+    let s: string;
+    if (v === null || v === undefined) s = "";
+    else if (typeof v === "object") s = JSON.stringify(v);
+    else s = String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const lines = [keys.join(",")];
+  for (const r of rows) {
+    lines.push(keys.map((k) => esc(r[k])).join(","));
+  }
+  return lines.join("\r\n");
+}
+
+export function downloadTextFile(
+  filename: string,
+  text: string,
+  mime = "text/csv;charset=utf-8",
+): void {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

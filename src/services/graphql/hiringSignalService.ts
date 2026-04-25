@@ -71,6 +71,70 @@ const HIRE_SIGNAL_TRIGGER = gql`
   }
 `;
 
+const HIRE_SIGNAL_TRIGGER_TRACK = gql`
+  mutation HireSignalTriggerTrack($body: JSON) {
+    hireSignal {
+      triggerScrapeAndTrack(body: $body) {
+        id
+        userId
+        status
+        apifyRunId
+        error
+        createdAt
+        jobServerResponse
+      }
+    }
+  }
+`;
+
+const HIRE_SIGNAL_RUNS = gql`
+  query HireSignalRuns($limit: Int) {
+    hireSignal {
+      runs(limit: $limit)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_RUN = gql`
+  query HireSignalRun($runId: String!) {
+    hireSignal {
+      run(runId: $runId)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_RUN_REFRESH = gql`
+  query HireSignalRunRefresh($runId: String!) {
+    hireSignal {
+      refreshHireSignalRun(runId: $runId)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_LIST_SCRAPE_JOBS = gql`
+  query HireSignalListScrapeJobs($limit: Int, $offset: Int) {
+    hireSignal {
+      listScrapeJobs(limit: $limit, offset: $offset)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_SCRAPE_JOB_JOBS = gql`
+  query HireSignalScrapeJobJobs(
+    $scrapeJobId: String!
+    $limit: Int
+    $offset: Int
+  ) {
+    hireSignal {
+      scrapeJobJobs(
+        scrapeJobId: $scrapeJobId
+        limit: $limit
+        offset: $offset
+      )
+    }
+  }
+`;
+
 /** Proxies job.server → Connectra (sync.server); needs CONNECTRA_* on job.server. */
 const HIRE_SIGNAL_JOB_CONNECTRA_COMPANY = gql`
   query HireSignalJobConnectraCompany($linkedinJobId: String!) {
@@ -181,6 +245,59 @@ export async function triggerHireSignalScrape(
   return graphqlQuery<{
     hireSignal: { triggerScrape: HireSignalApiJson };
   }>(HIRE_SIGNAL_TRIGGER, { body: body ?? null });
+}
+
+export type HireSignalScrapeJobRow = {
+  id: string;
+  userId?: string;
+  status?: string;
+  apifyRunId?: string | null;
+  error?: string | null;
+  itemCount?: number | null;
+  createdAt?: string | null;
+  jobServerResponse?: Record<string, unknown> | null;
+};
+
+export async function triggerHireSignalScrapeAndTrack(
+  body?: Record<string, unknown> | null,
+) {
+  return graphqlQuery<{
+    hireSignal: { triggerScrapeAndTrack: HireSignalScrapeJobRow };
+  }>(HIRE_SIGNAL_TRIGGER_TRACK, { body: body ?? null });
+}
+
+export async function fetchHireSignalRuns(limit = 20) {
+  return graphqlQuery<{
+    hireSignal: { runs: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUNS, { limit });
+}
+
+export async function fetchHireSignalRun(runId: string) {
+  return graphqlQuery<{
+    hireSignal: { run: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN, { runId });
+}
+
+export async function refreshHireSignalRun(runId: string) {
+  return graphqlQuery<{
+    hireSignal: { refreshHireSignalRun: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN_REFRESH, { runId });
+}
+
+export async function fetchListScrapeJobs(limit = 50, offset = 0) {
+  return graphqlQuery<{
+    hireSignal: { listScrapeJobs: HireSignalApiJson };
+  }>(HIRE_SIGNAL_LIST_SCRAPE_JOBS, { limit, offset });
+}
+
+export async function fetchScrapeJobJobs(
+  scrapeJobId: string,
+  limit = 500,
+  offset = 0,
+) {
+  return graphqlQuery<{
+    hireSignal: { scrapeJobJobs: HireSignalApiJson };
+  }>(HIRE_SIGNAL_SCRAPE_JOB_JOBS, { scrapeJobId, limit, offset });
 }
 
 export async function fetchJobConnectraCompany(linkedinJobId: string) {
