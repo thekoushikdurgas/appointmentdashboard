@@ -105,9 +105,9 @@ function HiringSignalsPageBody({
     "signals",
   );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [tableDensity, setTableDensity] = useState<
-    "comfortable" | "compact"
-  >("comfortable");
+  const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
+    "comfortable",
+  );
   const [visibleColumns, setVisibleColumns] = useState<
     HiringSignalsDataTableColumnId[]
   >([...HS_DT_DEFAULT_COLUMNS]);
@@ -200,7 +200,9 @@ function HiringSignalsPageBody({
           const short = full.length > 14 ? `${full.slice(0, 14)}…` : full;
           return (
             <Tooltip content={full || "—"} placement="top">
-              <span className="c360-font-mono c360-text-2xs">{short || "—"}</span>
+              <span className="c360-font-mono c360-text-2xs">
+                {short || "—"}
+              </span>
             </Tooltip>
           );
         },
@@ -222,9 +224,7 @@ function HiringSignalsPageBody({
         header: "Items",
         align: "right",
         render: (row) => (
-          <span>
-            {String(row.itemCount ?? row.item_count ?? "—")}
-          </span>
+          <span>{String(row.itemCount ?? row.item_count ?? "—")}</span>
         ),
       },
       {
@@ -383,18 +383,14 @@ function HiringSignalsPageBody({
         },
       ]}
       activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
-      onTabChange={(v) =>
-        setSignalTimePreset(v === "new" ? "new_7d" : "all")
-      }
+      onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
       totalCount={total}
       viewModes={[
         { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
         { value: "compact", label: "Compact", icon: List },
       ]}
       viewMode={tableDensity}
-      onViewModeChange={(m) =>
-        setTableDensity(m as "comfortable" | "compact")
-      }
+      onViewModeChange={(m) => setTableDensity(m as "comfortable" | "compact")}
       filterConfig={{
         activeCount: activeDraftCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -502,7 +498,9 @@ function HiringSignalsPageBody({
                     satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
                   }
                   loading={runsLoading && satelliteRunsRows.length === 0}
-                  emptyState={<p className="c360-m-0 c360-text-sm">No runs yet.</p>}
+                  emptyState={
+                    <p className="c360-m-0 c360-text-sm">No runs yet.</p>
+                  }
                 />
               </div>
               {satelliteRunsRows.length > RUNS_PAGE_SIZE ? (

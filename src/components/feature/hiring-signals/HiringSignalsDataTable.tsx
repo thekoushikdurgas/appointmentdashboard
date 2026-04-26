@@ -94,7 +94,10 @@ export interface HiringSignalsDataTableProps {
   onSelectionChange: (keys: Set<string>) => void;
   density?: "comfortable" | "compact";
   visibleColumns?: HiringSignalsDataTableColumnId[];
-  onToggleColumn?: (id: HiringSignalsDataTableColumnId, visible: boolean) => void;
+  onToggleColumn?: (
+    id: HiringSignalsDataTableColumnId,
+    visible: boolean,
+  ) => void;
   className?: string;
 }
 
@@ -114,10 +117,7 @@ export function HiringSignalsDataTable({
   onToggleColumn,
   className,
 }: HiringSignalsDataTableProps) {
-  const vis = useMemo(
-    () => new Set(visibleColumns),
-    [visibleColumns],
-  );
+  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
   const allIds = useMemo(() => rows.map(hiringSignalRowKey), [rows]);
   const allSelected =
@@ -263,9 +263,7 @@ export function HiringSignalsDataTable({
                 />
               </th>
               {vis.has("title") ? (
-                <th className="c360-px-3 c360-py-2 c360-font-medium">
-                  Title
-                </th>
+                <th className="c360-px-3 c360-py-2 c360-font-medium">Title</th>
               ) : null}
               {vis.has("company") ? (
                 <th className="c360-px-3 c360-py-2 c360-font-medium">
@@ -281,9 +279,7 @@ export function HiringSignalsDataTable({
                 <th className="c360-px-3 c360-py-2 c360-font-medium">Type</th>
               ) : null}
               {vis.has("posted") ? (
-                <th className="c360-px-3 c360-py-2 c360-font-medium">
-                  Posted
-                </th>
+                <th className="c360-px-3 c360-py-2 c360-font-medium">Posted</th>
               ) : null}
               {vis.has("actions") ? (
                 <th className="c360-px-3 c360-py-2 c360-w-px c360-text-right">

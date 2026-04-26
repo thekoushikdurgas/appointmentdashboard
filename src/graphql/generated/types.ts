@@ -1867,8 +1867,6 @@ export type HireSignalQueryJobsArgs = {
   offset?: Scalars["Int"]["input"];
   postedAfter?: InputMaybe<Scalars["String"]["input"]>;
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
-  /** Apify run id filter (gateway/job.server must expose this arg on `hireSignal.jobs`). */
-  runId?: InputMaybe<Scalars["String"]["input"]>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
 };

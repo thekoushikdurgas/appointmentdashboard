@@ -46,7 +46,10 @@ const FUNCTION_PRESET_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
-export type { HiringSignalFilterDraft, HiringSignalDraftField } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+export type {
+  HiringSignalFilterDraft,
+  HiringSignalDraftField,
+} from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 export { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 
 function countTextSection(d: HiringSignalFilterDraft): number {
@@ -115,8 +118,7 @@ export function HiringSignalsFilterSidebar({
     });
   }
   if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
-    const s =
-      draft.functionCustom.trim() || draft.functionPreset.trim() || "";
+    const s = draft.functionCustom.trim() || draft.functionPreset.trim() || "";
     addChip("func", `Function: ${s}`, () => {
       onDraftField("functionPreset", "");
       onDraftField("functionCustom", "");
@@ -280,9 +282,7 @@ export function HiringSignalsFilterSidebar({
               <Select
                 id="hsf-emp"
                 value={draft.employmentType}
-                onChange={(e) =>
-                  onDraftField("employmentType", e.target.value)
-                }
+                onChange={(e) => onDraftField("employmentType", e.target.value)}
                 options={EMPLOYMENT_OPTIONS}
                 fullWidth
                 inputSize="md"
@@ -331,9 +331,7 @@ export function HiringSignalsFilterSidebar({
               <Select
                 id="hsf-func-preset"
                 value={draft.functionPreset}
-                onChange={(e) =>
-                  onDraftField("functionPreset", e.target.value)
-                }
+                onChange={(e) => onDraftField("functionPreset", e.target.value)}
                 options={FUNCTION_PRESET_OPTIONS}
                 fullWidth
                 inputSize="md"
@@ -347,9 +345,7 @@ export function HiringSignalsFilterSidebar({
               <Input
                 id="hsf-func-custom"
                 value={draft.functionCustom}
-                onChange={(e) =>
-                  onDraftField("functionCustom", e.target.value)
-                }
+                onChange={(e) => onDraftField("functionCustom", e.target.value)}
                 placeholder="Matches function_category_v2"
                 autoComplete="off"
               />

@@ -49,7 +49,9 @@ export function RunScrapeModal({
       .map((s) => s.trim())
       .filter(Boolean);
     if (lines.length === 0) {
-      setValidationError("Add at least one URL (one per line in the box below).");
+      setValidationError(
+        "Add at least one URL (one per line in the box below).",
+      );
       return;
     }
     setValidationError(null);

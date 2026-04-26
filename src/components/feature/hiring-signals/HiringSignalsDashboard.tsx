@@ -89,7 +89,10 @@ export function HiringSignalsDashboard({
   return (
     <div className={cn("c360-flex c360-flex-col c360-gap-6", className)}>
       {latestRun && Object.keys(latestRun).length > 0 ? (
-        <Card title="Latest scrape run" subtitle="Most recent Apify run (job.server)">
+        <Card
+          title="Latest scrape run"
+          subtitle="Most recent Apify run (job.server)"
+        >
           <div className="c360-flex c360-flex-col c360-gap-3 sm:c360-flex-row sm:c360-items-start sm:c360-justify-between">
             <div className="c360-min-w-0 c360-space-y-2">
               <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">

@@ -4,7 +4,7 @@
 
 The hiring-signals **Signals** list can be filtered by Apify run id when drilling down from the **Runs** tab (“Signals” on a satellite or tracked scrape row).
 
-The app sends `runId` in `HireSignalJobs` (`src/services/graphql/hiringSignalService.ts`). The **gateway** schema must include a `runId` (or equivalent) argument on `hireSignal.jobs` that proxies to job.server’s `run_id` / `apify_run_id` filter. If the argument is missing, GraphQL will error until the gateway is updated.
+The app sends `runId` in `HireSignalJobs` (`src/services/graphql/hiringSignalService.ts`). The **gateway** exposes `runId` on `hireSignal.jobs` (`contact360.io/api/app/graphql/modules/hire_signal/queries.py`) and forwards it to job.server as the `run_id` query parameter on `GET /api/v1/jobs`. Job.server filters Mongo with `apify_run_id` (`EC2/job.server`).
 
 ## UI patterns
 
