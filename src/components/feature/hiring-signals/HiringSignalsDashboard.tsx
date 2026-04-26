@@ -146,11 +146,13 @@ export function HiringSignalsDashboard({
             <ul
               className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0"
               role="list"
+              style={{ flexDirection: 'column' }}
             >
               {recent.map((j) => (
                 <li
                   key={j.id || `${j.linkedinJobId}-${j.apifyItemId}`}
                   className="c360-flex c360-items-start c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-p-2"
+                  style={{ padding: '10px' }}
                 >
                   <div className="c360-min-w-0">
                     <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink c360-hs-line-clamp-2">
@@ -184,12 +186,14 @@ export function HiringSignalsDashboard({
             <ul
               className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0"
               role="list"
+              style={{ display: 'flex', gap: '10px', borderRadius: '10px' }}
             >
               {topCompanies.map((c) => (
-                <li key={c.uuid}>
+                <li key={c.uuid} style={{ padding: 0, borderRadius: '10px' }}>
                   <button
                     type="button"
                     className="c360-flex c360-w-full c360-items-center c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1/30 c360-p-3 c360-text-left c360-hs-hover-primary-border"
+                    style={{ borderRadius: '7px', padding: '5px 11px' }}
                     onClick={() => onOpenCompanyDrawer(c.sample)}
                   >
                     <span className="c360-flex c360-min-w-0 c360-items-center c360-gap-2">

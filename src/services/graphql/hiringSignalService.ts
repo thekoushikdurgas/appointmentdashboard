@@ -5,6 +5,9 @@
 import { gql } from "graphql-request";
 import { graphqlQuery } from "@/lib/graphqlClient";
 
+/** Hiring-signal operations: hooks/modals show toasts; avoid duplicate client toasts. */
+const HS_GQL = { showToastOnError: false as const };
+
 // --- response shapes (JSON scalars from gateway) ---
 
 export type HireSignalApiJson = Record<string, unknown> | null | unknown[];
@@ -13,6 +16,42 @@ export function asRecord(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v)
     ? (v as Record<string, unknown>)
     : null;
+}
+
+/** Normalized rows + total from `hireSignal.runs` JSON (job.server list envelope). */
+export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
+  rows: Record<string, unknown>[];
+  total: number;
+} {
+  const r = asRecord(raw);
+  const data = r?.data;
+  const rows = Array.isArray(data)
+    ? data.filter(
+        (x): x is Record<string, unknown> =>
+          !!x && typeof x === "object" && !Array.isArray(x),
+      )
+    : [];
+  const total =
+    typeof r?.total === "number"
+      ? r.total
+      : rows.length;
+  return { rows, total };
+}
+
+/** Typed envelope for `hireSignal.jobs` list payload. */
+export function hireSignalJobsListFromJson(raw: HireSignalApiJson): {
+  success: boolean;
+  data: unknown[];
+  total: number;
+} {
+  const r = asRecord(raw);
+  const data = (r?.data as unknown) ?? [];
+  const arr = Array.isArray(data) ? data : [];
+  return {
+    success: Boolean(r?.success),
+    data: arr,
+    total: typeof r?.total === "number" ? r.total : 0,
+  };
 }
 
 // --- operations ---
@@ -90,9 +129,9 @@ const HIRE_SIGNAL_TRIGGER_TRACK = gql`
 `;
 
 const HIRE_SIGNAL_RUNS = gql`
-  query HireSignalRuns($limit: Int) {
+  query HireSignalRuns($limit: Int, $offset: Int) {
     hireSignal {
-      runs(limit: $limit)
+      runs(limit: $limit, offset: $offset)
     }
   }
 `;
@@ -207,25 +246,29 @@ export interface JobListFilters {
 export async function fetchHiringSignalJobs(filters: JobListFilters) {
   return graphqlQuery<{
     hireSignal: { jobs: HireSignalApiJson };
-  }>(HIRE_SIGNAL_JOBS, {
-    limit: filters.limit,
-    offset: filters.offset,
-    title: filters.title || null,
-    company: filters.company || null,
-    location: filters.location || null,
-    employmentType: filters.employmentType || null,
-    seniority: filters.seniority || null,
-    functionCategory: filters.functionCategory || null,
-    postedAfter: filters.postedAfter || null,
-    postedBefore: filters.postedBefore || null,
-    runId: filters.runId?.trim() || null,
-  });
+  }>(
+    HIRE_SIGNAL_JOBS,
+    {
+      limit: filters.limit,
+      offset: filters.offset,
+      title: filters.title || null,
+      company: filters.company || null,
+      location: filters.location || null,
+      employmentType: filters.employmentType || null,
+      seniority: filters.seniority || null,
+      functionCategory: filters.functionCategory || null,
+      postedAfter: filters.postedAfter || null,
+      postedBefore: filters.postedBefore || null,
+      runId: filters.runId?.trim() || null,
+    },
+    HS_GQL,
+  );
 }
 
 export async function fetchHiringSignalStats() {
   return graphqlQuery<{
     hireSignal: { stats: HireSignalApiJson };
-  }>(HIRE_SIGNAL_STATS, {});
+  }>(HIRE_SIGNAL_STATS, {}, HS_GQL);
 }
 
 export async function fetchCompanyHiringSignalJobs(
@@ -237,7 +280,7 @@ export async function fetchCompanyHiringSignalJobs(
   }>(HIRE_SIGNAL_COMPANY_JOBS, {
     companyUuid,
     limit,
-  });
+  }, HS_GQL);
 }
 
 export async function triggerHireSignalScrape(
@@ -245,7 +288,7 @@ export async function triggerHireSignalScrape(
 ) {
   return graphqlQuery<{
     hireSignal: { triggerScrape: HireSignalApiJson };
-  }>(HIRE_SIGNAL_TRIGGER, { body: body ?? null });
+  }>(HIRE_SIGNAL_TRIGGER, { body: body ?? null }, HS_GQL);
 }
 
 export type HireSignalScrapeJobRow = {
@@ -264,31 +307,31 @@ export async function triggerHireSignalScrapeAndTrack(
 ) {
   return graphqlQuery<{
     hireSignal: { triggerScrapeAndTrack: HireSignalScrapeJobRow };
-  }>(HIRE_SIGNAL_TRIGGER_TRACK, { body: body ?? null });
+  }>(HIRE_SIGNAL_TRIGGER_TRACK, { body: body ?? null }, HS_GQL);
 }
 
-export async function fetchHireSignalRuns(limit = 20) {
+export async function fetchHireSignalRuns(limit = 20, offset = 0) {
   return graphqlQuery<{
     hireSignal: { runs: HireSignalApiJson };
-  }>(HIRE_SIGNAL_RUNS, { limit });
+  }>(HIRE_SIGNAL_RUNS, { limit, offset: Math.max(0, offset) }, HS_GQL);
 }
 
 export async function fetchHireSignalRun(runId: string) {
   return graphqlQuery<{
     hireSignal: { run: HireSignalApiJson };
-  }>(HIRE_SIGNAL_RUN, { runId });
+  }>(HIRE_SIGNAL_RUN, { runId }, HS_GQL);
 }
 
 export async function refreshHireSignalRun(runId: string) {
   return graphqlQuery<{
     hireSignal: { refreshHireSignalRun: HireSignalApiJson };
-  }>(HIRE_SIGNAL_RUN_REFRESH, { runId });
+  }>(HIRE_SIGNAL_RUN_REFRESH, { runId }, HS_GQL);
 }
 
 export async function fetchListScrapeJobs(limit = 50, offset = 0) {
   return graphqlQuery<{
     hireSignal: { listScrapeJobs: HireSignalApiJson };
-  }>(HIRE_SIGNAL_LIST_SCRAPE_JOBS, { limit, offset });
+  }>(HIRE_SIGNAL_LIST_SCRAPE_JOBS, { limit, offset }, HS_GQL);
 }
 
 export async function fetchScrapeJobJobs(
@@ -298,13 +341,13 @@ export async function fetchScrapeJobJobs(
 ) {
   return graphqlQuery<{
     hireSignal: { scrapeJobJobs: HireSignalApiJson };
-  }>(HIRE_SIGNAL_SCRAPE_JOB_JOBS, { scrapeJobId, limit, offset });
+  }>(HIRE_SIGNAL_SCRAPE_JOB_JOBS, { scrapeJobId, limit, offset }, HS_GQL);
 }
 
 export async function fetchJobConnectraCompany(linkedinJobId: string) {
   return graphqlQuery<{
     hireSignal: { jobConnectraCompany: HireSignalApiJson };
-  }>(HIRE_SIGNAL_JOB_CONNECTRA_COMPANY, { linkedinJobId });
+  }>(HIRE_SIGNAL_JOB_CONNECTRA_COMPANY, { linkedinJobId }, HS_GQL);
 }
 
 export async function fetchJobConnectraContacts(
@@ -318,19 +361,23 @@ export async function fetchJobConnectraContacts(
 ) {
   return graphqlQuery<{
     hireSignal: { jobConnectraContacts: HireSignalApiJson };
-  }>(HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS, {
-    linkedinJobId,
-    page: options?.page ?? 1,
-    limit: options?.limit ?? 25,
-    populateCompany: options?.populateCompany ?? true,
-    includePoster: options?.includePoster ?? true,
-  });
+  }>(
+    HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS,
+    {
+      linkedinJobId,
+      page: options?.page ?? 1,
+      limit: options?.limit ?? 25,
+      populateCompany: options?.populateCompany ?? true,
+      includePoster: options?.includePoster ?? true,
+    },
+    HS_GQL,
+  );
 }
 
 export async function fetchConnectraCompany(companyUuid: string) {
   return graphqlQuery<{
     hireSignal: { connectraCompany: HireSignalApiJson };
-  }>(HIRE_SIGNAL_CONNECTRA_COMPANY, { companyUuid });
+  }>(HIRE_SIGNAL_CONNECTRA_COMPANY, { companyUuid }, HS_GQL);
 }
 
 export async function fetchConnectraContactsForCompany(
@@ -339,10 +386,14 @@ export async function fetchConnectraContactsForCompany(
 ) {
   return graphqlQuery<{
     hireSignal: { connectraContactsForCompany: HireSignalApiJson };
-  }>(HIRE_SIGNAL_CONNECTRA_CONTACTS_FOR_COMPANY, {
-    companyUuid,
-    page: options?.page ?? 1,
-    limit: options?.limit ?? 25,
-    populateCompany: options?.populateCompany ?? true,
-  });
+  }>(
+    HIRE_SIGNAL_CONNECTRA_CONTACTS_FOR_COMPANY,
+    {
+      companyUuid,
+      page: options?.page ?? 1,
+      limit: options?.limit ?? 25,
+      populateCompany: options?.populateCompany ?? true,
+    },
+    HS_GQL,
+  );
 }

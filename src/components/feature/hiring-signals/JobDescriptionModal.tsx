@@ -61,7 +61,7 @@ export function JobDescriptionModal({
       }
     >
       {job ? (
-        <div className="c360-space-y-3">
+        <div className="c360-space-y-3" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-text-sm c360-text-ink-muted">
             <span className="c360-font-medium c360-text-ink">
               {job.companyName || "—"}
@@ -79,7 +79,7 @@ export function JobDescriptionModal({
               </>
             ) : null}
           </div>
-          <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+          <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2" style={{ paddingTop: '5px', paddingBottom: '5px' }}>
             {job.employmentType ? (
               <Badge
                 color={employmentTypeBadgeColor(job.employmentType)}

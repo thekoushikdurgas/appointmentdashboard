@@ -119,15 +119,23 @@ function HiringSignalsPageBody({
     runActionId,
     scrapeDownloadId,
     satelliteRunsRows,
+    satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,
     onDownloadCsv,
-  } = useHireSignalRuns(mainTab);
+  } = useHireSignalRuns(mainTab, {
+    satellitePage,
+    runsPageSize: RUNS_PAGE_SIZE,
+  });
 
   useEffect(() => {
-    setSatellitePage(1);
-  }, [satelliteRunsRows.length]);
+    const maxPage = Math.max(
+      1,
+      Math.ceil(satelliteRunsTotal / RUNS_PAGE_SIZE),
+    );
+    if (satellitePage > maxPage) setSatellitePage(maxPage);
+  }, [satelliteRunsTotal, satellitePage]);
 
   useEffect(() => {
     setTrackedPage(1);
@@ -179,11 +187,6 @@ function HiringSignalsPageBody({
       className="c360-mb-4"
     />
   );
-
-  const satellitePaged = useMemo(() => {
-    const start = (satellitePage - 1) * RUNS_PAGE_SIZE;
-    return satelliteRunsRows.slice(start, start + RUNS_PAGE_SIZE);
-  }, [satelliteRunsRows, satellitePage]);
 
   const trackedPaged = useMemo(() => {
     const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
@@ -416,18 +419,6 @@ function HiringSignalsPageBody({
 
   return (
     <DashboardPageLayout>
-      <div className="c360-mb-4 c360-flex c360-flex-col c360-gap-3 c360-hs-page-head">
-        <div>
-          <h1 className="c360-page-header__title">Hiring signals</h1>
-          <p className="c360-page-header__subtitle">
-            LinkedIn roles ingested on job.server (Apify) and linked to
-            companies for Connectra. Use{" "}
-            <span className="c360-font-medium c360-text-ink">Hire signal</span>{" "}
-            in GraphQL (gateway) or the actions below.
-          </p>
-        </div>
-      </div>
-
       {error ? (
         <p className="c360-mb-4 c360-text-sm c360-text-danger" role="alert">
           {error}
@@ -463,7 +454,7 @@ function HiringSignalsPageBody({
           />
         </TabsContent>
         <TabsContent value="runs">
-          <div className="c360-flex c360-flex-col c360-gap-6">
+          <div className="c360-flex c360-flex-col c360-gap-6" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
             <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
               <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
                 Job.server runs &amp; your scrape history
@@ -493,7 +484,7 @@ function HiringSignalsPageBody({
               <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
                 <Table<Record<string, unknown>>
                   columns={satelliteColumns}
-                  data={satellitePaged}
+                  data={satelliteRunsRows}
                   keyExtractor={(row) =>
                     satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
                   }
@@ -503,12 +494,12 @@ function HiringSignalsPageBody({
                   }
                 />
               </div>
-              {satelliteRunsRows.length > RUNS_PAGE_SIZE ? (
+              {satelliteRunsTotal > RUNS_PAGE_SIZE ? (
                 <Pagination
                   className="c360-hs-table-pagination"
                   page={satellitePage}
                   pageSize={RUNS_PAGE_SIZE}
-                  total={satelliteRunsRows.length}
+                  total={satelliteRunsTotal}
                   onPageChange={setSatellitePage}
                 />
               ) : null}
@@ -545,7 +536,6 @@ function HiringSignalsPageBody({
           </div>
         </TabsContent>
         <TabsContent value="signals">
-          {renderStatsBar()}
           <DataPageLayout
             showFilters
             mobileFiltersOpen={mobileFiltersOpen}

@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  asRecord,
   fetchHireSignalRuns,
   fetchListScrapeJobs,
   fetchScrapeJobJobs,
+  hireSignalRunsFromJson,
   refreshHireSignalRun,
 } from "@/services/graphql/hiringSignalService";
 import {
@@ -14,9 +14,27 @@ import {
   linkedinJobsPayloadToCsv,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
-export function useHireSignalRuns(mainTab: "overview" | "signals" | "runs") {
+/** How many satellite runs to load for Overview “latest run” preview (first page). */
+export const HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT = 25;
+
+export type UseHireSignalRunsOpts = {
+  /** 1-based page when `mainTab === "runs"` (server-side offset). */
+  satellitePage: number;
+  /** Page size for satellite runs on the Runs tab. */
+  runsPageSize: number;
+};
+
+export function useHireSignalRuns(
+  mainTab: "overview" | "signals" | "runs",
+  opts: UseHireSignalRunsOpts,
+) {
+  const { satellitePage, runsPageSize } = opts;
+
   const [runsLoading, setRunsLoading] = useState(false);
-  const [runsPayload, setRunsPayload] = useState<unknown>(null);
+  const [satelliteRunsRows, setSatelliteRunsRows] = useState<
+    Record<string, unknown>[]
+  >([]);
+  const [satelliteRunsTotal, setSatelliteRunsTotal] = useState(0);
   const [scrapeJobsPayload, setScrapeJobsPayload] = useState<unknown>(null);
   const [runActionId, setRunActionId] = useState<string | null>(null);
   const [scrapeDownloadId, setScrapeDownloadId] = useState<string | null>(null);
@@ -24,11 +42,21 @@ export function useHireSignalRuns(mainTab: "overview" | "signals" | "runs") {
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
     try {
+      const limit =
+        mainTab === "runs" ? runsPageSize : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
+      const offset =
+        mainTab === "runs"
+          ? Math.max(0, satellitePage - 1) * runsPageSize
+          : 0;
+
       const [r, s] = await Promise.all([
-        fetchHireSignalRuns(25),
+        fetchHireSignalRuns(limit, offset),
         fetchListScrapeJobs(30, 0),
       ]);
-      setRunsPayload(r.hireSignal?.runs ?? null);
+      const raw = r.hireSignal?.runs ?? null;
+      const { rows, total } = hireSignalRunsFromJson(raw);
+      setSatelliteRunsRows(rows);
+      setSatelliteRunsTotal(total);
       setScrapeJobsPayload(s.hireSignal?.listScrapeJobs ?? null);
     } catch (e) {
       const m = e instanceof Error ? e.message : "Failed to load runs";
@@ -36,7 +64,7 @@ export function useHireSignalRuns(mainTab: "overview" | "signals" | "runs") {
     } finally {
       setRunsLoading(false);
     }
-  }, []);
+  }, [mainTab, runsPageSize, satellitePage]);
 
   useEffect(() => {
     if (mainTab === "runs" || mainTab === "overview") void loadRuns();
@@ -86,16 +114,6 @@ export function useHireSignalRuns(mainTab: "overview" | "signals" | "runs") {
     }
   }, []);
 
-  const satelliteRunsRows = useMemo(() => {
-    const env = asRecord(runsPayload);
-    const data = env?.data;
-    if (!Array.isArray(data)) return [];
-    return data.filter(
-      (x): x is Record<string, unknown> =>
-        !!x && typeof x === "object" && !Array.isArray(x),
-    );
-  }, [runsPayload]);
-
   const trackedScrapeRows = useMemo(() => {
     if (!Array.isArray(scrapeJobsPayload)) return [];
     return scrapeJobsPayload.filter(
@@ -109,6 +127,7 @@ export function useHireSignalRuns(mainTab: "overview" | "signals" | "runs") {
     runActionId,
     scrapeDownloadId,
     satelliteRunsRows,
+    satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,

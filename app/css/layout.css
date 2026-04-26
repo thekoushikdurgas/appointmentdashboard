@@ -358,6 +358,14 @@
   animation: c360-fade-in 200ms ease forwards;
 }
 
+.c360-page.c360-dashboard-layout {
+  padding: 0;
+}
+
+.c360-tabs--dashboard .c360-tabs__panel .c360-page {
+  padding: 0;
+}
+
 .c360-dashboard-loading-shell {
   display: flex;
   align-items: center;
@@ -548,14 +556,37 @@
 
 .c360-data-layout__filters {
   background: var(--c360-bg-elevated);
-  border-radius: var(--c360-radius-lg);
+  border-radius: 10px;
   border: 1px solid var(--c360-border);
-  padding: var(--c360-spacing-4);
+  padding: 0;
   align-self: start;
+  height: 100%;
   position: sticky;
   top: calc(var(--c360-topbar-height) + var(--c360-container-padding));
-  max-height: calc(100vh - var(--c360-topbar-height) - var(--c360-spacing-12));
   overflow-y: auto;
+}
+
+.c360-data-layout__filters .c360-card {
+  padding: 0;
+}
+
+.c360-data-layout__filters .c360-card__body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  padding: 20px;
+}
+
+.c360-data-layout__filters .c360-space-y-2 {
+  display: grid;
+  justify-content: flex-start;
+  align-items: center;
+  width: fit-content;
+  column-gap: 0;
+  row-gap: 14px;
 }
 
 .c360-data-layout__content {

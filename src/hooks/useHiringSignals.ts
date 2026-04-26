@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
+  hireSignalJobsListFromJson,
   asRecord,
+  type HireSignalApiJson,
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
@@ -60,16 +62,11 @@ function parseJobListPayload(raw: unknown): {
   data: LinkedInJobRow[];
   total: number;
 } {
-  const r = asRecord(raw);
-  if (!r) {
-    return { success: false, data: [], total: 0 };
-  }
-  const data = (r.data as unknown) ?? [];
-  const arr = Array.isArray(data) ? data : [];
+  const envelope = hireSignalJobsListFromJson(raw as HireSignalApiJson);
   return {
-    success: Boolean(r.success),
-    data: arr.map((item) => mapJobRow(item)),
-    total: Number(r.total ?? 0) || 0,
+    success: envelope.success,
+    data: envelope.data.map((item) => mapJobRow(item)),
+    total: envelope.total,
   };
 }
 
