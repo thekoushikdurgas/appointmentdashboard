@@ -37,6 +37,8 @@ export interface GenericToolbarProps {
   tabs?: ToolbarTab[];
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  /** Inline summary between tabs and the actions cluster (e.g. list stats). */
+  meta?: ReactNode;
   viewModes?: ViewModeConfig[];
   viewMode?: string;
   onViewModeChange?: (mode: string) => void;
@@ -53,6 +55,7 @@ export function GenericToolbar({
   tabs,
   activeTab,
   onTabChange,
+  meta,
   viewModes,
   viewMode,
   onViewModeChange,
@@ -67,6 +70,8 @@ export function GenericToolbar({
     (filterConfig?.show !== false && !!filterConfig) ||
     (viewModes && viewModes.length > 0) ||
     actions.length > 0;
+  const hasLeading =
+    (tabs && tabs.length > 0) || meta != null;
 
   return (
     <div
@@ -74,32 +79,37 @@ export function GenericToolbar({
       role="region"
       aria-label="List toolbar"
     >
-      {tabs && tabs.length > 0 ? (
-        <div className={`${p}__tabs`} role="tablist" aria-label="List scope">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.value;
-            const showCount =
-              tab.count !== undefined &&
-              (isActive || !tab.showCountOnlyWhenActive);
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                role="tab"
-                aria-selected={isActive ? "true" : "false"}
-                id={`${p}__tab-${tab.value}`}
-                className={cn(`${p}__tab`, isActive && `${p}__tab--active`)}
-                onClick={() => onTabChange?.(tab.value)}
-              >
-                <span className={`${p}__tab-label`}>{tab.label}</span>
-                {showCount ? (
-                  <span className={`${p}__tab-count`} aria-label="Count">
-                    {tab.count}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
+      {hasLeading ? (
+        <div className={`${p}__leading`}>
+          {tabs && tabs.length > 0 ? (
+            <div className={`${p}__tabs`} role="tablist" aria-label="List scope">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.value;
+                const showCount =
+                  tab.count !== undefined &&
+                  (isActive || !tab.showCountOnlyWhenActive);
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive ? "true" : "false"}
+                    id={`${p}__tab-${tab.value}`}
+                    className={cn(`${p}__tab`, isActive && `${p}__tab--active`)}
+                    onClick={() => onTabChange?.(tab.value)}
+                  >
+                    <span className={`${p}__tab-label`}>{tab.label}</span>
+                    {showCount ? (
+                      <span className={`${p}__tab-count`} aria-label="Count">
+                        {tab.count}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {meta ? <div className={`${p}__meta`}>{meta}</div> : null}
         </div>
       ) : null}
 

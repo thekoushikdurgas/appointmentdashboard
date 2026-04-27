@@ -1,5 +1,6 @@
 import type { BadgeProps } from "@/components/ui/Badge";
 import { asRecord } from "@/services/graphql/hiringSignalService";
+import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 
 /** Initials for avatar (company or person). */
 export function hiringSignalInitials(name: string, fallback = "?"): string {
@@ -168,4 +169,9 @@ export function downloadTextFile(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+/** Stable table/selection key for a job row (list + checkboxes). */
+export function hiringSignalRowKey(row: LinkedInJobRow): string {
+  return row.id || `${row.linkedinJobId}-${row.apifyItemId}`;
 }

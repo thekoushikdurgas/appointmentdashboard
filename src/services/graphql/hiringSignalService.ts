@@ -57,9 +57,9 @@ const HIRE_SIGNAL_JOBS = gql`
   query HireSignalJobs(
     $limit: Int
     $offset: Int
-    $title: String
-    $company: String
-    $location: String
+    $titles: [String!]
+    $companies: [String!]
+    $locations: [String!]
     $employmentType: String
     $seniority: String
     $functionCategory: String
@@ -71,9 +71,43 @@ const HIRE_SIGNAL_JOBS = gql`
       jobs(
         limit: $limit
         offset: $offset
-        title: $title
-        company: $company
-        location: $location
+        titles: $titles
+        companies: $companies
+        locations: $locations
+        employmentType: $employmentType
+        seniority: $seniority
+        functionCategory: $functionCategory
+        postedAfter: $postedAfter
+        postedBefore: $postedBefore
+        runId: $runId
+      )
+    }
+  }
+`;
+
+const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
+  query HireSignalJobFilterOptions(
+    $field: String!
+    $q: String
+    $optionLimit: Int
+    $titles: [String!]
+    $companies: [String!]
+    $locations: [String!]
+    $employmentType: String
+    $seniority: String
+    $functionCategory: String
+    $postedAfter: String
+    $postedBefore: String
+    $runId: String
+  ) {
+    hireSignal {
+      jobFilterOptions(
+        field: $field
+        q: $q
+        limit: $optionLimit
+        titles: $titles
+        companies: $companies
+        locations: $locations
         employmentType: $employmentType
         seniority: $seniority
         functionCategory: $functionCategory
@@ -291,9 +325,10 @@ export type HireSignalExportDownloadUrlResponse = {
 } | null;
 
 export interface JobListFilters {
-  title?: string;
-  company?: string;
-  location?: string;
+  /** Substring tokens, OR within field (matches job.server + gateway). */
+  titles?: string[];
+  companies?: string[];
+  locations?: string[];
   employmentType?: string;
   seniority?: string;
   functionCategory?: string;
@@ -306,6 +341,44 @@ export interface JobListFilters {
   offset: number;
 }
 
+export type HireSignalJobFilterOptionRow = {
+  value: string;
+  count: number;
+};
+
+function hireSignalJobListFilterVars(filters: JobListFilters) {
+  return {
+    titles: filters.titles?.length ? filters.titles : null,
+    companies: filters.companies?.length ? filters.companies : null,
+    locations: filters.locations?.length ? filters.locations : null,
+    employmentType: filters.employmentType || null,
+    seniority: filters.seniority || null,
+    functionCategory: filters.functionCategory || null,
+    postedAfter: filters.postedAfter || null,
+    postedBefore: filters.postedBefore || null,
+    runId: filters.runId?.trim() || null,
+  };
+}
+
+export function parseJobFilterOptionsPayload(
+  raw: HireSignalApiJson,
+): HireSignalJobFilterOptionRow[] {
+  const env = asRecord(raw);
+  const data = env?.data;
+  if (!Array.isArray(data)) return [];
+  const out: HireSignalJobFilterOptionRow[] = [];
+  for (const item of data) {
+    const o = asRecord(item);
+    if (!o) continue;
+    const value = String(o.value ?? "").trim();
+    if (!value) continue;
+    const c = o.count;
+    const count = typeof c === "number" ? c : Number(c) || 0;
+    out.push({ value, count });
+  }
+  return out;
+}
+
 export async function fetchHiringSignalJobs(filters: JobListFilters) {
   return graphqlQuery<{
     hireSignal: { jobs: HireSignalApiJson };
@@ -314,18 +387,30 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
     {
       limit: filters.limit,
       offset: filters.offset,
-      title: filters.title || null,
-      company: filters.company || null,
-      location: filters.location || null,
-      employmentType: filters.employmentType || null,
-      seniority: filters.seniority || null,
-      functionCategory: filters.functionCategory || null,
-      postedAfter: filters.postedAfter || null,
-      postedBefore: filters.postedBefore || null,
-      runId: filters.runId?.trim() || null,
+      ...hireSignalJobListFilterVars(filters),
     },
     HS_GQL,
   );
+}
+
+export async function fetchHireSignalJobFilterOptions(
+  field: "title" | "company" | "location",
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number },
+) {
+  const res = await graphqlQuery<{
+    hireSignal: { jobFilterOptions: HireSignalApiJson };
+  }>(
+    HIRE_SIGNAL_JOB_FILTER_OPTIONS,
+    {
+      field,
+      q: options?.q?.trim() || null,
+      optionLimit: options?.limit ?? 50,
+      ...hireSignalJobListFilterVars(filters),
+    },
+    HS_GQL,
+  );
+  return parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
 }
 
 export async function fetchHiringSignalStats() {
@@ -463,6 +548,112 @@ export async function fetchConnectraContactsForCompany(
     },
     HS_GQL,
   );
+}
+
+function linkedinJobIdFromItem(item: unknown): string {
+  const o = asRecord(item);
+  if (!o) return "";
+  return String(o.linkedinJobId ?? o.linkedin_job_id ?? "").trim();
+}
+
+/** Batch size when paging through jobs for export ID collection. */
+export const HS_EXPORT_FETCH_BATCH = 150;
+
+/** Hard cap per export request (gateway/job.server may impose its own limit). */
+export const HS_MAX_EXPORT_LINKEDIN_IDS = 5000;
+
+/**
+ * Collect up to `n` LinkedIn job IDs in list order for the given filters (paged fetch).
+ */
+export async function fetchLinkedinJobIdsFirstN(
+  filters: JobListFilters,
+  n: number,
+): Promise<string[]> {
+  const cap = Math.max(0, Math.floor(n));
+  if (cap === 0) return [];
+
+  const ids: string[] = [];
+  let offset = 0;
+
+  while (ids.length < cap) {
+    const pageSize = Math.min(HS_EXPORT_FETCH_BATCH, cap - ids.length);
+    const res = await fetchHiringSignalJobs({
+      ...filters,
+      limit: pageSize,
+      offset,
+    });
+    const env = hireSignalJobsListFromJson(res.hireSignal?.jobs);
+    if (env.data.length === 0) break;
+
+    for (const item of env.data) {
+      const id = linkedinJobIdFromItem(item);
+      if (id) ids.push(id);
+      if (ids.length >= cap) return ids.slice(0, cap);
+    }
+
+    if (offset + env.data.length >= env.total) break;
+    offset += env.data.length;
+  }
+
+  return ids.slice(0, cap);
+}
+
+export type CollectAllExportIdsResult = {
+  ids: string[];
+  totalMatching: number;
+  truncated: boolean;
+};
+
+/**
+ * Collect LinkedIn job IDs for all rows matching filters, up to {@link HS_MAX_EXPORT_LINKEDIN_IDS}.
+ */
+export async function fetchLinkedinJobIdsAllMatching(
+  filters: JobListFilters,
+  maxIds: number = HS_MAX_EXPORT_LINKEDIN_IDS,
+): Promise<CollectAllExportIdsResult> {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let totalMatching = 0;
+
+  for (;;) {
+    const res = await fetchHiringSignalJobs({
+      ...filters,
+      limit: HS_EXPORT_FETCH_BATCH,
+      offset,
+    });
+    const env = hireSignalJobsListFromJson(res.hireSignal?.jobs);
+    totalMatching = env.total;
+
+    for (const item of env.data) {
+      const id = linkedinJobIdFromItem(item);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+      if (ids.length >= maxIds) {
+        return {
+          ids,
+          totalMatching,
+          truncated: totalMatching > ids.length,
+        };
+      }
+    }
+
+    if (
+      env.data.length === 0 ||
+      offset + env.data.length >= env.total ||
+      ids.length >= totalMatching
+    ) {
+      break;
+    }
+    offset += env.data.length;
+  }
+
+  return {
+    ids,
+    totalMatching,
+    truncated: false,
+  };
 }
 
 export async function exportSelectedHireSignalJobs(linkedinJobIds: string[]) {

@@ -23,12 +23,12 @@ import { cn, getAvatarUrl } from "@/lib/utils";
 import { mapConnectraError } from "@/lib/linkedinValidation";
 import type { Contact } from "@/services/graphql/contactsService";
 
-const PAGE_SIZE_OPTIONS = [
+export const CONTACTS_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
   { value: "25", label: "25" },
   { value: "50", label: "50" },
   { value: "100", label: "100" },
-];
+] as const;
 
 /** Toggleable data columns (checkbox + expand are always shown). */
 export const CONTACTS_DT_COLUMN_IDS = [
@@ -160,6 +160,10 @@ export interface ContactsDataTableProps {
   showToolbarSearch?: boolean;
   /** When false, hide the Columns popover (e.g. column picker lives in the left filter sidebar). */
   showColumnPicker?: boolean;
+  /** When false, hide “Show N entries” in the table toolbar (e.g. control lives in the page toolbar). */
+  showPageSizeControl?: boolean;
+  /** When false, hide the bottom “Showing X–Y of Z” + pager row (e.g. pagination lives only in the page chrome). */
+  showPaginationFooter?: boolean;
   /** appointment-d1-style table density (toolbar view toggle). */
   density?: "comfortable" | "compact";
 }
@@ -187,6 +191,8 @@ export function ContactsDataTable({
   onToggleColumn,
   showToolbarSearch = true,
   showColumnPicker = true,
+  showPageSizeControl = true,
+  showPaginationFooter = true,
   density = "comfortable",
 }: ContactsDataTableProps) {
   const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
@@ -269,6 +275,11 @@ export function ContactsDataTable({
       />
     ) : null;
 
+  const hasTableToolbar =
+    showPageSizeControl ||
+    showToolbarSearch ||
+    (showColumnPicker && onToggleColumn != null);
+
   return (
     <div
       className={cn(
@@ -276,31 +287,43 @@ export function ContactsDataTable({
         density === "compact" && "c360-contacts-dt--compact",
       )}
     >
-      <div className="c360-contacts-dt__toolbar">
-        <div className="c360-contacts-dt__toolbar-left">
-          <span className="c360-contacts-dt__toolbar-label">Show</span>
-          <Select
-            options={PAGE_SIZE_OPTIONS}
-            value={String(pageSize)}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            fullWidth={false}
-            className="c360-contacts-dt__page-size"
-          />
-          <span className="c360-contacts-dt__toolbar-label">entries</span>
-          {columnsMenu}
+      {hasTableToolbar ? (
+        <div className="c360-contacts-dt__toolbar">
+          {showPageSizeControl || columnsMenu ? (
+            <div className="c360-contacts-dt__toolbar-left">
+              {showPageSizeControl ? (
+                <>
+                  <span className="c360-contacts-dt__toolbar-label">Show</span>
+                  <Select
+                    options={[...CONTACTS_DT_PAGE_SIZE_OPTIONS]}
+                    value={String(pageSize)}
+                    onChange={(e) =>
+                      onPageSizeChange(Number(e.target.value))
+                    }
+                    fullWidth={false}
+                    className="c360-contacts-dt__page-size"
+                  />
+                  <span className="c360-contacts-dt__toolbar-label">
+                    entries
+                  </span>
+                </>
+              ) : null}
+              {columnsMenu}
+            </div>
+          ) : null}
+          {showToolbarSearch ? (
+            <div className="c360-contacts-dt__toolbar-right">
+              <span className="c360-contacts-dt__toolbar-label">Search:</span>
+              <Input
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Filter by email, name…"
+                className="c360-contacts-dt__search"
+              />
+            </div>
+          ) : null}
         </div>
-        {showToolbarSearch ? (
-          <div className="c360-contacts-dt__toolbar-right">
-            <span className="c360-contacts-dt__toolbar-label">Search:</span>
-            <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Filter by email, name…"
-              className="c360-contacts-dt__search"
-            />
-          </div>
-        ) : null}
-      </div>
+      ) : null}
 
       <div className="c360-contacts-dt__scroll">
         <table className="c360-contacts-dt__table">
@@ -562,32 +585,34 @@ export function ContactsDataTable({
         </table>
       </div>
 
-      <div className="c360-contacts-dt__footer">
-        <p className="c360-contacts-dt__footer-text">
-          Showing {showingFrom} to {showingTo} of {total} entries
-        </p>
-        <div className="c360-contacts-dt__pager">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={safePage <= 1}
-            onClick={() => onPageChange(safePage - 1)}
-          >
-            Previous
-          </Button>
-          <span className="c360-contacts-dt__footer-text">
-            Page {safePage} of {pageCount}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={safePage >= pageCount}
-            onClick={() => onPageChange(safePage + 1)}
-          >
-            Next
-          </Button>
+      {showPaginationFooter ? (
+        <div className="c360-contacts-dt__footer">
+          <p className="c360-contacts-dt__footer-text">
+            Showing {showingFrom} to {showingTo} of {total} entries
+          </p>
+          <div className="c360-contacts-dt__pager">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={safePage <= 1}
+              onClick={() => onPageChange(safePage - 1)}
+            >
+              Previous
+            </Button>
+            <span className="c360-contacts-dt__footer-text">
+              Page {safePage} of {pageCount}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={safePage >= pageCount}
+              onClick={() => onPageChange(safePage + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

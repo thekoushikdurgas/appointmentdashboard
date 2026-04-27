@@ -509,23 +509,135 @@
   }
 }
 
-/* Contacts page — left rail (`DataPageLayout` filters slot), /1-style blocks + kit tokens */
-.c360-contacts-page.c360-data-layout {
-  grid-template-columns: minmax(260px, 300px) 1fr;
+/* Contacts / Companies — `DataPageLayout` filter rail + stacked list toolbar */
+.c360-page.c360-contacts-page,
+.c360-page.c360-companies-page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.c360-page.c360-contacts-page > .c360-data-layout,
+.c360-page.c360-companies-page > .c360-data-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  width: 100%;
+}
+
+.c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__filters,
+.c360-page.c360-companies-page > .c360-data-layout > .c360-data-layout__filters {
+  flex: 0 0 auto;
+  min-width: 260px;
+  max-width: 300px;
+  width: 300px;
+  height: fit-content;
+}
+
+.c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__content,
+.c360-page.c360-companies-page > .c360-data-layout > .c360-data-layout__content {
+  flex: 1;
+  min-width: 0;
+  gap: 0;
+}
+
+/* Stacked toolbar rows, full-width action cluster */
+.c360-page.c360-contacts-page .c360-toolbar,
+.c360-page.c360-companies-page .c360-toolbar {
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.c360-page.c360-contacts-page .c360-toolbar__leading,
+.c360-page.c360-companies-page .c360-toolbar__leading {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-page.c360-contacts-page .c360-toolbar__actions,
+.c360-page.c360-companies-page .c360-toolbar__actions {
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.c360-page.c360-companies-page .c360-toolbar {
+  flex-direction: row;
+}
+
+.c360-page.c360-companies-page .c360-toolbar__leading {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.c360-page.c360-companies-page .c360-toolbar__meta {
+  display: flex;
+  width: 100%;
+}
+
+.c360-page.c360-companies-page .c360-contacts-metadata--toolbar {
+  flex-wrap: nowrap;
+  width: fit-content;
+}
+
+.c360-page.c360-companies-page .c360-contacts-metadata__item {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: fit-content;
+  height: fit-content;
+  gap: 5px;
+}
+
+.c360-page.c360-companies-page .c360-contacts-metadata__label {
+  width: 100px;
+}
+
+.c360-page.c360-companies-page .c360-toolbar__actions {
+  width: fit-content;
 }
 
 /* Root: mirrors `contact360.io/1` `ContactsFilters` shell; colors from app `--c360-*` kit */
 .c360-contacts-filters {
   display: flex;
   flex-direction: column;
-  gap: var(--c360-spacing-4);
-  padding: 10px;
+  gap: 0;
+  padding: 0;
+}
+
+.c360-contacts-filters .c360-filter-combobox {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.c360-contacts-filters .c360-popover__trigger {
+  display: block;
+  width: 100%;
+  max-width: 100%;
 }
 .c360-contacts-filters__head {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: var(--c360-spacing-2);
+}
+.c360-companies-filters .c360-contacts-filters__head {
+  flex-direction: column;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 .c360-contacts-filters__title {
   margin: 0;
@@ -550,6 +662,7 @@
 }
 .c360-contacts-filters__search-input {
   width: 100%;
+  border-radius: 0;
 }
 .c360-contacts-filters__chips {
   display: flex;
@@ -600,7 +713,7 @@
 /* Collapsible filter card — aligned with `contact360.io/1` `data-pages.css` filter section */
 .c360-contacts-filter-section {
   border: 1px solid var(--c360-border);
-  border-radius: var(--c360-radius-md);
+  border-radius: 0;
   overflow: hidden;
 }
 .c360-contacts-filter-section--active {

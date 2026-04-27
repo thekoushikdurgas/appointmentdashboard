@@ -12,7 +12,6 @@ import {
   Download,
   Upload,
   RefreshCw,
-  Filter,
 } from "lucide-react";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -21,7 +20,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
-import { PageHeader } from "@/components/patterns/PageHeader";
+import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Pagination } from "@/components/patterns/Pagination";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
@@ -51,6 +50,7 @@ import type {
   VqlQueryInput,
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
+import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
 type ViewMode = "list" | "card";
 
@@ -67,7 +67,10 @@ export default function CompaniesPage() {
     exportVql,
     refresh,
     applyVqlQuery,
+    pageSize,
   } = useCompanies();
+  const isDesktop = useIsDesktop();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -77,6 +80,7 @@ export default function CompaniesPage() {
     useState<DraftQuery | null>(null);
   const { sections: filterSections, loadFilterData } = useCompanyFilters();
   const { isSuperAdmin } = useRole();
+  const totalPages = Math.ceil(total / pageSize);
 
   const facetFilter = useMemo((): VqlFilterInput | undefined => {
     const conditions: VqlConditionInput[] = [];
@@ -144,6 +148,15 @@ export default function CompaniesPage() {
   const advancedVqlRuleCount = advancedCompanyDraft
     ? countDraftConditions(advancedCompanyDraft.rootGroup)
     : 0;
+
+  const toolbarActiveCount = useMemo(() => {
+    let n = Object.values(facetValues).filter(
+      (v) => v != null && String(v).trim() !== "",
+    ).length;
+    if (search.trim()) n += 1;
+    if (advancedVqlRuleCount > 0) n += 1;
+    return n;
+  }, [facetValues, search, advancedVqlRuleCount]);
 
   const hasAdvancedBuilderState = useMemo(() => {
     if (!advancedCompanyDraft) return false;
@@ -261,90 +274,98 @@ export default function CompaniesPage() {
     }
   };
 
-  return (
-    <DataPageLayout filters={filtersSidebar}>
-      <PageHeader
-        title="Companies"
-        subtitle={`${total.toLocaleString()} companies`}
-        actions={
-          <>
-            <SavedSearchesMenu
-              entity="company"
-              getCompanyPayload={getCompanySavedPayload}
-              onApplyCompany={handleApplyCompanySaved}
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<Filter size={16} />}
-              onClick={() => setVqlOpen(true)}
-            >
-              {hasAdvancedBuilderState ? "Edit Filters" : "Advanced Filter"}
-            </Button>
-            {hasAdvancedBuilderState ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearCompanyVql}
-                title="Clear advanced filters"
-              >
-                ✕ Clear
-              </Button>
-            ) : null}
-            {/* View mode toggle */}
-            <div className="c360-view-toggle">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                title="List view"
-                className={cn(
-                  "c360-view-toggle__btn",
-                  viewMode === "list" && "c360-view-toggle__btn--active",
-                )}
-              >
-                <List size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("card")}
-                title="Card view"
-                className={cn(
-                  "c360-view-toggle__btn",
-                  viewMode === "card" && "c360-view-toggle__btn--active",
-                )}
-              >
-                <LayoutGrid size={14} />
-              </button>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<Download size={16} />}
-              onClick={() => setExportOpen(true)}
-            >
-              Export
-            </Button>
-            {isSuperAdmin && (
-              <Button
-                variant="secondary"
-                size="sm"
-                leftIcon={<Upload size={16} />}
-                onClick={() => setImportOpen(true)}
-              >
-                Import
-              </Button>
-            )}
-            <Button
-              size="sm"
-              leftIcon={<Plus size={16} />}
-              onClick={() => setCreateOpen(true)}
-            >
-              Add Company
-            </Button>
-          </>
-        }
-      />
+  const companiesToolbarMeta = (
+    <div className="c360-contacts-metadata c360-contacts-metadata--toolbar">
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Total</span>
+        <span className="c360-contacts-metadata__value">
+          {total.toLocaleString()}
+        </span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">On this page</span>
+        <span className="c360-contacts-metadata__value">
+          {companies.length}
+        </span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Page size</span>
+        <span className="c360-contacts-metadata__value">{pageSize}</span>
+      </div>
+    </div>
+  );
 
+  const toolbarEl = (
+    <DataToolbar
+      cssPrefix="c360-toolbar"
+      meta={companiesToolbarMeta}
+      viewModes={[
+        { value: "list", label: "List", icon: List },
+        { value: "card", label: "Card", icon: LayoutGrid },
+      ]}
+      viewMode={viewMode}
+      onViewModeChange={(m) => setViewMode(m as ViewMode)}
+      filterConfig={{
+        activeCount: toolbarActiveCount,
+        onOpen: () => setMobileFiltersOpen(true),
+        show: !isDesktop,
+      }}
+      actionPrefix={
+        <SavedSearchesMenu
+          entity="company"
+          getCompanyPayload={getCompanySavedPayload}
+          onApplyCompany={handleApplyCompanySaved}
+        />
+      }
+      actions={[
+        {
+          label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
+          onClick: () => setVqlOpen(true),
+          variant: "secondary" as const,
+        },
+        ...(hasAdvancedBuilderState
+          ? [
+              {
+                label: "Clear advanced",
+                onClick: clearCompanyVql,
+                variant: "ghost" as const,
+              },
+            ]
+          : []),
+        {
+          label: "Export",
+          onClick: () => setExportOpen(true),
+          icon: Download,
+          variant: "secondary" as const,
+        },
+        ...(isSuperAdmin
+          ? [
+              {
+                label: "Import",
+                onClick: () => setImportOpen(true),
+                icon: Upload,
+                variant: "secondary" as const,
+              },
+            ]
+          : []),
+        {
+          label: "Add company",
+          onClick: () => setCreateOpen(true),
+          icon: Plus,
+          variant: "primary" as const,
+        },
+      ]}
+    />
+  );
+
+  return (
+    <DataPageLayout
+      filters={filtersSidebar}
+      toolbar={toolbarEl}
+      mobileFiltersOpen={mobileFiltersOpen}
+      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+      className="c360-companies-page"
+    >
       <CompanyExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
@@ -470,15 +491,17 @@ export default function CompaniesPage() {
               </div>
             ))}
           </div>
-          <div className="c360-flex c360-justify-end c360-mt-4">
-            <Pagination
-              page={page}
-              totalPages={Math.ceil(total / 25)}
-              onPageChange={setPage}
-              total={total}
-              pageSize={25}
-            />
-          </div>
+          {totalPages > 1 ? (
+            <div className="c360-flex c360-justify-end c360-mt-4">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                total={total}
+                pageSize={pageSize}
+              />
+            </div>
+          ) : null}
         </>
       ) : (
         /* Table list view */
@@ -551,15 +574,17 @@ export default function CompaniesPage() {
               </tbody>
             </table>
           </div>
-          <div className="c360-table-footer">
-            <Pagination
-              page={page}
-              totalPages={Math.ceil(total / 25)}
-              onPageChange={setPage}
-              total={total}
-              pageSize={25}
-            />
-          </div>
+          {totalPages > 1 ? (
+            <div className="c360-table-footer">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                total={total}
+                pageSize={pageSize}
+              />
+            </div>
+          ) : null}
         </Card>
       )}
       <CompanyImportModal

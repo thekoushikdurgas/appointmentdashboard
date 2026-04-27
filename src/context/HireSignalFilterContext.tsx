@@ -11,6 +11,7 @@ import {
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import {
   EMPTY_HIRING_SIGNAL_DRAFT,
+  normalizeHiringSignalTokenList,
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
@@ -19,7 +20,10 @@ import {
 export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
   let n = 0;
   (Object.keys(d) as HiringSignalDraftField[]).forEach((k) => {
-    if (String(d[k]).trim()) n += 1;
+    const v = d[k];
+    if (Array.isArray(v)) {
+      if (normalizeHiringSignalTokenList(v).length > 0) n += 1;
+    } else if (String(v).trim()) n += 1;
   });
   return n;
 }
@@ -27,7 +31,10 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
 export interface HireSignalFilterContextValue {
   draft: HiringSignalFilterDraft;
   setDraft: React.Dispatch<React.SetStateAction<HiringSignalFilterDraft>>;
-  onDraftField: (field: HiringSignalDraftField, value: string) => void;
+  onDraftField: (
+    field: HiringSignalDraftField,
+    value: string | string[],
+  ) => void;
   applyFilters: () => void;
   resetFilters: () => void;
   activeDraftCount: number;
@@ -48,11 +55,14 @@ export function HireSignalFilterProvider({
   );
 
   const applyFilters = useCallback(() => {
+    const titles = normalizeHiringSignalTokenList(draft.titles);
+    const companies = normalizeHiringSignalTokenList(draft.companies);
+    const locations = normalizeHiringSignalTokenList(draft.locations);
     setFilters((f) => ({
       ...f,
-      title: draft.title.trim() || undefined,
-      company: draft.company.trim() || undefined,
-      location: draft.location.trim() || undefined,
+      titles: titles.length ? titles : undefined,
+      companies: companies.length ? companies : undefined,
+      locations: locations.length ? locations : undefined,
       employmentType: draft.employmentType.trim() || undefined,
       seniority:
         draft.seniorityCustom.trim() ||
@@ -70,9 +80,9 @@ export function HireSignalFilterProvider({
     setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
     setFilters((f) => ({
       ...f,
-      title: undefined,
-      company: undefined,
-      location: undefined,
+      titles: undefined,
+      companies: undefined,
+      locations: undefined,
       employmentType: undefined,
       seniority: undefined,
       functionCategory: undefined,
@@ -84,8 +94,21 @@ export function HireSignalFilterProvider({
   }, [setFilters]);
 
   const onDraftField = useCallback(
-    (field: HiringSignalDraftField, value: string) => {
-      setDraft((d) => ({ ...d, [field]: value }));
+    (field: HiringSignalDraftField, value: string | string[]) => {
+      setDraft((d) => {
+        if (
+          field === "titles" ||
+          field === "companies" ||
+          field === "locations"
+        ) {
+          const arr = Array.isArray(value) ? value : [value];
+          return {
+            ...d,
+            [field]: normalizeHiringSignalTokenList(arr.map((x) => String(x))),
+          };
+        }
+        return { ...d, [field]: value as string };
+      });
     },
     [],
   );

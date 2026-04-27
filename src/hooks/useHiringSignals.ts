@@ -21,7 +21,7 @@ function sevenDaysAgoYmd(): string {
 }
 
 /** When preset is new_7d, ensure postedAfter is at least 7 days ago (stricter user dates win). */
-function effectivePostedAfter(
+export function effectivePostedAfter(
   preset: "all" | "new_7d",
   fromFilters: string | undefined,
 ): string | undefined {
@@ -138,9 +138,9 @@ export function useHiringSignals(
   const signalTimePreset = options?.signalTimePreset ?? "all";
 
   const [filters, setFilters] = useState<JobListFilters>({
-    title: initial.title,
-    company: initial.company,
-    location: initial.location,
+    titles: initial.titles,
+    companies: initial.companies,
+    locations: initial.locations,
     employmentType: initial.employmentType,
     seniority: initial.seniority,
     functionCategory: initial.functionCategory,
@@ -210,7 +210,10 @@ export function useHiringSignals(
   );
 
   const setFilterField = useCallback(
-    (key: keyof JobListFilters, value: string | undefined) => {
+    (
+      key: keyof JobListFilters,
+      value: string | string[] | undefined,
+    ) => {
       setFilters((f) => ({ ...f, [key]: value, offset: 0 }));
     },
     [],

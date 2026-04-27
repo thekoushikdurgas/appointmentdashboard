@@ -100,9 +100,14 @@ export function CompaniesFilterSidebar({
   ]);
 
   return (
-    <div className="c360-contacts-filters">
+    <div className="c360-contacts-filters c360-companies-filters">
       <div className="c360-contacts-filters__head">
-        <h2 className="c360-contacts-filters__title">Filters</h2>
+        <h2
+          className="c360-contacts-filters__title"
+          id="c360-filter-drawer-title"
+        >
+          Filters
+        </h2>
         {totalActiveCount > 0 ? (
           <span className="c360-contacts-filters__head-count" aria-hidden>
             {totalActiveCount}

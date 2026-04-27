@@ -43,6 +43,19 @@
   box-shadow: var(--c360-kit-shadow-soft);
 }
 
+.c360-toolbar__leading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-4);
+  min-width: 0;
+  flex: 1;
+}
+
+.c360-toolbar__meta {
+  min-width: 0;
+}
+
 .c360-toolbar__tabs {
   display: flex;
   flex-wrap: wrap;
@@ -224,6 +237,19 @@
   border-radius: var(--c360-radius-lg);
 }
 
+/* Embedded in list toolbar — avoid double card chrome */
+.c360-contacts-metadata--toolbar {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-contacts-metadata--toolbar .c360-contacts-metadata__value {
+  font-size: var(--c360-text-base);
+}
+
 .c360-contacts-metadata__item {
   display: flex;
   flex-direction: column;
@@ -247,19 +273,21 @@
 /* ─── Sidebar header (d1-style actions) ───────────────────────────────── */
 .c360-contacts-filters__head-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: var(--c360-spacing-3);
-  padding-bottom: var(--c360-spacing-2);
-  margin-bottom: var(--c360-spacing-2);
+  padding: 10px;
+  margin-bottom: 0;
   border-bottom: 1px solid var(--c360-border);
 }
 
 .c360-contacts-filters__head-text {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  gap: 20px;
   min-width: 0;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .c360-contacts-filters__subtitle {
@@ -314,7 +342,7 @@
 /* AI search row */
 .c360-contacts-filters__ai-row {
   position: relative;
-  margin-bottom: var(--c360-spacing-4);
+  margin-bottom: 0;
 }
 
 .c360-contacts-filters__ai-input-wrap {

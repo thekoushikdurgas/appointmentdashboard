@@ -1,17 +1,16 @@
 "use client";
 
-import { Filter, RotateCcw, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import type {
-  HiringSignalDraftField,
-  HiringSignalFilterDraft,
-} from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
+import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const EMPLOYMENT_OPTIONS = [
   { value: "", label: "Any" },
@@ -52,26 +51,11 @@ export type {
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 export { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 
-function countTextSection(d: HiringSignalFilterDraft): number {
-  return ["title", "company", "location"].filter((k) =>
-    String(d[k as HiringSignalDraftField]).trim(),
-  ).length;
-}
-
-function countRoleSection(d: HiringSignalFilterDraft): number {
-  let n = 0;
-  if (d.employmentType.trim()) n += 1;
-  if (d.seniorityPreset.trim() || d.seniorityCustom.trim()) n += 1;
-  if (d.functionPreset.trim() || d.functionCustom.trim()) n += 1;
-  return n;
-}
-
-function countDateSection(d: HiringSignalFilterDraft): number {
-  return [d.postedAfter, d.postedBefore].filter((x) => x.trim()).length;
-}
-
 export interface HiringSignalsFilterSidebarProps {
   onApply: () => void;
+  /** Applied list filters (API state) — used to scope facet option queries. */
+  appliedListFilters: JobListFilters;
+  signalTimePreset: "all" | "new_7d";
   /** Active Apify run filter (from Runs tab drill-down). */
   appliedRunId?: string;
   onClearRunId?: () => void;
@@ -80,6 +64,8 @@ export interface HiringSignalsFilterSidebarProps {
 
 export function HiringSignalsFilterSidebar({
   onApply,
+  appliedListFilters,
+  signalTimePreset,
   appliedRunId,
   onClearRunId,
   className,
@@ -93,18 +79,36 @@ export function HiringSignalsFilterSidebar({
     chips.push({ key, label, onRemove: clear });
   };
 
-  if (draft.title.trim())
-    addChip("title", `Title: ${draft.title.trim()}`, () =>
-      onDraftField("title", ""),
-    );
-  if (draft.company.trim())
-    addChip("company", `Company: ${draft.company.trim()}`, () =>
-      onDraftField("company", ""),
-    );
-  if (draft.location.trim())
-    addChip("loc", `Location: ${draft.location.trim()}`, () =>
-      onDraftField("location", ""),
-    );
+  draft.titles.forEach((rawT, i) => {
+    const t = rawT.trim();
+    if (!t) return;
+    addChip(`title-${i}-${t}`, `Title: ${t}`, () => {
+      onDraftField(
+        "titles",
+        draft.titles.filter((_, j) => j !== i),
+      );
+    });
+  });
+  draft.companies.forEach((rawC, i) => {
+    const c = rawC.trim();
+    if (!c) return;
+    addChip(`company-${i}-${c}`, `Company: ${c}`, () => {
+      onDraftField(
+        "companies",
+        draft.companies.filter((_, j) => j !== i),
+      );
+    });
+  });
+  draft.locations.forEach((rawL, i) => {
+    const loc = rawL.trim();
+    if (!loc) return;
+    addChip(`loc-${i}-${loc}`, `Location: ${loc}`, () => {
+      onDraftField(
+        "locations",
+        draft.locations.filter((_, j) => j !== i),
+      );
+    });
+  });
   if (draft.employmentType.trim())
     addChip("emp", `Type: ${draft.employmentType}`, () =>
       onDraftField("employmentType", ""),
@@ -153,27 +157,49 @@ export function HiringSignalsFilterSidebar({
 
   const totalChips =
     chips.length + (appliedRunId?.trim() && onClearRunId ? 1 : 0);
+  const titleValues = normalizeHiringSignalTokenList(draft.titles);
+  const companyValues = normalizeHiringSignalTokenList(draft.companies);
+  const locationValues = normalizeHiringSignalTokenList(draft.locations);
+  const seniorityCount =
+    draft.seniorityPreset.trim() || draft.seniorityCustom.trim() ? 1 : 0;
+  const functionCount =
+    draft.functionPreset.trim() || draft.functionCustom.trim() ? 1 : 0;
 
   return (
-    <Card className={cn("c360-p-4 c360-h-full", className)}>
-      <div className="c360-mb-3 c360-flex c360-items-center c360-justify-between">
-        <h2
-          id="c360-filter-drawer-title"
-          className="c360-m-0 c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
-        >
-          <Filter size={16} aria-hidden />
-          Refine signals
-        </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="c360-gap-1"
-          onClick={resetFilters}
-        >
-          <RotateCcw size={14} />
-          Clear
-        </Button>
+    <div className={cn("c360-contacts-filters c360-hs-filters", className)}>
+      <div className="c360-contacts-filters__head-row">
+        <div className="c360-contacts-filters__head-text">
+          <div className="c360-contacts-filters__head">
+            <h2
+              id="c360-filter-drawer-title"
+              className="c360-contacts-filters__title"
+            >
+              Refine signals
+            </h2>
+          </div>
+          <p className="c360-contacts-filters__subtitle">
+            {totalChips} active
+          </p>
+        </div>
+        <div className="c360-contacts-filters__head-actions">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={onApply}
+          >
+            Apply filters
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="c360-contacts-filters__clear-text"
+            onClick={resetFilters}
+          >
+            Clear
+          </Button>
+        </div>
       </div>
 
       {totalChips > 0 ? (
@@ -200,214 +226,176 @@ export function HiringSignalsFilterSidebar({
         </div>
       ) : null}
 
-      <div className="c360-space-y-2">
+      <div className="c360-hs-filters__sections">
         <ContactsCollapsibleFilterSection
-          title="Text filters"
-          count={countTextSection(draft)}
+          title="Title"
+          count={titleValues.length}
+          defaultOpen
+          onClear={() => onDraftField("titles", [])}
+        >
+          <HiringSignalTextFacetCombobox
+            field="title"
+            label="Job title"
+            draft={draft}
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            selectedValues={titleValues}
+            onSelectionChange={(v) => onDraftField("titles", v)}
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Company"
+          count={companyValues.length}
+          defaultOpen
+          onClear={() => onDraftField("companies", [])}
+        >
+          <HiringSignalTextFacetCombobox
+            field="company"
+            label="Company"
+            draft={draft}
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            selectedValues={companyValues}
+            onSelectionChange={(v) => onDraftField("companies", v)}
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Location"
+          count={locationValues.length}
+          defaultOpen
+          onClear={() => onDraftField("locations", [])}
+        >
+          <HiringSignalTextFacetCombobox
+            field="location"
+            label="Location"
+            draft={draft}
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            selectedValues={locationValues}
+            onSelectionChange={(v) => onDraftField("locations", v)}
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <p className="c360-hs-filters__text-hint c360-text-2xs c360-text-ink-muted">
+          Search to load values from the server. Multiple selections match{" "}
+          <strong>any</strong> value within title, company, or location; filters
+          are combined across categories.
+        </p>
+
+        <ContactsCollapsibleFilterSection
+          title="Employment type"
+          count={draft.employmentType.trim() ? 1 : 0}
+          defaultOpen
+          onClear={() => onDraftField("employmentType", "")}
+        >
+          <Select
+            id="hsf-emp"
+            value={draft.employmentType}
+            onChange={(e) => onDraftField("employmentType", e.target.value)}
+            options={EMPLOYMENT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Seniority"
+          count={seniorityCount}
           defaultOpen
           onClear={() => {
-            onDraftField("title", "");
-            onDraftField("company", "");
-            onDraftField("location", "");
+            onDraftField("seniorityPreset", "");
+            onDraftField("seniorityCustom", "");
           }}
         >
-          <div className="c360-space-y-3">
-            <div>
-              <label
-                htmlFor="hsf-title"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Job title
-              </label>
-              <Input
-                id="hsf-title"
-                value={draft.title}
-                onChange={(e) => onDraftField("title", e.target.value)}
-                placeholder="Role keywords"
-                autoComplete="off"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="hsf-company"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Company
-              </label>
-              <Input
-                id="hsf-company"
-                value={draft.company}
-                onChange={(e) => onDraftField("company", e.target.value)}
-                placeholder="Company name"
-                autoComplete="organization"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="hsf-loc"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Location
-              </label>
-              <Input
-                id="hsf-loc"
-                value={draft.location}
-                onChange={(e) => onDraftField("location", e.target.value)}
-                placeholder="City / region"
-                autoComplete="off"
-              />
-            </div>
+          <div className="c360-space-y-2">
+            <Select
+              id="hsf-seniority-preset"
+              value={draft.seniorityPreset}
+              onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
+              options={SENIORITY_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+            <label
+              htmlFor="hsf-seniority-custom"
+              className="c360-block c360-text-2xs c360-text-ink-muted"
+            >
+              Or custom (overrides preset when filled)
+            </label>
+            <Input
+              id="hsf-seniority-custom"
+              value={draft.seniorityCustom}
+              onChange={(e) => onDraftField("seniorityCustom", e.target.value)}
+              placeholder="e.g. Principal"
+              autoComplete="off"
+            />
           </div>
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Role filters"
-          count={countRoleSection(draft)}
+          title="Function / department"
+          count={functionCount}
+          defaultOpen
           onClear={() => {
-            onDraftField("employmentType", "");
-            onDraftField("seniorityPreset", "");
-            onDraftField("seniorityCustom", "");
             onDraftField("functionPreset", "");
             onDraftField("functionCustom", "");
           }}
         >
-          <div className="c360-space-y-3">
-            <div>
-              <label
-                htmlFor="hsf-emp"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Employment type
-              </label>
-              <Select
-                id="hsf-emp"
-                value={draft.employmentType}
-                onChange={(e) => onDraftField("employmentType", e.target.value)}
-                options={EMPLOYMENT_OPTIONS}
-                fullWidth
-                inputSize="md"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="hsf-seniority-preset"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Seniority
-              </label>
-              <Select
-                id="hsf-seniority-preset"
-                value={draft.seniorityPreset}
-                onChange={(e) =>
-                  onDraftField("seniorityPreset", e.target.value)
-                }
-                options={SENIORITY_PRESET_OPTIONS}
-                fullWidth
-                inputSize="md"
-              />
-              <label
-                htmlFor="hsf-seniority-custom"
-                className="c360-mt-2 c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Or custom (overrides preset when filled)
-              </label>
-              <Input
-                id="hsf-seniority-custom"
-                value={draft.seniorityCustom}
-                onChange={(e) =>
-                  onDraftField("seniorityCustom", e.target.value)
-                }
-                placeholder="e.g. Principal"
-                autoComplete="off"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="hsf-func-preset"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Function / department
-              </label>
-              <Select
-                id="hsf-func-preset"
-                value={draft.functionPreset}
-                onChange={(e) => onDraftField("functionPreset", e.target.value)}
-                options={FUNCTION_PRESET_OPTIONS}
-                fullWidth
-                inputSize="md"
-              />
-              <label
-                htmlFor="hsf-func-custom"
-                className="c360-mt-2 c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Or custom (overrides preset when filled)
-              </label>
-              <Input
-                id="hsf-func-custom"
-                value={draft.functionCustom}
-                onChange={(e) => onDraftField("functionCustom", e.target.value)}
-                placeholder="Matches function_category_v2"
-                autoComplete="off"
-              />
-            </div>
+          <div className="c360-space-y-2">
+            <Select
+              id="hsf-func-preset"
+              value={draft.functionPreset}
+              onChange={(e) => onDraftField("functionPreset", e.target.value)}
+              options={FUNCTION_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+            <label
+              htmlFor="hsf-func-custom"
+              className="c360-block c360-text-2xs c360-text-ink-muted"
+            >
+              Or custom (overrides preset when filled)
+            </label>
+            <Input
+              id="hsf-func-custom"
+              value={draft.functionCustom}
+              onChange={(e) => onDraftField("functionCustom", e.target.value)}
+              placeholder="Matches function_category_v2"
+              autoComplete="off"
+            />
           </div>
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Date range"
-          count={countDateSection(draft)}
-          onClear={() => {
-            onDraftField("postedAfter", "");
-            onDraftField("postedBefore", "");
-          }}
+          title="Posted after"
+          count={draft.postedAfter.trim() ? 1 : 0}
+          defaultOpen
+          onClear={() => onDraftField("postedAfter", "")}
         >
-          <div className="c360-grid c360-gap-2">
-            <div>
-              <label
-                htmlFor="hsf-posted-after"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Posted after
-              </label>
-              <Input
-                id="hsf-posted-after"
-                type="date"
-                value={draft.postedAfter}
-                onChange={(e) => onDraftField("postedAfter", e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="hsf-posted-before"
-                className="c360-mb-1 c360-block c360-text-2xs c360-font-medium c360-text-ink-muted c360-uppercase c360-tracking-wide"
-              >
-                Posted before
-              </label>
-              <Input
-                id="hsf-posted-before"
-                type="date"
-                value={draft.postedBefore}
-                onChange={(e) => onDraftField("postedBefore", e.target.value)}
-              />
-            </div>
-          </div>
+          <Input
+            id="hsf-posted-after"
+            type="date"
+            value={draft.postedAfter}
+            onChange={(e) => onDraftField("postedAfter", e.target.value)}
+          />
         </ContactsCollapsibleFilterSection>
 
-        <Button
-          type="button"
-          variant="primary"
-          className="c360-w-full c360-mt-2"
-          onClick={onApply}
+        <ContactsCollapsibleFilterSection
+          title="Posted before"
+          count={draft.postedBefore.trim() ? 1 : 0}
+          defaultOpen
+          onClear={() => onDraftField("postedBefore", "")}
         >
-          Apply filters
-        </Button>
-        {activeDraftCount === 0 && !appliedRunId ? (
-          <p className="c360-m-0 c360-text-2xs c360-text-ink-muted">
-            Set filters above, then Apply. Toolbar “New (7 days)” adds a posted
-            date preset on the signals list.
-          </p>
-        ) : null}
+          <Input
+            id="hsf-posted-before"
+            type="date"
+            value={draft.postedBefore}
+            onChange={(e) => onDraftField("postedBefore", e.target.value)}
+          />
+        </ContactsCollapsibleFilterSection>
       </div>
-    </Card>
+    </div>
   );
 }

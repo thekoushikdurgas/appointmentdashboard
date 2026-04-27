@@ -19,8 +19,8 @@ import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   employmentTypeBadgeColor,
   hiringSignalInitials,
+  hiringSignalRowKey,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
-import { toast } from "sonner";
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -52,10 +52,6 @@ const COL_LABELS: Record<HiringSignalsDataTableColumnId, string> = {
   posted: "Posted",
   actions: "Actions",
 };
-
-export function hiringSignalRowKey(row: LinkedInJobRow): string {
-  return row.id || `${row.linkedinJobId}-${row.apifyItemId}`;
-}
 
 function formatPosted(iso: string): string {
   if (!iso) return "—";
@@ -154,10 +150,6 @@ export interface HiringSignalsDataTableProps {
   onSelectionChange: (keys: Set<string>) => void;
   density?: "comfortable" | "compact";
   visibleColumns?: HiringSignalsDataTableColumnId[];
-  /** Server-side XLSX export (GraphQL `hireSignal.exportSelectedJobs`). */
-  onExportSelected?: (linkedinJobIds: string[]) => void | Promise<void>;
-  /** Disable export button while the mutation is in flight. */
-  exportBusy?: boolean;
   className?: string;
 }
 
@@ -172,8 +164,6 @@ export function HiringSignalsDataTable({
   onSelectionChange,
   density = "comfortable",
   visibleColumns = HS_DT_DEFAULT_COLUMNS,
-  onExportSelected,
-  exportBusy = false,
   className,
 }: HiringSignalsDataTableProps) {
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -194,31 +184,6 @@ export function HiringSignalsDataTable({
       for (const id of allIds) next.delete(id);
       onSelectionChange(next);
     }
-  };
-
-  const exportSelected = () => {
-    const picked = rows.filter((r) => selectedKeys.has(hiringSignalRowKey(r)));
-    if (picked.length === 0) {
-      toast.message("Nothing selected", {
-        description: "Select one or more rows first.",
-      });
-      return;
-    }
-    if (!onExportSelected) {
-      toast.error("Export is not available.");
-      return;
-    }
-    const ids = picked
-      .map((r) => (r.linkedinJobId || "").trim())
-      .filter(Boolean);
-    if (ids.length === 0) {
-      toast.message("Missing LinkedIn job ids", {
-        description:
-          "Selected rows do not include a LinkedIn job id. Refresh or pick different rows.",
-      });
-      return;
-    }
-    void onExportSelected(ids);
   };
 
   const skeletonRows =
@@ -242,27 +207,6 @@ export function HiringSignalsDataTable({
 
   return (
     <div className={cn("c360-w-full c360-min-w-0 c360-space-y-3", className)}>
-      {selectedKeys.size > 0 ? (
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={exportSelected}
-            disabled={exportBusy || !onExportSelected}
-            title={
-              onExportSelected
-                ? "Queue XLSX export on the server (see Jobs)"
-                : undefined
-            }
-          >
-            {exportBusy
-              ? "Exporting…"
-              : `Export selected as XLSX (${selectedKeys.size})`}
-          </Button>
-        </div>
-      ) : null}
-
       <div className="c360-overflow-x-auto c360-rounded-md c360-border c360-border-ink-8">
         <table className="c360-w-full c360-text-left c360-text-sm">
           <thead className="c360-border-b c360-border-ink-8 c360-bg-ink-4/40">
@@ -340,9 +284,27 @@ export function HiringSignalsDataTable({
                   </td>
                   {vis.has("title") ? (
                     <td className="c360-px-3 c360-py-2 c360-align-top c360-font-medium c360-text-ink">
-                      <span className="c360-line-clamp-2">
-                        {row.title || "—"}
-                      </span>
+                      <div className="c360-hs-title-cell">
+                        <span
+                          className="c360-hs-title-cell__text"
+                          title={row.title || undefined}
+                        >
+                          {row.title || "—"}
+                        </span>
+                        <Tooltip content="Job description" placement="top">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="c360-hs-title-cell__jd c360-gap-1 c360-px-2"
+                            onClick={() => onOpenDescription(row)}
+                            aria-label="View job description"
+                          >
+                            <FileText size={14} aria-hidden />
+                            JD
+                          </Button>
+                        </Tooltip>
+                      </div>
                       {row.seniority ? (
                         <p className="c360-mt-0-5 c360-text-2xs c360-text-ink-muted c360-font-normal">
                           {row.seniority}
@@ -423,19 +385,6 @@ export function HiringSignalsDataTable({
                   {vis.has("actions") ? (
                     <td className="c360-px-3 c360-py-2 c360-align-top c360-text-right c360-nowrap">
                       <div className="c360-inline-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
-                        <Tooltip content="Job description" placement="top">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="c360-gap-1 c360-px-2"
-                            onClick={() => onOpenDescription(row)}
-                            aria-label="View job description"
-                          >
-                            <FileText size={14} aria-hidden />
-                            JD
-                          </Button>
-                        </Tooltip>
                         {row.companyUuid ? (
                           <Tooltip
                             content="Company roles (Mongo)"

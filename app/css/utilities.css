@@ -776,6 +776,10 @@
   margin-bottom: var(--c360-spacing-6);
 }
 
+.c360-page-header--actions-only {
+  justify-content: flex-end;
+}
+
 .c360-page-header__title {
   font-size: var(--c360-text-2xl);
   font-weight: 700;

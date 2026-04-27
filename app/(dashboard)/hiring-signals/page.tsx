@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   LayoutDashboard,
   Zap,
+  Download,
 } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -20,6 +21,7 @@ import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Button } from "@/components/ui/Button";
 import {
+  effectivePostedAfter,
   useHiringSignals,
   type LinkedInJobRow,
 } from "@/hooks/useHiringSignals";
@@ -37,6 +39,10 @@ import {
   HS_DT_DEFAULT_COLUMNS,
   type HiringSignalsDataTableColumnId,
 } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
+import {
+  HiringSignalsExportModal,
+  type HiringSignalsExportIntent,
+} from "@/components/feature/hiring-signals/HiringSignalsExportModal";
 import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDescriptionModal";
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
 import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
@@ -49,6 +55,8 @@ import { parseOperationError } from "@/lib/errorParser";
 import {
   exportSelectedHireSignalJobs,
   fetchHireSignalExportStatus,
+  fetchLinkedinJobIdsAllMatching,
+  fetchLinkedinJobIdsFirstN,
 } from "@/services/graphql/hiringSignalService";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "sonner";
@@ -106,8 +114,8 @@ function HiringSignalsPageBody({
 
   const { applyFilters, activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
-  const { isAdmin, isPro } = useRole();
-  /** Runs / scrape ops UI — operators only (admin + superadmin). */
+  const { isAdmin, isPro, isSuperAdmin } = useRole();
+  /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
   const showRunsTab = isAdmin;
   /** Charts + stats dashboard — professional/enterprise (`isPro`) plus admins/superadmins always. */
   const showOverviewTab = isPro() || isAdmin;
@@ -133,6 +141,7 @@ function HiringSignalsPageBody({
   const [satellitePage, setSatellitePage] = useState(1);
   const [trackedPage, setTrackedPage] = useState(1);
   const [exportBusy, setExportBusy] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportBanner, setExportBanner] = useState<{
     jobId: string;
     status: string;
@@ -198,32 +207,70 @@ function HiringSignalsPageBody({
     [],
   );
 
-  const onExportSelected = useCallback(
+  const effectiveJobListFilters = useMemo(
+    () => ({
+      ...filters,
+      postedAfter: effectivePostedAfter(signalTimePreset, filters.postedAfter),
+    }),
+    [filters, signalTimePreset],
+  );
+
+  const queueHireSignalXlsxExport = useCallback(
     async (linkedinJobIds: string[]) => {
+      const res = await exportSelectedHireSignalJobs(linkedinJobIds);
+      const row = res.hireSignal?.exportSelectedJobs;
+      if (!row?.jobId) {
+        toast.error("Export was queued but no job id was returned.");
+        return;
+      }
+      setExportBanner({ jobId: row.jobId, status: row.status || "OPEN" });
+      toast.success("XLSX export queued", {
+        description:
+          "Track progress on Jobs (filter: Hiring Signals) — download when complete.",
+        action: {
+          label: "Open Jobs",
+          onClick: () => openJobsDrawer({ jobFamily: "hire_signal" }),
+        },
+      });
+    },
+    [openJobsDrawer],
+  );
+
+  const handleExportIntent = useCallback(
+    async (intent: HiringSignalsExportIntent) => {
       setExportBusy(true);
       try {
-        const res = await exportSelectedHireSignalJobs(linkedinJobIds);
-        const row = res.hireSignal?.exportSelectedJobs;
-        if (!row?.jobId) {
-          toast.error("Export was queued but no job id was returned.");
+        let linkedinJobIds: string[] = [];
+        if (intent.scope === "selected") {
+          linkedinJobIds = intent.linkedinJobIds;
+        } else if (intent.scope === "first_n") {
+          linkedinJobIds = await fetchLinkedinJobIdsFirstN(
+            effectiveJobListFilters,
+            intent.n,
+          );
+        } else {
+          const r =
+            await fetchLinkedinJobIdsAllMatching(effectiveJobListFilters);
+          linkedinJobIds = r.ids;
+          if (r.truncated) {
+            toast.message("Large export", {
+              description: `Including ${linkedinJobIds.length.toLocaleString()} of ${r.totalMatching.toLocaleString()} matching rows (server limit). Narrow filters if you need a smaller file.`,
+            });
+          }
+        }
+        if (linkedinJobIds.length === 0) {
+          toast.error("Nothing to export.");
           return;
         }
-        setExportBanner({ jobId: row.jobId, status: row.status || "OPEN" });
-        toast.success("XLSX export queued", {
-          description:
-            "Track progress on Jobs (filter: Hiring Signals) — download when complete.",
-          action: {
-            label: "Open Jobs",
-            onClick: () => openJobsDrawer({ jobFamily: "hire_signal" }),
-          },
-        });
+        await queueHireSignalXlsxExport(linkedinJobIds);
+        setExportModalOpen(false);
       } catch (e) {
         toast.error(parseOperationError(e, "jobs").userMessage);
       } finally {
         setExportBusy(false);
       }
     },
-    [openJobsDrawer],
+    [effectiveJobListFilters, queueHireSignalXlsxExport],
   );
 
   useEffect(() => {
@@ -494,18 +541,29 @@ function HiringSignalsPageBody({
       }}
       actions={[
         {
+          label: "Export XLSX",
+          onClick: () => setExportModalOpen(true),
+          icon: Download,
+          variant: "secondary",
+          disabled: loading || total === 0,
+        },
+        {
           label: "Refresh",
           onClick: () => void refetch(),
           icon: RefreshCw,
           variant: "secondary",
           disabled: loading,
         },
-        {
-          label: "Run scrape",
-          onClick: () => setScrapeModalOpen(true),
-          icon: Play,
-          variant: "primary",
-        },
+        ...(isSuperAdmin
+          ? [
+              {
+                label: "Run scrape",
+                onClick: () => setScrapeModalOpen(true),
+                icon: Play,
+                variant: "primary" as const,
+              },
+            ]
+          : []),
       ]}
     />
   );
@@ -628,8 +686,13 @@ function HiringSignalsPageBody({
                     loading={runsLoading && trackedScrapeRows.length === 0}
                     emptyState={
                       <p className="c360-m-0 c360-text-sm">
-                        No tracked scrapes yet. Use <strong>Run scrape</strong>{" "}
-                        to queue one.
+                        No tracked scrapes yet.
+                        {isSuperAdmin ? (
+                          <>
+                            {" "}
+                            Use <strong>Run scrape</strong> to queue one.
+                          </>
+                        ) : null}
                       </p>
                     }
                   />
@@ -649,6 +712,7 @@ function HiringSignalsPageBody({
         ) : null}
         <TabsContent value="signals">
           <DataPageLayout
+            className="c360-hiring-signals-page"
             showFilters
             mobileFiltersOpen={mobileFiltersOpen}
             onMobileFiltersClose={() => setMobileFiltersOpen(false)}
@@ -659,6 +723,8 @@ function HiringSignalsPageBody({
                   applyFilters();
                   setMobileFiltersOpen(false);
                 }}
+                appliedListFilters={filters}
+                signalTimePreset={signalTimePreset}
                 appliedRunId={filters.runId}
                 onClearRunId={clearRunFilter}
               />
@@ -722,8 +788,6 @@ function HiringSignalsPageBody({
               onSelectionChange={setSelectedKeys}
               density={tableDensity}
               visibleColumns={visibleColumns}
-              onExportSelected={onExportSelected}
-              exportBusy={exportBusy}
             />
           </DataPageLayout>
         </TabsContent>
@@ -753,14 +817,27 @@ function HiringSignalsPageBody({
         onClose={() => setDrawerRow(null)}
       />
 
-      <RunScrapeModal
-        isOpen={scrapeModalOpen}
-        onClose={() => setScrapeModalOpen(false)}
-        onSuccess={() => {
-          void refetch();
-          void loadRuns();
-        }}
+      <HiringSignalsExportModal
+        isOpen={exportModalOpen}
+        onClose={() => !exportBusy && setExportModalOpen(false)}
+        jobs={jobs}
+        totalMatching={total}
+        selectedKeys={selectedKeys}
+        defaultFirstN={filters.limit}
+        busy={exportBusy}
+        onConfirm={(intent) => void handleExportIntent(intent)}
       />
+
+      {isSuperAdmin ? (
+        <RunScrapeModal
+          isOpen={scrapeModalOpen}
+          onClose={() => setScrapeModalOpen(false)}
+          onSuccess={() => {
+            void refetch();
+            void loadRuns();
+          }}
+        />
+      ) : null}
     </DashboardPageLayout>
   );
 }

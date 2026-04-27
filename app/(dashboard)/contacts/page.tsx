@@ -14,12 +14,12 @@ import {
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
 import { parseOperationError } from "@/lib/errorParser";
-import { PageHeader } from "@/components/patterns/PageHeader";
 import { WorldMap } from "@/components/shared/WorldMap";
 import { useContacts } from "@/hooks/useContacts";
 import { useContactFilters } from "@/hooks/useContactFilters";
@@ -29,6 +29,7 @@ import {
   ContactsDataTable,
   CONTACTS_DT_COLUMN_IDS,
   CONTACTS_DT_DEFAULT_COLUMNS,
+  CONTACTS_DT_PAGE_SIZE_OPTIONS,
   type ContactsDataTableColumnId,
 } from "@/components/feature/contacts/ContactsDataTable";
 import { ContactsFilterSidebar } from "@/components/feature/contacts/ContactsFilterSidebar";
@@ -493,6 +494,25 @@ export default function ContactsPage() {
     ],
   );
 
+  const contactsToolbarMeta = (
+    <div className="c360-contacts-metadata c360-contacts-metadata--toolbar">
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Total (list)</span>
+        <span className="c360-contacts-metadata__value">
+          {total.toLocaleString()}
+        </span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Verified on page</span>
+        <span className="c360-contacts-metadata__value">{verifiedOnPage}</span>
+      </div>
+      <div className="c360-contacts-metadata__item">
+        <span className="c360-contacts-metadata__label">Rows this page</span>
+        <span className="c360-contacts-metadata__value">{contacts.length}</span>
+      </div>
+    </div>
+  );
+
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
@@ -503,6 +523,7 @@ export default function ContactsPage() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       totalCount={total}
+      meta={contactsToolbarMeta}
       viewModes={[
         { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
         { value: "compact", label: "Compact", icon: List },
@@ -514,6 +535,28 @@ export default function ContactsPage() {
         onOpen: () => setMobileFiltersOpen(true),
         show: !isDesktop,
       }}
+      actionPrefix={
+        <>
+          <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
+            <span className="c360-contacts-dt__toolbar-label">Show</span>
+            <Select
+              options={[...CONTACTS_DT_PAGE_SIZE_OPTIONS]}
+              value={String(pageSize)}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              fullWidth={false}
+              className="c360-contacts-dt__page-size"
+              inputSize="sm"
+              aria-label="Rows per page"
+            />
+            <span className="c360-contacts-dt__toolbar-label">entries</span>
+          </div>
+          <SavedSearchesMenu
+            entity="contact"
+            getContactPayload={getContactSavedPayload}
+            onApplyContact={handleApplyContactSaved}
+          />
+        </>
+      }
       actions={[
         {
           label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
@@ -561,45 +604,14 @@ export default function ContactsPage() {
     />
   );
 
-  const metadataEl = (
-    <div className="c360-contacts-metadata">
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Total (list)</span>
-        <span className="c360-contacts-metadata__value">
-          {total.toLocaleString()}
-        </span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Verified on page</span>
-        <span className="c360-contacts-metadata__value">{verifiedOnPage}</span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Rows this page</span>
-        <span className="c360-contacts-metadata__value">{contacts.length}</span>
-      </div>
-    </div>
-  );
-
   return (
     <DataPageLayout
       filters={filtersSidebar}
       toolbar={toolbarEl}
-      metadata={metadataEl}
       mobileFiltersOpen={mobileFiltersOpen}
       onMobileFiltersClose={() => setMobileFiltersOpen(false)}
       className="c360-contacts-page"
     >
-      <PageHeader
-        title="Contacts"
-        actions={
-          <SavedSearchesMenu
-            entity="contact"
-            getContactPayload={getContactSavedPayload}
-            onApplyContact={handleApplyContactSaved}
-          />
-        }
-      />
-
       <Modal
         isOpen={mapModalOpen}
         onClose={() => setMapModalOpen(false)}
@@ -689,7 +701,7 @@ export default function ContactsPage() {
           );
         })()}
 
-      <Card title="Contacts" padding="none" className="c360-mb-4">
+      <Card padding="none">
         <div className="c360-p-4">
           <ContactsDataTable
             contacts={contacts}
@@ -714,6 +726,8 @@ export default function ContactsPage() {
             onToggleColumn={toggleColumn}
             showToolbarSearch={false}
             showColumnPicker={false}
+            showPageSizeControl={false}
+            showPaginationFooter={false}
             density={tableDensity}
           />
         </div>
