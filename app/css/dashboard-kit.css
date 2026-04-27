@@ -100,6 +100,13 @@
   gap: var(--c360-spacing-2);
 }
 
+.c360-toolbar__action-prefix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+}
+
 .c360-toolbar__filter-btn {
   gap: var(--c360-spacing-2);
 }

@@ -59,10 +59,10 @@
   color: var(--c360-text-muted);
   border-color: transparent;
 }
-.c360-btn--ghost:hover:not(:disabled) {
+/* .c360-btn--ghost:hover:not(:disabled) {
   background: var(--c360-border);
   color: var(--c360-text);
-}
+} */
 
 .c360-btn--outline {
   background: transparent;

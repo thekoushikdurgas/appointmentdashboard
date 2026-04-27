@@ -79,11 +79,72 @@ function isRemoteAllowed(remote: string): boolean {
   );
 }
 
+export interface HiringSignalsToolbarTableExtrasProps {
+  pageSize: number;
+  onPageSizeChange: (n: number) => void;
+  visibleColumns: HiringSignalsDataTableColumnId[];
+  onToggleColumn: (
+    id: HiringSignalsDataTableColumnId,
+    visible: boolean,
+  ) => void;
+}
+
+/** Columns popover + page size — intended for `DataToolbar` `actionPrefix` on hiring signals. */
+export function HiringSignalsToolbarTableExtras({
+  pageSize,
+  onPageSizeChange,
+  visibleColumns,
+  onToggleColumn,
+}: HiringSignalsToolbarTableExtrasProps) {
+  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
+
+  return (
+    <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+      <Popover
+        trigger={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="c360-gap-1"
+          >
+            <Columns3 size={14} aria-hidden />
+            Columns
+          </Button>
+        }
+        content={
+          <div className="c360-space-y-2 c360-p-1">
+            <p className="c360-m-0 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Visible columns
+            </p>
+            {HS_DT_COLUMN_IDS.map((id) => (
+              <Checkbox
+                key={id}
+                size="sm"
+                checked={vis.has(id)}
+                onChange={(c) => onToggleColumn(id, c)}
+                label={COL_LABELS[id]}
+              />
+            ))}
+          </div>
+        }
+        width={220}
+      />
+      <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
+      <Select
+        className="c360-w-24"
+        fullWidth={false}
+        value={String(pageSize)}
+        onChange={(e) => onPageSizeChange(Number(e.target.value) || 25)}
+        options={PAGE_SIZE_OPTIONS}
+      />
+    </div>
+  );
+}
+
 export interface HiringSignalsDataTableProps {
   rows: LinkedInJobRow[];
   loading?: boolean;
-  pageSize: number;
-  onPageSizeChange: (n: number) => void;
   onOpenDescription: (row: LinkedInJobRow) => void;
   onOpenCompany: (row: LinkedInJobRow) => void;
   onOpenConnectra: (row: LinkedInJobRow) => void;
@@ -93,10 +154,6 @@ export interface HiringSignalsDataTableProps {
   onSelectionChange: (keys: Set<string>) => void;
   density?: "comfortable" | "compact";
   visibleColumns?: HiringSignalsDataTableColumnId[];
-  onToggleColumn?: (
-    id: HiringSignalsDataTableColumnId,
-    visible: boolean,
-  ) => void;
   /** Server-side XLSX export (GraphQL `hireSignal.exportSelectedJobs`). */
   onExportSelected?: (linkedinJobIds: string[]) => void | Promise<void>;
   /** Disable export button while the mutation is in flight. */
@@ -107,8 +164,6 @@ export interface HiringSignalsDataTableProps {
 export function HiringSignalsDataTable({
   rows,
   loading,
-  pageSize,
-  onPageSizeChange,
   onOpenDescription,
   onOpenCompany,
   onOpenConnectra,
@@ -117,7 +172,6 @@ export function HiringSignalsDataTable({
   onSelectionChange,
   density = "comfortable",
   visibleColumns = HS_DT_DEFAULT_COLUMNS,
-  onToggleColumn,
   onExportSelected,
   exportBusy = false,
   className,
@@ -167,40 +221,6 @@ export function HiringSignalsDataTable({
     void onExportSelected(ids);
   };
 
-  const columnPicker =
-    onToggleColumn != null ? (
-      <Popover
-        trigger={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="c360-gap-1"
-          >
-            <Columns3 size={14} aria-hidden />
-            Columns
-          </Button>
-        }
-        content={
-          <div className="c360-space-y-2 c360-p-1">
-            <p className="c360-m-0 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Visible columns
-            </p>
-            {HS_DT_COLUMN_IDS.map((id) => (
-              <Checkbox
-                key={id}
-                size="sm"
-                checked={vis.has(id)}
-                onChange={(c) => onToggleColumn(id, c)}
-                label={COL_LABELS[id]}
-              />
-            ))}
-          </div>
-        }
-        width={220}
-      />
-    ) : null;
-
   const skeletonRows =
     loading && rows.length === 0
       ? Array.from({ length: 5 }).map((_, si) => (
@@ -222,8 +242,8 @@ export function HiringSignalsDataTable({
 
   return (
     <div className={cn("c360-w-full c360-min-w-0 c360-space-y-3", className)}>
-      <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-        {selectedKeys.size > 0 ? (
+      {selectedKeys.size > 0 ? (
+        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
           <Button
             type="button"
             variant="secondary"
@@ -240,21 +260,8 @@ export function HiringSignalsDataTable({
               ? "Exporting…"
               : `Export selected as XLSX (${selectedKeys.size})`}
           </Button>
-        ) : (
-          <span className="c360-text-2xs c360-text-ink-muted" />
-        )}
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-2">
-          {columnPicker}
-          <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
-          <Select
-            className="c360-w-24"
-            fullWidth={false}
-            value={String(pageSize)}
-            onChange={(e) => onPageSizeChange(Number(e.target.value) || 25)}
-            options={PAGE_SIZE_OPTIONS}
-          />
         </div>
-      </div>
+      ) : null}
 
       <div className="c360-overflow-x-auto c360-rounded-md c360-border c360-border-ink-8">
         <table className="c360-w-full c360-text-left c360-text-sm">

@@ -33,6 +33,7 @@ import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/Hiring
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import {
   HiringSignalsDataTable,
+  HiringSignalsToolbarTableExtras,
   HS_DT_DEFAULT_COLUMNS,
   type HiringSignalsDataTableColumnId,
 } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
@@ -52,6 +53,7 @@ import {
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
+import { useRole } from "@/context/RoleContext";
 
 const RUNS_PAGE_SIZE = 10;
 
@@ -104,6 +106,13 @@ function HiringSignalsPageBody({
 
   const { applyFilters, activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
+  const { isAdmin, isPro } = useRole();
+  /** Runs / scrape ops UI — operators only (admin + superadmin). */
+  const showRunsTab = isAdmin;
+  /** Charts + stats dashboard — professional/enterprise (`isPro`) plus admins/superadmins always. */
+  const showOverviewTab = isPro() || isAdmin;
+  /** More than just the Signals list — show Overview and/or Runs tab triggers. */
+  const showTabList = showOverviewTab || showRunsTab;
 
   const [scrapeModalOpen, setScrapeModalOpen] = useState(false);
   const [jd, setJd] = useState<LinkedInJobRow | null>(null);
@@ -247,6 +256,11 @@ function HiringSignalsPageBody({
       clearInterval(id);
     };
   }, [exportBanner?.jobId, exportBanner?.status]);
+
+  useEffect(() => {
+    if (!showOverviewTab && mainTab === "overview") setMainTab("signals");
+    if (!showRunsTab && mainTab === "runs") setMainTab("signals");
+  }, [showOverviewTab, showRunsTab, mainTab]);
 
   const renderStatsBar = () => (
     <HiringSignalStatsBar
@@ -442,6 +456,14 @@ function HiringSignalsPageBody({
   const signalsToolbar = (
     <DataToolbar
       cssPrefix="c360-toolbar"
+      actionPrefix={
+        <HiringSignalsToolbarTableExtras
+          pageSize={filters.limit}
+          onPageSizeChange={setPageSize}
+          visibleColumns={visibleColumns}
+          onToggleColumn={toggleHsColumn}
+        />
+      }
       tabs={[
         {
           value: "all",
@@ -497,34 +519,49 @@ function HiringSignalsPageBody({
       ) : null}
 
       <Tabs
-        value={mainTab}
-        onValueChange={(v) => setMainTab(v as "overview" | "signals" | "runs")}
+        value={showTabList ? mainTab : "signals"}
+        onValueChange={
+          showTabList
+            ? (v) => setMainTab(v as "overview" | "signals" | "runs")
+            : undefined
+        }
         variant="dashboard"
         className="c360-mb-4"
       >
-        <TabsList>
-          <TabsTrigger value="overview" icon={<LayoutDashboard size={14} />}>
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="signals" icon={<Zap size={14} />}>
-            Signals
-          </TabsTrigger>
-          <TabsTrigger value="runs" icon={<History size={14} />}>
-            Runs
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <HiringSignalsDashboard
-            jobs={jobs}
-            loading={loading}
-            statsBar={renderStatsBar()}
-            onOpenCompanyDrawer={(row) => setDrawerRow(row)}
-            latestRun={latestSatelliteRun}
-            runsLoading={runsLoading}
-            onGoToRuns={() => setMainTab("runs")}
-          />
-        </TabsContent>
-        <TabsContent value="runs">
+        {showTabList ? (
+          <TabsList>
+            {showOverviewTab ? (
+              <TabsTrigger value="overview" icon={<LayoutDashboard size={14} />}>
+                Overview
+              </TabsTrigger>
+            ) : null}
+            <TabsTrigger value="signals" icon={<Zap size={14} />}>
+              Signals
+            </TabsTrigger>
+            {showRunsTab ? (
+              <TabsTrigger value="runs" icon={<History size={14} />}>
+                Runs
+              </TabsTrigger>
+            ) : null}
+          </TabsList>
+        ) : null}
+        {showOverviewTab ? (
+          <TabsContent value="overview">
+            <HiringSignalsDashboard
+              jobs={jobs}
+              loading={loading}
+              statsBar={renderStatsBar()}
+              onOpenCompanyDrawer={(row) => setDrawerRow(row)}
+              latestRun={latestSatelliteRun}
+              runsLoading={runsLoading}
+              onGoToRuns={
+                showRunsTab ? () => setMainTab("runs") : undefined
+              }
+            />
+          </TabsContent>
+        ) : null}
+        {showRunsTab ? (
+          <TabsContent value="runs">
           <div
             className="c360-flex c360-flex-col c360-gap-6"
             style={{ paddingLeft: "16px", paddingRight: "16px" }}
@@ -609,6 +646,7 @@ function HiringSignalsPageBody({
             </section>
           </div>
         </TabsContent>
+        ) : null}
         <TabsContent value="signals">
           <DataPageLayout
             showFilters
@@ -625,13 +663,6 @@ function HiringSignalsPageBody({
                 onClearRunId={clearRunFilter}
               />
             }
-            metadata={
-              <p className="c360-text-2xs c360-text-ink-muted">
-                {loading
-                  ? "Loading…"
-                  : `Showing ${jobs.length} of ${total.toLocaleString()} match(es). Filters apply on “Apply”.`}
-              </p>
-            }
             pagination={
               total > filters.limit ? (
                 <Pagination
@@ -644,15 +675,6 @@ function HiringSignalsPageBody({
               ) : null
             }
           >
-            <div className="c360-mb-2">
-              <h2 className="c360-text-sm c360-font-semibold c360-text-ink">
-                Open roles
-              </h2>
-              <p className="c360-mt-1 c360-text-2xs c360-text-ink-muted">
-                Server-paginated list; set filters in the left column, then
-                Apply.
-              </p>
-            </div>
             {exportBanner ? (
               <Alert
                 variant={
@@ -692,8 +714,6 @@ function HiringSignalsPageBody({
             <HiringSignalsDataTable
               rows={jobs}
               loading={loading}
-              pageSize={filters.limit}
-              onPageSizeChange={setPageSize}
               onOpenDescription={setJd}
               onOpenCompany={setCompanyRow}
               onOpenConnectra={setConnectraRow}
@@ -702,7 +722,6 @@ function HiringSignalsPageBody({
               onSelectionChange={setSelectedKeys}
               density={tableDensity}
               visibleColumns={visibleColumns}
-              onToggleColumn={toggleHsColumn}
               onExportSelected={onExportSelected}
               exportBusy={exportBusy}
             />

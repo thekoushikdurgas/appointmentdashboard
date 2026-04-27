@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -40,6 +41,8 @@ export interface GenericToolbarProps {
   viewMode?: string;
   onViewModeChange?: (mode: string) => void;
   filterConfig?: FilterConfig;
+  /** Renders at the start of the right-hand actions cluster (e.g. columns + per page). */
+  actionPrefix?: ReactNode;
   actions?: ToolbarAction[];
   className?: string;
   /** BEM prefix for scoped styles (default: kit toolbar). */
@@ -54,11 +57,16 @@ export function GenericToolbar({
   viewMode,
   onViewModeChange,
   filterConfig,
+  actionPrefix,
   actions = [],
   className,
   cssPrefix = "c360-toolbar",
 }: GenericToolbarProps) {
   const p = cssPrefix;
+  const hasActionClusterTail =
+    (filterConfig?.show !== false && !!filterConfig) ||
+    (viewModes && viewModes.length > 0) ||
+    actions.length > 0;
 
   return (
     <div
@@ -96,6 +104,12 @@ export function GenericToolbar({
       ) : null}
 
       <div className={`${p}__actions`}>
+        {actionPrefix ? (
+          <div className={`${p}__action-prefix`}>{actionPrefix}</div>
+        ) : null}
+        {actionPrefix && hasActionClusterTail ? (
+          <div className={`${p}__divider`} aria-hidden />
+        ) : null}
         {filterConfig?.show !== false && filterConfig ? (
           <Button
             type="button"

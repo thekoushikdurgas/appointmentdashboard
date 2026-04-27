@@ -5,7 +5,7 @@
 .c360-popover__panel {
   position: absolute;
   z-index: var(--c360-z-popover);
-  width: var(--c360-popover-width, 280px);
+  /* width: var(--c360-popover-width, 280px); */
   background: var(--c360-bg-elevated);
   border: 1px solid var(--c360-border);
   border-radius: var(--c360-radius-lg);
@@ -30,7 +30,7 @@
 
 /* Dashboard UI kit mini-sidebar flyout: $shadow 40px rgba(82,63,105,0.1) */
 .c360-popover__panel--sidebar-flyout {
-  box-shadow: var(--c360-shadow-card);
+  box-shadow: 5px;
   border-radius: var(--c360-radius-lg);
   padding: 0;
   overflow: visible;

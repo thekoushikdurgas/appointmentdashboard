@@ -119,9 +119,11 @@ video {
 
   /* Layout */
   --c360-sidebar-width: 240px;
-  /* Kit mini sidebar rail ≈ 5rem (_sidebar-mini-nav.scss .deznav width) */
-  --c360-sidebar-width-collapsed: 80px;
-  --c360-topbar-height: 64px;
+  /* Collapsed icon rail (search + nav icons) */
+  --c360-sidebar-width-collapsed: 45px;
+  /* Top bar: full width sidebar rail vs collapsed rail (see .c360-topbar--collapsed) */
+  --c360-topbar-height: 57px;
+  --c360-topbar-height-collapsed: 45px;
   --c360-content-max-width: 1280px;
   --c360-container-padding: 24px;
 

@@ -332,13 +332,13 @@ export function JobsWorkspace({
         </div>
       </Card>
 
-      {showJobReviews ? (
+      {/* {showJobReviews ? (
         <div className="c360-mt-6">
           <Card title="Job Reviews" subtitle="User feedback on batch jobs">
             <ReviewList reviews={[]} entityName="jobs" />
           </Card>
         </div>
-      ) : null}
+      ) : null} */}
 
       <Modal
         isOpen={exportOpen}

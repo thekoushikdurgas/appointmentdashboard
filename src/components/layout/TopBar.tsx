@@ -207,9 +207,6 @@ export default function TopBar({
                 className="c360-topbar__profile-trigger"
                 aria-label="Account menu"
               >
-                <span className="c360-topbar__profile-greeting">
-                  Hello, <strong>{firstName}</strong>
-                </span>
                 <span className="c360-topbar__profile-avatar" aria-hidden>
                   {initials}
                 </span>

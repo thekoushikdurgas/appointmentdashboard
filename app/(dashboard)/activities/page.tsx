@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { StatCard } from "@/components/shared/StatCard";
-import { PageHeader } from "@/components/patterns/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -386,9 +385,8 @@ export default function ActivitiesPage() {
   const rangeEnd = pageOffset + actRows.length;
 
   return (
-    <DashboardPageLayout>
-      <PageHeader title="Activities" />
-
+    <DashboardPageLayout className="c360-dashboard-layout--activities">
+      <div className="c360-dashboard-layout__activities-column">
       {error && activeTab !== "usage" && (
         <p className="c360-input-error c360-mb-4" role="alert">
           {error}
@@ -443,7 +441,7 @@ export default function ActivitiesPage() {
             </div>
           </div>
 
-          <div className="c360-dashboard-layout__stats c360-mb-6">
+          <div className="c360-dashboard-layout__stats">
             {statsRow.map((s) => (
               <StatCard key={s.label} {...s} />
             ))}
@@ -630,6 +628,7 @@ export default function ActivitiesPage() {
           </div>
         )}
       </Tabs>
+      </div>
     </DashboardPageLayout>
   );
 }
