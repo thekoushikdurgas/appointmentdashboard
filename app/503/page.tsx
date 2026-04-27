@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 
 export default function ServiceUnavailablePage() {
   return (
@@ -30,13 +31,13 @@ export default function ServiceUnavailablePage() {
       </div>
       <div className="c360-error-page__actions">
         <Link
-          href="/dashboard"
+          href={ROUTES.DASHBOARD}
           className="c360-btn c360-btn--primary c360-error-page__link-btn"
         >
           Try Dashboard
         </Link>
         <Link
-          href="/dashboard"
+          href={ROUTES.HOME}
           className="c360-btn c360-btn--secondary c360-error-page__link-btn"
         >
           Go to home

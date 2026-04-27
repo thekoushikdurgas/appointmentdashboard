@@ -20,13 +20,19 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+function isVqlQueryObject(v: unknown): boolean {
+  return (
+    typeof v === "object" && v !== null && !Array.isArray(v)
+  );
+}
+
 export function isContactSavedSearchPayload(
   v: unknown,
 ): v is ContactSavedSearchPayload {
   if (!isRecord(v)) return false;
   return (
     v.version === SAVED_SEARCH_VERSION &&
-    "vqlQuery" in v &&
+    isVqlQueryObject(v.vqlQuery) &&
     typeof v.pageSize === "number"
   );
 }
@@ -37,7 +43,7 @@ export function isCompanySavedSearchPayload(
   if (!isRecord(v)) return false;
   return (
     v.version === SAVED_SEARCH_VERSION &&
-    "vqlQuery" in v &&
+    isVqlQueryObject(v.vqlQuery) &&
     typeof v.search === "string"
   );
 }
