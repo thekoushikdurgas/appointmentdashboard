@@ -21,9 +21,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 function isVqlQueryObject(v: unknown): boolean {
-  return (
-    typeof v === "object" && v !== null && !Array.isArray(v)
-  );
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 export function isContactSavedSearchPayload(

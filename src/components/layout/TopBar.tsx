@@ -77,9 +77,6 @@ export default function TopBar({
     isLast: i === segments.length - 1,
   }));
 
-  const firstName =
-    user?.full_name?.split(/\s+/)[0] || user?.email?.split("@")[0] || "there";
-
   const initials = (user?.full_name || user?.email || "U")
     .trim()
     .charAt(0)

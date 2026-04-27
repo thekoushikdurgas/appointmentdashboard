@@ -387,247 +387,247 @@ export default function ActivitiesPage() {
   return (
     <DashboardPageLayout className="c360-dashboard-layout--activities">
       <div className="c360-dashboard-layout__activities-column">
-      {error && activeTab !== "usage" && (
-        <p className="c360-input-error c360-mb-4" role="alert">
-          {error}
-        </p>
-      )}
-
-      {activeTab !== "usage" && (
-        <>
-          <ActivityFiltersBar
-            values={filterForm}
-            onChange={setFilterForm}
-            onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
-            disabled={loading}
-          />
-
-          <div className="c360-flex c360-flex-wrap c360-justify-between c360-items-center c360-gap-3 c360-mb-4">
-            <p className="c360-text-sm c360-text-muted c360-m-0">
-              Showing{" "}
-              <strong>
-                {rangeStart}-{rangeEnd}
-              </strong>{" "}
-              of <strong>{total}</strong>
-            </p>
-            <div className="c360-flex c360-gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={!hasPrevious || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={!hasNext || loading}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                loading={loading}
-                onClick={() => void refresh()}
-              >
-                Refresh
-              </Button>
-            </div>
-          </div>
-
-          <div className="c360-dashboard-layout__stats">
-            {statsRow.map((s) => (
-              <StatCard key={s.label} {...s} />
-            ))}
-          </div>
-        </>
-      )}
-
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="c360-mb-4">
-          <TabsList>
-            <TabsTrigger value="feed" icon={<Activity size={14} />}>
-              Activity Feed
-            </TabsTrigger>
-            <TabsTrigger value="calendar" icon={<Calendar size={14} />}>
-              Calendar
-            </TabsTrigger>
-            <TabsTrigger value="analytics" icon={<BarChart2 size={14} />}>
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="jobs" icon={<TrendingUp size={14} />}>
-              Live Job Stats
-            </TabsTrigger>
-            <TabsTrigger value="usage" icon={<PieChart size={14} />}>
-              Usage
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {activeTab === "feed" && (
-          <ActivityFeedTab activities={feedItems} loading={loading} />
+        {error && activeTab !== "usage" && (
+          <p className="c360-input-error c360-mb-4" role="alert">
+            {error}
+          </p>
         )}
-        {activeTab === "calendar" && (
-          <ActivityCalendarTab events={calendarEvents} />
-        )}
-        {activeTab === "analytics" && (
-          <ActivityAnalyticsTab
-            analyticsData={analyticsData}
-            stats={stats}
-            statsLoading={loading}
-          />
-        )}
-        {activeTab === "jobs" && <JobStatsTab jobStats={jobStats} />}
 
-        {activeTab === "usage" && (
-          <div className="c360-section-stack">
-            {usageError && (
-              <Alert variant="danger" className="c360-mb-4">
-                {usageError}
-              </Alert>
-            )}
-            <div className="c360-flex c360-flex-wrap c360-gap-2 c360-mb-4 c360-items-center">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={usageLoading}
-                leftIcon={
-                  <RefreshCw
-                    size={14}
-                    className={cn(usageLoading && "c360-spin")}
-                  />
-                }
-                onClick={() => void refreshUsage()}
-              >
-                Refresh
-              </Button>
-              <Badge color="blue">{formatNumber(credits)} credits left</Badge>
-            </div>
+        {activeTab !== "usage" && (
+          <>
+            <ActivityFiltersBar
+              values={filterForm}
+              onChange={setFilterForm}
+              onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
+              disabled={loading}
+            />
 
-            <div className="c360-mb-4">
-              <Tabs
-                value={usageSubTab}
-                onValueChange={(v) =>
-                  setUsageSubTab(v as "overview" | "drill-down")
-                }
-                variant="filter"
-              >
-                <TabsList>
-                  <TabsTrigger value="overview">All features</TabsTrigger>
-                  <TabsTrigger value="drill-down">Feature detail</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            {usageSubTab === "drill-down" && (
-              <div className="c360-section-stack c360-mb-6">
-                <Card
-                  title="Pick a feature"
-                  subtitle="Then open Usage, Activity, or Jobs sub-tabs below"
+            <div className="c360-flex c360-flex-wrap c360-justify-between c360-items-center c360-gap-3 c360-mb-4">
+              <p className="c360-text-sm c360-text-muted c360-m-0">
+                Showing{" "}
+                <strong>
+                  {rangeStart}-{rangeEnd}
+                </strong>{" "}
+                of <strong>{total}</strong>
+              </p>
+              <div className="c360-flex c360-gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!hasPrevious || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  <div className="c360-card-body">
-                    <div className="c360-flex c360-flex-wrap c360-gap-2">
-                      {usageData.map((f) => (
-                        <button
-                          key={f.feature}
-                          type="button"
-                          className={cn(
-                            "c360-btn c360-btn--sm",
-                            selectedFeature === f.feature
-                              ? "c360-btn--primary"
-                              : "c360-btn--secondary",
-                          )}
-                          onClick={() => {
-                            setSelectedFeature(f.feature);
-                            const p = new URLSearchParams(
-                              searchParams.toString(),
-                            );
-                            p.set("tab", "usage");
-                            p.set("feature", f.feature);
-                            router.replace(`/activities?${p.toString()}`, {
-                              scroll: false,
-                            });
-                          }}
-                        >
-                          {f.feature}
-                        </button>
-                      ))}
-                    </div>
-                    {!selectedFeature && usageData.length > 0 && (
-                      <p className="c360-text-sm c360-text-muted c360-mt-3 c360-mb-0">
-                        Select a feature to load overview data.
-                      </p>
-                    )}
-                  </div>
-                </Card>
-
-                <FeatureOverviewPanel
-                  overview={overview}
-                  loading={overviewLoading}
-                  showResetUsage={isSuperAdmin}
-                  onResetUsage={handleResetUsage}
-                  resetProcessing={resetProcessing}
-                />
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!hasNext || loading}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={loading}
+                  onClick={() => void refresh()}
+                >
+                  Refresh
+                </Button>
               </div>
-            )}
+            </div>
 
-            {usageSubTab === "overview" && (
-              <div className="c360-usage-grid">
-                {usageLoading && (
-                  <p className="c360-page-subtitle">Loading usage…</p>
-                )}
-                {!usageLoading && usageData.length === 0 && !usageError && (
-                  <p className="c360-page-subtitle">
-                    No usage records from the gateway yet, or your plan has no
-                    tracked features.
-                  </p>
-                )}
-                {usageData.map((item) => (
-                  <FeatureUsageCard
-                    key={item.feature}
-                    feature={item}
-                    onDrillDown={handleDrillDown}
-                  />
-                ))}
-              </div>
-            )}
-
-            <Card
-              title="Billing cycle"
-              subtitle="Usage periods follow gateway rules (often monthly)"
-              padding="md"
-              className="c360-mt-6"
-            >
-              <div className="c360-billing-info-row">
-                <div>
-                  <div className="c360-section-label">Current plan</div>
-                  <div className="c360-billing-stat-value">
-                    {plan.charAt(0).toUpperCase() + plan.slice(1)}
-                  </div>
-                </div>
-                <div>
-                  <div className="c360-section-label">Credits remaining</div>
-                  <div className="c360-billing-stat-value">
-                    {formatNumber(credits)}
-                  </div>
-                </div>
-                <div>
-                  <div className="c360-section-label">Next period starts</div>
-                  <div className="c360-billing-stat-value">
-                    {firstOfNextMonthLabel()}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
+            <div className="c360-dashboard-layout__stats">
+              {statsRow.map((s) => (
+                <StatCard key={s.label} {...s} />
+              ))}
+            </div>
+          </>
         )}
-      </Tabs>
+
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <div className="c360-mb-4">
+            <TabsList>
+              <TabsTrigger value="feed" icon={<Activity size={14} />}>
+                Activity Feed
+              </TabsTrigger>
+              <TabsTrigger value="calendar" icon={<Calendar size={14} />}>
+                Calendar
+              </TabsTrigger>
+              <TabsTrigger value="analytics" icon={<BarChart2 size={14} />}>
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="jobs" icon={<TrendingUp size={14} />}>
+                Live Job Stats
+              </TabsTrigger>
+              <TabsTrigger value="usage" icon={<PieChart size={14} />}>
+                Usage
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {activeTab === "feed" && (
+            <ActivityFeedTab activities={feedItems} loading={loading} />
+          )}
+          {activeTab === "calendar" && (
+            <ActivityCalendarTab events={calendarEvents} />
+          )}
+          {activeTab === "analytics" && (
+            <ActivityAnalyticsTab
+              analyticsData={analyticsData}
+              stats={stats}
+              statsLoading={loading}
+            />
+          )}
+          {activeTab === "jobs" && <JobStatsTab jobStats={jobStats} />}
+
+          {activeTab === "usage" && (
+            <div className="c360-section-stack">
+              {usageError && (
+                <Alert variant="danger" className="c360-mb-4">
+                  {usageError}
+                </Alert>
+              )}
+              <div className="c360-flex c360-flex-wrap c360-gap-2 c360-mb-4 c360-items-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={usageLoading}
+                  leftIcon={
+                    <RefreshCw
+                      size={14}
+                      className={cn(usageLoading && "c360-spin")}
+                    />
+                  }
+                  onClick={() => void refreshUsage()}
+                >
+                  Refresh
+                </Button>
+                <Badge color="blue">{formatNumber(credits)} credits left</Badge>
+              </div>
+
+              <div className="c360-mb-4">
+                <Tabs
+                  value={usageSubTab}
+                  onValueChange={(v) =>
+                    setUsageSubTab(v as "overview" | "drill-down")
+                  }
+                  variant="filter"
+                >
+                  <TabsList>
+                    <TabsTrigger value="overview">All features</TabsTrigger>
+                    <TabsTrigger value="drill-down">Feature detail</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {usageSubTab === "drill-down" && (
+                <div className="c360-section-stack c360-mb-6">
+                  <Card
+                    title="Pick a feature"
+                    subtitle="Then open Usage, Activity, or Jobs sub-tabs below"
+                  >
+                    <div className="c360-card-body">
+                      <div className="c360-flex c360-flex-wrap c360-gap-2">
+                        {usageData.map((f) => (
+                          <button
+                            key={f.feature}
+                            type="button"
+                            className={cn(
+                              "c360-btn c360-btn--sm",
+                              selectedFeature === f.feature
+                                ? "c360-btn--primary"
+                                : "c360-btn--secondary",
+                            )}
+                            onClick={() => {
+                              setSelectedFeature(f.feature);
+                              const p = new URLSearchParams(
+                                searchParams.toString(),
+                              );
+                              p.set("tab", "usage");
+                              p.set("feature", f.feature);
+                              router.replace(`/activities?${p.toString()}`, {
+                                scroll: false,
+                              });
+                            }}
+                          >
+                            {f.feature}
+                          </button>
+                        ))}
+                      </div>
+                      {!selectedFeature && usageData.length > 0 && (
+                        <p className="c360-text-sm c360-text-muted c360-mt-3 c360-mb-0">
+                          Select a feature to load overview data.
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+
+                  <FeatureOverviewPanel
+                    overview={overview}
+                    loading={overviewLoading}
+                    showResetUsage={isSuperAdmin}
+                    onResetUsage={handleResetUsage}
+                    resetProcessing={resetProcessing}
+                  />
+                </div>
+              )}
+
+              {usageSubTab === "overview" && (
+                <div className="c360-usage-grid">
+                  {usageLoading && (
+                    <p className="c360-page-subtitle">Loading usage…</p>
+                  )}
+                  {!usageLoading && usageData.length === 0 && !usageError && (
+                    <p className="c360-page-subtitle">
+                      No usage records from the gateway yet, or your plan has no
+                      tracked features.
+                    </p>
+                  )}
+                  {usageData.map((item) => (
+                    <FeatureUsageCard
+                      key={item.feature}
+                      feature={item}
+                      onDrillDown={handleDrillDown}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <Card
+                title="Billing cycle"
+                subtitle="Usage periods follow gateway rules (often monthly)"
+                padding="md"
+                className="c360-mt-6"
+              >
+                <div className="c360-billing-info-row">
+                  <div>
+                    <div className="c360-section-label">Current plan</div>
+                    <div className="c360-billing-stat-value">
+                      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="c360-section-label">Credits remaining</div>
+                    <div className="c360-billing-stat-value">
+                      {formatNumber(credits)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="c360-section-label">Next period starts</div>
+                    <div className="c360-billing-stat-value">
+                      {firstOfNextMonthLabel()}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+        </Tabs>
       </div>
     </DashboardPageLayout>
   );

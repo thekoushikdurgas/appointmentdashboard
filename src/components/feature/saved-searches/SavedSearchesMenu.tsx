@@ -169,7 +169,7 @@ export function SavedSearchesMenu({
                 this view.
               </p>
             ) : (
-              <ul className="c360-m-0 c360-p-0" style={{ listStyle: "none" }}>
+              <ul className="c360-list-none">
                 {list.map((s) => (
                   <li
                     key={s.id}
@@ -177,13 +177,7 @@ export function SavedSearchesMenu({
                   >
                     <button
                       type="button"
-                      className="c360-text-left c360-flex-1 c360-text-sm"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: 0,
-                      }}
+                      className="c360-interactive-plain c360-text-left c360-flex-1 c360-text-sm"
                       onClick={() => void handleApply(s)}
                     >
                       {s.name}

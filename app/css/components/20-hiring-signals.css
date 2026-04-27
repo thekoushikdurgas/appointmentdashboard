@@ -6,6 +6,55 @@
     align-items: flex-end;
     justify-content: space-between;
   }
+
+  .c360-hs-latest-run-inner {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+/* Hiring signals dashboard — lists / cards (no inline styles) */
+.c360-hs-dashboard-recent-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-hs-dashboard-recent-item {
+  padding: 10px;
+}
+
+.c360-hs-dashboard-companies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 10px;
+}
+
+.c360-hs-dashboard-company-li {
+  padding: 0;
+  border-radius: 10px;
+}
+
+.c360-hs-dashboard-company-btn {
+  border-radius: 7px;
+  padding: 5px 11px;
+}
+
+/* Job description modal body */
+.c360-hs-jd-modal-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.c360-hs-jd-modal-meta-row {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.c360-hs-jd-modal-desc-scroll {
+  max-height: min(60vh, 28rem);
 }
 
 /* ─── Sanitized job description HTML (dangerouslySetInnerHTML) ───────────── */

@@ -75,7 +75,6 @@ export function JobsDrawer() {
               <JobsWorkspace
                 key={openRequest.seq}
                 initialJobFamily={openRequest.jobFamily ?? ""}
-                showJobReviews
               />
             </div>
           </motion.aside>

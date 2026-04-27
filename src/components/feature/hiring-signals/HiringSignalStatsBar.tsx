@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import {
   Briefcase,
   Building2,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import { CountUpNumber } from "@/components/ui/CountUpNumber";
 import { Progress } from "@/components/ui/Progress";
+import { applyVars } from "@/lib/applyCssVars";
 import { cn } from "@/lib/utils";
 
 export interface HiringSignalStatsBarProps {
@@ -69,11 +69,11 @@ export function HiringSignalStatsBar({
         <div className="c360-stat-card__header">
           <div
             className="c360-stat-card__icon"
-            style={
-              {
-                ["--c360-stat-icon-bg" as string]: "var(--c360-primary-light)",
-                ["--c360-stat-icon-fg" as string]: "var(--c360-primary)",
-              } as CSSProperties
+            ref={(el) =>
+              applyVars(el, {
+                "--c360-stat-icon-bg": "var(--c360-primary-light)",
+                "--c360-stat-icon-fg": "var(--c360-primary)",
+              })
             }
           >
             <Briefcase size={22} aria-hidden />
@@ -98,11 +98,11 @@ export function HiringSignalStatsBar({
         <div className="c360-stat-card__header">
           <div
             className="c360-stat-card__icon"
-            style={
-              {
-                ["--c360-stat-icon-bg" as string]: "var(--c360-success-light)",
-                ["--c360-stat-icon-fg" as string]: "var(--c360-success)",
-              } as CSSProperties
+            ref={(el) =>
+              applyVars(el, {
+                "--c360-stat-icon-bg": "var(--c360-success-light)",
+                "--c360-stat-icon-fg": "var(--c360-success)",
+              })
             }
           >
             <Building2 size={22} aria-hidden />
@@ -137,11 +137,11 @@ export function HiringSignalStatsBar({
         <div className="c360-stat-card__header">
           <div
             className="c360-stat-card__icon"
-            style={
-              {
-                ["--c360-stat-icon-bg" as string]: "var(--c360-warning-light)",
-                ["--c360-stat-icon-fg" as string]: "var(--c360-warning)",
-              } as CSSProperties
+            ref={(el) =>
+              applyVars(el, {
+                "--c360-stat-icon-bg": "var(--c360-warning-light)",
+                "--c360-stat-icon-fg": "var(--c360-warning)",
+              })
             }
           >
             <Filter size={22} aria-hidden />
@@ -173,11 +173,11 @@ export function HiringSignalStatsBar({
         <div className="c360-stat-card__header">
           <div
             className="c360-stat-card__icon"
-            style={
-              {
-                ["--c360-stat-icon-bg" as string]: "var(--c360-info-light)",
-                ["--c360-stat-icon-fg" as string]: "var(--c360-info)",
-              } as CSSProperties
+            ref={(el) =>
+              applyVars(el, {
+                "--c360-stat-icon-bg": "var(--c360-info-light)",
+                "--c360-stat-icon-fg": "var(--c360-info)",
+              })
             }
           >
             <LayoutGrid size={22} aria-hidden />

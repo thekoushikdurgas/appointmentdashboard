@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Popover } from "@/components/ui/Popover";
 import { cn } from "@/lib/utils";
+import { applyVars } from "@/lib/applyCssVars";
 import type { MappedJob } from "@/lib/jobs/jobsMapper";
 import {
   formatJobIdShort,
@@ -441,11 +442,15 @@ export function JobsDataTable({
                           )}
                         >
                           <div
+                            ref={(el) =>
+                              applyVars(el, {
+                                "--c360-jobs-dt-progress-pct": `${pct}%`,
+                              })
+                            }
                             className={cn(
                               "c360-jobs-dt__progress-fill",
                               progressBarClass(tone),
                             )}
-                            style={{ width: `${pct}%` }}
                             role="progressbar"
                             aria-valuenow={Math.round(pct)}
                             aria-valuemin={0}

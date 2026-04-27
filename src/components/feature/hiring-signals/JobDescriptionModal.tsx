@@ -61,10 +61,7 @@ export function JobDescriptionModal({
       }
     >
       {job ? (
-        <div
-          className="c360-space-y-3"
-          style={{ display: "flex", flexDirection: "column", gap: "5px" }}
-        >
+        <div className="c360-hs-jd-modal-stack">
           <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-text-sm c360-text-ink-muted">
             <span className="c360-font-medium c360-text-ink">
               {job.companyName || "—"}
@@ -82,10 +79,7 @@ export function JobDescriptionModal({
               </>
             ) : null}
           </div>
-          <div
-            className="c360-flex c360-flex-wrap c360-items-center c360-gap-2"
-            style={{ paddingTop: "5px", paddingBottom: "5px" }}
-          >
+          <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-hs-jd-modal-meta-row">
             {job.employmentType ? (
               <Badge
                 color={employmentTypeBadgeColor(job.employmentType)}
@@ -111,8 +105,8 @@ export function JobDescriptionModal({
             className={cn(
               "c360-overflow-auto c360-rounded c360-border c360-border-ink-8 c360-p-3",
               "c360-text-sm c360-leading-relaxed c360-text-ink",
+              "c360-hs-jd-modal-desc-scroll",
             )}
-            style={{ maxHeight: "min(60vh, 28rem)" }}
           >
             {safeHtml ? (
               <div

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
 import { Building2, Loader2, UserCircle2, Users, Linkedin } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -137,33 +136,9 @@ export function JobConnectraModal({
             <Loader2 className="c360-animate-spin" size={20} />
             Loading from job.server (Connectra)…
           </div>
-          <div
-            className="c360-skeleton"
-            style={
-              {
-                ["--c360-skeleton-h" as string]: "72px",
-                ["--c360-skeleton-w" as string]: "100%",
-              } as CSSProperties
-            }
-          />
-          <div
-            className="c360-skeleton"
-            style={
-              {
-                ["--c360-skeleton-h" as string]: "96px",
-                ["--c360-skeleton-w" as string]: "100%",
-              } as CSSProperties
-            }
-          />
-          <div
-            className="c360-skeleton"
-            style={
-              {
-                ["--c360-skeleton-h" as string]: "140px",
-                ["--c360-skeleton-w" as string]: "100%",
-              } as CSSProperties
-            }
-          />
+          <div className="c360-skeleton c360-skeleton--w-full c360-skeleton--h-72" />
+          <div className="c360-skeleton c360-skeleton--w-full c360-skeleton--h-96" />
+          <div className="c360-skeleton c360-skeleton--w-full c360-skeleton--h-140" />
         </div>
       ) : null}
 

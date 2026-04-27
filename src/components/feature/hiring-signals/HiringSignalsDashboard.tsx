@@ -93,7 +93,7 @@ export function HiringSignalsDashboard({
           title="Latest scrape run"
           subtitle="Most recent Apify run (job.server)"
         >
-          <div className="c360-flex c360-flex-col c360-gap-3 sm:c360-flex-row sm:c360-items-start sm:c360-justify-between">
+          <div className="c360-flex c360-flex-col c360-gap-3 c360-hs-latest-run-inner">
             <div className="c360-min-w-0 c360-space-y-2">
               <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
                 <Badge color={runStatusBadgeColor(latestStatus)} size="sm">
@@ -144,15 +144,13 @@ export function HiringSignalsDashboard({
             <p className="c360-text-sm c360-text-muted">No rows to show.</p>
           ) : (
             <ul
-              className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0"
+              className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0 c360-hs-dashboard-recent-list"
               role="list"
-              style={{ flexDirection: "column" }}
             >
               {recent.map((j) => (
                 <li
                   key={j.id || `${j.linkedinJobId}-${j.apifyItemId}`}
-                  className="c360-flex c360-items-start c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-p-2"
-                  style={{ padding: "10px" }}
+                  className="c360-flex c360-items-start c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-hs-dashboard-recent-item"
                 >
                   <div className="c360-min-w-0">
                     <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink c360-hs-line-clamp-2">
@@ -184,16 +182,14 @@ export function HiringSignalsDashboard({
             </p>
           ) : (
             <ul
-              className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0"
+              className="c360-m-0 c360-list-none c360-p-0 c360-hs-dashboard-companies-list"
               role="list"
-              style={{ display: "flex", gap: "10px", borderRadius: "10px" }}
             >
               {topCompanies.map((c) => (
-                <li key={c.uuid} style={{ padding: 0, borderRadius: "10px" }}>
+                <li key={c.uuid} className="c360-hs-dashboard-company-li">
                   <button
                     type="button"
-                    className="c360-flex c360-w-full c360-items-center c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1/30 c360-p-3 c360-text-left c360-hs-hover-primary-border"
-                    style={{ borderRadius: "7px", padding: "5px 11px" }}
+                    className="c360-flex c360-w-full c360-items-center c360-justify-between c360-gap-2 c360-border c360-border-ink-8 c360-bg-ink-1/30 c360-text-left c360-hs-hover-primary-border c360-hs-dashboard-company-btn"
                     onClick={() => onOpenCompanyDrawer(c.sample)}
                   >
                     <span className="c360-flex c360-min-w-0 c360-items-center c360-gap-2">

@@ -531,7 +531,10 @@ function HiringSignalsPageBody({
         {showTabList ? (
           <TabsList>
             {showOverviewTab ? (
-              <TabsTrigger value="overview" icon={<LayoutDashboard size={14} />}>
+              <TabsTrigger
+                value="overview"
+                icon={<LayoutDashboard size={14} />}
+              >
                 Overview
               </TabsTrigger>
             ) : null}
@@ -554,98 +557,95 @@ function HiringSignalsPageBody({
               onOpenCompanyDrawer={(row) => setDrawerRow(row)}
               latestRun={latestSatelliteRun}
               runsLoading={runsLoading}
-              onGoToRuns={
-                showRunsTab ? () => setMainTab("runs") : undefined
-              }
+              onGoToRuns={showRunsTab ? () => setMainTab("runs") : undefined}
             />
           </TabsContent>
         ) : null}
         {showRunsTab ? (
           <TabsContent value="runs">
-          <div
-            className="c360-flex c360-flex-col c360-gap-6"
-            style={{ paddingLeft: "16px", paddingRight: "16px" }}
-          >
-            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-              <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
-                Job.server runs &amp; your scrape history
-              </h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="c360-gap-2"
-                onClick={() => void loadRuns()}
-                disabled={runsLoading}
-                leftIcon={
-                  <RefreshCw
-                    size={15}
-                    className={cn(runsLoading && "c360-spin")}
+            <div className="c360-flex c360-flex-col c360-gap-6 c360-px-4">
+              <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
+                <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
+                  Job.server runs &amp; your scrape history
+                </h2>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="c360-gap-2"
+                  onClick={() => void loadRuns()}
+                  disabled={runsLoading}
+                  leftIcon={
+                    <RefreshCw
+                      size={15}
+                      className={cn(runsLoading && "c360-spin")}
+                    />
+                  }
+                >
+                  Reload
+                </Button>
+              </div>
+
+              <section>
+                <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
+                  Recent Apify runs (satellite)
+                </h3>
+                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                  <Table<Record<string, unknown>>
+                    columns={satelliteColumns}
+                    data={satelliteRunsRows}
+                    keyExtractor={(row) =>
+                      satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
+                    }
+                    loading={runsLoading && satelliteRunsRows.length === 0}
+                    emptyState={
+                      <p className="c360-m-0 c360-text-sm">No runs yet.</p>
+                    }
                   />
-                }
-              >
-                Reload
-              </Button>
+                </div>
+                {satelliteRunsTotal > RUNS_PAGE_SIZE ? (
+                  <Pagination
+                    className="c360-hs-table-pagination"
+                    page={satellitePage}
+                    pageSize={RUNS_PAGE_SIZE}
+                    total={satelliteRunsTotal}
+                    onPageChange={setSatellitePage}
+                  />
+                ) : null}
+              </section>
+
+              <section>
+                <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
+                  Your tracked scrapes (gateway)
+                </h3>
+                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+                  <Table<Record<string, unknown>>
+                    columns={trackedColumns}
+                    data={trackedPaged}
+                    keyExtractor={(row) =>
+                      String(row.id ?? JSON.stringify(row))
+                    }
+                    loading={runsLoading && trackedScrapeRows.length === 0}
+                    emptyState={
+                      <p className="c360-m-0 c360-text-sm">
+                        No tracked scrapes yet. Use <strong>Run scrape</strong>{" "}
+                        to queue one.
+                      </p>
+                    }
+                  />
+                </div>
+                {trackedScrapeRows.length > RUNS_PAGE_SIZE ? (
+                  <Pagination
+                    className="c360-hs-table-pagination"
+                    page={trackedPage}
+                    pageSize={RUNS_PAGE_SIZE}
+                    total={trackedScrapeRows.length}
+                    onPageChange={setTrackedPage}
+                  />
+                ) : null}
+              </section>
             </div>
-
-            <section>
-              <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
-                Recent Apify runs (satellite)
-              </h3>
-              <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                <Table<Record<string, unknown>>
-                  columns={satelliteColumns}
-                  data={satelliteRunsRows}
-                  keyExtractor={(row) =>
-                    satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
-                  }
-                  loading={runsLoading && satelliteRunsRows.length === 0}
-                  emptyState={
-                    <p className="c360-m-0 c360-text-sm">No runs yet.</p>
-                  }
-                />
-              </div>
-              {satelliteRunsTotal > RUNS_PAGE_SIZE ? (
-                <Pagination
-                  className="c360-hs-table-pagination"
-                  page={satellitePage}
-                  pageSize={RUNS_PAGE_SIZE}
-                  total={satelliteRunsTotal}
-                  onPageChange={setSatellitePage}
-                />
-              ) : null}
-            </section>
-
-            <section>
-              <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
-                Your tracked scrapes (gateway)
-              </h3>
-              <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                <Table<Record<string, unknown>>
-                  columns={trackedColumns}
-                  data={trackedPaged}
-                  keyExtractor={(row) => String(row.id ?? JSON.stringify(row))}
-                  loading={runsLoading && trackedScrapeRows.length === 0}
-                  emptyState={
-                    <p className="c360-m-0 c360-text-sm">
-                      No tracked scrapes yet. Use <strong>Run scrape</strong> to
-                      queue one.
-                    </p>
-                  }
-                />
-              </div>
-              {trackedScrapeRows.length > RUNS_PAGE_SIZE ? (
-                <Pagination
-                  className="c360-hs-table-pagination"
-                  page={trackedPage}
-                  pageSize={RUNS_PAGE_SIZE}
-                  total={trackedScrapeRows.length}
-                  onPageChange={setTrackedPage}
-                />
-              ) : null}
-            </section>
-          </div>
-        </TabsContent>
+          </TabsContent>
         ) : null}
         <TabsContent value="signals">
           <DataPageLayout

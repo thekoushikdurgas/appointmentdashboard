@@ -642,6 +642,28 @@
   animation: c360-skeleton 1.5s ease-in-out infinite;
 }
 
+.c360-skeleton--w-full {
+  --c360-skeleton-w: 100%;
+}
+.c360-skeleton--h-72 {
+  --c360-skeleton-h: 72px;
+}
+.c360-skeleton--h-96 {
+  --c360-skeleton-h: 96px;
+}
+.c360-skeleton--h-140 {
+  --c360-skeleton-h: 140px;
+}
+
+.c360-interactive-plain {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
 .c360-spinner {
   display: inline-block;
   width: 24px;

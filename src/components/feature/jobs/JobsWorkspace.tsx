@@ -9,7 +9,6 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { ReviewList } from "@/components/shared/ReviewList";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useReviewDrawer } from "@/context/ReviewDrawerContext";
@@ -33,14 +32,11 @@ import {
 export interface JobsWorkspaceProps {
   /** When set on mount, pre-selects the job family filter (e.g. hire_signal). */
   initialJobFamily?: string;
-  /** Omit outer “Job reviews” card (e.g. compact drawer). */
-  showJobReviews?: boolean;
   className?: string;
 }
 
 export function JobsWorkspace({
   initialJobFamily = "",
-  showJobReviews = true,
   className,
 }: JobsWorkspaceProps) {
   const { user } = useAuth();
@@ -331,14 +327,6 @@ export function JobsWorkspace({
           />
         </div>
       </Card>
-
-      {/* {showJobReviews ? (
-        <div className="c360-mt-6">
-          <Card title="Job Reviews" subtitle="User feedback on batch jobs">
-            <ReviewList reviews={[]} entityName="jobs" />
-          </Card>
-        </div>
-      ) : null} */}
 
       <Modal
         isOpen={exportOpen}
