@@ -70,8 +70,7 @@ export function GenericToolbar({
     (filterConfig?.show !== false && !!filterConfig) ||
     (viewModes && viewModes.length > 0) ||
     actions.length > 0;
-  const hasLeading =
-    (tabs && tabs.length > 0) || meta != null;
+  const hasLeading = (tabs && tabs.length > 0) || meta != null;
 
   return (
     <div
@@ -82,7 +81,11 @@ export function GenericToolbar({
       {hasLeading ? (
         <div className={`${p}__leading`}>
           {tabs && tabs.length > 0 ? (
-            <div className={`${p}__tabs`} role="tablist" aria-label="List scope">
+            <div
+              className={`${p}__tabs`}
+              role="tablist"
+              aria-label="List scope"
+            >
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.value;
                 const showCount =

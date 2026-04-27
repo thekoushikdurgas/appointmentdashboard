@@ -221,7 +221,7 @@ Work is grouped to match the **Full UI Kit Implementation Plan** (auth/errors, a
 
 ### Phase 3 — Contacts
 
-- [x] `WorldMap` (`react-simple-maps`) — counts by country from contacts `filterData` API aggregates (`useCountryAggregates` hook, ISO alpha-2 → numeric mapping).
+- [x] `WorldMap` (`react-simple-maps`) — counts by country from VQL-scoped `contactGeoAnalytics` / `useCountryAggregates(exportVql)` (ISO alpha-2 → numeric mapping; see [CONTACTS_GEO_ANALYTICS.md](CONTACTS_GEO_ANALYTICS.md)).
 - [ ] Accordion rows for contact detail (`ui-accordion.html` pattern).
 - [ ] Filter bar: multi-select, button group, sort/export (`uc-select2`, `ui-button-group`, `ui-dropdown` patterns).
 

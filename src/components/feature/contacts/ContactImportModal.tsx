@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  Upload,
-  CheckCircle,
-  FileText,
-  Settings,
-  Table2,
-} from "lucide-react";
+import { Upload, CheckCircle, FileText, Settings, Table2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -54,9 +48,7 @@ const STEP_ICONS: Record<WizardStep, React.ReactNode> = {
   4: <CheckCircle size={16} />,
 };
 
-function emptyMapping(): Partial<
-  Record<ContactImportCanonicalField, string>
-> {
+function emptyMapping(): Partial<Record<ContactImportCanonicalField, string>> {
   return {};
 }
 
@@ -69,9 +61,10 @@ export function ContactImportModal({
   const [step, setStep] = useState<WizardStep>(1);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [rawHeaders, setRawHeaders] = useState<string[]>([]);
-  const [mapping, setMapping] = useState<
-    Partial<Record<ContactImportCanonicalField, string>>
-  >(emptyMapping);
+  const [mapping, setMapping] =
+    useState<Partial<Record<ContactImportCanonicalField, string>>>(
+      emptyMapping,
+    );
   const [outputPrefix, setOutputPrefix] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [uploadBytes, setUploadBytes] = useState<{
@@ -377,8 +370,8 @@ export function ContactImportModal({
             </p>
             {autoRecognizable ? (
               <Alert variant="info" title="Headers look compatible">
-                No mapping is required if your columns already match. Adjust only
-                when your file uses different header names.
+                No mapping is required if your columns already match. Adjust
+                only when your file uses different header names.
               </Alert>
             ) : null}
             <div className="c360-max-h-64 c360-space-y-3 c360-overflow-y-auto c360-pr-1">
@@ -485,9 +478,7 @@ export function ContactImportModal({
 
             {uploadBytes && uploadBytes.total > 0 ? (
               <ProgressBar
-                value={Math.round(
-                  (100 * uploadBytes.done) / uploadBytes.total,
-                )}
+                value={Math.round((100 * uploadBytes.done) / uploadBytes.total)}
                 tone="primary"
                 animated
                 label="Uploading CSV"

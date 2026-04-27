@@ -153,7 +153,12 @@ export default function ContactsPage() {
     refresh,
   } = useContacts();
 
-  const { data: countryData, loading: countryLoading } = useCountryAggregates();
+  const {
+    data: countryData,
+    loading: countryLoading,
+    error: countryMapError,
+    analytics: countryGeoMeta,
+  } = useCountryAggregates(exportVql);
 
   const [selected, setSelected] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -494,6 +499,14 @@ export default function ContactsPage() {
     ],
   );
 
+  const mapTopCountry = useMemo(() => {
+    if (countryData.length === 0) return null;
+    return countryData.reduce(
+      (best, cur) => (cur.count > best.count ? cur : best),
+      countryData[0]!,
+    );
+  }, [countryData]);
+
   const contactsToolbarMeta = (
     <div className="c360-contacts-metadata c360-contacts-metadata--toolbar">
       <div className="c360-contacts-metadata__item">
@@ -619,9 +632,47 @@ export default function ContactsPage() {
         size="xl"
         className="c360-contacts-map-modal"
       >
-        <p className="c360-text-sm c360-text-muted c360-mb-4">
-          Contacts by country. Hover a region for counts.
+        <p className="c360-text-sm c360-text-muted c360-mb-3">
+          Countries reflect your current filters and search (same cohort as the
+          list). Hover a region for counts.
         </p>
+        {countryMapError ? (
+          <Alert variant="danger" title="Could not load map data" className="c360-mb-4">
+            {countryMapError}
+          </Alert>
+        ) : null}
+        {countryGeoMeta ? (
+          <div className="c360-contacts-metadata c360-mb-4 c360-flex c360-flex-wrap c360-gap-4">
+            <div className="c360-contacts-metadata__item">
+              <span className="c360-contacts-metadata__label">Filtered total</span>
+              <span className="c360-contacts-metadata__value">
+                {countryGeoMeta.total.toLocaleString()}
+              </span>
+            </div>
+            <div className="c360-contacts-metadata__item">
+              <span className="c360-contacts-metadata__label">Countries shown</span>
+              <span className="c360-contacts-metadata__value">
+                {countryData.length.toLocaleString()}
+              </span>
+            </div>
+            {mapTopCountry ? (
+              <div className="c360-contacts-metadata__item">
+                <span className="c360-contacts-metadata__label">Top country</span>
+                <span className="c360-contacts-metadata__value">
+                  {mapTopCountry.name} ({mapTopCountry.count.toLocaleString()})
+                </span>
+              </div>
+            ) : null}
+            {countryGeoMeta.unmappedCount > 0 ? (
+              <div className="c360-contacts-metadata__item">
+                <span className="c360-contacts-metadata__label">Unmapped country</span>
+                <span className="c360-contacts-metadata__value">
+                  {countryGeoMeta.unmappedCount.toLocaleString()}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <WorldMap
           data={countryData}
           height={countryLoading && countryData.length === 0 ? 80 : 440}

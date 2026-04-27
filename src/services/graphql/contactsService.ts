@@ -17,6 +17,7 @@ import {
   CONTACT_QUERY_STRICT,
   CONTACTS_FILTERS_QUERY,
   CONTACT_FILTER_DATA_QUERY,
+  CONTACT_GEO_ANALYTICS_QUERY,
   CREATE_CONTACT_MUTATION,
   UPDATE_CONTACT_MUTATION,
   DELETE_CONTACT_MUTATION,
@@ -103,6 +104,22 @@ export interface ContactListResult {
   offset: number;
   /** Pass as ``searchAfter`` on the next request (cursor mode). */
   nextSearchAfter?: string[] | null;
+}
+
+/** VQL-scoped geo bucket (GraphQL ``ContactGeoBucket``). */
+export interface ContactGeoBucket {
+  value: string;
+  displayValue: string;
+  count: number;
+  cities?: ContactGeoBucket[] | null;
+}
+
+/** Result of ``contactGeoAnalytics`` (Connectra-backed). */
+export interface ContactGeoAnalyticsResult {
+  total: number;
+  unmappedCount: number;
+  sumOtherDocCount: number;
+  countries: ContactGeoBucket[];
 }
 
 async function fetchConnection(
@@ -229,6 +246,22 @@ export const contactsService = {
     }>(CONTACT_FILTER_DATA_QUERY, { input });
     const fd = data.contacts.filterData;
     return { items: fd.items, total: fd.total };
+  },
+
+  /**
+   * VQL-scoped country/city counts for the World Map (same filter scope as the list).
+   */
+  geoAnalytics: async (args: {
+    query?: VqlQueryInput | null;
+    includeCities?: boolean;
+  }): Promise<ContactGeoAnalyticsResult> => {
+    const data = await graphqlQuery<{
+      contacts: { contactGeoAnalytics: ContactGeoAnalyticsResult };
+    }>(CONTACT_GEO_ANALYTICS_QUERY, {
+      query: args.query ?? null,
+      includeCities: args.includeCities ?? false,
+    });
+    return data.contacts.contactGeoAnalytics;
   },
 
   delete: (uuid: string) =>

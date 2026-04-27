@@ -210,10 +210,7 @@ export function useHiringSignals(
   );
 
   const setFilterField = useCallback(
-    (
-      key: keyof JobListFilters,
-      value: string | string[] | undefined,
-    ) => {
+    (key: keyof JobListFilters, value: string | string[] | undefined) => {
       setFilters((f) => ({ ...f, [key]: value, offset: 0 }));
     },
     [],

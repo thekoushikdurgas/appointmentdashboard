@@ -100,6 +100,34 @@ export const CONTACT_FILTER_DATA_QUERY = `
   }
 `;
 
+export const CONTACT_GEO_ANALYTICS_QUERY = `
+  query ContactGeoAnalyticsGateway(
+    $query: VQLQueryInput
+    $includeCities: Boolean
+  ) {
+    contacts {
+      contactGeoAnalytics(
+        query: $query
+        includeCities: $includeCities
+      ) {
+        total
+        unmappedCount
+        sumOtherDocCount
+        countries {
+          value
+          displayValue
+          count
+          cities {
+            value
+            displayValue
+            count
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const CREATE_CONTACT_MUTATION = `
   mutation CreateContact($input: CreateContactInput!) {
     contacts {

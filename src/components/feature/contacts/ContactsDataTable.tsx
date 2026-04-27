@@ -297,9 +297,7 @@ export function ContactsDataTable({
                   <Select
                     options={[...CONTACTS_DT_PAGE_SIZE_OPTIONS]}
                     value={String(pageSize)}
-                    onChange={(e) =>
-                      onPageSizeChange(Number(e.target.value))
-                    }
+                    onChange={(e) => onPageSizeChange(Number(e.target.value))}
                     fullWidth={false}
                     className="c360-contacts-dt__page-size"
                   />

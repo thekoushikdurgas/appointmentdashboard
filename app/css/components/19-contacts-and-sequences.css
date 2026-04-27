@@ -530,7 +530,9 @@
 }
 
 .c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__filters,
-.c360-page.c360-companies-page > .c360-data-layout > .c360-data-layout__filters {
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__filters {
   flex: 0 0 auto;
   min-width: 260px;
   max-width: 300px;
@@ -539,7 +541,9 @@
 }
 
 .c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__content,
-.c360-page.c360-companies-page > .c360-data-layout > .c360-data-layout__content {
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content {
   flex: 1;
   min-width: 0;
   gap: 0;

@@ -24,9 +24,7 @@ export function PageHeader({
     >
       {hasText ? (
         <div>
-          {title ? (
-            <h1 className="c360-page-header__title">{title}</h1>
-          ) : null}
+          {title ? <h1 className="c360-page-header__title">{title}</h1> : null}
           {subtitle ? (
             <p className="c360-page-header__subtitle">{subtitle}</p>
           ) : null}

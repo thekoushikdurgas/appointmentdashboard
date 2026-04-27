@@ -19,9 +19,7 @@ function buildFacetOptionBase(
   preset: "all" | "new_7d",
 ): JobListFilters {
   const seniority =
-    draft.seniorityCustom.trim() ||
-    draft.seniorityPreset.trim() ||
-    undefined;
+    draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || undefined;
   const functionCategory =
     draft.functionCustom.trim() || draft.functionPreset.trim() || undefined;
   const titles = normalizeHiringSignalTokenList(draft.titles);
@@ -42,7 +40,8 @@ function buildFacetOptionBase(
       preset,
       draftPosted || applied.postedAfter,
     ),
-    postedBefore: draft.postedBefore.trim() || applied.postedBefore || undefined,
+    postedBefore:
+      draft.postedBefore.trim() || applied.postedBefore || undefined,
   };
 }
 
@@ -97,8 +96,7 @@ export function HiringSignalTextFacetCombobox({
         setOptions(
           rows.map((r) => ({
             value: r.value,
-            displayValue:
-              r.count > 0 ? `${r.value} (${r.count})` : r.value,
+            displayValue: r.count > 0 ? `${r.value} (${r.count})` : r.value,
           })),
         );
       } catch {

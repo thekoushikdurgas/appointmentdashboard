@@ -249,8 +249,9 @@ function HiringSignalsPageBody({
             intent.n,
           );
         } else {
-          const r =
-            await fetchLinkedinJobIdsAllMatching(effectiveJobListFilters);
+          const r = await fetchLinkedinJobIdsAllMatching(
+            effectiveJobListFilters,
+          );
           linkedinJobIds = r.ids;
           if (r.truncated) {
             toast.message("Large export", {

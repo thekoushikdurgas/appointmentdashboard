@@ -69,9 +69,7 @@ export function HiringSignalsExportModal({
 
   const selectedDisabled = selectedIds.length === 0;
   const queueDisabled =
-    busy ||
-    totalMatching === 0 ||
-    (scope === "selected" && selectedDisabled);
+    busy || totalMatching === 0 || (scope === "selected" && selectedDisabled);
 
   const submit = async () => {
     if (scope === "selected") {

@@ -1842,6 +1842,7 @@ export type HireSignalQuery = {
   job: Scalars["JSON"]["output"];
   jobConnectraCompany: Scalars["JSON"]["output"];
   jobConnectraContacts: Scalars["JSON"]["output"];
+  jobFilterOptions: Scalars["JSON"]["output"];
   jobs: Scalars["JSON"]["output"];
   listScrapeJobs: Scalars["JSON"]["output"];
   refreshHireSignalRun: Scalars["JSON"]["output"];
@@ -1901,18 +1902,39 @@ export type HireSignalQueryJobConnectraContactsArgs = {
   populateCompany?: Scalars["Boolean"]["input"];
 };
 
+export type HireSignalQueryJobFilterOptionsArgs = {
+  companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  company?: InputMaybe<Scalars["String"]["input"]>;
+  employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  field: Scalars["String"]["input"];
+  functionCategory?: InputMaybe<Scalars["String"]["input"]>;
+  limit?: Scalars["Int"]["input"];
+  location?: InputMaybe<Scalars["String"]["input"]>;
+  locations?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  postedAfter?: InputMaybe<Scalars["String"]["input"]>;
+  postedBefore?: InputMaybe<Scalars["String"]["input"]>;
+  q?: InputMaybe<Scalars["String"]["input"]>;
+  runId?: InputMaybe<Scalars["String"]["input"]>;
+  seniority?: InputMaybe<Scalars["String"]["input"]>;
+  title?: InputMaybe<Scalars["String"]["input"]>;
+  titles?: InputMaybe<Array<Scalars["String"]["input"]>>;
+};
+
 export type HireSignalQueryJobsArgs = {
+  companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
   company?: InputMaybe<Scalars["String"]["input"]>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
+  locations?: InputMaybe<Array<Scalars["String"]["input"]>>;
   offset?: Scalars["Int"]["input"];
   postedAfter?: InputMaybe<Scalars["String"]["input"]>;
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
   runId?: InputMaybe<Scalars["String"]["input"]>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
+  titles?: InputMaybe<Array<Scalars["String"]["input"]>>;
 };
 
 export type HireSignalQueryListScrapeJobsArgs = {

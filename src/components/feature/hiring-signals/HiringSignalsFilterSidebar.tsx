@@ -7,7 +7,6 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
@@ -70,8 +69,7 @@ export function HiringSignalsFilterSidebar({
   onClearRunId,
   className,
 }: HiringSignalsFilterSidebarProps) {
-  const { draft, onDraftField, resetFilters, activeDraftCount } =
-    useHireSignalFilter();
+  const { draft, onDraftField, resetFilters } = useHireSignalFilter();
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
 
@@ -177,17 +175,10 @@ export function HiringSignalsFilterSidebar({
               Refine signals
             </h2>
           </div>
-          <p className="c360-contacts-filters__subtitle">
-            {totalChips} active
-          </p>
+          <p className="c360-contacts-filters__subtitle">{totalChips} active</p>
         </div>
         <div className="c360-contacts-filters__head-actions">
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={onApply}
-          >
+          <Button type="button" variant="primary" size="sm" onClick={onApply}>
             Apply filters
           </Button>
           <Button
