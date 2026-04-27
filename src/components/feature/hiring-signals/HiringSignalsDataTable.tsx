@@ -8,7 +8,6 @@ import {
   Link2,
   Columns3,
 } from "lucide-react";
-import Papa from "papaparse";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
@@ -98,6 +97,10 @@ export interface HiringSignalsDataTableProps {
     id: HiringSignalsDataTableColumnId,
     visible: boolean,
   ) => void;
+  /** Server-side XLSX export (GraphQL `hireSignal.exportSelectedJobs`). */
+  onExportSelected?: (linkedinJobIds: string[]) => void | Promise<void>;
+  /** Disable export button while the mutation is in flight. */
+  exportBusy?: boolean;
   className?: string;
 }
 
@@ -115,6 +118,8 @@ export function HiringSignalsDataTable({
   density = "comfortable",
   visibleColumns = HS_DT_DEFAULT_COLUMNS,
   onToggleColumn,
+  onExportSelected,
+  exportBusy = false,
   className,
 }: HiringSignalsDataTableProps) {
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -145,27 +150,21 @@ export function HiringSignalsDataTable({
       });
       return;
     }
-    const flat = picked.map((r) => ({
-      linkedin_job_id: r.linkedinJobId,
-      title: r.title,
-      company: r.companyName,
-      location: r.location,
-      employment_type: r.employmentType,
-      seniority: r.seniority,
-      function_category: r.functionCategory,
-      posted_at: r.postedAt,
-      job_url: r.jobUrl,
-      company_uuid: r.companyUuid,
-    }));
-    const csv = Papa.unparse(flat);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `hiring-signals-export-${picked.length}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported CSV", { description: `${picked.length} row(s)` });
+    if (!onExportSelected) {
+      toast.error("Export is not available.");
+      return;
+    }
+    const ids = picked
+      .map((r) => (r.linkedinJobId || "").trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      toast.message("Missing LinkedIn job ids", {
+        description:
+          "Selected rows do not include a LinkedIn job id. Refresh or pick different rows.",
+      });
+      return;
+    }
+    void onExportSelected(ids);
   };
 
   const columnPicker =
@@ -230,8 +229,16 @@ export function HiringSignalsDataTable({
             variant="secondary"
             size="sm"
             onClick={exportSelected}
+            disabled={exportBusy || !onExportSelected}
+            title={
+              onExportSelected
+                ? "Queue XLSX export on the server (see Jobs)"
+                : undefined
+            }
           >
-            Export selected ({selectedKeys.size})
+            {exportBusy
+              ? "Exporting…"
+              : `Export selected as XLSX (${selectedKeys.size})`}
           </Button>
         ) : (
           <span className="c360-text-2xs c360-text-ink-muted" />

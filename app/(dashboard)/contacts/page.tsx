@@ -57,9 +57,14 @@ import {
 } from "@/lib/contactsColumnVql";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
+import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import {
+  SAVED_SEARCH_VERSION,
+  type ContactSavedSearchPayload,
+} from "@/lib/savedSearchPayload";
+import type { VqlQueryInput } from "@/graphql/generated/types";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
-import type { VqlQueryInput } from "@/graphql/generated/types";
 
 const STATUS_MAP: Record<string, string> = {
   Verified: "VALID",
@@ -393,6 +398,22 @@ export default function ContactsPage() {
     }
   }, [refetchFiltersMetadata]);
 
+  const getContactSavedPayload = useCallback((): ContactSavedSearchPayload => {
+    return {
+      version: SAVED_SEARCH_VERSION,
+      vqlQuery: vqlQuery as Partial<VqlQueryInput>,
+      pageSize,
+    };
+  }, [vqlQuery, pageSize]);
+
+  const handleApplyContactSaved = useCallback(
+    (p: ContactSavedSearchPayload) => {
+      setPageSize(p.pageSize);
+      applyVqlQuery(p.vqlQuery);
+    },
+    [applyVqlQuery, setPageSize],
+  );
+
   const handleAiSearch = useCallback(() => {
     if (process.env.NEXT_PUBLIC_CONTACTS_AI_SEARCH === "1") {
       setAiSearching(true);
@@ -568,7 +589,16 @@ export default function ContactsPage() {
       onMobileFiltersClose={() => setMobileFiltersOpen(false)}
       className="c360-contacts-page"
     >
-      <PageHeader title="Contacts" />
+      <PageHeader
+        title="Contacts"
+        actions={
+          <SavedSearchesMenu
+            entity="contact"
+            getContactPayload={getContactSavedPayload}
+            onApplyContact={handleApplyContactSaved}
+          />
+        }
+      />
 
       <Modal
         isOpen={mapModalOpen}

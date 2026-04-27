@@ -38,10 +38,10 @@ export default function InternalServerErrorPage() {
           Go to Dashboard
         </Link>
         <Link
-          href="/status"
+          href="/dashboard"
           className="c360-btn c360-btn--secondary c360-error-page__link-btn"
         >
-          Check status
+          Go to home
         </Link>
       </div>
     </div>

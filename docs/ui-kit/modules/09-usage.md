@@ -20,7 +20,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 | ----------- | ------- | --------------- |
 | **Primary** | [x]     | [x] _(partial)_ |
 
-> **`usageOperations.ts`** centralizes queries/mutations; **`getFeatureOverview`** selects extended **`activities`** / **`jobs`** fields; **`useUsage`** + **`useFeatureOverview`** drive **`/usage`**.
+> **`usageOperations.ts`** centralizes queries/mutations; **`getFeatureOverview`** selects extended **`activities`** / **`jobs`** fields; **`useUsage`** + **`useFeatureOverview`** power the **Usage** tab on **`/activities?tab=usage`** (legacy **`/usage`** redirects there).
 
 **Codegen:** `UsageQuery`, `UsageMutation`; root `query.featureOverview` → `FeatureOverviewQuery` (not under `usage { }`).
 
@@ -60,7 +60,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 
 **[`useFeatureOverview`](../../../src/hooks/useFeatureOverview.ts)** — `{ overview, loading, error, refresh }` for one feature.
 
-**[`/usage`](<../../../app/(dashboard)/usage/page.tsx>)** — **`useUsage()`** for the grid; **filter Tabs** (All features | Feature detail); **`FeatureUsageCard`** ( **`Progress`**, unlimited badge via **`usageDisplay`** ); drill-down uses **`useFeatureOverview`** + **`FeatureOverviewPanel`** (sub-**Tabs**: Usage | Activity | Jobs, tables, links to **`/activities`** / **`/jobs`**). **SuperAdmin**: **Reset usage** + **`ConfirmModal`**.
+**[`/activities?tab=usage`](<../../../app/(dashboard)/activities/page.tsx>)** — **`useUsage()`** for the grid; **filter Tabs** (All features | Feature detail); **`FeatureUsageCard`** + **`FeatureOverviewPanel`**; links to the **Activity feed** (`/activities?tab=feed`) and **Jobs** drawer. **SuperAdmin**: **Reset usage** + **`ConfirmModal`**.
 
 **[`usageDisplay.ts`](../../../src/lib/usageDisplay.ts)** — **`isUsageUnlimited`**, **`usageProgressPercent`**.
 
@@ -121,6 +121,6 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 ## 6. Summary
 
 - **`09_USAGE_MODULE.md`** defines **usage query**, **track/reset mutations**, and **root `featureOverview`**.
-- **`contact360.io/app`** now has **`usageOperations`**, full **featureOverview** selections, **mutations**, **`useUsage` / `useFeatureOverview`**, and a **tabbed** **`/usage`** experience with **SuperAdmin reset** (gated).
+- **`contact360.io/app`** wires **`usageOperations`**, **featureOverview**, **`useUsage` / `useFeatureOverview`**, and **SuperAdmin reset** on the **Activities → Usage** tab.
 
 **Dashboard UI kit** fits **cards, Progress, tabs, and tables** for the feature-centric usage surface.

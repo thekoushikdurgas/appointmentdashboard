@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -11,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { notificationsService } from "@/services/graphql/notificationsService";
 import type { Notification } from "@/graphql/generated/types";
 import { ROUTES } from "@/lib/routes";
+import { useNotificationsDrawer } from "@/context/NotificationsDrawerContext";
 import { formatRelativeTime } from "@/lib/utils";
 import {
   normalizeNotificationPriority,
@@ -21,9 +21,16 @@ import {
 
 export default function NotificationDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const { openNotificationsDrawer } = useNotificationsDrawer();
   const id = params?.id ? String(params.id) : "";
   const [row, setRow] = useState<Notification | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+
+  const backToInbox = () => {
+    openNotificationsDrawer();
+    router.replace(ROUTES.DASHBOARD);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -64,15 +71,14 @@ export default function NotificationDetailPage() {
           <p className="c360-text-muted c360-mb-4">
             {error ?? "This notification could not be loaded."}
           </p>
-          <Link href={ROUTES.NOTIFICATIONS}>
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<ArrowLeft size={14} />}
-            >
-              Back to notifications
-            </Button>
-          </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<ArrowLeft size={14} />}
+            onClick={backToInbox}
+          >
+            Back to notifications
+          </Button>
         </Card>
       </DashboardPageLayout>
     );
@@ -90,9 +96,15 @@ export default function NotificationDetailPage() {
     <DashboardPageLayout>
       <div className="c360-page-header c360-mb-4">
         <div>
-          <Link href={ROUTES.NOTIFICATIONS} className="c360-text-sm">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="c360-h-auto c360-px-0 c360-py-0 c360-text-sm"
+            onClick={backToInbox}
+          >
             ← All notifications
-          </Link>
+          </Button>
           <h1 className="c360-page-title c360-mt-2">{n.title}</h1>
           <p className="c360-page-subtitle">
             {formatRelativeTime(n.createdAt)} ·{" "}

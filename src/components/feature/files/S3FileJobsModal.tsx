@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import Link from "next/link";
+import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -130,13 +130,13 @@ export function S3FileJobsModal({
           <code className="c360-text-xs">jobs.jobs(relatedFileKey: …)</code>
           ).
         </p>
-        <Link
-          href="/jobs"
+        <OpenJobsDrawerButton
+          type="button"
           className="c360-text-sm c360-text-primary"
-          onClick={onClose}
+          onClick={() => onClose()}
         >
           Open full job manager →
-        </Link>
+        </OpenJobsDrawerButton>
       </div>
 
       {loading && (

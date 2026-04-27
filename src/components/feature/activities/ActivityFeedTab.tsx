@@ -29,7 +29,11 @@ interface ActivityFeedTabProps {
 
 export function ActivityFeedTab({ activities, loading }: ActivityFeedTabProps) {
   return (
-    <Card title="Activity Feed" subtitle="Account events matching your filters">
+    <Card
+      className="c360-card--activity-feed-tab"
+      title="Activity Feed"
+      subtitle="Account events matching your filters"
+    >
       {loading ? (
         <p className="c360-page-subtitle">Loading activities…</p>
       ) : activities.length === 0 ? (

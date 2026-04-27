@@ -1,0 +1,53 @@
+/* ─── Global files slide-over (wide table + manifest) ─────────────────────── */
+
+.c360-files-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--c360-z-modal) - 1);
+  background: var(--c360-bg-overlay);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.c360-files-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--c360-z-modal);
+  width: min(920px, 100vw);
+  max-width: 100%;
+  background: var(--c360-bg-elevated);
+  box-shadow: var(--c360-shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-files-drawer__header {
+  flex-shrink: 0;
+  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  border-bottom: 1px solid var(--c360-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-files-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+}
+
+.c360-files-workspace {
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .c360-files-drawer {
+    width: 100vw;
+  }
+}

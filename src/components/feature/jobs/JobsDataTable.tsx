@@ -18,6 +18,8 @@ import type { MappedJob } from "@/lib/jobs/jobsMapper";
 import {
   formatJobIdShort,
   isSuccessfulTerminalJobStatus,
+  canDownloadSchedulerOutput,
+  schedulerOutputDownloadLabel,
 } from "@/lib/jobs/jobsUtils";
 
 const PAGE_SIZE_OPTIONS = [
@@ -59,10 +61,6 @@ function serviceLabel(s: string): string {
 
 function categoryLabel(job: MappedJob): string {
   return job.jobSubtype || job.jobFamily || "—";
-}
-
-function canDownloadJobCsv(job: MappedJob): boolean {
-  return isSuccessfulTerminalJobStatus(job.status) && !!job.outputFile?.trim();
 }
 
 type SortKey = "created" | "type" | "status" | "progress";
@@ -148,7 +146,9 @@ export interface JobsDataTableProps {
   onResume: (jobId: string) => void;
   onResumeConnectra: (jobId: string) => void;
   /** Raw S3 object key or HTTPS URL; parent may presign keys via GraphQL. */
-  onDownloadOutput: (outputUrl: string) => void | Promise<void>;
+  onDownloadOutput: (job: MappedJob) => void | Promise<void>;
+  /** Opens global review drawer with this scheduler job prefilled. */
+  onOpenJobTicket?: (job: MappedJob) => void;
   renderDetailPanel: (jobId: string) => React.ReactNode;
 }
 
@@ -166,6 +166,7 @@ export function JobsDataTable({
   onResume,
   onResumeConnectra,
   onDownloadOutput,
+  onOpenJobTicket,
   renderDetailPanel,
 }: JobsDataTableProps) {
   const [pageSize, setPageSize] = useState(10);
@@ -490,20 +491,18 @@ export function JobsDataTable({
                       </td>
                       <td className="c360-jobs-dt__action-cell">
                         <div className="c360-flex c360-items-center c360-justify-end c360-gap-1 c360-flex-wrap">
-                          {canDownloadJobCsv(job) && (
+                          {canDownloadSchedulerOutput(job) && (
                             <Button
                               type="button"
                               variant="primary"
                               size="sm"
                               className="c360-whitespace-nowrap"
                               leftIcon={<Download size={14} />}
-                              aria-label="Download CSV via presigned URL for output key"
-                              title="Presigned download for job output CSV"
-                              onClick={() =>
-                                void onDownloadOutput(job.outputFile!)
-                              }
+                              aria-label={`${schedulerOutputDownloadLabel(job)} via presigned URL`}
+                              title="Presigned download for job output"
+                              onClick={() => void onDownloadOutput(job)}
                             >
-                              Download CSV
+                              {schedulerOutputDownloadLabel(job)}
                             </Button>
                           )}
                           <Popover
@@ -520,15 +519,13 @@ export function JobsDataTable({
                             }
                             content={
                               <div className="c360-jobs-dt__menu">
-                                {canDownloadJobCsv(job) && (
+                                {canDownloadSchedulerOutput(job) && (
                                   <button
                                     type="button"
                                     className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--primary"
-                                    onClick={() =>
-                                      void onDownloadOutput(job.outputFile!)
-                                    }
+                                    onClick={() => void onDownloadOutput(job)}
                                   >
-                                    Download CSV
+                                    {schedulerOutputDownloadLabel(job)}
                                   </button>
                                 )}
                                 <button
@@ -538,6 +535,15 @@ export function JobsDataTable({
                                 >
                                   {expanded ? "Hide details" : "View details"}
                                 </button>
+                                {onOpenJobTicket && (
+                                  <button
+                                    type="button"
+                                    className="c360-jobs-dt__menu-item"
+                                    onClick={() => onOpenJobTicket(job)}
+                                  >
+                                    Report issue (ticket)
+                                  </button>
+                                )}
                                 {job.canPause && (
                                   <button
                                     type="button"

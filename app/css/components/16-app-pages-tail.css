@@ -8,6 +8,27 @@
   gap: 0;
   margin-bottom: var(--c360-spacing-6);
 }
+
+/* Import from S3 modals (3 top-level steps) — full-width row grid, padded */
+.c360-campaign-wizard--import {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(1, 1fr);
+  width: 100%;
+  padding-left: 36px;
+  padding-right: 36px;
+  row-gap: 7px;
+  margin-bottom: var(--c360-spacing-6);
+  align-items: center;
+  justify-items: center;
+}
+.c360-campaign-wizard--import .c360-campaign-wizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--c360-spacing-1);
+  min-width: 0;
+}
 .c360-campaign-wizard__segment {
   display: flex;
   align-items: center;
@@ -185,6 +206,15 @@
 .c360-analytics-usage-link {
   text-decoration: none;
   color: inherit;
+  /* Same tile works as `<button>` (Jobs drawer) or `<a>` */
+  display: block;
+  width: 100%;
+  text-align: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 .c360-analytics-usage-link__icon {
   color: var(--c360-primary);

@@ -42,7 +42,6 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
             label: "Dashboard",
             icon: "LayoutDashboard",
           },
-          { href: ROUTES.ANALYTICS, label: "Analytics", icon: "BarChart2" },
           { href: ROUTES.ACTIVITIES, label: "Activities", icon: "Activity" },
         ],
       },
@@ -57,6 +56,11 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
         children: [
           { href: ROUTES.CONTACTS, label: "Contacts", icon: "Users" },
           { href: ROUTES.COMPANIES, label: "Companies", icon: "Building2" },
+          {
+            href: ROUTES.HIRING_SIGNALS,
+            label: "Hiring signals",
+            icon: "Zap",
+          },
         ],
       },
     ],
@@ -70,9 +74,6 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
         children: [
           { href: ROUTES.EMAIL, label: "Email", icon: "Mail" },
           { href: ROUTES.PHONE, label: "Phone", icon: "Phone" },
-          { href: ROUTES.JOBS, label: "Jobs", icon: "Briefcase" },
-          { href: ROUTES.HIRING_SIGNALS, label: "Hiring signals", icon: "Zap" },
-          { href: ROUTES.FILES, label: "Files", icon: "FolderOpen" },
           { href: ROUTES.LINKEDIN, label: "LinkedIn", icon: "Linkedin" },
         ],
       },
@@ -111,26 +112,6 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
           { href: ROUTES.AI_CHAT, label: "AI Chat", icon: "MessageSquare" },
           { href: ROUTES.LIVE_VOICE, label: "Live Voice", icon: "Mic" },
           { href: ROUTES.RESUME, label: "Resume", icon: "FileText" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      {
-        label: "Account",
-        icon: "User",
-        children: [
-          { href: ROUTES.BILLING, label: "Billing", icon: "CreditCard" },
-          { href: ROUTES.USAGE, label: "Usage", icon: "PieChart" },
-          { href: ROUTES.NOTIFICATIONS, label: "Notifications", icon: "Bell" },
-          {
-            href: ROUTES.SAVED_SEARCHES,
-            label: "Saved Searches",
-            icon: "Bookmark",
-          },
-          { href: ROUTES.STATUS, label: "Status", icon: "CheckCircle" },
         ],
       },
     ],

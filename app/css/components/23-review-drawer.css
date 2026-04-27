@@ -1,0 +1,111 @@
+/* ─── Global job ticket / review slide-over ───────────────────────────────── */
+
+.c360-review-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--c360-z-modal) - 1);
+  background: var(--c360-bg-overlay);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.c360-review-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--c360-z-modal);
+  width: min(520px, 100vw);
+  max-width: 100%;
+  background: var(--c360-bg-elevated);
+  box-shadow: var(--c360-shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-review-drawer__header {
+  flex-shrink: 0;
+  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  border-bottom: 1px solid var(--c360-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-review-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+}
+
+.c360-review-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-6);
+}
+
+.c360-review-workspace__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-review-workspace__h {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+}
+
+.c360-review-workspace__hint {
+  margin: 0;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  line-height: 1.5;
+}
+
+.c360-review-workspace__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-review-workspace__item {
+  padding: var(--c360-spacing-3);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-bg-secondary);
+}
+
+.c360-review-workspace__item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-1);
+}
+
+.c360-review-workspace__badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-primary-light);
+  color: var(--c360-primary);
+}
+
+.c360-review-workspace__title {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+}

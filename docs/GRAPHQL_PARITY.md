@@ -19,34 +19,34 @@
 
 ## Module parity table
 
-| #   | Gateway root                  | API module         | App service                                               | App hook               | App route                                                    | Status    |
-| --- | ----------------------------- | ------------------ | --------------------------------------------------------- | ---------------------- | ------------------------------------------------------------ | --------- |
-| 01  | `auth`                        | `auth/`            | `authService.ts`, `AuthContext.tsx`, `authSelections.ts`  | —                      | `/login`, `/register`                                        | ✅ Wired  |
-| 02  | `users`                       | `users/`           | `usersService.ts`                                         | —                      | —                                                            | ✅ Wired  |
-| 03  | `contacts`                    | `contacts/`        | `contactsService.ts`                                      | `useContacts.ts`       | `/contacts`                                                  | ✅ Wired  |
-| 04  | `companies`                   | `companies/`       | `companiesService.ts`                                     | `useCompanies.ts`      | `/companies`, `/companies/[id]`                              | ✅ Wired  |
-| 05  | `activities`                  | `activities/`      | `activitiesService.ts`                                    | `useActivities.ts`     | `/activities`, `/dashboard` (sparklines)                     | ✅ Wired  |
-| 06  | `analytics`                   | `analytics/`       | `analyticsService.ts`                                     | —                      | `/analytics`, `/dashboard` (area chart)                      | ✅ Wired  |
-| 07  | `billing`                     | `billing/`         | `billingService.ts`                                       | `useBilling.ts`        | `/billing`                                                   | ✅ Wired  |
-| 08  | `email`                       | `email/`           | `emailService.ts`                                         | —                      | `/email`                                                     | ✅ Wired  |
-| 09  | `campaignSatellite`           | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns`, `/campaigns/sequences`, `/campaigns/templates` | ✅ Wired  |
-| 10  | `jobs`                        | `jobs/`            | `jobsService.ts`                                          | `useJobs.ts`           | `/jobs`                                                      | ✅ Wired  |
-| 11  | `usage` / `featureOverview`   | `usage/`           | `usageService.ts`                                         | `useUsage.ts`          | `/usage`                                                     | ✅ Wired  |
-| 12  | `s3` / `upload`               | `s3/`, `upload/`   | `s3Service.ts`, `uploadService.ts`                        | `useS3Files.ts`        | `/files`, `/export`                                          | ✅ Wired  |
-| 13  | `aiChats`                     | `ai_chats/`        | `aiChatService.ts`                                        | `useAIChat.ts`         | `/ai-chat`                                                   | ✅ Wired  |
-| 14  | `notifications`               | `notifications/`   | `notificationsService.ts`                                 | `useNotifications.ts`  | `/notifications`                                             | ✅ Wired  |
-| 15  | `admin`                       | `admin/`           | — _(not used in app; Django `admin_ops` + gateway token)_ | —                      | —                                                            | ⏭️ Ops UI |
-| 16  | `resume`                      | `resume/`          | `resumeService.ts`                                        | `useResume.ts`         | `/resume`                                                    | ✅ Wired  |
-| 17  | `linkedin`                    | `linkedin/`        | `linkedinService.ts`                                      | —                      | `/linkedin`                                                  | ✅ Wired  |
-| 18  | `health`                      | `health/`          | `healthService.ts`                                        | —                      | `/status`                                                    | ✅ Wired  |
-| 19  | `pages`                       | `pages/`           | `pagesService.ts`                                         | —                      | `/dashboard/[pageId]` (DocsAI)                               | ✅ Wired  |
-| 20  | `salesNavigator`              | `sales_navigator/` | `salesNavigatorService.ts`                                | `useSalesNavigator.ts` | `/sales-navigator`                                           | ✅ Wired  |
-| 21  | `campaignSatellite` campaigns | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns`                                                 | ✅ Wired  |
-| 22  | `campaignSatellite` sequences | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns/sequences`                                       | ✅ Wired  |
-| 23  | `campaignSatellite` templates | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns/templates`                                       | ✅ Wired  |
-| 24  | `savedSearches`               | `saved_searches/`  | `savedSearchesService.ts`                                 | `useSavedSearches.ts`  | `/saved-searches`                                            | ✅ Wired  |
-| 25  | `twoFactor`                   | `two_factor/`      | `twoFactorService.ts`                                     | `useTwoFactor.ts`      | `/profile` (Security tab)                                    | ✅ Wired  |
-| 26  | `profile`                     | `profile/`         | `profileService.ts`                                       | `useProfile.ts`        | `/profile`                                                   | ✅ Wired  |
+| #   | Gateway root                  | API module         | App service                                               | App hook               | App route                                                    | Status     |
+| --- | ----------------------------- | ------------------ | --------------------------------------------------------- | ---------------------- | ------------------------------------------------------------ | ---------- |
+| 01  | `auth`                        | `auth/`            | `authService.ts`, `AuthContext.tsx`, `authSelections.ts`  | —                      | `/login`, `/register`                                        | ✅ Wired   |
+| 02  | `users`                       | `users/`           | `usersService.ts`                                         | —                      | —                                                            | ✅ Wired   |
+| 03  | `contacts`                    | `contacts/`        | `contactsService.ts`                                      | `useContacts.ts`       | `/contacts`                                                  | ✅ Wired   |
+| 04  | `companies`                   | `companies/`       | `companiesService.ts`                                     | `useCompanies.ts`      | `/companies`, `/companies/[id]`                              | ✅ Wired   |
+| 05  | `activities`                  | `activities/`      | `activitiesService.ts`                                    | `useActivities.ts`     | `/activities`, `/dashboard` (sparklines)                     | ✅ Wired   |
+| 06  | `analytics`                   | `analytics/`       | `analyticsService.ts`                                     | `usePerformanceMetric` | `/dashboard` (area chart), `WebVitalsReporter`               | ✅ Wired   |
+| 07  | `billing`                     | `billing/`         | `billingService.ts`                                       | `useBilling.ts`        | `/billing`                                                   | ✅ Wired   |
+| 08  | `email`                       | `email/`           | `emailService.ts`                                         | —                      | `/email`                                                     | ✅ Wired   |
+| 09  | `campaignSatellite`           | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns`, `/campaigns/sequences`, `/campaigns/templates` | ✅ Wired   |
+| 10  | `jobs`                        | `jobs/`            | `jobsService.ts`                                          | `useJobs.ts`           | `/jobs`                                                      | ✅ Wired   |
+| 11  | `usage` / `featureOverview`   | `usage/`           | `usageService.ts`                                         | `useUsage.ts`          | `/activities?tab=usage`                                      | ✅ Wired   |
+| 12  | `s3` / `upload`               | `s3/`, `upload/`   | `s3Service.ts`, `uploadService.ts`                        | `useS3Files.ts`        | `/files`, `/export`                                          | ✅ Wired   |
+| 13  | `aiChats`                     | `ai_chats/`        | `aiChatService.ts`                                        | `useAIChat.ts`         | `/ai-chat`                                                   | ✅ Wired   |
+| 14  | `notifications`               | `notifications/`   | `notificationsService.ts`                                 | `useNotifications.ts`  | `/notifications`                                             | ✅ Wired   |
+| 15  | `admin`                       | `admin/`           | — _(not used in app; Django `admin_ops` + gateway token)_ | —                      | —                                                            | ⏭️ Ops UI  |
+| 16  | `resume`                      | `resume/`          | `resumeService.ts`                                        | `useResume.ts`         | `/resume`                                                    | ✅ Wired   |
+| 17  | `linkedin`                    | `linkedin/`        | `linkedinService.ts`                                      | —                      | `/linkedin`                                                  | ✅ Wired   |
+| 18  | `health`                      | `health/`          | `healthService.ts`                                        | —                      | _(app `/status` removed; use Django admin system status)_    | ✅ Service |
+| 19  | `pages`                       | `pages/`           | `pagesService.ts`                                         | —                      | `/dashboard/[pageId]` (DocsAI)                               | ✅ Wired   |
+| 20  | `salesNavigator`              | `sales_navigator/` | `salesNavigatorService.ts`                                | `useSalesNavigator.ts` | `/sales-navigator`                                           | ✅ Wired   |
+| 21  | `campaignSatellite` campaigns | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns`                                                 | ✅ Wired   |
+| 22  | `campaignSatellite` sequences | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns/sequences`                                       | ✅ Wired   |
+| 23  | `campaignSatellite` templates | `campaigns/`       | `campaignSatelliteService.ts`                             | —                      | `/campaigns/templates`                                       | ✅ Wired   |
+| 24  | `savedSearches`               | `saved_searches/`  | `savedSearchesService.ts`                                 | `SavedSearchesMenu`    | `/contacts`, `/companies`                                    | ✅ Wired   |
+| 25  | `twoFactor`                   | `two_factor/`      | `twoFactorService.ts`                                     | `useTwoFactor.ts`      | `/profile` (Security tab)                                    | ✅ Wired   |
+| 26  | `profile`                     | `profile/`         | `profileService.ts`                                       | `useProfile.ts`        | `/profile`                                                   | ✅ Wired   |
 
 **Column “Status”:** **✅ Wired** means an app **service + primary route** exist. It does **not** guarantee full schema coverage or zero mocks — use the **GraphQL** / **UI** roll-up and Phase checklists in [`docs/ui-kit/extended-module-notes.md`](ui-kit/extended-module-notes.md).
 
@@ -103,11 +103,7 @@
 - `getVqlHealth()` → `{ vqlHealth, vqlStats }` — Connectra/VQL connectivity
 - `getPerformanceStats()` → cache, slow queries, DB, S3, endpoint latencies (SuperAdmin)
 
-**App route:** [`app/(dashboard)/status/page.tsx`](<app/(dashboard)/status/page.tsx>)
-
-- Tabs: **Overview** (gateway + services), **Connectra** (VQL status), **Operations** (SuperAdmin perf metrics)
-- Real data only; shows honest error card when API is unreachable
-- Lazy-loads Connectra and Operations tabs on first click
+**App route:** The dedicated **`/status`** page was **removed**; operator health is **`contact360.io/admin`** (system status + analytics). The **`healthService`** client remains for any future in-app health widgets.
 
 **Key types:** `GqlApiHealth`, `VqlHealth`, `VqlStats`, `PerformanceStats`, `ConnectraDetails`
 
@@ -246,13 +242,10 @@
 
 - `list(opts)`, `get(id)`, `create(input)`, `update(id, input)`, `delete(id)`, `updateUsage(id)`
 
-**App hook:** [`src/hooks/useSavedSearches.ts`](src/hooks/useSavedSearches.ts)
+**App UI:** [`src/components/feature/saved-searches/SavedSearchesMenu.tsx`](src/components/feature/saved-searches/SavedSearchesMenu.tsx) on **`/contacts`** and **`/companies`** (versioned VQL payload in `filters` JSON).
 
-**App route:** [`app/(dashboard)/saved-searches/page.tsx`](<app/(dashboard)/saved-searches/page.tsx>)
-
-- Cards per search with type badge, run count, last used
-- Create/edit modal with name, query, type (`contact`/`company`/`all`), filters
-- Delete confirmation modal
+- List/apply/delete and **Save current** modal; `updateSavedSearchUsage` on apply
+- Legacy `/saved-searches` **redirects** to `/contacts` (`next.config` redirects)
 
 **Key types:** `GqlSavedSearch`, `GqlSavedSearchType`
 
@@ -363,23 +356,22 @@ app/(dashboard)/**/page.tsx  (UI, reads hook state, calls hook actions)
 
 ## Completed improvements (Full App Parity plan)
 
-| Area                 | Task                                                                                | Status     |
-| -------------------- | ----------------------------------------------------------------------------------- | ---------- |
-| TypeScript / Codegen | Added `Gql*` type aliases for all generated types + manual types for satellite APIs | ✅ Done    |
-| TypeScript / Codegen | Added `typesPrefix: "Gql"` to `codegen.ts` for future regeneration                  | ✅ Done    |
-| usersService         | Fixed `uploadAvatar` field mismatch (`filePath` not `fileKey`)                      | ✅ Done    |
-| Page decomposition   | `contacts/page.tsx` → 5 feature components                                          | ✅ Done    |
-| Page decomposition   | `dashboard/page.tsx` → 4 feature components                                         | ✅ Done    |
-| Page decomposition   | `billing/page.tsx` → 4 feature components                                           | ✅ Done    |
-| Page decomposition   | `activities/page.tsx` → 3 feature components + CalendarView wired                   | ✅ Done    |
-| Page decomposition   | `admin/page.tsx` → 4 feature components                                             | ✅ Done    |
-| Page decomposition   | `companies/[id]/page.tsx` → 3 feature components                                    | ✅ Done    |
-| Page decomposition   | `email/page.tsx` → 5 feature components including BulkWizard                        | ✅ Done    |
-| Page decomposition   | `status/page.tsx` → 4 feature components                                            | ✅ Done    |
-| Page decomposition   | `saved-searches/page.tsx` → 3 feature components                                    | ✅ Done    |
-| Page decomposition   | `profile/page.tsx` → 5 feature components                                           | ✅ Done    |
-| VqlFilterInput       | Fixed `logicalOperator` → `allOf/anyOf` and `value` types in contacts page          | ✅ Done    |
-| tsc --noEmit         | 0 TypeScript errors                                                                 | ✅ Passing |
+| Area                 | Task                                                                                                | Status     |
+| -------------------- | --------------------------------------------------------------------------------------------------- | ---------- |
+| TypeScript / Codegen | Added `Gql*` type aliases for all generated types + manual types for satellite APIs                 | ✅ Done    |
+| TypeScript / Codegen | Added `typesPrefix: "Gql"` to `codegen.ts` for future regeneration                                  | ✅ Done    |
+| usersService         | Fixed `uploadAvatar` field mismatch (`filePath` not `fileKey`)                                      | ✅ Done    |
+| Page decomposition   | `contacts/page.tsx` → 5 feature components                                                          | ✅ Done    |
+| Page decomposition   | `dashboard/page.tsx` → 4 feature components                                                         | ✅ Done    |
+| Page decomposition   | `billing/page.tsx` → 4 feature components                                                           | ✅ Done    |
+| Page decomposition   | `activities/page.tsx` → 3 feature components + CalendarView wired                                   | ✅ Done    |
+| Page decomposition   | `admin/page.tsx` → 4 feature components                                                             | ✅ Done    |
+| Page decomposition   | `companies/[id]/page.tsx` → 3 feature components                                                    | ✅ Done    |
+| Page decomposition   | `email/page.tsx` → 5 feature components including BulkWizard                                        | ✅ Done    |
+| Page decomposition   | _(retired)_ `status/`, `saved-searches/` pages — use admin + Contacts/Companies `SavedSearchesMenu` | ✅ Done    |
+| Page decomposition   | `profile/page.tsx` → 5 feature components                                                           | ✅ Done    |
+| VqlFilterInput       | Fixed `logicalOperator` → `allOf/anyOf` and `value` types in contacts page                          | ✅ Done    |
+| tsc --noEmit         | 0 TypeScript errors                                                                                 | ✅ Passing |
 
 ### Phase 2–7 overhaul additions (2026-04-06)
 

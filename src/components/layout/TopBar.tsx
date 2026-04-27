@@ -2,17 +2,33 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Sun, Moon, Bell, User, Settings, LogOut } from "lucide-react";
+import {
+  Menu,
+  Sun,
+  Moon,
+  Bell,
+  User,
+  Settings,
+  LogOut,
+  Briefcase,
+  CreditCard,
+  FolderOpen,
+  MessageSquare,
+} from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/constants";
 import { Popover } from "@/components/ui/Popover";
 import { TopBarCredits } from "./TopBarCredits";
 import { cn } from "@/lib/utils";
+import { useJobsDrawer } from "@/context/JobsDrawerContext";
+import { useNotificationsDrawer } from "@/context/NotificationsDrawerContext";
+import { useFilesDrawer } from "@/context/FilesDrawerContext";
+import { useReviewDrawer } from "@/context/ReviewDrawerContext";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
-  analytics: "Analytics",
   contacts: "Contacts",
   companies: "Companies",
   email: "Email Finder",
@@ -23,10 +39,9 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "ai-chat": "AI Chat",
   "live-voice": "Live Voice",
   billing: "Billing",
-  usage: "Usage",
   profile: "Profile",
   settings: "Settings",
-  status: "Status",
+  notifications: "Notifications",
   campaigns: "Campaigns",
   new: "New",
   templates: "Templates",
@@ -50,6 +65,10 @@ export default function TopBar({
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { openJobsDrawer } = useJobsDrawer();
+  const { openNotificationsDrawer, unreadCount } = useNotificationsDrawer();
+  const { openFilesDrawer } = useFilesDrawer();
+  const { openReviewDrawer } = useReviewDrawer();
 
   const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = segments.map((seg, i) => ({
@@ -122,14 +141,60 @@ export default function TopBar({
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        <Link
-          href={ROUTES.NOTIFICATIONS}
+        <button
+          type="button"
+          onClick={() => openReviewDrawer()}
+          className="c360-btn c360-btn--ghost c360-btn--icon c360-topbar__icon-btn"
+          title="Job tickets"
+          aria-label="Open job tickets"
+        >
+          <MessageSquare size={18} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openNotificationsDrawer()}
           className="c360-btn c360-btn--ghost c360-btn--icon c360-topbar__icon-btn"
           title="Notifications"
-          aria-label="Notifications"
+          aria-label={
+            unreadCount > 0
+              ? `Open notifications, ${unreadCount} unread`
+              : "Open notifications"
+          }
         >
-          <Bell size={18} />
-        </Link>
+          <span className="c360-topbar-notif-wrap">
+            <Bell size={18} aria-hidden />
+            {unreadCount > 0 ? (
+              <Badge
+                color="red"
+                className="c360-topbar-notif-badge"
+                aria-hidden
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Badge>
+            ) : null}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openJobsDrawer()}
+          className="c360-btn c360-btn--ghost c360-btn--icon c360-topbar__icon-btn"
+          title="Jobs"
+          aria-label="Open jobs"
+        >
+          <Briefcase size={18} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openFilesDrawer()}
+          className="c360-btn c360-btn--ghost c360-btn--icon c360-topbar__icon-btn"
+          title="Files"
+          aria-label="Open files"
+        >
+          <FolderOpen size={18} />
+        </button>
 
         {user && (
           <Popover
@@ -160,7 +225,14 @@ export default function TopBar({
                     {user.role ?? "User"}
                   </span>
                 </div>
-                <TopBarCredits onNavigate={onAccountNavigate} />
+                <TopBarCredits />
+                <Link
+                  href={ROUTES.BILLING}
+                  className="c360-sidebar__user-menu-item"
+                  onClick={() => onAccountNavigate?.()}
+                >
+                  <CreditCard size={16} aria-hidden /> Billing
+                </Link>
                 <Link
                   href={ROUTES.PROFILE}
                   className="c360-sidebar__user-menu-item"

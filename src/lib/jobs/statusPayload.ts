@@ -73,7 +73,9 @@ function unwrapStatusPayload(
       Object.prototype.hasOwnProperty.call(inner, "outputCsvKey") ||
       Object.prototype.hasOwnProperty.call(inner, "s3_key") ||
       Object.prototype.hasOwnProperty.call(inner, "download_url") ||
-      Object.prototype.hasOwnProperty.call(inner, "downloadUrl"))
+      Object.prototype.hasOwnProperty.call(inner, "downloadUrl") ||
+      Object.prototype.hasOwnProperty.call(inner, "file_path") ||
+      Object.prototype.hasOwnProperty.call(inner, "filePath"))
   ) {
     return inner as Record<string, unknown>;
   }
@@ -144,13 +146,22 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
           "rows_processed",
         )
       : null);
-  const totalRows =
+  let totalRows =
     num(p, "total_rows", "totalRows", "total", "row_count") ??
     (jobResponse
       ? num(jobResponse, "total_rows", "totalRows", "total", "row_count")
       : null);
 
   const liveStatus = str(p, "status", "job_status", "state");
+
+  const statsBlock =
+    typeof p.stats === "object" && p.stats !== null && !Array.isArray(p.stats)
+      ? (p.stats as Record<string, unknown>)
+      : null;
+  const statsJobs = statsBlock ? num(statsBlock, "jobs", "Jobs") : null;
+  if (totalRows == null && statsJobs != null && statsJobs > 0) {
+    totalRows = statsJobs;
+  }
 
   const dataBlock =
     typeof p.data === "object" && p.data !== null && !Array.isArray(p.data)
@@ -164,6 +175,8 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
       "outputCsvKey",
       "output_file",
       "outputFile",
+      "file_path",
+      "filePath",
       "download_url",
       "downloadUrl",
       "s3_url",
@@ -208,10 +221,29 @@ export function parseStatusPayload(statusPayload: unknown): ParsedJobStatus {
     progress = Math.min(100, Math.round((processedRows / totalRows) * 100));
   }
 
+  const stLower = (liveStatus || "").trim().toLowerCase();
+  const exportLooksComplete =
+    stLower === "done" ||
+    stLower === "completed" ||
+    stLower === "complete" ||
+    stLower === "success" ||
+    stLower === "succeeded";
+  let processedOut = processedRows ?? 0;
+  let totalOut = totalRows ?? 0;
+  if (
+    exportLooksComplete &&
+    statsJobs != null &&
+    statsJobs > 0 &&
+    processedOut === 0 &&
+    totalOut > 0
+  ) {
+    processedOut = statsJobs;
+  }
+
   return {
     progress,
-    total: totalRows ?? 0,
-    processed: processedRows ?? 0,
+    total: totalOut,
+    processed: processedOut,
     outputFile,
     error,
     ...(liveStatus ? { liveStatus } : {}),

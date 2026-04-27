@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
-import Link from "next/link";
+import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
 import Papa from "papaparse";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -135,9 +135,9 @@ function LearnSingleSection() {
       <div className="c360-card c360-p-3 c360-text-sm c360-mb-4">
         <p className="c360-mb-0">
           For bulk pattern learning from a CSV in S3, go to{" "}
-          <Link href="/jobs" className="c360-text-primary">
+          <OpenJobsDrawerButton type="button" className="c360-text-primary">
             Jobs → Start Job → Email pattern learn (S3)
-          </Link>
+          </OpenJobsDrawerButton>
           .
         </p>
       </div>
@@ -334,9 +334,9 @@ function LearnBulkSection() {
       <div className="c360-card c360-p-3 c360-text-sm">
         <p className="c360-mb-0">
           Very large files: use{" "}
-          <Link href="/jobs" className="c360-text-primary">
+          <OpenJobsDrawerButton type="button" className="c360-text-primary">
             Jobs → Email pattern learn (S3)
-          </Link>
+          </OpenJobsDrawerButton>
           .
         </p>
       </div>

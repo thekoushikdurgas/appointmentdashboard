@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
 import { Upload, ChevronRight, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -465,9 +465,9 @@ export function EmailBulkFinderTab() {
               Start Jobs uploads this CSV to your workspace S3 and enqueues{" "}
               <strong>Email finder (bulk)</strong> using your column mapping
               above. For more than {SYNC_CAP} rows in sync, use Start Jobs or{" "}
-              <Link href="/jobs" className="c360-text-primary">
+              <OpenJobsDrawerButton type="button" className="c360-text-primary">
                 Jobs
-              </Link>
+              </OpenJobsDrawerButton>
               .
             </p>
 

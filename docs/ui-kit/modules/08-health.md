@@ -49,7 +49,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 - **`getVqlHealth()`** — `vqlHealth` + `vqlStats` (requires auth). Types from **`generated/types`**.
 - **`getPerformanceStats()`** — **`performanceStats`** including **`tokenBlacklistCleanup`** (SuperAdmin; expect **403** for others).
 
-**`useHealthStatus`** ([`useHealthStatus.ts`](../../../src/hooks/useHealthStatus.ts)) — consolidates loading/error/refresh for all tabs; avoids refetch loops when a tab errors.
+**`useHealthStatus`** — **removed** with the retired **`/status`** app page; use **Django admin** system status for operators. **`healthService`** remains for possible dashboard widgets.
 
 **`status/page.tsx`** — **`DashboardPageLayout`**, kit **Tabs** (filter variant): **Overview** (public), **Connectra**, **Reference**. Overview: API card with **`resolveGatewayDocsUrl`**, incidents empty copy. **Operations** (performance stats / token cleanup) was removed from the app — use Django admin / gateway tools.
 
@@ -93,7 +93,7 @@ Keep **`--c360-*`** and existing **`Card`, `Button`, `Alert`, `Skeleton`**.
 
 ### Phase C — Hooks & page behavior
 
-- [x] **`useHealthStatus()`** — Loading/error/refresh per tab; lazy-load guarded with **`!error`** to avoid refetch loops on failure.
+- [x] _(retired)_ **`/status`** app route — replaced by **admin** operator status; hooks **`usePublicHealth` / `useVqlHealthData` / `useHealthStatus`** removed from the app client.
 - [x] **`status/page.tsx` tabs** — Same three slices; **Tabs** UI component + **`DashboardPageLayout`**.
 
 ### Phase D — UX (kit-aligned)
@@ -112,7 +112,7 @@ Keep **`--c360-*`** and existing **`Card`, `Button`, `Alert`, `Skeleton`**.
 ## 6. Summary
 
 - **`08_HEALTH_MODULE.md`** and **`health/queries.py`** define **five** queries with **clear auth tiers** and rich **`performanceStats`** for SuperAdmin.
-- **`healthService`** now implements **public**, **Connectra (VQL)**, and **SuperAdmin performance** slices; **`/status`** uses **tabs** and lazy loading instead of mock multi-service data as “real.”
+- **`healthService`** still documents **public**, **Connectra (VQL)**, and **SuperAdmin performance** slices for callers; the **dedicated product `/status` page** was **removed** (use **Django admin** for operator health).
 - **Remaining:** richer **incidents**, optional **hook** abstraction, and **overview** metrics that are less synthetic when product defines SLOs.
 
 **Dashboard UI kit** fits **widget cards**, **badges**, **tabs** for tiered visibility, and future **charts** if you add metrics over time.

@@ -43,6 +43,15 @@ import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/Hiri
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
 import { cn, formatDate } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
+import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
+import { parseOperationError } from "@/lib/errorParser";
+import {
+  exportSelectedHireSignalJobs,
+  fetchHireSignalExportStatus,
+} from "@/services/graphql/hiringSignalService";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "sonner";
+import { useJobsDrawer } from "@/context/JobsDrawerContext";
 
 const RUNS_PAGE_SIZE = 10;
 
@@ -77,6 +86,7 @@ function HiringSignalsPageBody({
   signalTimePreset,
   setSignalTimePreset,
 }: HiringSignalsPageBodyProps) {
+  const { openJobsDrawer } = useJobsDrawer();
   const {
     jobs,
     total,
@@ -113,6 +123,11 @@ function HiringSignalsPageBody({
   >([...HS_DT_DEFAULT_COLUMNS]);
   const [satellitePage, setSatellitePage] = useState(1);
   const [trackedPage, setTrackedPage] = useState(1);
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportBanner, setExportBanner] = useState<{
+    jobId: string;
+    status: string;
+  } | null>(null);
 
   const {
     runsLoading,
@@ -130,10 +145,7 @@ function HiringSignalsPageBody({
   });
 
   useEffect(() => {
-    const maxPage = Math.max(
-      1,
-      Math.ceil(satelliteRunsTotal / RUNS_PAGE_SIZE),
-    );
+    const maxPage = Math.max(1, Math.ceil(satelliteRunsTotal / RUNS_PAGE_SIZE));
     if (satellitePage > maxPage) setSatellitePage(maxPage);
   }, [satelliteRunsTotal, satellitePage]);
 
@@ -176,6 +188,65 @@ function HiringSignalsPageBody({
     },
     [],
   );
+
+  const onExportSelected = useCallback(
+    async (linkedinJobIds: string[]) => {
+      setExportBusy(true);
+      try {
+        const res = await exportSelectedHireSignalJobs(linkedinJobIds);
+        const row = res.hireSignal?.exportSelectedJobs;
+        if (!row?.jobId) {
+          toast.error("Export was queued but no job id was returned.");
+          return;
+        }
+        setExportBanner({ jobId: row.jobId, status: row.status || "OPEN" });
+        toast.success("XLSX export queued", {
+          description:
+            "Track progress on Jobs (filter: Hiring Signals) — download when complete.",
+          action: {
+            label: "Open Jobs",
+            onClick: () => openJobsDrawer({ jobFamily: "hire_signal" }),
+          },
+        });
+      } catch (e) {
+        toast.error(parseOperationError(e, "jobs").userMessage);
+      } finally {
+        setExportBusy(false);
+      }
+    },
+    [openJobsDrawer],
+  );
+
+  useEffect(() => {
+    if (!exportBanner?.jobId) return;
+    const st = exportBanner.status || "";
+    const done =
+      st.toUpperCase() === "FAILED" || isSuccessfulTerminalJobStatus(st);
+    if (done) return;
+
+    let cancelled = false;
+    const id = setInterval(() => {
+      void (async () => {
+        try {
+          const data = await fetchHireSignalExportStatus(exportBanner.jobId);
+          const next = data.hireSignal?.exportJobStatus?.status;
+          if (!cancelled && next) {
+            setExportBanner((b) =>
+              b && b.jobId === exportBanner.jobId
+                ? { jobId: b.jobId, status: next }
+                : b,
+            );
+          }
+        } catch {
+          /* polling is best-effort */
+        }
+      })();
+    }, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [exportBanner?.jobId, exportBanner?.status]);
 
   const renderStatsBar = () => (
     <HiringSignalStatsBar
@@ -454,7 +525,10 @@ function HiringSignalsPageBody({
           />
         </TabsContent>
         <TabsContent value="runs">
-          <div className="c360-flex c360-flex-col c360-gap-6" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
+          <div
+            className="c360-flex c360-flex-col c360-gap-6"
+            style={{ paddingLeft: "16px", paddingRight: "16px" }}
+          >
             <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
               <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
                 Job.server runs &amp; your scrape history
@@ -579,6 +653,42 @@ function HiringSignalsPageBody({
                 Apply.
               </p>
             </div>
+            {exportBanner ? (
+              <Alert
+                variant={
+                  exportBanner.status.toUpperCase() === "FAILED"
+                    ? "danger"
+                    : isSuccessfulTerminalJobStatus(exportBanner.status)
+                      ? "success"
+                      : "info"
+                }
+                title="Latest XLSX export"
+                className="c360-mb-3"
+                onClose={() => setExportBanner(null)}
+              >
+                <p className="c360-m-0 c360-text-sm">
+                  Job{" "}
+                  <span className="c360-font-mono c360-text-2xs">
+                    {exportBanner.jobId.length > 20
+                      ? `${exportBanner.jobId.slice(0, 10)}…${exportBanner.jobId.slice(-6)}`
+                      : exportBanner.jobId}
+                  </span>{" "}
+                  — status{" "}
+                  <strong className="c360-font-medium">
+                    {exportBanner.status}
+                  </strong>
+                  .{" "}
+                  <button
+                    type="button"
+                    className="c360-inline c360-border-0 c360-bg-transparent c360-p-0 c360-text-primary c360-underline"
+                    onClick={() => openJobsDrawer({ jobFamily: "hire_signal" })}
+                  >
+                    Open Jobs
+                  </button>{" "}
+                  to download when complete.
+                </p>
+              </Alert>
+            ) : null}
             <HiringSignalsDataTable
               rows={jobs}
               loading={loading}
@@ -593,6 +703,8 @@ function HiringSignalsPageBody({
               density={tableDensity}
               visibleColumns={visibleColumns}
               onToggleColumn={toggleHsColumn}
+              onExportSelected={onExportSelected}
+              exportBusy={exportBusy}
             />
           </DataPageLayout>
         </TabsContent>

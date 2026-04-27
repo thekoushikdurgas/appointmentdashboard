@@ -12,7 +12,11 @@ interface ActivityCalendarTabProps {
 
 export function ActivityCalendarTab({ events }: ActivityCalendarTabProps) {
   return (
-    <Card title="Activity Calendar" subtitle="Events mapped to calendar days">
+    <Card
+      className="c360-card--activity-calendar-tab"
+      title="Activity Calendar"
+      subtitle="Events mapped to calendar days"
+    >
       <CalendarView events={events} height={460} />
     </Card>
   );

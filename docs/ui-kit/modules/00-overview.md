@@ -194,7 +194,7 @@ Suggested sequence (auth and user context first, then data-heavy features):
   - [x] **UI** — `/resume` + modals + nav; BFF for `/v1/ai/*` and structured forms remain in module doc.
 - [ ] **Admin + health** — [`13-admin.md`](13-admin.md), [`08-health.md`](08-health.md). _(partial)_
   - [ ] **GraphQL** — Admin service drift vs `AdminQuery`.
-  - [x] **UI** — Admin shell; `/status` tabs.
+  - [x] **UI** — Admin shell; product `/status` **retired** (operator status in Django admin).
 - [ ] **Campaign satellite** — [`22-campaigns.md`](22-campaigns.md) … [`25-campaign-templates.md`](25-campaign-templates.md). _(partial)_
   - [x] **GraphQL** — `campaignSatellite` JSON queries when env set.
   - [ ] **UI** — Writes often “coming soon”.

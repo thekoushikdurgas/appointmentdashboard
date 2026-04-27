@@ -45,9 +45,7 @@ export function useHireSignalRuns(
       const limit =
         mainTab === "runs" ? runsPageSize : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
       const offset =
-        mainTab === "runs"
-          ? Math.max(0, satellitePage - 1) * runsPageSize
-          : 0;
+        mainTab === "runs" ? Math.max(0, satellitePage - 1) * runsPageSize : 0;
 
       const [r, s] = await Promise.all([
         fetchHireSignalRuns(limit, offset),

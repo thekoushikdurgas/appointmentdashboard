@@ -297,6 +297,15 @@
   min-height: 36px;
 }
 
+/* Facet value trigger — fixed width in filter sidebar (matches devtools) */
+.c360-contacts-filters .c360-filter-combobox__trigger {
+  width: 100px;
+  max-width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
 .c360-filter-combobox__option--focus {
   outline: 2px solid var(--c360-border);
   outline-offset: -2px;

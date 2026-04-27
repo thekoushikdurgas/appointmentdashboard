@@ -53,7 +53,7 @@ So “modular GraphQL” for health is **`app/graphql/modules/health/`** and is 
 | **`healthService.ts`**                                 | **`apiHealth` + `apiMetadata`** (public), **`vqlHealth` + `vqlStats`**, **`performanceStats`** (+ `tokenBlacklistCleanup`); synthetic **one-row** `SystemHealth` for the gateway. |
 | **`vqlHealth` / `vqlStats` / `performanceStats`**      | **Wired** in `healthOperations.ts` + `healthService`; Operations tab **SuperAdmin-gated** client-side.                                                                            |
 | **Codegen `ApiHealth`** (`graphql/generated/types.ts`) | **`{ status, environment }`** — matches queries.                                                                                                                                  |
-| **`/status` page**                                     | **Live** GraphQL data; **Reference** tab = static HTTP matrix; overview **Alert** explains scope (no mock board).                                                                 |
+| **Product `/status` page**                             | **Removed**; operator health in **Django admin** (system status).                                                                                                                 |
 
 ---
 
@@ -85,14 +85,14 @@ The kit is a large static HTML/Bootstrap-style set (`form-element.html`, `chart-
 
 ### Phase C — Hooks & UX truthfulness
 
-- [x] **`usePublicHealth`**, **`useVqlHealthData`**, **`useHealthStatus`** (composed); performance stats / token cleanup live on the gateway and may be used from **Django admin** or scripts.
-- [x] **`/status`** — Overview + Connectra + Reference; **Operations** tab removed from the app (use Django ops / gateway for SuperAdmin health tools).
+- [x] **`usePublicHealth`**, **`useVqlHealthData`**, **`useHealthStatus`** — **removed** with the product **`/status`** page; use **Django admin** for operator health.
+- [x] **`/status`** — **retired** (see **admin** system status).
 
 ### Phase D — Health envelope matrix in product (optional; 18-specific)
 
 - [ ] **Decide transport:** Pure **ops** (docker compose + scripts) vs **in-app matrix**. Browsers cannot reliably `fetch` all internal service URLs (CORS); a **gateway or admin BFF** that probes configured URLs server-side is the usual pattern.
 - [ ] **Backend probe module** (if in-app): e.g. configurable list `{ name, url, requiredFields[], family }` → normalized result `{ httpStatus, body, missingFields[] }` matching 18’s table + envelope families.
-- [x] **UI (partial):** **Reference** tab on `/status` — static matrix + envelope families from this doc (no live HTTP probes).
+- [x] _(retired)_ **Reference** tab lived on product **`/status`**; static matrix docs remain in this file for HTTP envelope design.
 
 ### Phase E — Polish with Dashboard kit
 
@@ -107,4 +107,4 @@ The kit is a large static HTML/Bootstrap-style set (`form-element.html`, `chart-
 - **Gateway REST and GraphQL** match the docs; **app** consumes public + authenticated health fields; **Reference** tab documents the HTTP matrix without implying live probes.
 - **Modular implementation** = document linkage (A) → types + services (B) → hooks + status UI (C) → optional server-side probe API for live matrix (D) → kit components (E).
 
-If you want, the next step in **agent mode** can be: regenerate schema diff, then patch `healthService` + `/status` + codegen in one focused PR.
+If you reintroduce an in-app status surface, regenerate schema diff and align **`healthService`** + codegen in one PR.

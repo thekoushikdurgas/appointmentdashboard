@@ -231,6 +231,7 @@ export type AdminMutation = {
   promoteToSuperAdmin: User;
   requestDangerousOperationApproval: DangerousApprovalTicket;
   runSubscriptionExpirySweep: Scalars["Int"]["output"];
+  updateJobTicketStatus: JobTicket;
   updateLog: LogEntry;
   updateUserCredits: User;
   updateUserRole: User;
@@ -273,6 +274,10 @@ export type AdminMutationRunSubscriptionExpirySweepArgs = {
   maxBatches?: Scalars["Int"]["input"];
 };
 
+export type AdminMutationUpdateJobTicketStatusArgs = {
+  input: UpdateJobTicketStatusInput;
+};
+
 export type AdminMutationUpdateLogArgs = {
   input: UpdateLogInput;
 };
@@ -287,6 +292,8 @@ export type AdminMutationUpdateUserRoleArgs = {
 
 export type AdminQuery = {
   graphqlAuditEvents: Array<GraphQlAuditEventGql>;
+  jobTicket: JobTicket;
+  jobTickets: JobTicketConnection;
   logStatistics: LogStatistics;
   logs: LogConnection;
   schedulerJobs: JobConnection;
@@ -300,6 +307,18 @@ export type AdminQuery = {
 export type AdminQueryGraphqlAuditEventsArgs = {
   limit?: Scalars["Int"]["input"];
   offset?: Scalars["Int"]["input"];
+};
+
+export type AdminQueryJobTicketArgs = {
+  ticketId: Scalars["ID"]["input"];
+};
+
+export type AdminQueryJobTicketsArgs = {
+  externalJobId?: InputMaybe<Scalars["String"]["input"]>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  status?: InputMaybe<Scalars["String"]["input"]>;
+  userId?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type AdminQueryLogStatisticsArgs = {
@@ -1323,6 +1342,14 @@ export type CreateEmailVerifyExportInput = {
   s3Bucket?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type CreateJobTicketInput = {
+  description: Scalars["String"]["input"];
+  externalJobId: Scalars["String"]["input"];
+  jobSource: Scalars["String"]["input"];
+  severity?: Scalars["String"]["input"];
+  title: Scalars["String"]["input"];
+};
+
 export type CreateKnowledgeArticleInput = {
   body: Scalars["String"]["input"];
   tags?: InputMaybe<Array<Scalars["String"]["input"]>>;
@@ -1787,8 +1814,13 @@ export type HealthQuery = {
 };
 
 export type HireSignalMutation = {
+  exportSelectedJobs: SchedulerJob;
   triggerScrape: Scalars["JSON"]["output"];
   triggerScrapeAndTrack: ScrapeJobType;
+};
+
+export type HireSignalMutationExportSelectedJobsArgs = {
+  linkedinJobIds: Array<Scalars["String"]["input"]>;
 };
 
 export type HireSignalMutationTriggerScrapeArgs = {
@@ -1804,6 +1836,8 @@ export type HireSignalQuery = {
   companyJobs: Scalars["JSON"]["output"];
   connectraCompany: Scalars["JSON"]["output"];
   connectraContactsForCompany: Scalars["JSON"]["output"];
+  exportDownloadUrl?: Maybe<S3DownloadUrlResponse>;
+  exportJobStatus: SchedulerJob;
   getScrapeJob: Scalars["JSON"]["output"];
   job: Scalars["JSON"]["output"];
   jobConnectraCompany: Scalars["JSON"]["output"];
@@ -1837,6 +1871,15 @@ export type HireSignalQueryConnectraContactsForCompanyArgs = {
   populateCompany?: Scalars["Boolean"]["input"];
 };
 
+export type HireSignalQueryExportDownloadUrlArgs = {
+  expiresIn?: InputMaybe<Scalars["Int"]["input"]>;
+  exportJobId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryExportJobStatusArgs = {
+  exportJobId: Scalars["String"]["input"];
+};
+
 export type HireSignalQueryGetScrapeJobArgs = {
   pollApify?: Scalars["Boolean"]["input"];
   scrapeJobId: Scalars["String"]["input"];
@@ -1867,6 +1910,7 @@ export type HireSignalQueryJobsArgs = {
   offset?: Scalars["Int"]["input"];
   postedAfter?: InputMaybe<Scalars["String"]["input"]>;
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
+  runId?: InputMaybe<Scalars["String"]["input"]>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
 };
@@ -1886,6 +1930,7 @@ export type HireSignalQueryRunArgs = {
 
 export type HireSignalQueryRunsArgs = {
   limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
 };
 
 export type HireSignalQueryScrapeJobJobsArgs = {
@@ -1954,6 +1999,7 @@ export type JobMutation = {
   createEmailFinderExport: SchedulerJob;
   createEmailPatternExport: SchedulerJob;
   createEmailVerifyExport: SchedulerJob;
+  createJobTicket: JobTicket;
   pauseConnectraJob: Scalars["JSON"]["output"];
   pauseJob: Scalars["JSON"]["output"];
   resumeConnectraJob: Scalars["JSON"]["output"];
@@ -1981,6 +2027,10 @@ export type JobMutationCreateEmailPatternExportArgs = {
 
 export type JobMutationCreateEmailVerifyExportArgs = {
   input: CreateEmailVerifyExportInput;
+};
+
+export type JobMutationCreateJobTicketArgs = {
+  input: CreateJobTicketInput;
 };
 
 export type JobMutationPauseConnectraJobArgs = {
@@ -2016,6 +2066,7 @@ export type JobQuery = {
   job: SchedulerJob;
   jobOutputCsvDownloadUrl?: Maybe<S3DownloadUrlResponse>;
   jobs: JobConnection;
+  myJobTickets: JobTicketConnection;
 };
 
 export type JobQueryDeadLetterJobsArgs = {
@@ -2039,6 +2090,37 @@ export type JobQueryJobsArgs = {
   offset?: InputMaybe<Scalars["Int"]["input"]>;
   relatedFileKey?: InputMaybe<Scalars["String"]["input"]>;
   status?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type JobQueryMyJobTicketsArgs = {
+  externalJobId?: InputMaybe<Scalars["String"]["input"]>;
+  jobSource?: InputMaybe<Scalars["String"]["input"]>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  status?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type JobTicket = {
+  adminNotes?: Maybe<Scalars["String"]["output"]>;
+  createdAt: Scalars["DateTime"]["output"];
+  description: Scalars["String"]["output"];
+  externalJobId: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  jobSource: Scalars["String"]["output"];
+  jobStatusSnapshot?: Maybe<Scalars["String"]["output"]>;
+  jobType?: Maybe<Scalars["String"]["output"]>;
+  resolvedAt?: Maybe<Scalars["DateTime"]["output"]>;
+  resolvedByUserId?: Maybe<Scalars["ID"]["output"]>;
+  severity: Scalars["String"]["output"];
+  status: Scalars["String"]["output"];
+  title: Scalars["String"]["output"];
+  updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
+  userId: Scalars["ID"]["output"];
+};
+
+export type JobTicketConnection = {
+  pageInfo: PageInfo;
+  tickets: Array<JobTicket>;
 };
 
 export type KnowledgeArticle = {
@@ -3429,6 +3511,12 @@ export type UpdateContactInput = {
   status?: InputMaybe<Scalars["String"]["input"]>;
   textSearch?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type UpdateJobTicketStatusInput = {
+  adminNotes?: InputMaybe<Scalars["String"]["input"]>;
+  status: Scalars["String"]["input"];
+  ticketId: Scalars["ID"]["input"];
 };
 
 export type UpdateKnowledgeArticleInput = {

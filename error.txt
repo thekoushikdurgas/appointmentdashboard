@@ -1,39 +1,206 @@
-# Hydration console output — analysis and resolution
+[3/10] Type checking...
+----------------------------------------
+  Same as npm run typecheck (tsc --noEmit); duplicates removed vs older bat.
+  Running: npm run typecheck
 
-## What was reported
+> contact360-app@0.1.0 typecheck
+> tsc --noEmit
 
-- **Type:** React / Next.js **hydration mismatch** (server HTML vs first client render).
-- **Attribute involved:** `bis_skin_checked="1"` on many `<div>` elements (and similar `bis_*` in some builds).
+app/(dashboard)/companies/page.tsx:145:17 - error TS2304: Cannot find name 'vqlQuery'.
 
-## Root cause
+145       vqlQuery: vqlQuery as Partial<VqlQueryInput>,
+                    ~~~~~~~~
 
-This is **not** a bug in the Contact360 app source. The `bis_` prefix is injected by **browser security / anti-phishing extensions** (commonly **Bitdefender** “Traffic Light” and similar) that mark or scan DOM nodes after the page loads. The server never sends that attribute, so when React hydrates, the **live DOM** can differ from the **expected** tree and React logs a warning.
+app/(dashboard)/companies/page.tsx:148:7 - error TS2304: Cannot find name 'vqlQuery'.
 
-The official React docs list **browser extensions** as a common cause:  
-https://react.dev/link/hydration-mismatch
+148   }, [vqlQuery, search]);
+          ~~~~~~~~
 
-## What we changed in the repo
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:59:19 - error TS2554: Expected 2 arguments, but got 1.
 
-1. **`suppressHydrationWarning`** on app-controlled elements that were in the stack trace and on shared primitives that extensions often touch:
-   - `app/(auth)/layout.tsx` — `c360-auth-layout`
-   - All `(auth)/**` pages using `c360-auth-card` (login, forgot/reset password, lock screen, 2FA, etc.)
-   - `src/components/ui/Input.tsx` — `c360-field` and `c360-input-wrap`
-   - `src/components/ui/Checkbox.tsx` — label and label-text wrapper
-   - `AuthBrandHeader`, `AuthTabList`, `AuthLoginForm` (split/remember row), `AuthLoginFallback`
+59       toast.error(parseOperationError(e));
+                     ~~~~~~~~~~~~~~~~~~~
 
-   This tells React to **ignore attribute/text mismatches on those specific nodes** (typical for extension-injected attributes), without changing production behavior for real app bugs if they appear on *other* nodes.
+  src/lib/errorParser.ts:68:3
+    68   domain: Domain,
+         ~~~~~~~~~~~~~~
+    An argument for 'domain' was not provided.
 
-2. **Global note:** `Input` / `Checkbox` are used across the app; the same extension can in theory add attributes on dashboard pages. Suppressing on the shared wrappers reduces noise in dev for the whole product, not only `/login`.
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:59:19 - error TS2345: Argument of type 'OperationError' is not assignable to parameter of type 'string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ... 4 more ... | undefined'.
 
-## What you should still do locally (recommended)
+59       toast.error(parseOperationError(e));
+                     ~~~~~~~~~~~~~~~~~~~~~~
 
-- **Temporarily disable** the security extension (or add `localhost` / your dev host to its allow list) while developing, **or** ignore hydration warnings that still mention only `bis_*` attributes.
-- Warnings on **Next.js internal** nodes (e.g. `MetadataWrapper` / dev overlay) can still appear until the extension stops mutating the DOM. We cannot add `suppressHydrationWarning` to framework internals from app code.
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:66:9 - error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?
 
-## If warnings persist
+66     if (open) void load();
+           ~~~~
 
-1. Reproduce in an **incognito** window with **all extensions off**; if the warning disappears, it is environment-related.
-2. If it appears **with extensions off**, capture a new stack trace (there may be a real SSR/client split — `Date`, `Math.random`, invalid HTML nesting, etc.) and fix that in code.
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:92:19 - error TS2554: Expected 2 arguments, but got 1.
 
----
-Last updated: 2026-04-25
+92       toast.error(parseOperationError(e));
+                     ~~~~~~~~~~~~~~~~~~~
+
+  src/lib/errorParser.ts:68:3
+    68   domain: Domain,
+         ~~~~~~~~~~~~~~
+    An argument for 'domain' was not provided.
+
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:92:19 - error TS2345: Argument of type 'OperationError' is not assignable to parameter of type 'string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ... 4 more ... | undefined'.
+
+92       toast.error(parseOperationError(e));
+                     ~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:115:19 - error TS2554: Expected 2 arguments, but got 1.
+
+115       toast.error(parseOperationError(e));
+                      ~~~~~~~~~~~~~~~~~~~
+
+  src/lib/errorParser.ts:68:3
+    68   domain: Domain,
+         ~~~~~~~~~~~~~~
+    An argument for 'domain' was not provided.
+
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:115:19 - error TS2345: Argument of type 'OperationError' is not assignable to parameter of type 'string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ... 4 more ... | undefined'.
+
+115       toast.error(parseOperationError(e));
+                      ~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:126:19 - error TS2554: Expected 2 arguments, but got 1.
+
+126       toast.error(parseOperationError(e));
+                      ~~~~~~~~~~~~~~~~~~~
+
+  src/lib/errorParser.ts:68:3
+    68   domain: Domain,
+         ~~~~~~~~~~~~~~
+    An argument for 'domain' was not provided.
+
+src/components/feature/saved-searches/SavedSearchesMenu.tsx:126:19 - error TS2345: Argument of type 'OperationError' is not assignable to parameter of type 'string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ... 4 more ... | undefined'.
+
+126       toast.error(parseOperationError(e));
+                      ~~~~~~~~~~~~~~~~~~~~~~
+
+
+Found 11 errors in 2 files.
+
+Errors  Files
+     2  app/(dashboard)/companies/page.tsx:145
+     9  src/components/feature/saved-searches/SavedSearchesMenu.tsx:59
+  X Type check failed
+[5/10] Linting...
+----------------------------------------
+  Running: npm run lint
+
+> contact360-app@0.1.0 lint
+> eslint . --ext .ts,.tsx --max-warnings 0
+
+
+D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+  148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+  67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+✖ 2 problems (0 errors, 2 warnings)
+
+ESLint found too many warnings (maximum: 0).
+  X Linting errors found
+
+> contact360-app@0.1.0 lint:fix
+> eslint . --ext .ts,.tsx --fix
+
+
+D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+  148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+  67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+✖ 2 problems (0 errors, 2 warnings)
+
+
+> contact360-app@0.1.0 lint
+> eslint . --ext .ts,.tsx --max-warnings 0
+
+
+D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+  148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+  67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+✖ 2 problems (0 errors, 2 warnings)
+
+ESLint found too many warnings (maximum: 0).
+next build
+
+▲ Next.js 16.2.2 (Turbopack)
+- Environments: .env.production, .env
+- Experiments (use with caution):
+  · proxyTimeout: 300000
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 39.7s
+  Running TypeScript  .Failed to type check.
+
+./app/(dashboard)/companies/page.tsx:145:17
+Type error: Cannot find name 'vqlQuery'.
+
+  143 |     return {
+  144 |       version: SAVED_SEARCH_VERSION,
+> 145 |       vqlQuery: vqlQuery as Partial<VqlQueryInput>,
+      |                 ^
+  146 |       search,
+  147 |     };
+  148 |   }, [vqlQuery, search]);
+Next.js build worker exited with code: 1 and signal: null
+  X Build failed
+
+  [5/10] Linting...
+  ----------------------------------------
+    Running: npm run lint
+  
+  > contact360-app@0.1.0 lint
+  > eslint . --ext .ts,.tsx --max-warnings 0
+  
+  
+  D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+    148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+    67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  ✖ 2 problems (0 errors, 2 warnings)
+  
+  ESLint found too many warnings (maximum: 0).
+    X Linting errors found
+  
+  > contact360-app@0.1.0 lint:fix
+  > eslint . --ext .ts,.tsx --fix
+  
+  
+  D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+    148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+    67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  ✖ 2 problems (0 errors, 2 warnings)
+  
+  
+  > contact360-app@0.1.0 lint
+  > eslint . --ext .ts,.tsx --max-warnings 0
+  
+  
+  D:\code\ayan\contact360\contact360.io\app\app\(dashboard)\companies\page.tsx
+    148:6  warning  React Hook useCallback has an unnecessary dependency: 'vqlQuery'. Either exclude it or remove the dependency array. Outer scope values like 'vqlQuery' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  D:\code\ayan\contact360\contact360.io\app\src\components\feature\saved-searches\SavedSearchesMenu.tsx
+    67:6  warning  React Hook useEffect has an unnecessary dependency: 'open'. Either exclude it or remove the dependency array. Outer scope values like 'open' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  
+  ✖ 2 problems (0 errors, 2 warnings)
+  
+  ESLint found too many warnings (maximum: 0).
+  

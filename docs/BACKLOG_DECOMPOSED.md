@@ -30,14 +30,14 @@
 
 _Smallest unit: one service + codegen + one screen._
 
-| ID   | Owner    | Micro-tasks                                                                                                                                                                                                                 |
-| ---- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P0.1 | **App**  | **`savedSearchesService` / `useSavedSearches`:** `getSavedSearch`, `updateSearchUsage` → `Boolean`, filter enum `contact` / `company` / `all`. Run `npm run codegen`; fix selections/variables; exercise `/saved-searches`. |
-| P0.2 | **App**  | **`salesNavigatorService`:** align `saveSalesNavigatorProfiles` payload/response with generated types; remove wrong **`api-modules`** re-exports; test Save on `/sales-navigator`.                                          |
-| P0.3 | **App**  | **`twoFactorService`:** `regenerateBackupCodes` response shape (no fake `success` field); Security tab flow.                                                                                                                |
-| P0.4 | **App**  | **`profileService`:** `updateTeamMemberRole` / `removeTeamMember` use `id`; `revokeAllOtherSessions` boolean handling.                                                                                                      |
-| P0.5 | **App**  | **`linkedinService`:** `upsertByLinkedInUrl` — minimal `contactData` from UI per schema; map GraphQL errors to copy.                                                                                                        |
-| P0.6 | **Both** | **`pagesService`:** extend queries only if product needs `pageContent`, `pagesByType`, filters — **API** adds fields → **App** splits `PAGE_SUMMARY_FIELDS` / detail (see [`19-pages.md`](ui-kit/modules/19-pages.md)).     |
+| ID   | Owner    | Micro-tasks                                                                                                                                                                                                             |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0.1 | **App**  | **`savedSearchesService`:** `SavedSearchesMenu` on `/contacts` & `/companies`; `getSavedSearch` + `updateSavedSearchUsage` on apply. Legacy `/saved-searches` redirects to `/contacts`.                                 |
+| P0.2 | **App**  | **`salesNavigatorService`:** align `saveSalesNavigatorProfiles` payload/response with generated types; remove wrong **`api-modules`** re-exports; test Save on `/sales-navigator`.                                      |
+| P0.3 | **App**  | **`twoFactorService`:** `regenerateBackupCodes` response shape (no fake `success` field); Security tab flow.                                                                                                            |
+| P0.4 | **App**  | **`profileService`:** `updateTeamMemberRole` / `removeTeamMember` use `id`; `revokeAllOtherSessions` boolean handling.                                                                                                  |
+| P0.5 | **App**  | **`linkedinService`:** `upsertByLinkedInUrl` — minimal `contactData` from UI per schema; map GraphQL errors to copy.                                                                                                    |
+| P0.6 | **Both** | **`pagesService`:** extend queries only if product needs `pageContent`, `pagesByType`, filters — **API** adds fields → **App** splits `PAGE_SUMMARY_FIELDS` / detail (see [`19-pages.md`](ui-kit/modules/19-pages.md)). |
 
 ---
 

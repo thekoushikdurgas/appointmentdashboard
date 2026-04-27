@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
 import { ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -361,9 +361,12 @@ export function EmailBulkVerifierTab() {
               <p className="c360-text-xs c360-text-muted">
                 This list has more addresses than one sync allows ({MAX_SYNC}).
                 On the last step, choose how many to verify per run, or use{" "}
-                <Link href="/jobs" className="c360-text-primary">
+                <OpenJobsDrawerButton
+                  type="button"
+                  className="c360-text-primary"
+                >
                   Jobs → Email verify (bulk) from S3
-                </Link>{" "}
+                </OpenJobsDrawerButton>{" "}
                 for the full file.
               </p>
             )}
@@ -472,9 +475,9 @@ export function EmailBulkVerifierTab() {
               with provider <strong>{providerLabel}</strong> and email column{" "}
               <strong>{emailColumn.trim() || "email"}</strong>. For more than{" "}
               {MAX_SYNC} addresses per sync, use Start Jobs or{" "}
-              <Link href="/jobs" className="c360-text-primary">
+              <OpenJobsDrawerButton type="button" className="c360-text-primary">
                 Jobs
-              </Link>
+              </OpenJobsDrawerButton>
               .
             </p>
 

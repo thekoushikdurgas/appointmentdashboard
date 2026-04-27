@@ -33,6 +33,11 @@ import { CompanyExportModal } from "@/components/feature/companies/CompanyExport
 import { CompanyImportModal } from "@/components/feature/companies/CompanyImportModal";
 import { CompaniesFilterSidebar } from "@/components/feature/companies/CompaniesFilterSidebar";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
+import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import {
+  SAVED_SEARCH_VERSION,
+  type CompanySavedSearchPayload,
+} from "@/lib/savedSearchPayload";
 import {
   countDraftConditions,
   draftGroupToVqlFilter,
@@ -43,6 +48,7 @@ import type {
   CreateCompanyInput,
   VqlConditionInput,
   VqlFilterInput,
+  VqlQueryInput,
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
 
@@ -112,6 +118,29 @@ export default function CompaniesPage() {
     });
   }, [facetFilter, advancedCompanyDraft, applyVqlQuery]);
 
+  /** Same shape as passed to `applyVqlQuery` — used for saved-search payload. */
+  const currentCompanyVqlQuery = useMemo((): Partial<VqlQueryInput> => {
+    const parts: VqlFilterInput[] = [];
+    if (facetFilter) parts.push(facetFilter);
+    if (advancedCompanyDraft) {
+      const g = draftGroupToVqlFilter(
+        advancedCompanyDraft.rootGroup,
+        "company",
+      );
+      if (g) parts.push(g);
+    }
+    const filters: VqlFilterInput | undefined =
+      parts.length === 0
+        ? undefined
+        : parts.length === 1
+          ? parts[0]
+          : { allOf: parts };
+    const extra = advancedCompanyDraft
+      ? draftToVqlQueryInput(advancedCompanyDraft, "company")
+      : {};
+    return { ...extra, filters };
+  }, [facetFilter, advancedCompanyDraft]);
+
   const advancedVqlRuleCount = advancedCompanyDraft
     ? countDraftConditions(advancedCompanyDraft.rootGroup)
     : 0;
@@ -132,6 +161,22 @@ export default function CompaniesPage() {
   const clearCompanyVql = useCallback(() => {
     setAdvancedCompanyDraft(null);
   }, []);
+
+  const getCompanySavedPayload = useCallback((): CompanySavedSearchPayload => {
+    return {
+      version: SAVED_SEARCH_VERSION,
+      vqlQuery: currentCompanyVqlQuery,
+      search,
+    };
+  }, [currentCompanyVqlQuery, search]);
+
+  const handleApplyCompanySaved = useCallback(
+    (p: CompanySavedSearchPayload) => {
+      setSearch(p.search);
+      applyVqlQuery(p.vqlQuery);
+    },
+    [applyVqlQuery, setSearch],
+  );
 
   const filtersSidebar = useMemo(
     () => (
@@ -223,6 +268,11 @@ export default function CompaniesPage() {
         subtitle={`${total.toLocaleString()} companies`}
         actions={
           <>
+            <SavedSearchesMenu
+              entity="company"
+              getCompanyPayload={getCompanySavedPayload}
+              onApplyCompany={handleApplyCompanySaved}
+            />
             <Button
               variant="secondary"
               size="sm"

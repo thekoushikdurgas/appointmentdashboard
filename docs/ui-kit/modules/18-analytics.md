@@ -1,6 +1,8 @@
 ﻿> **Source:** split from [`extended-module-notes.md`](../extended-module-notes.md) (index). Module order follows the original monolith.
 > Here is a structured analysis of **Analytics** (`18_ANALYTICS_MODULE.md` ↔ `contact360.io/api` ↔ `contact360.io/app`), **Dashboard UI kit** mapping, and a **task breakdown**.
 
+> **2026-04-27:** The standalone app route **`/analytics`** was **removed**; **`analyticsService`** + **`WebVitalsReporter`** still power the **dashboard** chart and RUM. Operator analytics: **Django admin** (`apps.analytics`).
+
 ---
 
 ## Module tracking
@@ -133,5 +135,5 @@ The **`GqlPerformanceMetric`** / **`GqlMetricAggregation`** / **`GqlTrackMetricI
 
 - **`contact360.io/api` `analytics` module** and **`18_ANALYTICS_MODULE.md`** describe **user-scoped performance metrics** (list, aggregate, submit with **epoch ms**).
 - **`analyticsService` queries** match the API; **submission** and **date filters** are incomplete; **`getSummary`** is a **legacy adapter** that **does not** represent gateway semantics.
-- **`/analytics` page** is styled like a **Dashboard kit** analytics view but is **fed by the wrong abstraction** (email/credits narrative vs **RUM metrics**).
+- The former **`/analytics`** page was **removed**; end-user RUM remains on the **dashboard** chart; **admin** hosts operator analytics.
 - **Modular implementation** starts with a **product split**, then **submit + filter + aggregate + charts** for real performance data, and/or **separate usage** data from **other GraphQL modules**.

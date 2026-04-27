@@ -75,6 +75,17 @@
   flex-shrink: 0;
 }
 
+/* Email page — tab panels as horizontal flex, wrapped */
+.c360-tabs--email {
+  width: 100%;
+}
+.c360-tabs--email .c360-tabs__panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--c360-spacing-4);
+}
+
 /* Contained variant */
 .c360-tabs--contained .c360-tabs__list {
   border-bottom: none;

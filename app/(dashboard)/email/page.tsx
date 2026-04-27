@@ -19,7 +19,7 @@ export default function EmailPage() {
         subtitle="Find and verify professional email addresses"
       />
 
-      <Tabs defaultValue="finder-single">
+      <Tabs defaultValue="finder-single" className="c360-tabs--email">
         <TabsList>
           <TabsTrigger value="finder-single" icon={<Search size={14} />}>
             Single Finder

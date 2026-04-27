@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -176,8 +177,8 @@ export function FeatureOverviewPanel({
                 </div>
               )}
               <p className="c360-text-sm c360-mt-3 c360-mb-0">
-                <Link href="/activities" className="c360-link">
-                  Open activities page →
+                <Link href="/activities?tab=feed" className="c360-link">
+                  Open full activity feed →
                 </Link>
               </p>
             </TabsContent>
@@ -222,9 +223,9 @@ export function FeatureOverviewPanel({
                 </div>
               )}
               <p className="c360-text-sm c360-mt-3 c360-mb-0">
-                <Link href="/jobs" className="c360-link">
-                  Open jobs page →
-                </Link>
+                <OpenJobsDrawerButton type="button" className="c360-link">
+                  Open jobs →
+                </OpenJobsDrawerButton>
               </p>
             </TabsContent>
           </Tabs>

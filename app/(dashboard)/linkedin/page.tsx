@@ -196,10 +196,7 @@ export default function LinkedInPage() {
   if (!canAccess) {
     return (
       <DashboardPageLayout>
-        <PageHeader
-          title="LinkedIn"
-          subtitle="Search and import by LinkedIn URL"
-        />
+        <PageHeader title="LinkedIn" />
         <Alert variant="warning">
           {FEATURE_GATES.linkedin_export.label} is available on{" "}
           <strong>Professional</strong> and <strong>Enterprise</strong> plans.{" "}
@@ -213,7 +210,6 @@ export default function LinkedInPage() {
     <DashboardPageLayout>
       <PageHeader
         title="LinkedIn"
-        subtitle="Search contacts and companies by LinkedIn URL (uses credits per operation)"
         actions={
           <>
             <div className="c360-flex-row-wrap c360-items-end c360-gap-2">

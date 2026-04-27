@@ -28,8 +28,8 @@
 | P2e   | Admin console **removed** from app — Django `admin_ops` + `NEXT_PUBLIC_ADMIN_URL`                                                        | ✅     |
 | P2f   | `companies/[id]/page.tsx` → CompanyHeader, CompanyContactsTable, CompanyFindEmailsPanel                                                  | ✅     |
 | P2g   | `email/page.tsx` → EmailFinderSingleTab, EmailBulkFinderTab, EmailBulkVerifierTab, EmailVerifierTab, EmailWebSearchTab, EmailPatternsTab | ✅     |
-| P2h   | `status/page.tsx` → StatusOverviewTab, StatusConnectraTab, Reference (Operations tab → Django admin)                                     | ✅     |
-| P2i   | `saved-searches/page.tsx` → SavedSearchFilterBar, SavedSearchTable, SavedSearchCreateModal, SavedSearchEditModal, SavedSearchDeleteModal | ✅     |
+| P2h   | _(retired)_ app `/status` — use **Django admin** system status                                                                           | ✅     |
+| P2i   | `SavedSearchesMenu` on **`/contacts`** & **`/companies`** (versioned VQL payload)                                                        | ✅     |
 | P2j   | `profile/page.tsx` → ProfileInfoTab, ProfileSecurityTab, ProfileApiKeysTab, ProfileSessionsTab, ProfileTeamTab                           | ✅     |
 | QA    | `tsc --noEmit` — 0 errors                                                                                                                | ✅     |
 
@@ -187,7 +187,7 @@ These avoid repeat TypeScript / ESLint / runtime issues.
 - [x] `src/types/api-modules.ts` + extended `graphql-gateway.ts` (contacts/companies).
 - [x] Service gaps: billing, contacts, companies, email, jobs, notifications, profile, saved searches, resume, s3, sales navigator, users, ai chat, two-factor, admin; **`pagesService`**, **`uploadService`**.
 - [x] Hooks: `useNotifications`, `useBilling`, `useProfile`, `useUsage`, `useResume`, `useSalesNavigator`, `useS3Files`, `useActivities`.
-- [x] Pages wired: profile, billing, contacts, companies, jobs, email, ai-chat, admin, usage, activities, status, **notifications**, **saved-searches**, **sales-navigator**, **resume** (`/resume`).
+- [x] Pages wired: profile, billing, contacts, companies, jobs, email, ai-chat, admin, **activities** (incl. usage tab), **notifications**, **sales-navigator**, **resume** (`/resume`). _(Retired: standalone `/usage`, `/status`, `/analytics`, `/saved-searches` — see redirects + merges.)_
 - [x] **API demo removal:** `demo_data.py` deleted; **`DEMO_MODE`** removed from settings; demo branches stripped from listed GraphQL query modules (see `GRAPHQL_PARITY.md` / API changelog in repo).
 
 ### 3.2 Remaining parity / QA tasks

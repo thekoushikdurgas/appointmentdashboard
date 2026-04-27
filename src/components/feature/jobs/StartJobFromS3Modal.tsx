@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Play } from "lucide-react";
+import { OpenFilesDrawerButton } from "@/components/feature/files/OpenFilesDrawerButton";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
@@ -532,9 +532,9 @@ export function StartJobFromS3Modal({
         {!loading && fileOptions.length === 0 && (
           <p className="c360-text-xs c360-text-muted">
             No files yet.{" "}
-            <Link href="/files" className="c360-text-primary">
+            <OpenFilesDrawerButton className="c360-text-primary c360-inline c360-underline c360-bg-transparent c360-border-none c360-cursor-pointer c360-p-0 c360-font-inherit">
               Open Files to upload
-            </Link>
+            </OpenFilesDrawerButton>
             .
           </p>
         )}

@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       { source: "/favicon.ico", destination: "/favicon.svg", permanent: false },
       { source: "/finder", destination: "/email", permanent: false },
       { source: "/verifier", destination: "/email", permanent: false },
+      { source: "/status", destination: "/dashboard", permanent: false },
+      { source: "/saved-searches", destination: "/contacts", permanent: false },
+      { source: "/analytics", destination: "/dashboard", permanent: false },
+      {
+        source: "/usage",
+        destination: "/activities?tab=usage",
+        permanent: false,
+      },
     ];
   },
 

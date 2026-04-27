@@ -116,6 +116,54 @@ export function getJobBadgeColor(
   }
 }
 
+/** XLSX exports tracked under scheduler_jobs (`hire_signal` / job.server). */
+export function isHireSignalXlsxExportJob(
+  job: Pick<Job, "type" | "sourceService">,
+): boolean {
+  return (
+    job.type === "hire_signal_xlsx_export" && job.sourceService === "job_server"
+  );
+}
+
+/** Whether the Jobs UI can offer a presigned download for this row. */
+export function canDownloadSchedulerOutput(
+  job: Pick<Job, "status" | "outputFile" | "type" | "sourceService">,
+): boolean {
+  if (!isSuccessfulTerminalJobStatus(job.status)) return false;
+  if (isHireSignalXlsxExportJob(job)) return true;
+  return !!job.outputFile?.trim();
+}
+
+export function schedulerOutputDownloadLabel(
+  job: Pick<Job, "type" | "sourceService">,
+): "Download XLSX" | "Download CSV" {
+  return isHireSignalXlsxExportJob(job) ? "Download XLSX" : "Download CSV";
+}
+
+/**
+ * Filename hint for blob / anchor download (CSV export jobs vs hiring-signal XLSX).
+ */
+export function schedulerExportSuggestedFilename(
+  job: Pick<Job, "type" | "sourceService">,
+  storageKeyOrUrl: string,
+): string {
+  const tail = storageKeyOrUrl.includes("/")
+    ? storageKeyOrUrl.slice(storageKeyOrUrl.lastIndexOf("/") + 1)
+    : storageKeyOrUrl;
+  const t = tail.trim();
+  if (!t) {
+    return isHireSignalXlsxExportJob(job)
+      ? "hiring-signals-export.xlsx"
+      : "export.csv";
+  }
+  if (isHireSignalXlsxExportJob(job)) {
+    return t.toLowerCase().endsWith(".xlsx")
+      ? t
+      : `${t.replace(/\.[^.]+$/, "") || t}.xlsx`;
+  }
+  return t.toLowerCase().endsWith(".csv") ? t : `${t}.csv`;
+}
+
 export function shouldPollJob(status: string): boolean {
   /**
    * Non-terminal work states. Include PROCESSING/RETRY/PAUSED so DB-only status (no live JSON yet)

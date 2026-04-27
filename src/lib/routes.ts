@@ -4,25 +4,18 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   DASHBOARD: "/dashboard",
-  ANALYTICS: "/analytics",
   CONTACTS: "/contacts",
   COMPANIES: "/companies",
   EMAIL: "/email",
   PHONE: "/phone",
-  JOBS: "/jobs",
   HIRING_SIGNALS: "/hiring-signals",
-  FILES: "/files",
   LINKEDIN: "/linkedin",
   ACTIVITIES: "/activities",
   AI_CHAT: "/ai-chat",
   LIVE_VOICE: "/live-voice",
   BILLING: "/billing",
-  USAGE: "/usage",
   PROFILE: "/profile",
   SETTINGS: "/settings",
-  STATUS: "/status",
-  NOTIFICATIONS: "/notifications",
-  SAVED_SEARCHES: "/saved-searches",
   CAMPAIGNS: "/campaigns",
   CAMPAIGNS_NEW: "/campaigns/new",
   CAMPAIGNS_TEMPLATES: "/campaigns/templates",
@@ -30,6 +23,17 @@ export const ROUTES = {
   RESUME: "/resume",
   FORBIDDEN: "/403",
 } as const;
+
+/** Deep link: Activities page with a given tab (and optional feature for Usage drill-down). */
+export function activitiesTabRoute(
+  tab: "feed" | "calendar" | "analytics" | "jobs" | "usage",
+  feature?: string,
+): string {
+  const p = new URLSearchParams();
+  p.set("tab", tab);
+  if (feature?.trim()) p.set("feature", feature.trim());
+  return `/activities?${p.toString()}`;
+}
 
 /** Dynamic resume editor/detail path. */
 export function resumeRoute(id: string): string {

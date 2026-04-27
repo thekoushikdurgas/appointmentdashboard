@@ -130,7 +130,7 @@ export function CompanyImportModal({
     >
       <div className="c360-section-stack">
         {/* Wizard step circles */}
-        <div className="c360-campaign-wizard">
+        <div className="c360-campaign-wizard c360-campaign-wizard--import">
           {([1, 2, 3] as WizardStep[]).map((s) => (
             <div
               key={s}

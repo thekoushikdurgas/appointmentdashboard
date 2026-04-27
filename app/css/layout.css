@@ -359,7 +359,8 @@
 }
 
 .c360-page.c360-dashboard-layout {
-  padding: 0;
+  padding: 10px;
+  justify-content: center;
 }
 
 .c360-tabs--dashboard .c360-tabs__panel .c360-page {
@@ -532,7 +533,8 @@
 
 .c360-dashboard-layout__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: var(--c360-spacing-4);
 }
 
@@ -540,6 +542,11 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: var(--c360-spacing-6);
+}
+
+/* Dashboard chart area: first card (Email Activity) sizes to its chart */
+.c360-dashboard-layout__charts > .c360-card:first-child {
+  height: fit-content;
 }
 
 .c360-data-layout {

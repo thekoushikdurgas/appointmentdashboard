@@ -129,7 +129,11 @@ function mapJob(r: JobRow): Job {
         ? fromResponse.output_csv_key
         : typeof fromResponse.s3_key === "string"
           ? fromResponse.s3_key
-          : undefined
+          : typeof fromResponse.file_path === "string"
+            ? fromResponse.file_path
+            : typeof fromResponse.filePath === "string"
+              ? fromResponse.filePath
+              : undefined
     : undefined;
 
   const apiOutputKey =
@@ -325,6 +329,65 @@ const TERMINATE_CONNECTRA_JOB = `mutation TerminateConnectraJob($jobUuid: String
   }
 }`;
 
+const JOB_TICKET_FIELDS = `
+  id
+  userId
+  jobSource
+  externalJobId
+  jobType
+  jobStatusSnapshot
+  title
+  description
+  severity
+  status
+  adminNotes
+  resolvedByUserId
+  resolvedAt
+  createdAt
+  updatedAt
+`;
+
+const MY_JOB_TICKETS = `query MyJobTickets($limit: Int, $offset: Int, $status: String, $externalJobId: String, $jobSource: String) {
+  jobs {
+    myJobTickets(limit: $limit, offset: $offset, status: $status, externalJobId: $externalJobId, jobSource: $jobSource) {
+      tickets { ${JOB_TICKET_FIELDS} }
+      pageInfo {
+        total
+        limit
+        offset
+        hasNext
+        hasPrevious
+      }
+    }
+  }
+}`;
+
+const CREATE_JOB_TICKET = `mutation CreateJobTicket($input: CreateJobTicketInput!) {
+  jobs {
+    createJobTicket(input: $input) {
+      ${JOB_TICKET_FIELDS}
+    }
+  }
+}`;
+
+export interface JobTicketRow {
+  id: string;
+  userId: string;
+  jobSource: string;
+  externalJobId: string;
+  jobType: string | null;
+  jobStatusSnapshot: string | null;
+  title: string;
+  description: string;
+  severity: string;
+  status: string;
+  adminNotes: string | null;
+  resolvedByUserId: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
 export const jobsService = {
   list: async (opts?: {
     limit?: number;
@@ -504,5 +567,55 @@ export const jobsService = {
     graphqlMutation<{ jobs: { terminateConnectraJob: unknown } }>(
       TERMINATE_CONNECTRA_JOB,
       { jobUuid },
+    ),
+
+  listMyJobTickets: async (opts?: {
+    limit?: number;
+    offset?: number;
+    status?: string | null;
+    externalJobId?: string | null;
+    jobSource?: string | null;
+  }) => {
+    const data = await graphqlQuery<{
+      jobs: {
+        myJobTickets: {
+          tickets: JobTicketRow[];
+          pageInfo: {
+            total: number;
+            limit: number;
+            offset: number;
+            hasNext: boolean;
+            hasPrevious: boolean;
+          };
+        };
+      };
+    }>(MY_JOB_TICKETS, {
+      limit: opts?.limit ?? 25,
+      offset: opts?.offset ?? 0,
+      status: opts?.status?.trim() || null,
+      externalJobId: opts?.externalJobId?.trim() || null,
+      jobSource: opts?.jobSource?.trim() || null,
+    });
+    return data.jobs.myJobTickets;
+  },
+
+  createJobTicket: (input: {
+    jobSource: string;
+    externalJobId: string;
+    title: string;
+    description: string;
+    severity?: string;
+  }) =>
+    graphqlMutation<{ jobs: { createJobTicket: JobTicketRow } }>(
+      CREATE_JOB_TICKET,
+      {
+        input: {
+          jobSource: input.jobSource,
+          externalJobId: input.externalJobId,
+          title: input.title,
+          description: input.description,
+          severity: input.severity ?? "normal",
+        },
+      },
     ),
 };

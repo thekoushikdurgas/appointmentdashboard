@@ -67,7 +67,6 @@ const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
     "ai_chat",
     "live_voice",
     "campaigns",
-    "analytics",
     "api_access",
   ],
   enterprise: ["*"],

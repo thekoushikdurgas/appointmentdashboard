@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { ShellSearchProvider } from "@/context/ShellSearchContext";
+import { JobsDrawerProvider } from "@/context/JobsDrawerContext";
+import { NotificationsDrawerProvider } from "@/context/NotificationsDrawerContext";
+import { FilesDrawerProvider } from "@/context/FilesDrawerContext";
+import { ReviewDrawerProvider } from "@/context/ReviewDrawerContext";
+import { JobsDrawer } from "@/components/feature/jobs/JobsDrawer";
+import { NotificationsDrawer } from "@/components/feature/notifications/NotificationsDrawer";
+import { FilesDrawer } from "@/components/feature/files/FilesDrawer";
+import { ReviewDrawer } from "@/components/feature/reviews/ReviewDrawer";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -64,23 +72,40 @@ export default function MainLayout({ children }: MainLayoutProps) {
       : "Collapse sidebar";
 
   return (
-    <ShellSearchProvider>
-      <div className="c360-shell">
-        <Sidebar
-          collapsed={collapsed}
-          mobileOpen={mobileOpen}
-          onMobileClose={handleMobileClose}
-        />
-        <div className={cn("c360-main", collapsed && "c360-main--collapsed")}>
-          <TopBar
-            collapsed={collapsed}
-            onMenuToggle={handleMenuClick}
-            menuButtonAriaLabel={menuButtonAriaLabel}
-            onAccountNavigate={handleMobileClose}
-          />
-          <main>{children}</main>
-        </div>
-      </div>
-    </ShellSearchProvider>
+    <ReviewDrawerProvider>
+      <JobsDrawerProvider>
+        <NotificationsDrawerProvider>
+          <FilesDrawerProvider>
+            <ShellSearchProvider>
+              <div className="c360-shell">
+                <Sidebar
+                  collapsed={collapsed}
+                  mobileOpen={mobileOpen}
+                  onMobileClose={handleMobileClose}
+                />
+                <div
+                  className={cn(
+                    "c360-main",
+                    collapsed && "c360-main--collapsed",
+                  )}
+                >
+                  <TopBar
+                    collapsed={collapsed}
+                    onMenuToggle={handleMenuClick}
+                    menuButtonAriaLabel={menuButtonAriaLabel}
+                    onAccountNavigate={handleMobileClose}
+                  />
+                  <main>{children}</main>
+                </div>
+              </div>
+            </ShellSearchProvider>
+            <JobsDrawer />
+            <NotificationsDrawer />
+            <FilesDrawer />
+            <ReviewDrawer />
+          </FilesDrawerProvider>
+        </NotificationsDrawerProvider>
+      </JobsDrawerProvider>
+    </ReviewDrawerProvider>
   );
 }

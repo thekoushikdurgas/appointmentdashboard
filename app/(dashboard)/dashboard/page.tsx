@@ -1,10 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Users, Mail, Briefcase, TrendingUp } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
-import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -29,11 +27,9 @@ import {
 } from "@/components/feature/dashboard/DashboardStatRow";
 import {
   DashboardChartSection,
-  DashboardLiveChart,
   type AreaDataPoint,
 } from "@/components/feature/dashboard/DashboardChartSection";
 import type { ActivityItem } from "@/components/feature/dashboard/DashboardActivityFeed";
-import { cn } from "@/lib/utils";
 
 /** Build 10-bucket sparkline from activity timestamps over the last 7 days */
 function buildSparkFromActivities(
@@ -75,30 +71,10 @@ function buildAreaDataFromMetrics(
   return entries.map(([time, vals]) => ({ time, ...vals }));
 }
 
-type DashboardTab = "overview" | "activity" | "usage";
-
-function DashboardPageContent() {
+export default function DashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
   // Record dashboard page-view performance metric (fire-and-forget)
   usePerformanceMetric("dashboard_view", undefined, { page: "dashboard" });
-  const searchParams = useSearchParams();
-  const rawTab = searchParams.get("tab") as DashboardTab | null;
-  const activeTab: DashboardTab =
-    rawTab === "activity" || rawTab === "usage" ? rawTab : "overview";
-
-  const setTab = useCallback(
-    (tab: DashboardTab) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (tab === "overview") {
-        params.delete("tab");
-      } else {
-        params.set("tab", tab);
-      }
-      router.replace(`?${params.toString()}`);
-    },
-    [router, searchParams],
-  );
 
   const [statsLoading, setStatsLoading] = useState(true);
   const [stats, setStats] = useState<StatCardData[]>([]);
@@ -245,65 +221,11 @@ function DashboardPageContent() {
         </Badge>
       </div>
 
-      <div className="c360-tabs c360-tabs--contained c360-mb-6">
-        <div className="c360-tabs__list" role="tablist">
-          {(["overview", "activity", "usage"] as DashboardTab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              className={cn(
-                "c360-tabs__tab",
-                activeTab === t && "c360-tabs__tab--active",
-              )}
-              onClick={() => setTab(t)}
-            >
-              {t === "overview"
-                ? "Overview"
-                : t === "activity"
-                  ? "Activity"
-                  : "Usage"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <DashboardAdCarousel />
+      <DashboardAdCarousel interval={6000} />
 
       <DashboardStatRow stats={stats} loading={statsLoading} />
 
-      {activeTab === "activity" && <DashboardLiveChart liveData={liveData} />}
-
-      {activeTab === "overview" && (
-        <DashboardChartSection liveData={liveData} activity={activity} />
-      )}
-
-      {activeTab === "usage" && (
-        <Card title="Usage & Credits" subtitle="Your plan consumption">
-          <p className="c360-page-subtitle">
-            Credits remaining: <strong>{user?.credits_remaining ?? "—"}</strong>
-          </p>
-          <p className="c360-page-subtitle c360-mt-2">
-            Plan: <strong>{user?.subscription_plan ?? "—"}</strong>
-          </p>
-        </Card>
-      )}
+      <DashboardChartSection liveData={liveData} activity={activity} />
     </DashboardPageLayout>
-  );
-}
-
-function DashboardFallback() {
-  return (
-    <DashboardPageLayout>
-      <div className="c360-spinner c360-mx-auto c360-my-8" />
-    </DashboardPageLayout>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<DashboardFallback />}>
-      <DashboardPageContent />
-    </Suspense>
   );
 }

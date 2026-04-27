@@ -1,16 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRole } from "@/context/RoleContext";
-import { ROUTES } from "@/lib/constants";
 
-interface TopBarCreditsProps {
-  /** e.g. close mobile sidebar when navigating to Billing */
-  onNavigate?: () => void;
-}
-
-/** Credits + Billing block for the account popover in the top bar. */
-export function TopBarCredits({ onNavigate }: TopBarCreditsProps) {
+/** Credits summary for the account popover; Billing is linked from the menu row above/below in TopBar. */
+export function TopBarCredits() {
   const { credits, creditsUsed, creditsLimit } = useRole();
 
   const pct =
@@ -22,13 +15,6 @@ export function TopBarCredits({ onNavigate }: TopBarCreditsProps) {
     <div className="c360-topbar__credits c360-topbar__credits--popover">
       <div className="c360-topbar__credits-head">
         <span className="c360-topbar__credits-label">Credits</span>
-        <Link
-          href={ROUTES.BILLING}
-          className="c360-topbar__credits-link"
-          onClick={() => onNavigate?.()}
-        >
-          Billing
-        </Link>
       </div>
       {creditsLimit > 0 && pct !== null ? (
         <>

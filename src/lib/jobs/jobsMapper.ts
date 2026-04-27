@@ -20,6 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
   LINKEDIN_EXPORT: "LinkedIn Export",
   CONTACTS_EXPORT: "Contacts Export",
   COMPANIES_EXPORT: "Companies Export",
+  hire_signal_xlsx_export: "Hiring signals XLSX export",
 };
 
 const SYNC = "sync_server";

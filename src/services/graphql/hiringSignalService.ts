@@ -3,7 +3,7 @@
  */
 
 import { gql } from "graphql-request";
-import { graphqlQuery } from "@/lib/graphqlClient";
+import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
 
 /** Hiring-signal operations: hooks/modals show toasts; avoid duplicate client toasts. */
 const HS_GQL = { showToastOnError: false as const };
@@ -31,10 +31,7 @@ export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
           !!x && typeof x === "object" && !Array.isArray(x),
       )
     : [];
-  const total =
-    typeof r?.total === "number"
-      ? r.total
-      : rows.length;
+  const total = typeof r?.total === "number" ? r.total : rows.length;
   return { rows, total };
 }
 
@@ -227,6 +224,72 @@ const HIRE_SIGNAL_CONNECTRA_CONTACTS_FOR_COMPANY = gql`
   }
 `;
 
+const HIRE_SIGNAL_EXPORT_SELECTED = gql`
+  mutation HireSignalExportSelected($linkedinJobIds: [String!]!) {
+    hireSignal {
+      exportSelectedJobs(linkedinJobIds: $linkedinJobIds) {
+        id
+        jobId
+        userId
+        jobType
+        status
+        sourceService
+        jobFamily
+        jobSubtype
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+const HIRE_SIGNAL_EXPORT_JOB_STATUS = gql`
+  query HireSignalExportJobStatus($exportJobId: String!) {
+    hireSignal {
+      exportJobStatus(exportJobId: $exportJobId) {
+        id
+        jobId
+        status
+        jobType
+        sourceService
+        jobFamily
+        jobSubtype
+        statusPayload
+        updatedAt
+      }
+    }
+  }
+`;
+
+const HIRE_SIGNAL_EXPORT_DOWNLOAD_URL = gql`
+  query HireSignalExportDownloadUrl($exportJobId: String!, $expiresIn: Int) {
+    hireSignal {
+      exportDownloadUrl(exportJobId: $exportJobId, expiresIn: $expiresIn) {
+        downloadUrl
+        expiresIn
+      }
+    }
+  }
+`;
+
+export type HireSignalExportSchedulerJob = {
+  id: string;
+  jobId: string;
+  userId: string;
+  jobType: string;
+  status: string;
+  sourceService: string;
+  jobFamily: string;
+  jobSubtype: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+export type HireSignalExportDownloadUrlResponse = {
+  downloadUrl: string;
+  expiresIn: number;
+} | null;
+
 export interface JobListFilters {
   title?: string;
   company?: string;
@@ -277,10 +340,14 @@ export async function fetchCompanyHiringSignalJobs(
 ) {
   return graphqlQuery<{
     hireSignal: { companyJobs: HireSignalApiJson };
-  }>(HIRE_SIGNAL_COMPANY_JOBS, {
-    companyUuid,
-    limit,
-  }, HS_GQL);
+  }>(
+    HIRE_SIGNAL_COMPANY_JOBS,
+    {
+      companyUuid,
+      limit,
+    },
+    HS_GQL,
+  );
 }
 
 export async function triggerHireSignalScrape(
@@ -393,6 +460,46 @@ export async function fetchConnectraContactsForCompany(
       page: options?.page ?? 1,
       limit: options?.limit ?? 25,
       populateCompany: options?.populateCompany ?? true,
+    },
+    HS_GQL,
+  );
+}
+
+export async function exportSelectedHireSignalJobs(linkedinJobIds: string[]) {
+  return graphqlMutation<{
+    hireSignal: { exportSelectedJobs: HireSignalExportSchedulerJob };
+  }>(
+    HIRE_SIGNAL_EXPORT_SELECTED,
+    { linkedinJobIds },
+    { showToastOnError: true },
+  );
+}
+
+export async function fetchHireSignalExportStatus(exportJobId: string) {
+  return graphqlQuery<{
+    hireSignal: {
+      exportJobStatus: HireSignalExportSchedulerJob & {
+        statusPayload?: unknown;
+      };
+    };
+  }>(
+    HIRE_SIGNAL_EXPORT_JOB_STATUS,
+    { exportJobId: exportJobId.trim() },
+    HS_GQL,
+  );
+}
+
+export async function fetchHireSignalExportDownloadUrl(
+  exportJobId: string,
+  expiresIn?: number,
+) {
+  return graphqlQuery<{
+    hireSignal: { exportDownloadUrl: HireSignalExportDownloadUrlResponse };
+  }>(
+    HIRE_SIGNAL_EXPORT_DOWNLOAD_URL,
+    {
+      exportJobId: exportJobId.trim(),
+      expiresIn: expiresIn ?? null,
     },
     HS_GQL,
   );

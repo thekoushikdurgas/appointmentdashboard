@@ -5,7 +5,24 @@ import { createPortal } from "react-dom";
 import { useOverlayLayer } from "@/hooks/useOverlayLayer";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { NAV_SEARCH_INDEX } from "@/lib/constants";
+import { NAV_SEARCH_INDEX, ROUTES } from "@/lib/constants";
+import type { FlatNavEntry } from "@/lib/navConfig";
+import {
+  JOBS_DRAWER_NAV_HREF,
+  useJobsDrawer,
+} from "@/context/JobsDrawerContext";
+import {
+  NOTIFICATIONS_DRAWER_NAV_HREF,
+  useNotificationsDrawer,
+} from "@/context/NotificationsDrawerContext";
+import {
+  FILES_DRAWER_NAV_HREF,
+  useFilesDrawer,
+} from "@/context/FilesDrawerContext";
+import {
+  REVIEW_DRAWER_NAV_HREF,
+  useReviewDrawer,
+} from "@/context/ReviewDrawerContext";
 
 interface NavCommandPaletteProps {
   open: boolean;
@@ -18,7 +35,26 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
-  const navIndex = useMemo(() => NAV_SEARCH_INDEX, []);
+  const { openJobsDrawer } = useJobsDrawer();
+  const { openNotificationsDrawer } = useNotificationsDrawer();
+  const { openFilesDrawer } = useFilesDrawer();
+  const { openReviewDrawer } = useReviewDrawer();
+  const navIndex = useMemo((): FlatNavEntry[] => {
+    const extra: FlatNavEntry[] = [
+      { label: "Jobs", href: JOBS_DRAWER_NAV_HREF, section: "Tools" },
+      {
+        label: "Notifications",
+        href: NOTIFICATIONS_DRAWER_NAV_HREF,
+        section: "Account",
+      },
+      { label: "Files", href: FILES_DRAWER_NAV_HREF, section: "Tools" },
+      { label: "Job tickets", href: REVIEW_DRAWER_NAV_HREF, section: "Tools" },
+      { label: "Billing", href: ROUTES.BILLING, section: "Account" },
+      { label: "Profile", href: ROUTES.PROFILE, section: "Account" },
+      { label: "Settings", href: ROUTES.SETTINGS, section: "Account" },
+    ];
+    return [...NAV_SEARCH_INDEX, ...extra];
+  }, []);
 
   const results = query.trim()
     ? navIndex.filter((r) =>
@@ -28,11 +64,42 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
 
   const navigate = useCallback(
     (href: string) => {
+      if (href === JOBS_DRAWER_NAV_HREF) {
+        openJobsDrawer();
+        onClose();
+        setQuery("");
+        return;
+      }
+      if (href === NOTIFICATIONS_DRAWER_NAV_HREF) {
+        openNotificationsDrawer();
+        onClose();
+        setQuery("");
+        return;
+      }
+      if (href === FILES_DRAWER_NAV_HREF) {
+        openFilesDrawer();
+        onClose();
+        setQuery("");
+        return;
+      }
+      if (href === REVIEW_DRAWER_NAV_HREF) {
+        openReviewDrawer();
+        onClose();
+        setQuery("");
+        return;
+      }
       router.push(href);
       onClose();
       setQuery("");
     },
-    [router, onClose],
+    [
+      router,
+      onClose,
+      openJobsDrawer,
+      openNotificationsDrawer,
+      openFilesDrawer,
+      openReviewDrawer,
+    ],
   );
 
   useEffect(() => {
