@@ -66,6 +66,8 @@ const HIRE_SIGNAL_JOBS = gql`
     $postedAfter: String
     $postedBefore: String
     $runId: String
+    $extendedJobFilters: JSON
+    $hideApplied: Boolean
   ) {
     hireSignal {
       jobs(
@@ -80,6 +82,8 @@ const HIRE_SIGNAL_JOBS = gql`
         postedAfter: $postedAfter
         postedBefore: $postedBefore
         runId: $runId
+        extendedJobFilters: $extendedJobFilters
+        hideApplied: $hideApplied
       )
     }
   }
@@ -99,6 +103,8 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
     $postedAfter: String
     $postedBefore: String
     $runId: String
+    $extendedJobFilters: JSON
+    $hideApplied: Boolean
   ) {
     hireSignal {
       jobFilterOptions(
@@ -114,6 +120,19 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
         postedAfter: $postedAfter
         postedBefore: $postedBefore
         runId: $runId
+        extendedJobFilters: $extendedJobFilters
+        hideApplied: $hideApplied
+      )
+    }
+  }
+`;
+
+const HIRE_SIGNAL_SUGGEST_RESUME = gql`
+  mutation HireSignalSuggestResume($fileBase64: String!, $fileName: String) {
+    hireSignal {
+      suggestHireSignalFiltersFromResumeUpload(
+        fileBase64: $fileBase64
+        fileName: $fileName
       )
     }
   }
@@ -330,6 +349,8 @@ export interface JobListFilters {
   companies?: string[];
   locations?: string[];
   employmentType?: string;
+  /** When set, overrides employmentType as repeated job.server params. */
+  employmentTypes?: string[];
   seniority?: string;
   functionCategory?: string;
   /** ISO date YYYY-MM-DD or RFC3339 */
@@ -337,6 +358,21 @@ export interface JobListFilters {
   postedBefore?: string;
   /** Apify / job.server run id (gateway must expose `jobs(runId:)`). */
   runId?: string;
+  workplaceTypes?: string[];
+  industries?: string[];
+  excludedIndustries?: string[];
+  excludedTitles?: string[];
+  excludedCompanies?: string[];
+  excludedLocations?: string[];
+  salaryMin?: number;
+  experienceBuckets?: string[];
+  roleTracks?: string[];
+  educationLevelMins?: string[];
+  clearanceMode?: "" | "allow" | "hide" | "only";
+  h1bOnly?: boolean;
+  skillsAll?: string[];
+  /** Hide jobs the user marked applied (gateway-owned list). */
+  hideApplied?: boolean;
   limit: number;
   offset: number;
 }
@@ -346,17 +382,61 @@ export type HireSignalJobFilterOptionRow = {
   count: number;
 };
 
+function buildExtendedJobFilters(
+  filters: JobListFilters,
+): Record<string, unknown> | null {
+  const x: Record<string, unknown> = {};
+  if (filters.workplaceTypes?.length) {
+    x.workplaceTypes = filters.workplaceTypes;
+  }
+  const emp =
+    filters.employmentTypes?.length && filters.employmentTypes.length > 0
+      ? filters.employmentTypes
+      : filters.employmentType?.trim()
+        ? [filters.employmentType.trim()]
+        : undefined;
+  if (emp?.length) x.employmentTypes = emp;
+  if (filters.industries?.length) x.industries = filters.industries;
+  if (filters.excludedIndustries?.length)
+    x.excludedIndustries = filters.excludedIndustries;
+  if (filters.excludedTitles?.length) x.excludedTitles = filters.excludedTitles;
+  if (filters.excludedCompanies?.length)
+    x.excludedCompanies = filters.excludedCompanies;
+  if (filters.excludedLocations?.length)
+    x.excludedLocations = filters.excludedLocations;
+  if (filters.salaryMin != null && filters.salaryMin > 0) {
+    x.salaryMin = Math.floor(filters.salaryMin);
+  }
+  if (filters.experienceBuckets?.length)
+    x.experienceBuckets = filters.experienceBuckets;
+  if (filters.roleTracks?.length) x.roleTracks = filters.roleTracks;
+  if (filters.educationLevelMins?.length)
+    x.educationLevelMins = filters.educationLevelMins;
+  if (filters.clearanceMode && filters.clearanceMode !== "allow") {
+    x.clearanceMode = filters.clearanceMode;
+  }
+  if (filters.h1bOnly) x.h1bOnly = true;
+  if (filters.skillsAll?.length) x.skillsAll = filters.skillsAll;
+  return Object.keys(x).length > 0 ? x : null;
+}
+
 function hireSignalJobListFilterVars(filters: JobListFilters) {
+  const ext = buildExtendedJobFilters(filters);
   return {
     titles: filters.titles?.length ? filters.titles : null,
     companies: filters.companies?.length ? filters.companies : null,
     locations: filters.locations?.length ? filters.locations : null,
-    employmentType: filters.employmentType || null,
+    employmentType:
+      filters.employmentTypes?.length || !filters.employmentType?.trim()
+        ? null
+        : filters.employmentType,
     seniority: filters.seniority || null,
     functionCategory: filters.functionCategory || null,
     postedAfter: filters.postedAfter || null,
     postedBefore: filters.postedBefore || null,
     runId: filters.runId?.trim() || null,
+    extendedJobFilters: ext,
+    hideApplied: filters.hideApplied ?? false,
   };
 }
 
@@ -693,5 +773,49 @@ export async function fetchHireSignalExportDownloadUrl(
       expiresIn: expiresIn ?? null,
     },
     HS_GQL,
+  );
+}
+
+export type HireSignalResumeSuggestPayload = {
+  version?: number;
+  primaryTitleTokens?: string[];
+  locationTokens?: string[];
+  extendedJobFiltersSuggestion?: Record<string, unknown>;
+  rationale?: string;
+};
+
+export async function suggestHireSignalFiltersFromResume(
+  fileBase64: string,
+  fileName?: string,
+) {
+  return graphqlMutation<{
+    hireSignal: {
+      suggestHireSignalFiltersFromResumeUpload: HireSignalResumeSuggestPayload;
+    };
+  }>(
+    HIRE_SIGNAL_SUGGEST_RESUME,
+    {
+      fileBase64,
+      fileName: fileName ?? null,
+    },
+    { showToastOnError: true },
+  );
+}
+
+const HIRE_SIGNAL_RECORD_APPLIED = gql`
+  mutation HireSignalRecordApplied($linkedinJobId: String!) {
+    hireSignal {
+      recordHireSignalJobApplied(linkedinJobId: $linkedinJobId)
+    }
+  }
+`;
+
+export async function recordHireSignalJobApplied(linkedinJobId: string) {
+  return graphqlMutation<{
+    hireSignal: { recordHireSignalJobApplied: boolean };
+  }>(
+    HIRE_SIGNAL_RECORD_APPLIED,
+    { linkedinJobId: linkedinJobId.trim() },
+    { showToastOnError: false },
   );
 }

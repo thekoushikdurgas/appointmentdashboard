@@ -39,6 +39,7 @@ import {
   HS_DT_DEFAULT_COLUMNS,
   type HiringSignalsDataTableColumnId,
 } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
+import { HiringSignalsResumeImport } from "@/components/feature/hiring-signals/HiringSignalsResumeImport";
 import {
   HiringSignalsExportModal,
   type HiringSignalsExportIntent,
@@ -108,11 +109,13 @@ function HiringSignalsPageBody({
     setFilters,
     setPage,
     setPageSize,
+    setFilterField,
     refetch,
     currentPage,
   } = hiring;
 
-  const { applyFilters, activeDraftCount } = useHireSignalFilter();
+  const { applyFilters, activeDraftCount, mergeResumeSuggestions } =
+    useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isPro, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -505,12 +508,29 @@ function HiringSignalsPageBody({
     <DataToolbar
       cssPrefix="c360-toolbar"
       actionPrefix={
-        <HiringSignalsToolbarTableExtras
-          pageSize={filters.limit}
-          onPageSizeChange={setPageSize}
-          visibleColumns={visibleColumns}
-          onToggleColumn={toggleHsColumn}
-        />
+        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-3">
+          <label className="c360-flex c360-items-center c360-gap-2 c360-text-2xs c360-text-ink-muted">
+            <input
+              type="checkbox"
+              checked={Boolean(filters.hideApplied)}
+              onChange={(e) =>
+                setFilterField("hideApplied", e.target.checked)
+              }
+            />
+            Hide applied
+          </label>
+          <HiringSignalsResumeImport
+            onSuggested={(titles, locs, ext) => {
+              mergeResumeSuggestions(titles, locs, ext);
+            }}
+          />
+          <HiringSignalsToolbarTableExtras
+            pageSize={filters.limit}
+            onPageSizeChange={setPageSize}
+            visibleColumns={visibleColumns}
+            onToggleColumn={toggleHsColumn}
+          />
+        </div>
       }
       tabs={[
         {

@@ -26,6 +26,47 @@ function buildFacetOptionBase(
   const companies = normalizeHiringSignalTokenList(draft.companies);
   const locations = normalizeHiringSignalTokenList(draft.locations);
   const draftPosted = draft.postedAfter.trim();
+
+  const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
+  const empLegacy = draft.employmentType.trim();
+  const employmentTypes =
+    empMulti.length > 0
+      ? empMulti
+      : empLegacy
+        ? [empLegacy]
+        : undefined;
+
+  const workplaceTypes = normalizeHiringSignalTokenList(draft.workplaceTypes);
+  const industries = normalizeHiringSignalTokenList(draft.industries);
+  const excludedIndustries = normalizeHiringSignalTokenList(
+    draft.excludedIndustries,
+  );
+  const excludedTitles = normalizeHiringSignalTokenList(draft.excludedTitles);
+  const excludedCompanies = normalizeHiringSignalTokenList(
+    draft.excludedCompanies,
+  );
+  const excludedLocations = normalizeHiringSignalTokenList(
+    draft.excludedLocations,
+  );
+  const salaryRaw = draft.salaryMin.trim();
+  const salaryParsed =
+    salaryRaw.length > 0 ? Math.floor(Number(salaryRaw)) : NaN;
+  const salaryMin =
+    Number.isFinite(salaryParsed) && salaryParsed > 0 ? salaryParsed : undefined;
+  const experienceBuckets = normalizeHiringSignalTokenList(
+    draft.experienceBuckets,
+  );
+  const roleTracks = normalizeHiringSignalTokenList(draft.roleTracks);
+  const educationLevelMins = normalizeHiringSignalTokenList(
+    draft.educationLevelMins,
+  );
+  const skillsAll = normalizeHiringSignalTokenList(draft.skillsAll);
+  const clearanceRaw = draft.clearanceMode.trim().toLowerCase();
+  const clearanceMode =
+    clearanceRaw === "hide" || clearanceRaw === "only"
+      ? clearanceRaw
+      : undefined;
+
   return {
     ...applied,
     limit: applied.limit,
@@ -33,7 +74,31 @@ function buildFacetOptionBase(
     titles: titles.length ? titles : undefined,
     companies: companies.length ? companies : undefined,
     locations: locations.length ? locations : undefined,
-    employmentType: draft.employmentType.trim() || undefined,
+    employmentType: undefined,
+    employmentTypes,
+    workplaceTypes: workplaceTypes.length ? workplaceTypes : undefined,
+    industries: industries.length ? industries : undefined,
+    excludedIndustries: excludedIndustries.length
+      ? excludedIndustries
+      : undefined,
+    excludedTitles: excludedTitles.length ? excludedTitles : undefined,
+    excludedCompanies: excludedCompanies.length
+      ? excludedCompanies
+      : undefined,
+    excludedLocations: excludedLocations.length
+      ? excludedLocations
+      : undefined,
+    salaryMin,
+    experienceBuckets: experienceBuckets.length
+      ? experienceBuckets
+      : undefined,
+    roleTracks: roleTracks.length ? roleTracks : undefined,
+    educationLevelMins: educationLevelMins.length
+      ? educationLevelMins
+      : undefined,
+    skillsAll: skillsAll.length ? skillsAll : undefined,
+    clearanceMode: clearanceMode || undefined,
+    h1bOnly: draft.h1bOnly ? true : undefined,
     seniority,
     functionCategory,
     postedAfter: effectivePostedAfter(

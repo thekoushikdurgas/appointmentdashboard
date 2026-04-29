@@ -142,11 +142,26 @@ export function useHiringSignals(
     companies: initial.companies,
     locations: initial.locations,
     employmentType: initial.employmentType,
+    employmentTypes: initial.employmentTypes,
     seniority: initial.seniority,
     functionCategory: initial.functionCategory,
     postedAfter: initial.postedAfter,
     postedBefore: initial.postedBefore,
     runId: initial.runId,
+    workplaceTypes: initial.workplaceTypes,
+    industries: initial.industries,
+    excludedIndustries: initial.excludedIndustries,
+    excludedTitles: initial.excludedTitles,
+    excludedCompanies: initial.excludedCompanies,
+    excludedLocations: initial.excludedLocations,
+    salaryMin: initial.salaryMin,
+    experienceBuckets: initial.experienceBuckets,
+    roleTracks: initial.roleTracks,
+    educationLevelMins: initial.educationLevelMins,
+    clearanceMode: initial.clearanceMode,
+    h1bOnly: initial.h1bOnly,
+    skillsAll: initial.skillsAll,
+    hideApplied: initial.hideApplied ?? false,
     limit: initial.limit ?? 25,
     offset: initial.offset ?? 0,
   });
@@ -210,7 +225,10 @@ export function useHiringSignals(
   );
 
   const setFilterField = useCallback(
-    (key: keyof JobListFilters, value: string | string[] | undefined) => {
+    (
+      key: keyof JobListFilters,
+      value: string | string[] | number | boolean | undefined,
+    ) => {
       setFilters((f) => ({ ...f, [key]: value, offset: 0 }));
     },
     [],

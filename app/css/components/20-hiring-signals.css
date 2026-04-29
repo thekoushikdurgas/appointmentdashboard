@@ -430,10 +430,6 @@
   gap: 0;
 }
 
-.c360-hs-filters__text-hint {
-  margin: var(--c360-spacing-3) var(--c360-spacing-4);
-}
-
 .c360-hs-filter-chips {
   display: flex;
   flex-wrap: wrap;

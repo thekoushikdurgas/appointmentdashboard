@@ -3,7 +3,29 @@ export type HiringSignalFilterDraft = {
   titles: string[];
   companies: string[];
   locations: string[];
+  /**
+   * Legacy single-value employment type (still merged into `employmentTypes` on apply when
+   * `employmentTypes` is empty).
+   */
   employmentType: string;
+  /** Multi-select employment types (OR). Takes precedence over `employmentType`. */
+  employmentTypes: string[];
+  /** Workplace: remote, hybrid, onsite — matches job.server `workplace_types`. */
+  workplaceTypes: string[];
+  industries: string[];
+  excludedIndustries: string[];
+  excludedTitles: string[];
+  excludedCompanies: string[];
+  excludedLocations: string[];
+  /** Minimum salary (USD), plain number string — applied as `salaryMin` when parseable. */
+  salaryMin: string;
+  experienceBuckets: string[];
+  roleTracks: string[];
+  educationLevelMins: string[];
+  skillsAll: string[];
+  /** Tri-state: allow (default) = no filter; hide / only for clearance-derived field. */
+  clearanceMode: "" | "allow" | "hide" | "only";
+  h1bOnly: boolean;
   seniorityPreset: string;
   seniorityCustom: string;
   functionPreset: string;
@@ -17,6 +39,20 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   companies: [],
   locations: [],
   employmentType: "",
+  employmentTypes: [],
+  workplaceTypes: [],
+  industries: [],
+  excludedIndustries: [],
+  excludedTitles: [],
+  excludedCompanies: [],
+  excludedLocations: [],
+  salaryMin: "",
+  experienceBuckets: [],
+  roleTracks: [],
+  educationLevelMins: [],
+  skillsAll: [],
+  clearanceMode: "",
+  h1bOnly: false,
   seniorityPreset: "",
   seniorityCustom: "",
   functionPreset: "",

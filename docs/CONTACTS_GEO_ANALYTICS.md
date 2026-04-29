@@ -1,6 +1,6 @@
 # Contacts geo analytics (VQL-scoped map)
 
-The contacts **World Map** uses `contactsService.geoAnalytics()` → GraphQL `contactGeoAnalytics` → Connectra `POST /contacts/analytics/geo` on the sync server. The request body is the same VQL as the list (export VQL from `useContacts`); pagination and company population are stripped server-side for aggregation.
+The contacts **World Map** uses `contactsService.geoAnalytics()` → GraphQL `contactGeoAnalytics` → Connectra `POST /contacts/analytics/geo` on the sync server. The app may send **export VQL** (`limit` up to 50k). The gateway **drops pagination and company populate before `convert_to_vql`** so Connectra’s pagination validator (max limit 100) is not applied to aggregation; the Connectra JSON body is then stripped again for geo-only fields.
 
 - **App:** `useCountryAggregates(exportVql)` in [`src/hooks/useCountryAggregates.ts`](../src/hooks/useCountryAggregates.ts)
 - **API:** `ContactQuery.contact_geo_analytics` in [`../api/app/graphql/modules/contacts/queries.py`](../../api/app/graphql/modules/contacts/queries.py)
