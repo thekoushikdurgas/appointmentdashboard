@@ -513,9 +513,7 @@ function HiringSignalsPageBody({
             <input
               type="checkbox"
               checked={Boolean(filters.hideApplied)}
-              onChange={(e) =>
-                setFilterField("hideApplied", e.target.checked)
-              }
+              onChange={(e) => setFilterField("hideApplied", e.target.checked)}
             />
             Hide applied
           </label>

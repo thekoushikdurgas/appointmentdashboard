@@ -169,13 +169,38 @@ export function HiringSignalsFilterSidebar({
     );
   addTokenChips("wp", draft.workplaceTypes, "Workplace", "workplaceTypes");
   addTokenChips("ind", draft.industries, "Industry", "industries");
-  addTokenChips("exind", draft.excludedIndustries, "Excl. industry", "excludedIndustries");
+  addTokenChips(
+    "exind",
+    draft.excludedIndustries,
+    "Excl. industry",
+    "excludedIndustries",
+  );
   addTokenChips("exti", draft.excludedTitles, "Excl. title", "excludedTitles");
-  addTokenChips("exco", draft.excludedCompanies, "Excl. company", "excludedCompanies");
-  addTokenChips("exloc", draft.excludedLocations, "Excl. location", "excludedLocations");
-  addTokenChips("xb", draft.experienceBuckets, "Experience", "experienceBuckets");
+  addTokenChips(
+    "exco",
+    draft.excludedCompanies,
+    "Excl. company",
+    "excludedCompanies",
+  );
+  addTokenChips(
+    "exloc",
+    draft.excludedLocations,
+    "Excl. location",
+    "excludedLocations",
+  );
+  addTokenChips(
+    "xb",
+    draft.experienceBuckets,
+    "Experience",
+    "experienceBuckets",
+  );
   addTokenChips("rt", draft.roleTracks, "Role track", "roleTracks");
-  addTokenChips("edu", draft.educationLevelMins, "Education ≥", "educationLevelMins");
+  addTokenChips(
+    "edu",
+    draft.educationLevelMins,
+    "Education ≥",
+    "educationLevelMins",
+  );
   addTokenChips("sk", draft.skillsAll, "Skill", "skillsAll");
 
   if (draft.salaryMin.trim())
@@ -252,25 +277,34 @@ export function HiringSignalsFilterSidebar({
   const employmentCount =
     normalizeHiringSignalTokenList(draft.employmentTypes).length +
     (draft.employmentType.trim() ? 1 : 0);
-  const workplaceCount = normalizeHiringSignalTokenList(draft.workplaceTypes)
-    .length;
-  const industriesCount = normalizeHiringSignalTokenList(draft.industries)
-    .length;
-  const exIndCount = normalizeHiringSignalTokenList(draft.excludedIndustries)
-    .length;
-  const exTitleCount = normalizeHiringSignalTokenList(draft.excludedTitles)
-    .length;
-  const exCoCount = normalizeHiringSignalTokenList(draft.excludedCompanies)
-    .length;
-  const exLocCount = normalizeHiringSignalTokenList(draft.excludedLocations)
-    .length;
+  const workplaceCount = normalizeHiringSignalTokenList(
+    draft.workplaceTypes,
+  ).length;
+  const industriesCount = normalizeHiringSignalTokenList(
+    draft.industries,
+  ).length;
+  const exIndCount = normalizeHiringSignalTokenList(
+    draft.excludedIndustries,
+  ).length;
+  const exTitleCount = normalizeHiringSignalTokenList(
+    draft.excludedTitles,
+  ).length;
+  const exCoCount = normalizeHiringSignalTokenList(
+    draft.excludedCompanies,
+  ).length;
+  const exLocCount = normalizeHiringSignalTokenList(
+    draft.excludedLocations,
+  ).length;
   const salaryCount = draft.salaryMin.trim() ? 1 : 0;
-  const expBucketCount = normalizeHiringSignalTokenList(draft.experienceBuckets)
-    .length;
-  const roleTrackCount = normalizeHiringSignalTokenList(draft.roleTracks)
-    .length;
-  const eduCount = normalizeHiringSignalTokenList(draft.educationLevelMins)
-    .length;
+  const expBucketCount = normalizeHiringSignalTokenList(
+    draft.experienceBuckets,
+  ).length;
+  const roleTrackCount = normalizeHiringSignalTokenList(
+    draft.roleTracks,
+  ).length;
+  const eduCount = normalizeHiringSignalTokenList(
+    draft.educationLevelMins,
+  ).length;
   const skillsCount = normalizeHiringSignalTokenList(draft.skillsAll).length;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
@@ -387,7 +421,9 @@ export function HiringSignalsFilterSidebar({
 
         <ContactsCollapsibleFilterSection
           title="Basic job criteria"
-          count={employmentCount + workplaceCount + seniorityCount + functionCount}
+          count={
+            employmentCount + workplaceCount + seniorityCount + functionCount
+          }
           defaultOpen={false}
           onClear={() => {
             onDraftField("employmentTypes", []);
@@ -525,11 +561,7 @@ export function HiringSignalsFilterSidebar({
         <ContactsCollapsibleFilterSection
           title="Industries & exclusions"
           count={
-            industriesCount +
-            exIndCount +
-            exTitleCount +
-            exCoCount +
-            exLocCount
+            industriesCount + exIndCount + exTitleCount + exCoCount + exLocCount
           }
           defaultOpen={false}
           onClear={() => {
@@ -546,7 +578,9 @@ export function HiringSignalsFilterSidebar({
           <textarea
             className={cn(TEXTAREA_CLASS, "c360-mb-2")}
             value={draft.industries.join("\n")}
-            onChange={(e) => onDraftField("industries", tokensFromLines(e.target.value))}
+            onChange={(e) =>
+              onDraftField("industries", tokensFromLines(e.target.value))
+            }
             spellCheck={false}
           />
           <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
@@ -581,10 +615,7 @@ export function HiringSignalsFilterSidebar({
             className={cn(TEXTAREA_CLASS, "c360-mb-2")}
             value={draft.excludedCompanies.join("\n")}
             onChange={(e) =>
-              onDraftField(
-                "excludedCompanies",
-                tokensFromLines(e.target.value),
-              )
+              onDraftField("excludedCompanies", tokensFromLines(e.target.value))
             }
             spellCheck={false}
           />
@@ -595,10 +626,7 @@ export function HiringSignalsFilterSidebar({
             className={cn(TEXTAREA_CLASS)}
             value={draft.excludedLocations.join("\n")}
             onChange={(e) =>
-              onDraftField(
-                "excludedLocations",
-                tokensFromLines(e.target.value),
-              )
+              onDraftField("excludedLocations", tokensFromLines(e.target.value))
             }
             spellCheck={false}
           />

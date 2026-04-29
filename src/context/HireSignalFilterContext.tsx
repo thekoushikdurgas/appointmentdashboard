@@ -86,11 +86,7 @@ export function HireSignalFilterProvider({
     const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
     const empLegacy = draft.employmentType.trim();
     const employmentTypes =
-      empMulti.length > 0
-        ? empMulti
-        : empLegacy
-          ? [empLegacy]
-          : undefined;
+      empMulti.length > 0 ? empMulti : empLegacy ? [empLegacy] : undefined;
 
     const salaryRaw = draft.salaryMin.trim();
     const salaryParsed =
@@ -122,9 +118,7 @@ export function HireSignalFilterProvider({
     const skillsAll = normalizeHiringSignalTokenList(draft.skillsAll);
 
     const clearanceRaw = draft.clearanceMode.trim().toLowerCase();
-    const clearanceMode:
-      | undefined
-      | "" | "allow" | "hide" | "only" =
+    const clearanceMode: undefined | "" | "allow" | "hide" | "only" =
       clearanceRaw === "hide" || clearanceRaw === "only"
         ? clearanceRaw
         : undefined;

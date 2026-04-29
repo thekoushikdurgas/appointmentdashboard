@@ -637,27 +637,37 @@ export default function ContactsPage() {
           list). Hover a region for counts.
         </p>
         {countryMapError ? (
-          <Alert variant="danger" title="Could not load map data" className="c360-mb-4">
+          <Alert
+            variant="danger"
+            title="Could not load map data"
+            className="c360-mb-4"
+          >
             {countryMapError}
           </Alert>
         ) : null}
         {countryGeoMeta ? (
           <div className="c360-contacts-metadata c360-mb-4 c360-flex c360-flex-wrap c360-gap-4">
             <div className="c360-contacts-metadata__item">
-              <span className="c360-contacts-metadata__label">Filtered total</span>
+              <span className="c360-contacts-metadata__label">
+                Filtered total
+              </span>
               <span className="c360-contacts-metadata__value">
                 {countryGeoMeta.total.toLocaleString()}
               </span>
             </div>
             <div className="c360-contacts-metadata__item">
-              <span className="c360-contacts-metadata__label">Countries shown</span>
+              <span className="c360-contacts-metadata__label">
+                Countries shown
+              </span>
               <span className="c360-contacts-metadata__value">
                 {countryData.length.toLocaleString()}
               </span>
             </div>
             {mapTopCountry ? (
               <div className="c360-contacts-metadata__item">
-                <span className="c360-contacts-metadata__label">Top country</span>
+                <span className="c360-contacts-metadata__label">
+                  Top country
+                </span>
                 <span className="c360-contacts-metadata__value">
                   {mapTopCountry.name} ({mapTopCountry.count.toLocaleString()})
                 </span>
@@ -665,7 +675,9 @@ export default function ContactsPage() {
             ) : null}
             {countryGeoMeta.unmappedCount > 0 ? (
               <div className="c360-contacts-metadata__item">
-                <span className="c360-contacts-metadata__label">Unmapped country</span>
+                <span className="c360-contacts-metadata__label">
+                  Unmapped country
+                </span>
                 <span className="c360-contacts-metadata__value">
                   {countryGeoMeta.unmappedCount.toLocaleString()}
                 </span>

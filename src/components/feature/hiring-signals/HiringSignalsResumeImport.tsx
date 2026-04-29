@@ -41,9 +41,7 @@ export function HiringSignalsResumeImport({
       const raw =
         res.hireSignal?.suggestHireSignalFiltersFromResumeUpload ?? null;
       const o =
-        raw && typeof raw === "object"
-          ? (raw as Record<string, unknown>)
-          : {};
+        raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
       const titles = Array.isArray(o.primaryTitleTokens)
         ? (o.primaryTitleTokens as string[])
         : [];

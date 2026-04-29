@@ -21,9 +21,7 @@ export interface UseCountryAggregatesReturn {
   > | null;
 }
 
-function mapGeoToCountryCounts(
-  res: ContactGeoAnalyticsResult,
-): CountryCount[] {
+function mapGeoToCountryCounts(res: ContactGeoAnalyticsResult): CountryCount[] {
   const mapped: CountryCount[] = [];
   for (const item of res.countries ?? []) {
     const numericId = toNumericIso(item.value ?? "");
@@ -48,9 +46,8 @@ export function useCountryAggregates(
   const [data, setData] = useState<CountryCount[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [analytics, setAnalytics] = useState<UseCountryAggregatesReturn["analytics"]>(
-    null,
-  );
+  const [analytics, setAnalytics] =
+    useState<UseCountryAggregatesReturn["analytics"]>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);

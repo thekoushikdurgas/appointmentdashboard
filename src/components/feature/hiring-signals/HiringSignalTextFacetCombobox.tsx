@@ -30,11 +30,7 @@ function buildFacetOptionBase(
   const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
   const empLegacy = draft.employmentType.trim();
   const employmentTypes =
-    empMulti.length > 0
-      ? empMulti
-      : empLegacy
-        ? [empLegacy]
-        : undefined;
+    empMulti.length > 0 ? empMulti : empLegacy ? [empLegacy] : undefined;
 
   const workplaceTypes = normalizeHiringSignalTokenList(draft.workplaceTypes);
   const industries = normalizeHiringSignalTokenList(draft.industries);
@@ -52,7 +48,9 @@ function buildFacetOptionBase(
   const salaryParsed =
     salaryRaw.length > 0 ? Math.floor(Number(salaryRaw)) : NaN;
   const salaryMin =
-    Number.isFinite(salaryParsed) && salaryParsed > 0 ? salaryParsed : undefined;
+    Number.isFinite(salaryParsed) && salaryParsed > 0
+      ? salaryParsed
+      : undefined;
   const experienceBuckets = normalizeHiringSignalTokenList(
     draft.experienceBuckets,
   );
@@ -82,16 +80,10 @@ function buildFacetOptionBase(
       ? excludedIndustries
       : undefined,
     excludedTitles: excludedTitles.length ? excludedTitles : undefined,
-    excludedCompanies: excludedCompanies.length
-      ? excludedCompanies
-      : undefined,
-    excludedLocations: excludedLocations.length
-      ? excludedLocations
-      : undefined,
+    excludedCompanies: excludedCompanies.length ? excludedCompanies : undefined,
+    excludedLocations: excludedLocations.length ? excludedLocations : undefined,
     salaryMin,
-    experienceBuckets: experienceBuckets.length
-      ? experienceBuckets
-      : undefined,
+    experienceBuckets: experienceBuckets.length ? experienceBuckets : undefined,
     roleTracks: roleTracks.length ? roleTracks : undefined,
     educationLevelMins: educationLevelMins.length
       ? educationLevelMins

@@ -1112,6 +1112,20 @@ export type ContactFilterDataInput = {
   searchText?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type ContactGeoAnalytics = {
+  countries: Array<ContactGeoBucket>;
+  sumOtherDocCount: Scalars["Int"]["output"];
+  total: Scalars["Int"]["output"];
+  unmappedCount: Scalars["Int"]["output"];
+};
+
+export type ContactGeoBucket = {
+  cities?: Maybe<Array<ContactGeoBucket>>;
+  count: Scalars["Int"]["output"];
+  displayValue: Scalars["String"]["output"];
+  value: Scalars["String"]["output"];
+};
+
 export type ContactInMessage = {
   city?: Maybe<Scalars["String"]["output"]>;
   company?: Maybe<Scalars["String"]["output"]>;
@@ -1189,6 +1203,7 @@ export type ContactMutationUpdateContactArgs = {
 export type ContactQuery = {
   contact: Contact;
   contactCount: Scalars["Int"]["output"];
+  contactGeoAnalytics: ContactGeoAnalytics;
   contactQuery: ContactConnection;
   contacts: ContactConnection;
   filterData: ContactFilterDataConnection;
@@ -1200,6 +1215,11 @@ export type ContactQueryContactArgs = {
 };
 
 export type ContactQueryContactCountArgs = {
+  query?: InputMaybe<VqlQueryInput>;
+};
+
+export type ContactQueryContactGeoAnalyticsArgs = {
+  includeCities?: Scalars["Boolean"]["input"];
   query?: InputMaybe<VqlQueryInput>;
 };
 
