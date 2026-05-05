@@ -1,0 +1,175 @@
+/* Email Activity dashboard chart — rhythm aligned with docs/frontend/ideas/mydesigns/dashboardgraph.md */
+
+.c360-dashboard-email-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-4);
+}
+
+.c360-dashboard-email-chart__hero {
+  margin-bottom: 0;
+}
+
+.c360-dashboard-email-chart__eyebrow {
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text-muted);
+  margin: 0 0 var(--c360-spacing-2);
+}
+
+.c360-dashboard-email-chart__hero-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--c360-spacing-2) var(--c360-spacing-4);
+}
+
+.c360-dashboard-email-chart__kpi {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  color: var(--c360-text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.c360-dashboard-email-chart__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+}
+
+.c360-dashboard-email-chart__trend--up {
+  color: var(--c360-success);
+}
+
+.c360-dashboard-email-chart__trend--down {
+  color: var(--c360-danger);
+}
+
+.c360-dashboard-email-chart__trend-context {
+  font-weight: 400;
+  color: var(--c360-text-muted);
+}
+
+.c360-dashboard-email-chart__stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  font-size: var(--c360-text-sm);
+  padding-bottom: var(--c360-spacing-2);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-dashboard-email-chart__stats-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-2) var(--c360-spacing-5);
+}
+
+.c360-dashboard-email-chart__stats-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-4);
+  color: var(--c360-text-muted);
+}
+
+.c360-dashboard-email-chart__stat-strong {
+  font-weight: 600;
+  color: var(--c360-text-primary);
+}
+
+.c360-dashboard-email-chart__stat-high {
+  font-weight: 600;
+  color: var(--c360-info);
+}
+
+.c360-dashboard-email-chart__stat-low {
+  font-weight: 600;
+  color: var(--c360-warning);
+}
+
+.c360-dashboard-email-chart__stat-change--up {
+  font-weight: 600;
+  color: var(--c360-success);
+}
+
+.c360-dashboard-email-chart__stat-change--down {
+  font-weight: 600;
+  color: var(--c360-danger);
+}
+
+.c360-dashboard-email-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-5);
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+.c360-dashboard-email-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.c360-dashboard-email-chart__legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.c360-dashboard-email-chart__plot {
+  width: 100%;
+  min-height: 280px;
+  border-radius: var(--c360-radius-md);
+  overflow: hidden;
+  background-color: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--c360-border) 65%, transparent) 1px,
+    transparent 1.5px
+  );
+  background-size: 20px 20px;
+}
+
+.c360-dashboard-email-chart__plot .recharts-cartesian-axis-tick text {
+  fill: var(--c360-text-muted);
+  font-size: 11px;
+}
+
+.c360-dashboard-email-chart__tooltip {
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  padding: var(--c360-spacing-3);
+  box-shadow: var(--c360-shadow-lg);
+  font-size: var(--c360-text-xs);
+  min-width: 10rem;
+}
+
+.c360-dashboard-email-chart__tooltip-date {
+  color: var(--c360-text-muted);
+  margin-bottom: var(--c360-spacing-2);
+  font-weight: 500;
+}
+
+.c360-dashboard-email-chart__tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--c360-spacing-4);
+  margin-top: 0.25rem;
+}
+
+.c360-dashboard-email-chart__tooltip-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--c360-text-primary);
+}

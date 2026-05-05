@@ -392,14 +392,17 @@
   width: 100%;
 }
 
+.c360-page.c360-hiring-signals-page > .c360-data-layout > .c360-data-layout__filters {
+  flex: 0 0 auto;
+  height: fit-content;
+}
+
 .c360-page.c360-hiring-signals-page
   > .c360-data-layout
-  > .c360-data-layout__filters {
-  flex: 0 0 auto;
+  > .c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail) {
   min-width: 260px;
   max-width: 300px;
   width: 300px;
-  height: fit-content;
 }
 
 .c360-page.c360-hiring-signals-page
@@ -490,4 +493,23 @@
 .c360-hs-skeleton-cell {
   height: 1.25rem;
   border-radius: var(--c360-radius-sm);
+}
+
+/* Dashboard KPI strip — data-card rhythm (gap, tile width) */
+.c360-hs-stats-grid.c360-stat-grid {
+  gap: var(--c360-spacing-4);
+}
+
+.c360-hs-stats-grid.c360-stat-grid--wide {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.c360-hs-stats-grid .c360-stat-card {
+  transition:
+    box-shadow var(--c360-transition-fast),
+    border-color var(--c360-transition-fast);
+}
+
+.c360-hs-stats-grid .c360-stat-card:hover {
+  box-shadow: var(--c360-shadow-lg);
 }

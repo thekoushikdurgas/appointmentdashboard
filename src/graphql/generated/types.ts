@@ -1834,13 +1834,35 @@ export type HealthQuery = {
 };
 
 export type HireSignalMutation = {
+  addHireSignalHiddenCompany: Scalars["JSON"]["output"];
   exportSelectedJobs: SchedulerJob;
+  recordHireSignalJobApplied: Scalars["Boolean"]["output"];
+  removeHireSignalHiddenCompany: Scalars["Boolean"]["output"];
+  suggestHireSignalFiltersFromResumeUpload: Scalars["JSON"]["output"];
   triggerScrape: Scalars["JSON"]["output"];
   triggerScrapeAndTrack: ScrapeJobType;
 };
 
+export type HireSignalMutationAddHireSignalHiddenCompanyArgs = {
+  companyLinkedinUrl?: InputMaybe<Scalars["String"]["input"]>;
+  companyName: Scalars["String"]["input"];
+};
+
 export type HireSignalMutationExportSelectedJobsArgs = {
   linkedinJobIds: Array<Scalars["String"]["input"]>;
+};
+
+export type HireSignalMutationRecordHireSignalJobAppliedArgs = {
+  linkedinJobId: Scalars["String"]["input"];
+};
+
+export type HireSignalMutationRemoveHireSignalHiddenCompanyArgs = {
+  hiddenCompanyId: Scalars["String"]["input"];
+};
+
+export type HireSignalMutationSuggestHireSignalFiltersFromResumeUploadArgs = {
+  fileBase64: Scalars["String"]["input"];
+  fileName?: Scalars["String"]["input"];
 };
 
 export type HireSignalMutationTriggerScrapeArgs = {
@@ -1926,8 +1948,10 @@ export type HireSignalQueryJobFilterOptionsArgs = {
   companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
   company?: InputMaybe<Scalars["String"]["input"]>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   field: Scalars["String"]["input"];
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
+  hideApplied?: Scalars["Boolean"]["input"];
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
   locations?: InputMaybe<Array<Scalars["String"]["input"]>>;
@@ -1944,7 +1968,9 @@ export type HireSignalQueryJobsArgs = {
   companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
   company?: InputMaybe<Scalars["String"]["input"]>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
+  hideApplied?: Scalars["Boolean"]["input"];
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
   locations?: InputMaybe<Array<Scalars["String"]["input"]>>;

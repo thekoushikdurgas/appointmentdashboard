@@ -735,9 +735,13 @@ function HiringSignalsPageBody({
             showFilters
             mobileFiltersOpen={mobileFiltersOpen}
             onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+            filtersAriaLabel="Hiring signal filters"
+            filterDrawerTitleId="c360-hs-filter-drawer-title"
+            filtersPeekRail
             toolbar={signalsToolbar}
             filters={
               <HiringSignalsFilterSidebar
+                drawerTitleId="c360-hs-filter-drawer-title"
                 onApply={() => {
                   applyFilters();
                   setMobileFiltersOpen(false);

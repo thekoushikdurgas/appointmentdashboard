@@ -139,6 +139,7 @@ export default function DashboardPage() {
             iconColor: "var(--c360-primary)",
             sparkData: allSpark,
             sparkColor: "var(--c360-primary)",
+            description: "All contacts in your workspace",
           },
           {
             label: "Pipeline (jobs)",
@@ -149,6 +150,7 @@ export default function DashboardPage() {
             iconColor: "var(--c360-success)",
             sparkData: emailSpark,
             sparkColor: "var(--c360-success)",
+            description: "Jobs created across your campaigns",
           },
           {
             label: "Active Jobs",
@@ -159,6 +161,7 @@ export default function DashboardPage() {
             iconColor: "var(--c360-warning)",
             sparkData: jobSpark,
             sparkColor: "var(--c360-warning)",
+            description: "Running, queued, or pending right now",
           },
           {
             label: "Credits remaining",
@@ -169,6 +172,7 @@ export default function DashboardPage() {
             iconColor: "var(--c360-accent)",
             sparkData: creditSpark,
             sparkColor: "var(--c360-accent)",
+            description: "Find credits available on your plan",
           },
         ]);
 

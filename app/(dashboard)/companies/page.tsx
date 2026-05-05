@@ -364,6 +364,9 @@ export default function CompaniesPage() {
       toolbar={toolbarEl}
       mobileFiltersOpen={mobileFiltersOpen}
       onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+      filtersAriaLabel="Company filters"
+      filterDrawerTitleId="c360-companies-filter-drawer-title"
+      filtersPeekRail
       className="c360-companies-page"
     >
       <CompanyExportModal

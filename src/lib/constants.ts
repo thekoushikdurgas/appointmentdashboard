@@ -71,7 +71,7 @@ export const STORAGE_KEYS = {
   LAST_ROUTE: "c360-last-route",
 } as const;
 
-/* ─── Sidebar navigation (tree; see navConfig) ───────────────────────────── */
+/* ─── Sidebar navigation (sections + leaves; see navConfig) ───────────────── */
 export {
   SIDEBAR_SECTIONS,
   flattenNavLeaves,

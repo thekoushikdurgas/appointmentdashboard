@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  Menu,
   Sun,
   Moon,
   Bell,
@@ -37,7 +36,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   linkedin: "LinkedIn",
   activities: "Activities",
   "ai-chat": "AI Chat",
-  "live-voice": "Live Voice",
   billing: "Billing",
   profile: "Profile",
   settings: "Settings",
@@ -50,16 +48,12 @@ const BREADCRUMB_LABELS: Record<string, string> = {
 
 interface TopBarProps {
   collapsed: boolean;
-  onMenuToggle: () => void;
-  menuButtonAriaLabel: string;
   /** Close mobile sidebar when using account actions (parity with former sidebar profile links). */
   onAccountNavigate?: () => void;
 }
 
 export default function TopBar({
   collapsed,
-  onMenuToggle,
-  menuButtonAriaLabel,
   onAccountNavigate,
 }: TopBarProps) {
   const pathname = usePathname();
@@ -87,15 +81,6 @@ export default function TopBar({
       className={cn("c360-topbar", collapsed && "c360-topbar--collapsed")}
     >
       <div className="c360-topbar__left">
-        <button
-          type="button"
-          onClick={onMenuToggle}
-          className="c360-btn c360-btn--ghost c360-btn--icon"
-          aria-label={menuButtonAriaLabel}
-        >
-          <Menu size={20} />
-        </button>
-
         <nav
           className="c360-topbar__breadcrumb c360-topbar__breadcrumb--secondary"
           aria-label="Breadcrumb"

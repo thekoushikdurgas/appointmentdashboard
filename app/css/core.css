@@ -114,6 +114,7 @@ video {
   --c360-z-cmd-palette-overlay: 150;
   --c360-z-cmd-palette: 151;
   --c360-z-toast: 200;
+  --c360-z-shell-bottom-nav: 42;
 
   --c360-tooltip-bg: #1a1a2e;
 
@@ -126,6 +127,7 @@ video {
   --c360-topbar-height-collapsed: 45px;
   --c360-content-max-width: 1280px;
   --c360-container-padding: 24px;
+  --c360-shell-bottom-nav-height: 76px;
 
   /* Component heights */
   --c360-input-height: 40px;

@@ -16,7 +16,9 @@ import {
   RefreshCw,
   Search,
   Filter,
+  Mic,
 } from "lucide-react";
+import { LiveVoicePanel } from "@/components/feature/live-voice/LiveVoicePanel";
 import { useAIChat } from "@/hooks/useAIChat";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -97,6 +99,7 @@ export default function AiChatPage() {
   );
   const [parsing, setParsing] = useState(false);
   const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
 
   const handleAnalyzeRisk = async () => {
     const email = riskEmail.trim();
@@ -388,6 +391,15 @@ export default function AiChatPage() {
               />
               <button
                 type="button"
+                className="c360-chat-input-action-btn"
+                aria-label="Open live voice"
+                title="Live voice"
+                onClick={() => setVoiceModalOpen(true)}
+              >
+                <Mic size={18} color="var(--c360-text-secondary)" />
+              </button>
+              <button
+                type="button"
                 onClick={() => void sendMessage()}
                 disabled={!input.trim() || isSending}
                 className={cn(
@@ -555,6 +567,15 @@ export default function AiChatPage() {
             </div>
           )}
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        title="Live Voice AI"
+        size="xl"
+      >
+        <LiveVoicePanel variant="embedded" />
       </Modal>
 
       <Modal

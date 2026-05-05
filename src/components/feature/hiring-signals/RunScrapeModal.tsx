@@ -9,7 +9,9 @@ import { triggerHireSignalScrapeAndTrack } from "@/services/graphql/hiringSignal
 import { toast } from "sonner";
 
 const DEFAULT_URL =
-  "https://www.linkedin.com/jobs/search/?keywords=golang&position=1&pageNum=0";
+  "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
+
+type ScrapeMode = "keywords" | "urls";
 
 export interface RunScrapeModalProps {
   isOpen: boolean;
@@ -22,8 +24,12 @@ export function RunScrapeModal({
   onClose,
   onSuccess,
 }: RunScrapeModalProps) {
+  const [mode, setMode] = useState<ScrapeMode>("keywords");
+  const [keywords, setKeywords] = useState("golang developer");
+  const [geoId, setGeoId] = useState(105080838);
   const [urlsText, setUrlsText] = useState(DEFAULT_URL);
   const [count, setCount] = useState(100);
+  const [enableEnrichment, setEnableEnrichment] = useState(false);
   const [scrapeCompany, setScrapeCompany] = useState(false);
   const [splitByLocation, setSplitByLocation] = useState(false);
   const [trigger, setTrigger] = useState("manual");
@@ -35,8 +41,12 @@ export function RunScrapeModal({
   }, [isOpen]);
 
   const reset = useCallback(() => {
+    setMode("keywords");
+    setKeywords("golang developer");
+    setGeoId(105080838);
     setUrlsText(DEFAULT_URL);
     setCount(100);
+    setEnableEnrichment(false);
     setScrapeCompany(false);
     setSplitByLocation(false);
     setTrigger("manual");
@@ -44,26 +54,49 @@ export function RunScrapeModal({
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    const lines = urlsText
-      .split(/\r?\n/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (lines.length === 0) {
-      setValidationError(
-        "Add at least one URL (one per line in the box below).",
-      );
-      return;
+    if (mode === "urls") {
+      const lines = urlsText
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (lines.length === 0) {
+        setValidationError(
+          "Add at least one LinkedIn jobs search URL (one per line).",
+        );
+        return;
+      }
+    } else {
+      if (!keywords.trim()) {
+        setValidationError("Enter search keywords.");
+        return;
+      }
+      if (!Number.isFinite(geoId) || geoId <= 0) {
+        setValidationError("Enter a valid LinkedIn geoId (e.g. 105080838).");
+        return;
+      }
     }
     setValidationError(null);
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {
         trigger: trigger.trim() || "manual",
-        urls: lines,
-        count: Number.isFinite(count) ? count : 100,
-        scrapeCompany,
-        splitByLocation,
+        mode,
       };
+      if (mode === "keywords") {
+        body.keywords = keywords.trim();
+        body.geoId = geoId;
+        body.maxJobs = Number.isFinite(count) ? count : 100;
+        body.enableEnrichment = enableEnrichment;
+      } else {
+        const lines = urlsText
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        body.urls = lines;
+        body.count = Number.isFinite(count) ? count : 100;
+        body.scrapeCompany = scrapeCompany;
+        body.splitByLocation = splitByLocation;
+      }
       const res = await triggerHireSignalScrapeAndTrack(body);
       const row = res.hireSignal?.triggerScrapeAndTrack;
       if (row && typeof row === "object" && "id" in row) {
@@ -85,8 +118,12 @@ export function RunScrapeModal({
       setSubmitting(false);
     }
   }, [
+    mode,
+    keywords,
+    geoId,
     urlsText,
     count,
+    enableEnrichment,
     scrapeCompany,
     splitByLocation,
     trigger,
@@ -99,7 +136,7 @@ export function RunScrapeModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Run Apify scrape"
+      title="Run job scrape"
       size="lg"
       footer={
         <div className="c360-flex c360-w-full c360-items-center c360-justify-end c360-gap-2">
@@ -127,7 +164,8 @@ export function RunScrapeModal({
       <p className="c360-mb-4 c360-text-2xs c360-text-muted">
         Body is sent to the gateway as{" "}
         <code className="c360-break-all">triggerScrapeAndTrack</code> (saved in
-        Postgres + forwarded to job.server with your scrape parameters).
+        Postgres + forwarded to job.server). Job ingest uses scraper.server when
+        configured there.
       </p>
       {validationError ? (
         <Alert variant="danger" className="c360-mb-3" title="Check your input">
@@ -151,20 +189,83 @@ export function RunScrapeModal({
             <Radio value="cron" label="Cron / scheduled" />
           </RadioGroup>
         </div>
-        <label className="c360-flex c360-flex-col c360-gap-1">
+        <div className="c360-flex c360-flex-col c360-gap-2">
           <span className="c360-text-2xs c360-font-medium c360-text-ink">
-            URLs (one per line)
+            Search mode
           </span>
-          <textarea
-            className="c360-min-h-[120px] c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-p-2 c360-font-mono c360-text-2xs"
-            value={urlsText}
-            onChange={(e) => setUrlsText(e.target.value)}
-            spellCheck={false}
-          />
-        </label>
+          <RadioGroup
+            name="hs-mode"
+            value={mode}
+            onChange={(v) => setMode(v as ScrapeMode)}
+            horizontal
+            className="c360-flex-wrap"
+          >
+            <Radio value="keywords" label="Keywords + geo" />
+            <Radio value="urls" label="LinkedIn URLs" />
+          </RadioGroup>
+        </div>
+        {mode === "keywords" ? (
+          <>
+            <label className="c360-flex c360-flex-col c360-gap-1">
+              <span className="c360-text-2xs c360-font-medium c360-text-ink">
+                Keywords
+              </span>
+              <input
+                type="text"
+                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder='e.g. "golang developer OR kubernetes"'
+              />
+            </label>
+            <label className="c360-flex c360-flex-col c360-gap-1">
+              <span className="c360-text-2xs c360-font-medium c360-text-ink">
+                LinkedIn geoId
+              </span>
+              <input
+                type="number"
+                min={1}
+                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+                value={geoId}
+                onChange={(e) => setGeoId(Number(e.target.value))}
+              />
+              <span className="c360-text-2xs c360-text-muted">
+                Example: 105080838 (United States). Must match job.server /
+                scraper.server geo filter.
+              </span>
+            </label>
+            <label className="c360-flex c360-items-center c360-gap-2">
+              <input
+                type="checkbox"
+                checked={enableEnrichment}
+                onChange={(e) => setEnableEnrichment(e.target.checked)}
+              />
+              <span className="c360-text-sm c360-text-ink">
+                Enable company website enrichment (OpenAI on scraper)
+              </span>
+            </label>
+          </>
+        ) : (
+          <label className="c360-flex c360-flex-col c360-gap-1">
+            <span className="c360-text-2xs c360-font-medium c360-text-ink">
+              LinkedIn jobs search URLs (one per line)
+            </span>
+            <textarea
+              className="c360-min-h-[120px] c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-p-2 c360-font-mono c360-text-2xs"
+              value={urlsText}
+              onChange={(e) => setUrlsText(e.target.value)}
+              spellCheck={false}
+            />
+            <span className="c360-text-2xs c360-text-muted">
+              URLs must include a{" "}
+              <code className="c360-break-all">keywords=</code> query param for
+              scraper-based ingest.
+            </span>
+          </label>
+        )}
         <label className="c360-flex c360-flex-col c360-gap-1">
           <span className="c360-text-2xs c360-font-medium c360-text-ink">
-            Count
+            {mode === "keywords" ? "Max jobs" : "Count / max jobs"}
           </span>
           <input
             type="number"
@@ -174,22 +275,30 @@ export function RunScrapeModal({
             onChange={(e) => setCount(Number(e.target.value))}
           />
         </label>
-        <label className="c360-flex c360-items-center c360-gap-2">
-          <input
-            type="checkbox"
-            checked={scrapeCompany}
-            onChange={(e) => setScrapeCompany(e.target.checked)}
-          />
-          <span className="c360-text-sm c360-text-ink">scrapeCompany</span>
-        </label>
-        <label className="c360-flex c360-items-center c360-gap-2">
-          <input
-            type="checkbox"
-            checked={splitByLocation}
-            onChange={(e) => setSplitByLocation(e.target.checked)}
-          />
-          <span className="c360-text-sm c360-text-ink">splitByLocation</span>
-        </label>
+        {mode === "urls" ? (
+          <>
+            <label className="c360-flex c360-items-center c360-gap-2">
+              <input
+                type="checkbox"
+                checked={scrapeCompany}
+                onChange={(e) => setScrapeCompany(e.target.checked)}
+              />
+              <span className="c360-text-sm c360-text-ink">
+                scrapeCompany (Apify legacy)
+              </span>
+            </label>
+            <label className="c360-flex c360-items-center c360-gap-2">
+              <input
+                type="checkbox"
+                checked={splitByLocation}
+                onChange={(e) => setSplitByLocation(e.target.checked)}
+              />
+              <span className="c360-text-sm c360-text-ink">
+                splitByLocation (Apify legacy)
+              </span>
+            </label>
+          </>
+        ) : null}
       </div>
     </Modal>
   );

@@ -1,5 +1,6 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Activity,
@@ -19,10 +20,13 @@ import {
   Brain,
   Wrench,
   Zap,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { SIDEBAR_SECTIONS } from "@/lib/constants";
+import { useReducedMotion } from "framer-motion";
+import { SIDEBAR_SECTIONS, ROUTES } from "@/lib/constants";
 import type { SidebarSectionConfig } from "@/lib/constants";
+import { usePathname } from "next/navigation";
 import { useRole } from "@/context/RoleContext";
 import { SidebarSearch } from "@/components/shared/SidebarSearch";
 import { SidebarNav } from "./SidebarNav";
@@ -53,14 +57,26 @@ interface SidebarProps {
   collapsed: boolean;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  /** Desktop collapsed rail: optional hover peek (pointer fine + motion OK). */
+  peekAllowed?: boolean;
+  onPeekChange?: (peek: boolean) => void;
+  /** When true, show full labels on a collapsed rail (hover peek). */
+  peekOpen?: boolean;
 }
 
 export default function Sidebar({
   collapsed,
   mobileOpen,
   onMobileClose,
+  peekAllowed = false,
+  onPeekChange,
+  peekOpen = false,
 }: SidebarProps) {
+  const pathname = usePathname();
   const { isSuperAdmin } = useRole();
+  const prefersReducedMotion = useReducedMotion();
+  const finePointer = useStateFinePointer();
+  const railCollapsed = collapsed && !peekOpen;
 
   const visibleSections = useMemo((): SidebarSectionConfig[] => {
     return SIDEBAR_SECTIONS.filter(
@@ -69,6 +85,28 @@ export default function Sidebar({
   }, [isSuperAdmin]);
 
   const iconFor = (key: string) => ICON_MAP[key];
+
+  const settingsActive =
+    pathname === ROUTES.SETTINGS || pathname.startsWith(`${ROUTES.SETTINGS}/`);
+
+  const peekActive =
+    peekAllowed &&
+    !prefersReducedMotion &&
+    finePointer &&
+    !mobileOpen &&
+    collapsed;
+
+  useEffect(() => {
+    if (!collapsed) onPeekChange?.(false);
+  }, [collapsed, onPeekChange]);
+
+  const handlePeekEnter = () => {
+    if (peekActive) onPeekChange?.(true);
+  };
+
+  const handlePeekLeave = () => {
+    onPeekChange?.(false);
+  };
 
   return (
     <>
@@ -80,26 +118,83 @@ export default function Sidebar({
         />
       )}
       <aside
+        id="c360-app-sidebar"
         className={cn(
           "c360-sidebar",
           collapsed && "c360-sidebar--collapsed",
+          collapsed && peekOpen && "c360-sidebar--rail-expanded",
           mobileOpen && "c360-sidebar--mobile-open",
         )}
         aria-label="Main navigation"
+        onMouseEnter={handlePeekEnter}
+        onMouseLeave={handlePeekLeave}
       >
-        <div className="c360-sidebar__search">
-          <SidebarSearch collapsed={collapsed} />
+        <div className="c360-sidebar__header">
+          <Link
+            href={ROUTES.DASHBOARD}
+            className="c360-sidebar__brand"
+            onClick={onMobileClose}
+          >
+            <span className="c360-sidebar__brand-mark" aria-hidden>
+              C
+            </span>
+            <span className="c360-sidebar__brand-text">Contact360</span>
+          </Link>
         </div>
 
-        <nav className="c360-sidebar__nav" aria-label="Primary navigation">
-          <SidebarNav
-            collapsed={collapsed}
-            sections={visibleSections}
-            onMobileClose={onMobileClose}
-            iconFor={iconFor}
-          />
-        </nav>
+        <div className="c360-sidebar__search">
+          <SidebarSearch collapsed={railCollapsed} />
+        </div>
+
+        <div className="c360-sidebar__main">
+          <nav className="c360-sidebar__nav" aria-label="Primary navigation">
+            <SidebarNav
+              collapsed={railCollapsed}
+              sections={visibleSections}
+              onMobileClose={onMobileClose}
+              iconFor={iconFor}
+            />
+          </nav>
+        </div>
+
+        <div className="c360-sidebar__footer">
+          <Link
+            href={ROUTES.SETTINGS}
+            className={cn(
+              "c360-sidebar__footer-link",
+              "c360-sidebar__item",
+              "c360-sidebar__item--leaf",
+              railCollapsed && "c360-sidebar__item--collapsed-icon",
+              settingsActive && "c360-sidebar__item--active",
+            )}
+            onClick={onMobileClose}
+            title="Settings"
+            aria-label="Settings"
+            aria-current={settingsActive ? "page" : undefined}
+          >
+            <Settings
+              size={railCollapsed ? 20 : 16}
+              className="c360-sidebar__item-icon"
+              aria-hidden
+            />
+            <span className="c360-sidebar__item-label">Settings</span>
+          </Link>
+        </div>
       </aside>
     </>
   );
+}
+
+function useStateFinePointer(): boolean {
+  const [fine, setFine] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: fine)");
+    const sync = () => setFine(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return fine;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
@@ -6,6 +7,13 @@ export interface DataPageLayoutProps {
   filters?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Desktop aside + contextual name for SRs (must match visible filter intent). */
+  filtersAriaLabel?: string;
+  /**
+   * ID of the visible filter panel title inside `filters` — must match the `h2`
+   * `id` for the mobile drawer `aria-labelledby`.
+   */
+  filterDrawerTitleId?: string;
   showFilters?: boolean;
   /** Primary toolbar row (tabs + actions) — appointment-d1-style. */
   toolbar?: ReactNode;
@@ -19,18 +27,27 @@ export interface DataPageLayoutProps {
    */
   mobileFiltersOpen?: boolean;
   onMobileFiltersClose?: () => void;
+  /**
+   * Desktop: collapse filter rail (icon strip) until hover/focus-within peels it open —
+   * same UX idea as docs/frontend/ideas/mydesigns/sidebar.md (narrow rail → expand).
+   * Ignored on mobile (filters use drawer).
+   */
+  filtersPeekRail?: boolean;
 }
 
 export default function DataPageLayout({
   filters,
   children,
   className,
+  filtersAriaLabel = "Filters",
+  filterDrawerTitleId = "c360-filter-drawer-title",
   showFilters = true,
   toolbar,
   metadata,
   pagination,
   mobileFiltersOpen = false,
   onMobileFiltersClose,
+  filtersPeekRail = false,
 }: DataPageLayoutProps) {
   const isDesktop = useIsDesktop();
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -101,8 +118,34 @@ export default function DataPageLayout({
         )}
       >
         {inlineFilters ? (
-          <aside className="c360-data-layout__filters" aria-label="Filters">
-            {filters}
+          <aside
+            className={cn(
+              "c360-data-layout__filters",
+              filtersPeekRail &&
+                isDesktop &&
+                "c360-data-layout__filters--peek-rail",
+            )}
+            aria-label={filtersAriaLabel}
+          >
+            {filtersPeekRail && isDesktop ? (
+              <>
+                <button
+                  type="button"
+                  className="c360-data-layout__filters-rail"
+                  aria-label={`Expand ${filtersAriaLabel}`}
+                >
+                  <SlidersHorizontal
+                    size={20}
+                    strokeWidth={2}
+                    className="c360-data-layout__filters-rail-svg"
+                    aria-hidden
+                  />
+                </button>
+                <div className="c360-data-layout__filters-body">{filters}</div>
+              </>
+            ) : (
+              filters
+            )}
           </aside>
         ) : null}
         <div className="c360-data-layout__content">
@@ -133,7 +176,7 @@ export default function DataPageLayout({
             className="c360-data-layout__drawer"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="c360-filter-drawer-title"
+            aria-labelledby={filterDrawerTitleId}
           >
             <div className="c360-data-layout__drawer-body">{filters}</div>
           </div>

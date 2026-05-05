@@ -18,6 +18,8 @@ export interface CompaniesFilterSidebarProps {
   advancedVqlRuleCount: number;
   onClearVql: () => void;
   onOpenAdvanced: () => void;
+  /** Must match `DataPageLayout` `filterDrawerTitleId` (mobile drawer `aria-labelledby`). */
+  drawerTitleId?: string;
 }
 
 export function CompaniesFilterSidebar({
@@ -30,6 +32,7 @@ export function CompaniesFilterSidebar({
   advancedVqlRuleCount,
   onClearVql,
   onOpenAdvanced,
+  drawerTitleId = "c360-companies-filter-drawer-title",
 }: CompaniesFilterSidebarProps) {
   const facetActiveCount = useMemo(
     () =>
@@ -101,18 +104,33 @@ export function CompaniesFilterSidebar({
 
   return (
     <div className="c360-contacts-filters c360-companies-filters">
-      <div className="c360-contacts-filters__head">
-        <h2
-          className="c360-contacts-filters__title"
-          id="c360-filter-drawer-title"
-        >
-          Filters
-        </h2>
-        {totalActiveCount > 0 ? (
-          <span className="c360-contacts-filters__head-count" aria-hidden>
-            {totalActiveCount}
-          </span>
-        ) : null}
+      <div className="c360-contacts-filters__head-row">
+        <div className="c360-contacts-filters__head-text">
+          <div className="c360-contacts-filters__head">
+            <h2
+              id={drawerTitleId}
+              className="c360-contacts-filters__title"
+            >
+              Filters
+            </h2>
+          </div>
+          <p className="c360-contacts-filters__subtitle">
+            {totalActiveCount} active
+          </p>
+        </div>
+        <div className="c360-contacts-filters__head-actions">
+          {totalActiveCount > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="c360-contacts-filters__clear-text"
+              onClick={clearAll}
+            >
+              Clear
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="c360-contacts-filters__search">
@@ -144,18 +162,6 @@ export function CompaniesFilterSidebar({
             </button>
           ))}
         </div>
-      ) : null}
-
-      {totalActiveCount > 0 ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="c360-contacts-filters__clear-all"
-          onClick={clearAll}
-        >
-          Clear all filters
-        </Button>
       ) : null}
 
       {filterSections.map((section) => {

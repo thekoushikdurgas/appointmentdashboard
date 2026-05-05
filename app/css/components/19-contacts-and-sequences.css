@@ -444,10 +444,10 @@
   border-color: var(--c360-primary);
 }
 .c360-status-btn--active {
-  background: var(--c360-primary-light);
+  background: var(--c360-bg-secondary);
   color: var(--c360-primary);
-  border-color: var(--c360-primary);
-  font-weight: 600;
+  border-color: var(--c360-border);
+  font-weight: var(--c360-font-medium);
 }
 .c360-filter-bar--facets {
   display: flex;
@@ -534,10 +534,18 @@
   > .c360-data-layout
   > .c360-data-layout__filters {
   flex: 0 0 auto;
+  height: fit-content;
+}
+
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail),
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail) {
   min-width: 260px;
   max-width: 300px;
   width: 300px;
-  height: fit-content;
 }
 
 .c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__content,
@@ -611,12 +619,13 @@
   width: fit-content;
 }
 
-/* Root: mirrors `contact360.io/1` `ContactsFilters` shell; colors from app `--c360-*` kit */
+/* Root: same rhythm as main sidebar (`c360-sidebar__nav` / mydesigns sidebar — flat list, muted + hover surface) */
 .c360-contacts-filters {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 0;
+  gap: var(--c360-spacing-1);
+  padding: var(--c360-spacing-2);
+  box-sizing: border-box;
 }
 
 .c360-contacts-filters .c360-filter-combobox {
@@ -638,27 +647,22 @@
   justify-content: flex-start;
   gap: var(--c360-spacing-2);
 }
-.c360-companies-filters .c360-contacts-filters__head {
-  flex-direction: column;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
 .c360-contacts-filters__title {
   margin: 0;
   font-size: var(--c360-text-xs);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--c360-text);
+  letter-spacing: 0.08em;
+  color: var(--c360-text-muted);
 }
 .c360-contacts-filters__head-count {
   min-width: 1.5rem;
   padding: 2px 8px;
-  border-radius: var(--c360-radius-sm);
-  font-size: 0.75rem;
-  font-weight: 700;
+  border-radius: var(--c360-radius-full);
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
   text-align: center;
-  background: var(--c360-primary-light, rgba(47, 76, 221, 0.12));
+  background: var(--c360-bg-secondary);
   color: var(--c360-primary);
 }
 .c360-contacts-filters__search .c360-field {
@@ -666,7 +670,7 @@
 }
 .c360-contacts-filters__search-input {
   width: 100%;
-  border-radius: 0;
+  border-radius: var(--c360-radius-md);
 }
 .c360-contacts-filters__chips {
   display: flex;
@@ -689,7 +693,9 @@
     background var(--c360-transition-fast);
 }
 .c360-contacts-filters__chip:hover {
-  border-color: var(--c360-primary);
+  border-color: var(--c360-border);
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
 }
 .c360-contacts-filters__clear-all {
   align-self: flex-start;
@@ -714,50 +720,66 @@
   width: 100%;
 }
 
-/* Collapsible filter card — aligned with `contact360.io/1` `data-pages.css` filter section */
+/* Collapsible blocks — nav-row semantics (hover/active match `c360-sidebar__item`) */
 .c360-contacts-filter-section {
   border: 1px solid var(--c360-border);
-  border-radius: 0;
+  border-radius: var(--c360-radius-md);
   overflow: hidden;
+  background: var(--c360-bg-elevated);
 }
 .c360-contacts-filter-section--active {
-  border-color: var(--c360-border-strong);
+  border-color: var(--c360-border);
 }
 .c360-contacts-filter-section__header {
   width: 100%;
   display: flex;
   align-items: center;
   gap: var(--c360-spacing-2);
-  padding: var(--c360-spacing-3) var(--c360-spacing-4);
-  background: var(--c360-bg-elevated);
+  min-height: 32px;
+  padding: 6px var(--c360-spacing-2);
+  background: transparent;
   border: none;
   cursor: pointer;
-  font-size: var(--c360-text-xs);
-  font-weight: 600;
-  color: var(--c360-text);
+  font-size: var(--c360-text-sm);
+  font-weight: var(--c360-font-normal);
+  color: var(--c360-text-muted);
   text-align: left;
+  transition:
+    color var(--c360-transition-fast),
+    background var(--c360-transition-fast);
+}
+.c360-contacts-filter-section__header:hover {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+}
+.c360-contacts-filter-section--active .c360-contacts-filter-section__header {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+  font-weight: var(--c360-font-medium);
 }
 .c360-contacts-filter-section__title {
   flex: 1;
+  color: inherit;
 }
 .c360-contacts-filter-section__chevron {
   flex-shrink: 0;
-  color: var(--c360-text-muted);
+  color: inherit;
+  opacity: 0.75;
   transition: transform var(--c360-transition-default);
 }
 .c360-contacts-filter-section__chevron--open {
   transform: rotate(180deg);
 }
 .c360-contacts-filter-section__count {
-  background: var(--c360-primary-light, rgba(47, 76, 221, 0.12));
+  background: var(--c360-bg-secondary);
   color: var(--c360-primary);
   padding: 2px 8px;
-  border-radius: var(--c360-radius-sm);
-  font-size: 0.75rem;
-  font-weight: 700;
+  border-radius: var(--c360-radius-full);
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
 }
 .c360-contacts-filter-section__content {
-  padding: var(--c360-spacing-4);
+  padding: var(--c360-spacing-3);
   border-top: 1px solid var(--c360-border);
   background: var(--c360-bg);
 }
@@ -780,15 +802,33 @@
   border-color: var(--c360-primary);
 }
 
-/* Sidebar: one control group per collapsible (same pattern as `/1` `FilterSection` per concern) */
-.c360-contact-filter-email-status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--c360-spacing-3);
-}
+/* Restore pill email-status controls — `16-app-pages-tail.css` loads later and defines a segmented `.c360-status-btn-group` */
 .c360-contact-filter-email-status .c360-status-btn-group {
   width: 100%;
+  flex-wrap: wrap;
+  gap: 6px;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+.c360-contact-filter-email-status .c360-status-btn {
+  padding: 6px 14px;
+  border-radius: var(--c360-radius-full);
+  border: 1px solid var(--c360-border-strong);
+  background: var(--c360-bg-elevated);
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  color: var(--c360-text-muted);
+}
+.c360-contact-filter-email-status .c360-status-btn:hover {
+  color: var(--c360-primary);
+  border-color: var(--c360-primary);
+}
+.c360-contact-filter-email-status .c360-status-btn--active {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-primary);
+  border-color: var(--c360-border);
+  font-weight: var(--c360-font-medium);
 }
 .c360-contacts-filters
   .c360-contacts-filter-section__content

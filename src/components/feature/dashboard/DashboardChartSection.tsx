@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -12,7 +13,11 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DashboardLineChart } from "@/components/shared/DashboardLineChart";
+import {
+  EmailActivityChart,
+  buildEmailActivityFallbackSeries,
+  mapLiveDataToEmailActivity,
+} from "@/components/shared/DashboardLineChart";
 import {
   DashboardActivityFeed,
   type ActivityItem,
@@ -30,15 +35,24 @@ interface DashboardChartSectionProps {
 }
 
 export function DashboardChartSection({
+  liveData,
   activity,
 }: DashboardChartSectionProps) {
+  const emailChartData = useMemo(() => {
+    if (liveData && liveData.length > 0) {
+      return mapLiveDataToEmailActivity(liveData);
+    }
+    return buildEmailActivityFallbackSeries();
+  }, [liveData]);
+
   return (
     <div className="c360-dashboard-layout__charts">
       <Card
         title="Email Activity"
         subtitle="Daily finds & verifications (last 30 days)"
+        className="c360-dashboard-email-activity-card"
       >
-        <DashboardLineChart />
+        <EmailActivityChart data={emailChartData} />
       </Card>
 
       <Card title="Recent Activity" subtitle="Latest events">

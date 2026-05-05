@@ -871,6 +871,10 @@
   margin: 0 auto;
   padding: var(--c360-spacing-6);
 }
+.c360-voice-page--modal {
+  padding: var(--c360-spacing-4);
+  max-width: none;
+}
 .c360-voice-panel {
   padding: var(--c360-spacing-6);
   display: flex;

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import { MobileBottomDock } from "./MobileBottomDock";
 import { ShellSearchProvider } from "@/context/ShellSearchContext";
 import { JobsDrawerProvider } from "@/context/JobsDrawerContext";
 import { NotificationsDrawerProvider } from "@/context/NotificationsDrawerContext";
@@ -25,6 +26,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
+  const [sidebarPeek, setSidebarPeek] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED);
@@ -39,13 +41,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  const handleToggle = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, String(next));
-      return next;
-    });
-  };
+  useEffect(() => {
+    if (isNarrowViewport) setSidebarPeek(false);
+  }, [isNarrowViewport]);
 
   const handleMobileToggle = () => {
     setMobileOpen((prev) => !prev);
@@ -55,33 +53,26 @@ export default function MainLayout({ children }: MainLayoutProps) {
     setMobileOpen(false);
   };
 
-  const handleMenuClick = () => {
-    if (window.matchMedia(MOBILE_SIDEBAR_MQ).matches) {
-      handleMobileToggle();
-    } else {
-      handleToggle();
-    }
-  };
-
-  const menuButtonAriaLabel = isNarrowViewport
-    ? mobileOpen
-      ? "Close navigation"
-      : "Open navigation"
-    : collapsed
-      ? "Expand sidebar"
-      : "Collapse sidebar";
-
   return (
     <ReviewDrawerProvider>
       <JobsDrawerProvider>
         <NotificationsDrawerProvider>
           <FilesDrawerProvider>
             <ShellSearchProvider>
-              <div className="c360-shell">
+              <div
+                className={cn(
+                  "c360-shell",
+                  sidebarPeek && "c360-shell--sidebar-peek",
+                  isNarrowViewport && "c360-shell--narrow-dock",
+                )}
+              >
                 <Sidebar
                   collapsed={collapsed}
                   mobileOpen={mobileOpen}
                   onMobileClose={handleMobileClose}
+                  peekAllowed={!isNarrowViewport && collapsed}
+                  onPeekChange={setSidebarPeek}
+                  peekOpen={sidebarPeek}
                 />
                 <div
                   className={cn(
@@ -91,12 +82,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 >
                   <TopBar
                     collapsed={collapsed}
-                    onMenuToggle={handleMenuClick}
-                    menuButtonAriaLabel={menuButtonAriaLabel}
                     onAccountNavigate={handleMobileClose}
                   />
                   <main>{children}</main>
                 </div>
+                <MobileBottomDock
+                  visible={isNarrowViewport}
+                  mobileDrawerOpen={mobileOpen}
+                  onToggleSidebarDrawer={handleMobileToggle}
+                  onNavigate={handleMobileClose}
+                />
               </div>
             </ShellSearchProvider>
             <JobsDrawer />

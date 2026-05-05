@@ -1,13 +1,17 @@
 /**
- * Sidebar navigation tree — leaves have href; branches expand to show children.
- * Used by Sidebar (accordion), SidebarSearch (flattened index), and TopBar search.
+ * Sidebar navigation — flat section groups (21st.dev–style list with separators).
+ * Leaves only at top level per section; branches reserved for future nested IA.
  */
 import { ROUTES } from "@/lib/routes";
+
+import type { BadgeColor } from "@/components/ui/Badge";
 
 export type NavLeaf = {
   href: string;
   label: string;
   icon: string;
+  badge?: string;
+  badgeColor?: BadgeColor;
 };
 
 export type NavBranch = {
@@ -34,71 +38,47 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
     label: null,
     items: [
       {
-        label: "Overview",
+        href: ROUTES.DASHBOARD,
+        label: "Dashboard",
         icon: "LayoutDashboard",
-        children: [
-          {
-            href: ROUTES.DASHBOARD,
-            label: "Dashboard",
-            icon: "LayoutDashboard",
-          },
-          { href: ROUTES.ACTIVITIES, label: "Activities", icon: "Activity" },
-        ],
       },
+      { href: ROUTES.ACTIVITIES, label: "Activities", icon: "Activity" },
     ],
   },
   {
     label: "Database",
     items: [
+      { href: ROUTES.CONTACTS, label: "Contacts", icon: "Users" },
+      { href: ROUTES.COMPANIES, label: "Companies", icon: "Building2" },
       {
-        label: "Data",
-        icon: "Database",
-        children: [
-          { href: ROUTES.CONTACTS, label: "Contacts", icon: "Users" },
-          { href: ROUTES.COMPANIES, label: "Companies", icon: "Building2" },
-          {
-            href: ROUTES.HIRING_SIGNALS,
-            label: "Hiring signals",
-            icon: "Zap",
-          },
-        ],
+        href: ROUTES.HIRING_SIGNALS,
+        label: "Hiring signals",
+        icon: "Zap",
       },
     ],
   },
   {
     label: "Tools",
     items: [
-      {
-        label: "Tool",
-        icon: "Tool",
-        children: [
-          { href: ROUTES.EMAIL, label: "Email", icon: "Mail" },
-          { href: ROUTES.PHONE, label: "Phone", icon: "Phone" },
-          { href: ROUTES.LINKEDIN, label: "LinkedIn", icon: "Linkedin" },
-        ],
-      },
+      { href: ROUTES.EMAIL, label: "Email", icon: "Mail" },
+      { href: ROUTES.PHONE, label: "Phone", icon: "Phone" },
+      { href: ROUTES.LINKEDIN, label: "LinkedIn", icon: "Linkedin" },
     ],
   },
   {
     label: "Campaigns",
     items: [
+      { href: ROUTES.CAMPAIGNS, label: "All campaigns", icon: "Megaphone" },
+      { href: ROUTES.CAMPAIGNS_NEW, label: "New campaign", icon: "Plus" },
       {
-        label: "Campaigns",
-        icon: "Megaphone",
-        children: [
-          { href: ROUTES.CAMPAIGNS, label: "All campaigns", icon: "Megaphone" },
-          { href: ROUTES.CAMPAIGNS_NEW, label: "New campaign", icon: "Plus" },
-          {
-            href: ROUTES.CAMPAIGNS_TEMPLATES,
-            label: "Templates",
-            icon: "LayoutTemplate",
-          },
-          {
-            href: ROUTES.CAMPAIGNS_SEQUENCES,
-            label: "Sequences",
-            icon: "ListOrdered",
-          },
-        ],
+        href: ROUTES.CAMPAIGNS_TEMPLATES,
+        label: "Templates",
+        icon: "LayoutTemplate",
+      },
+      {
+        href: ROUTES.CAMPAIGNS_SEQUENCES,
+        label: "Sequences",
+        icon: "ListOrdered",
       },
     ],
   },
@@ -106,14 +86,13 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
     label: "AI",
     items: [
       {
-        label: "AI",
-        icon: "Brain",
-        children: [
-          { href: ROUTES.AI_CHAT, label: "AI Chat", icon: "MessageSquare" },
-          { href: ROUTES.LIVE_VOICE, label: "Live Voice", icon: "Mic" },
-          { href: ROUTES.RESUME, label: "Resume", icon: "FileText" },
-        ],
+        href: ROUTES.AI_CHAT,
+        label: "AI Chat",
+        icon: "MessageSquare",
+        badge: "Beta",
+        badgeColor: "info",
       },
+      { href: ROUTES.RESUME, label: "Resume", icon: "FileText" },
     ],
   },
 ];

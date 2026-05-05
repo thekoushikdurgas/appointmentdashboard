@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         destination: "/activities?tab=usage",
         permanent: false,
       },
+      {
+        source: "/live-voice",
+        destination: "/ai-chat",
+        permanent: false,
+      },
     ];
   },
 

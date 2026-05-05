@@ -299,6 +299,23 @@
   cursor: not-allowed;
 }
 
+.c360-chat-input-action-btn {
+  border: none;
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--c360-transition-fast);
+  align-self: flex-end;
+  cursor: pointer;
+  background: var(--c360-bg-tertiary);
+  flex-shrink: 0;
+}
+.c360-chat-input-action-btn:hover {
+  background: var(--c360-bg-elevated);
+}
+
 .c360-chat-retry-bar {
   display: flex;
   align-items: center;

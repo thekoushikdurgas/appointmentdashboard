@@ -623,6 +623,9 @@ export default function ContactsPage() {
       toolbar={toolbarEl}
       mobileFiltersOpen={mobileFiltersOpen}
       onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+      filtersAriaLabel="Contact filters"
+      filterDrawerTitleId="c360-filter-drawer-title"
+      filtersPeekRail
       className="c360-contacts-page"
     >
       <Modal

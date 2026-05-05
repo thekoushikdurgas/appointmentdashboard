@@ -24,7 +24,12 @@ interface TranscriptEntry {
   timestamp: Date;
 }
 
-export default function LiveVoicePage() {
+export interface LiveVoicePanelProps {
+  /** `embedded`: modal / inline (no page header). `page`: full standalone header. */
+  variant?: "page" | "embedded";
+}
+
+export function LiveVoicePanel({ variant = "embedded" }: LiveVoicePanelProps) {
   const [status, setStatus] = useState<CallStatus>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
@@ -91,19 +96,24 @@ export default function LiveVoicePage() {
   };
 
   return (
-    <div className="c360-voice-page">
-      <div className="c360-standalone-header">
-        <h1 className="c360-standalone-header__title">Live Voice AI</h1>
-        <p className="c360-standalone-header__subtitle">
-          Talk to the Contact360 AI assistant in real time.
-        </p>
-      </div>
+    <div
+      className={cn(
+        "c360-voice-page",
+        variant === "embedded" && "c360-voice-page--modal",
+      )}
+    >
+      {variant === "page" && (
+        <div className="c360-standalone-header">
+          <h1 className="c360-standalone-header__title">Live Voice AI</h1>
+          <p className="c360-standalone-header__subtitle">
+            Talk to the Contact360 AI assistant in real time.
+          </p>
+        </div>
+      )}
 
       <div className="c360-2col-grid">
-        {/* Call panel */}
         <Card>
           <div className="c360-voice-panel">
-            {/* Status */}
             <div className="c360-voice-status-row">
               <Badge
                 color={
@@ -123,7 +133,6 @@ export default function LiveVoicePage() {
               )}
             </div>
 
-            {/* Avatar */}
             <div
               className={cn(
                 "c360-voice-avatar",
@@ -142,7 +151,6 @@ export default function LiveVoicePage() {
               )}
             </div>
 
-            {/* Controls */}
             <div className="c360-voice-controls">
               <button
                 type="button"
@@ -208,7 +216,6 @@ export default function LiveVoicePage() {
           </div>
         </Card>
 
-        {/* Transcript */}
         <Card title="Live Transcript">
           <div className="c360-transcript-box">
             {transcript.length === 0 ? (

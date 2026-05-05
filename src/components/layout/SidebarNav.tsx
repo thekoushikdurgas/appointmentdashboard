@@ -8,9 +8,11 @@ import type { LucideIcon } from "lucide-react";
 import {
   isNavBranch,
   type NavBranch,
+  type NavLeaf,
   type NavNode,
   type SidebarSectionConfig,
 } from "@/lib/constants";
+import { Badge } from "@/components/ui/Badge";
 import { Popover } from "@/components/ui/Popover";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,19 @@ function expandKeysForPathname(
 
 type IconFn = (key: string) => LucideIcon | undefined;
 
+function LeafBadge({ leaf }: { leaf: NavLeaf }) {
+  if (!leaf.badge) return null;
+  return (
+    <Badge
+      size="sm"
+      color={leaf.badgeColor ?? "primary"}
+      className="c360-sidebar__item-badge shrink-0"
+    >
+      {leaf.badge}
+    </Badge>
+  );
+}
+
 function SubBranchPanel({
   branch,
   pathname,
@@ -85,7 +100,10 @@ function SubBranchPanel({
                     )}
                     onClick={onPick}
                   >
-                    {c.label}
+                    <span className="c360-sidebar-flyout__link-label">
+                      {c.label}
+                    </span>
+                    <LeafBadge leaf={c} />
                   </Link>
                 ),
               )}
@@ -103,7 +121,10 @@ function SubBranchPanel({
             )}
             onClick={onPick}
           >
-            {node.label}
+            <span className="c360-sidebar-flyout__link-label">
+              {node.label}
+            </span>
+            <LeafBadge leaf={node} />
           </Link>
         );
       })}
@@ -190,7 +211,10 @@ function CollapsedBranchMenu({
                   onClick={onPick}
                   onMouseEnter={() => setSub(null)}
                 >
-                  {node.label}
+                  <span className="c360-sidebar-flyout__link-label">
+                    {node.label}
+                  </span>
+                  <LeafBadge leaf={node} />
                 </Link>
               );
             })}
@@ -243,6 +267,7 @@ function NavNodesList({
           }
           const Icon = iconFor(node.icon);
           const open = expanded.has(key);
+          const branchActive = branchHasActive(node, pathname);
           return (
             <div key={key} className="c360-sidebar__branch-wrap">
               <button
@@ -251,6 +276,7 @@ function NavNodesList({
                   "c360-sidebar__item",
                   "c360-sidebar__branch-toggle",
                   open && "c360-sidebar__branch-toggle--open",
+                  branchActive && "c360-sidebar__item--active",
                 )}
                 aria-expanded={open}
                 onClick={() => toggle(key)}
@@ -298,6 +324,7 @@ function NavNodesList({
 
         const Icon = iconFor(node.icon);
         const active = leafActive(node.href, pathname);
+        const iconSize = collapsed ? 20 : 16;
         if (collapsed) {
           return (
             <Link
@@ -307,14 +334,15 @@ function NavNodesList({
               className={cn(
                 "c360-sidebar__item",
                 "c360-sidebar__item--collapsed-icon",
+                "c360-sidebar__item--leaf",
                 active && "c360-sidebar__item--active",
               )}
-              title={node.label}
+              title={node.badge ? `${node.label} (${node.badge})` : node.label}
               aria-current={active ? "page" : undefined}
             >
               {Icon && (
                 <Icon
-                  size={20}
+                  size={iconSize}
                   className="c360-sidebar__item-icon"
                   aria-hidden
                 />
@@ -330,14 +358,26 @@ function NavNodesList({
             onClick={onMobileClose}
             className={cn(
               "c360-sidebar__item",
+              "c360-sidebar__item--leaf",
               active && "c360-sidebar__item--active",
             )}
             aria-current={active ? "page" : undefined}
           >
             {Icon && (
-              <Icon size={20} className="c360-sidebar__item-icon" aria-hidden />
+              <Icon
+                size={iconSize}
+                className="c360-sidebar__item-icon"
+                aria-hidden
+              />
             )}
-            <span className="c360-sidebar__item-label">{node.label}</span>
+            <span
+              className={cn(
+                "c360-sidebar__item-label",
+                node.badge && "c360-sidebar__item-label--grow",
+              )}
+            >
+              {node.label}
+            </span>
           </Link>
         );
       })}
@@ -377,10 +417,13 @@ export function SidebarNav({
   return (
     <>
       {sections.map((section, si) => (
-        <div key={si}>
-          {section.label && (
+        <div key={si} className="c360-sidebar__section-group">
+          {si > 0 ? (
+            <div className="c360-sidebar__section-sep" aria-hidden="true" />
+          ) : null}
+          {section.label ? (
             <div className="c360-sidebar__section-label">{section.label}</div>
-          )}
+          ) : null}
           <NavNodesList
             nodes={section.items}
             keyPrefix={[String(si)]}

@@ -109,6 +109,7 @@ export interface HiringSignalsFilterSidebarProps {
   appliedRunId?: string;
   onClearRunId?: () => void;
   className?: string;
+  drawerTitleId?: string;
 }
 
 export function HiringSignalsFilterSidebar({
@@ -118,6 +119,7 @@ export function HiringSignalsFilterSidebar({
   appliedRunId,
   onClearRunId,
   className,
+  drawerTitleId = "c360-hs-filter-drawer-title",
 }: HiringSignalsFilterSidebarProps) {
   const { draft, onDraftField, resetFilters } = useHireSignalFilter();
 
@@ -319,7 +321,7 @@ export function HiringSignalsFilterSidebar({
         <div className="c360-contacts-filters__head-text">
           <div className="c360-contacts-filters__head">
             <h2
-              id="c360-filter-drawer-title"
+              id={drawerTitleId}
               className="c360-contacts-filters__title"
             >
               Refine signals

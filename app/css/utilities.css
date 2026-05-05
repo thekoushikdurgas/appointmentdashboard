@@ -941,6 +941,62 @@
   box-shadow: var(--c360-shadow-md);
 }
 
+.c360-stat-card:focus-within {
+  box-shadow:
+    var(--c360-shadow-md),
+    0 0 0 3px var(--c360-focus-ring);
+}
+
+/* Data-card style KPI row (title + icon header, value, description) — see docs/frontend/ideas/mydesigns/dashboardcomponet.md */
+.c360-stat-card__headline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-stat-card__metric-title {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--c360-text-primary);
+}
+
+.c360-stat-card__headline-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-stat-icon-bg, var(--c360-primary-light));
+  color: var(--c360-stat-icon-fg, var(--c360-primary));
+  flex-shrink: 0;
+}
+
+.c360-stat-card__value-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-stat-card__value-row .c360-stat-card__value {
+  margin: 0;
+  min-width: 0;
+}
+
+.c360-stat-card__description {
+  margin: 0;
+  font-size: var(--c360-text-2xs);
+  color: var(--c360-text-muted);
+  line-height: 1.45;
+  min-height: 2.25em;
+}
+
 .c360-stat-card__header {
   display: flex;
   align-items: center;

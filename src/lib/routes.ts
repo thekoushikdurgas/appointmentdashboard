@@ -12,7 +12,6 @@ export const ROUTES = {
   LINKEDIN: "/linkedin",
   ACTIVITIES: "/activities",
   AI_CHAT: "/ai-chat",
-  LIVE_VOICE: "/live-voice",
   BILLING: "/billing",
   PROFILE: "/profile",
   SETTINGS: "/settings",

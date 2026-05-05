@@ -62,6 +62,11 @@ export type { SweetAlertOptions, SweetAlertType } from "./SweetAlert";
 export { Carousel } from "./Carousel";
 export type { CarouselSlide } from "./Carousel";
 
+export { CircularTestimonials } from "./circular-testimonials/CircularTestimonials";
+export type { CircularTestimonialsProps } from "./circular-testimonials/CircularTestimonials";
+export type { CircularTestimonial } from "./circular-testimonials/dashboardDemoTestimonials";
+export { DASHBOARD_DEMO_TESTIMONIALS } from "./circular-testimonials/dashboardDemoTestimonials";
+
 export { Pagination } from "./Pagination";
 export type { PaginationProps } from "./Pagination";
 

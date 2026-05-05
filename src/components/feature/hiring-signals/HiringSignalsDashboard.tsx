@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 
 function runStatusBadgeColor(status: string): BadgeColor {
   const s = status.toUpperCase();
-  if (s.includes("SUCCESS") || s === "SUCCEEDED") return "success";
+  if (s.includes("SUCCESS") || s === "SUCCEEDED" || s === "DONE")
+    return "success";
   if (s.includes("RUNNING") || s.includes("PENDING")) return "warning";
   if (
     s.includes("FAIL") ||
@@ -30,7 +31,7 @@ export interface HiringSignalsDashboardProps {
   loading: boolean;
   statsBar: React.ReactNode;
   onOpenCompanyDrawer: (row: LinkedInJobRow) => void;
-  /** First row from satellite runs payload (recent Apify run). */
+  /** First row from satellite runs payload (recent scrape run). */
   latestRun?: Record<string, unknown>;
   runsLoading?: boolean;
   onGoToRuns?: () => void;
@@ -91,7 +92,7 @@ export function HiringSignalsDashboard({
       {latestRun && Object.keys(latestRun).length > 0 ? (
         <Card
           title="Latest scrape run"
-          subtitle="Most recent Apify run (job.server)"
+          subtitle="Most recent scrape run (job.server)"
         >
           <div className="c360-flex c360-flex-col c360-gap-3 c360-hs-latest-run-inner">
             <div className="c360-min-w-0 c360-space-y-2">

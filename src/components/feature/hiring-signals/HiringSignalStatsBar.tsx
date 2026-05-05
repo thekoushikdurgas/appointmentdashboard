@@ -61,14 +61,23 @@ export function HiringSignalStatsBar({
       : 0;
 
   return (
-    <div className={cn("c360-stat-grid c360-stat-grid--wide", className)}>
+    <div
+      className={cn(
+        "c360-stat-grid c360-stat-grid--wide c360-hs-stats-grid",
+        className,
+      )}
+      role="list"
+      aria-label="Hiring signals summary"
+    >
       <article
         className="c360-stat-card"
         data-state={loading ? "loading" : undefined}
+        role="listitem"
       >
-        <div className="c360-stat-card__header">
+        <div className="c360-stat-card__headline">
+          <p className="c360-stat-card__metric-title">Jobs indexed</p>
           <div
-            className="c360-stat-card__icon"
+            className="c360-stat-card__headline-icon"
             ref={(el) =>
               applyVars(el, {
                 "--c360-stat-icon-bg": "var(--c360-primary-light)",
@@ -76,17 +85,18 @@ export function HiringSignalStatsBar({
               })
             }
           >
-            <Briefcase size={22} aria-hidden />
+            <Briefcase size={18} aria-hidden />
           </div>
+        </div>
+        <div className="c360-stat-card__value-row">
+          <p className="c360-stat-card__value">
+            {loading ? "—" : <CountUpNumber end={totalJobs} duration={900} />}
+          </p>
           {!loading && totalJobs > 0 ? (
             <TrendChip direction="up" label="Indexed" />
           ) : null}
         </div>
-        <p className="c360-stat-card__label">Jobs indexed</p>
-        <p className="c360-stat-card__value">
-          {loading ? "—" : <CountUpNumber end={totalJobs} duration={900} />}
-        </p>
-        <p className="c360-text-2xs c360-text-muted c360-m-0">
+        <p className="c360-stat-card__description">
           Total rows in job.server Mongo
         </p>
       </article>
@@ -94,10 +104,12 @@ export function HiringSignalStatsBar({
       <article
         className="c360-stat-card"
         data-state={loading ? "loading" : undefined}
+        role="listitem"
       >
-        <div className="c360-stat-card__header">
+        <div className="c360-stat-card__headline">
+          <p className="c360-stat-card__metric-title">With company link</p>
           <div
-            className="c360-stat-card__icon"
+            className="c360-stat-card__headline-icon"
             ref={(el) =>
               applyVars(el, {
                 "--c360-stat-icon-bg": "var(--c360-success-light)",
@@ -105,17 +117,18 @@ export function HiringSignalStatsBar({
               })
             }
           >
-            <Building2 size={22} aria-hidden />
+            <Building2 size={18} aria-hidden />
           </div>
         </div>
-        <p className="c360-stat-card__label">With company link</p>
-        <p className="c360-stat-card__value">
-          {loading ? (
-            "—"
-          ) : (
-            <CountUpNumber end={jobsWithCompany} duration={900} />
-          )}
-        </p>
+        <div className="c360-stat-card__value-row">
+          <p className="c360-stat-card__value">
+            {loading ? (
+              "—"
+            ) : (
+              <CountUpNumber end={jobsWithCompany} duration={900} />
+            )}
+          </p>
+        </div>
         <Progress
           value={jobsWithCompany}
           max={totalJobs || 1}
@@ -125,7 +138,7 @@ export function HiringSignalStatsBar({
           label="Linked to company"
           className="c360-mt-2"
         />
-        <p className="c360-text-2xs c360-text-muted c360-m-0">
+        <p className="c360-stat-card__description">
           Linked to Connectra company_uuid
         </p>
       </article>
@@ -133,10 +146,12 @@ export function HiringSignalStatsBar({
       <article
         className="c360-stat-card"
         data-state={loading ? "loading" : undefined}
+        role="listitem"
       >
-        <div className="c360-stat-card__header">
+        <div className="c360-stat-card__headline">
+          <p className="c360-stat-card__metric-title">Filter matches</p>
           <div
-            className="c360-stat-card__icon"
+            className="c360-stat-card__headline-icon"
             ref={(el) =>
               applyVars(el, {
                 "--c360-stat-icon-bg": "var(--c360-warning-light)",
@@ -144,8 +159,17 @@ export function HiringSignalStatsBar({
               })
             }
           >
-            <Filter size={22} aria-hidden />
+            <Filter size={18} aria-hidden />
           </div>
+        </div>
+        <div className="c360-stat-card__value-row">
+          <p className="c360-stat-card__value">
+            {loading ? (
+              "—"
+            ) : (
+              <CountUpNumber end={filterMatchTotal} duration={900} />
+            )}
+          </p>
           {!loading && totalJobs > 0 ? (
             <TrendChip
               direction={filterDepth > 0 ? "up" : "down"}
@@ -153,15 +177,7 @@ export function HiringSignalStatsBar({
             />
           ) : null}
         </div>
-        <p className="c360-stat-card__label">Filter matches</p>
-        <p className="c360-stat-card__value">
-          {loading ? (
-            "—"
-          ) : (
-            <CountUpNumber end={filterMatchTotal} duration={900} />
-          )}
-        </p>
-        <p className="c360-text-2xs c360-text-muted c360-m-0">
+        <p className="c360-stat-card__description">
           Rows matching current filters (all pages)
         </p>
       </article>
@@ -169,10 +185,12 @@ export function HiringSignalStatsBar({
       <article
         className="c360-stat-card"
         data-state={loading ? "loading" : undefined}
+        role="listitem"
       >
-        <div className="c360-stat-card__header">
+        <div className="c360-stat-card__headline">
+          <p className="c360-stat-card__metric-title">Active signals (page)</p>
           <div
-            className="c360-stat-card__icon"
+            className="c360-stat-card__headline-icon"
             ref={(el) =>
               applyVars(el, {
                 "--c360-stat-icon-bg": "var(--c360-info-light)",
@@ -180,17 +198,18 @@ export function HiringSignalStatsBar({
               })
             }
           >
-            <LayoutGrid size={22} aria-hidden />
+            <LayoutGrid size={18} aria-hidden />
           </div>
+        </div>
+        <div className="c360-stat-card__value-row">
+          <p className="c360-stat-card__value">
+            {loading ? "—" : <CountUpNumber end={pageRowCount} duration={600} />}
+          </p>
           {!loading && pageRowCount > 0 ? (
             <TrendChip direction="up" label="Page" />
           ) : null}
         </div>
-        <p className="c360-stat-card__label">Active signals (page)</p>
-        <p className="c360-stat-card__value">
-          {loading ? "—" : <CountUpNumber end={pageRowCount} duration={600} />}
-        </p>
-        <p className="c360-text-2xs c360-text-muted c360-m-0">
+        <p className="c360-stat-card__description">
           Roles visible on the current results page
         </p>
       </article>

@@ -222,8 +222,30 @@
 
 .c360-data-layout__drawer-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--c360-spacing-4);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c360-scrollbar-thumb) transparent;
+}
+
+.c360-data-layout__drawer-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.c360-data-layout__drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.c360-data-layout__drawer-body::-webkit-scrollbar-thumb {
+  background: var(--c360-scrollbar-thumb);
+  border-radius: 5px;
+}
+
+.c360-data-layout__drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--c360-scrollbar-thumb-hover);
 }
 
 /* ─── Contacts metadata strip (kit card rhythm) ───────────────────────── */
@@ -270,22 +292,24 @@
   color: var(--c360-text);
 }
 
-/* ─── Sidebar header (d1-style actions) ───────────────────────────────── */
+/* ─── Filter rail header — rhythm aligned with `c360-sidebar__*` (mydesigns sidebar) ───────────────────────────────── */
 .c360-contacts-filters__head-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--c360-spacing-3);
-  padding: 10px;
-  margin-bottom: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  margin: calc(-1 * var(--c360-spacing-2)) calc(-1 * var(--c360-spacing-2))
+    var(--c360-spacing-1);
+  padding: var(--c360-spacing-3) var(--c360-spacing-2);
   border-bottom: 1px solid var(--c360-border);
 }
 
 .c360-contacts-filters__head-text {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
+  flex: 1;
   justify-content: flex-start;
   align-items: flex-start;
 }
