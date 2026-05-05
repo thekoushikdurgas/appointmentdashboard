@@ -130,8 +130,7 @@ export function CircularTestimonials({
         zIndex: 3,
         opacity: 1,
         pointerEvents: "auto",
-        transform:
-          "translateX(0px) translateY(0px) scale(1) rotateY(0deg)",
+        transform: "translateX(0px) translateY(0px) scale(1) rotateY(0deg)",
         transition: "all 0.8s cubic-bezier(.4,2,.3,1)",
       };
     }
@@ -199,7 +198,8 @@ export function CircularTestimonials({
                   fill
                   sizes="(max-width: 768px) 100vw, 480px"
                   className="c360-circular-testimonials__img"
-                  priority={index === 0}
+                  priority={index === activeIndex}
+                  loading={index === activeIndex ? "eager" : "lazy"}
                 />
               </div>
             ))}
@@ -259,7 +259,7 @@ export function CircularTestimonials({
                       ease: "easeInOut",
                       delay: 0.025 * i,
                     }}
-                    style={{ display: "inline-block" }}
+                    className="c360-circular-testimonials__quote-word"
                   >
                     {word}
                     {"\u00A0"}

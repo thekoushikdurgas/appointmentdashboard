@@ -203,7 +203,11 @@ export function HiringSignalStatsBar({
         </div>
         <div className="c360-stat-card__value-row">
           <p className="c360-stat-card__value">
-            {loading ? "—" : <CountUpNumber end={pageRowCount} duration={600} />}
+            {loading ? (
+              "—"
+            ) : (
+              <CountUpNumber end={pageRowCount} duration={600} />
+            )}
           </p>
           {!loading && pageRowCount > 0 ? (
             <TrendChip direction="up" label="Page" />

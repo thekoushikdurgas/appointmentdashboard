@@ -239,15 +239,42 @@
   border-radius: var(--c360-radius-sm);
   padding: 4px 2px;
   min-height: 48px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  border: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition:
+    background var(--c360-transition-fast),
+    outline var(--c360-transition-fast);
+}
+.c360-calendar-view__cell:focus-visible {
+  outline: 2px solid var(--c360-primary);
+  outline-offset: 2px;
 }
 .c360-calendar-view__cell--empty {
   background: transparent;
+  cursor: default;
+  pointer-events: none;
 }
 .c360-calendar-view__cell--day {
-  background: var(--c360-bg);
+  background: var(--c360-bg-secondary);
+}
+.c360-calendar-view__cell--day:hover {
+  background: var(--c360-bg-hover);
 }
 .c360-calendar-view__cell--today {
   background: var(--c360-primary);
+}
+.c360-calendar-view__cell--selected:not(.c360-calendar-view__cell--today) {
+  outline: 2px solid var(--c360-primary);
+  outline-offset: -1px;
+  background: var(--c360-primary-light);
+}
+.c360-calendar-view__cell--selected.c360-calendar-view__cell--today {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 .c360-calendar-view__day-num {
   font-size: var(--c360-text-xs);

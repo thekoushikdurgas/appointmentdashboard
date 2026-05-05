@@ -103,9 +103,7 @@ export function DashboardStatRow({ stats, loading }: DashboardStatRowProps) {
               ) : null}
             </div>
             {stat.description ? (
-              <p className="c360-stat-card__description">
-                {stat.description}
-              </p>
+              <p className="c360-stat-card__description">{stat.description}</p>
             ) : null}
             <div className="c360-mt-2 c360-min-w-0">
               <SparklineChart

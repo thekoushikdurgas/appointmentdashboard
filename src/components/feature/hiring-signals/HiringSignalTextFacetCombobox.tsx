@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
 import type { ContactFilterData } from "@/graphql/generated/types";
 import {
   normalizeHiringSignalTokenList,
@@ -124,18 +122,8 @@ export function HiringSignalTextFacetCombobox({
   disabled = false,
 }: HiringSignalTextFacetComboboxProps) {
   const [searchText, setSearchText] = useState("");
-  const [customToken, setCustomToken] = useState("");
   const [options, setOptions] = useState<ContactFilterData[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const addCustomToken = useCallback(() => {
-    const t = customToken.trim();
-    if (!t) return;
-    if (!selectedValues.includes(t)) {
-      onSelectionChange([...selectedValues, t]);
-    }
-    setCustomToken("");
-  }, [customToken, onSelectionChange, selectedValues]);
 
   const load = useCallback(
     async (q: string) => {
@@ -191,33 +179,6 @@ export function HiringSignalTextFacetCombobox({
         onSearchChange={setSearchText}
         disabled={disabled}
       />
-      <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-        <Input
-          type="text"
-          inputSize="sm"
-          className="c360-min-w-0 c360-flex-1"
-          value={customToken}
-          onChange={(e) => setCustomToken(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addCustomToken();
-            }
-          }}
-          placeholder="Custom value (substring match)"
-          disabled={disabled}
-          autoComplete="off"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || !customToken.trim()}
-          onClick={addCustomToken}
-        >
-          Add
-        </Button>
-      </div>
     </div>
   );
 }

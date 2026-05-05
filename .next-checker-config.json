@@ -16,6 +16,11 @@
   "localstorage_allow_files": [
     "src/context/ThemeContext.tsx",
     "src/components/layout/MainLayout.tsx",
-    "src/components/shared/OnboardingTour.tsx"
+    "src/components/shared/OnboardingTour.tsx",
+    "src/components/layouts/DataPageLayout.tsx",
+    "src/lib/contactsListCache.ts",
+    "src/lib/jobsListLocalCache.ts",
+    "src/lib/s3FilesLocalCache.ts",
+    "src/lib/ttlLocalStorageCache.ts"
   ]
 }

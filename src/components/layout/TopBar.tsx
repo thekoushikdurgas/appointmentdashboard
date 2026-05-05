@@ -52,10 +52,7 @@ interface TopBarProps {
   onAccountNavigate?: () => void;
 }
 
-export default function TopBar({
-  collapsed,
-  onAccountNavigate,
-}: TopBarProps) {
+export default function TopBar({ collapsed, onAccountNavigate }: TopBarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();

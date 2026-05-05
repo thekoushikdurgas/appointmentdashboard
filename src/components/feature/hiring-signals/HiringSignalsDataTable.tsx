@@ -55,9 +55,11 @@ const COL_LABELS: Record<HiringSignalsDataTableColumnId, string> = {
 
 function formatPosted(iso: string): string {
   if (!iso) return "—";
+  if (iso.startsWith("0001-01-01")) return "—";
   try {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
+    if (Number.isNaN(d.getTime())) return "—";
+    if (d.getUTCFullYear() < 1970) return "—";
     return d.toLocaleString("en-IN", { dateStyle: "medium" });
   } catch {
     return "—";
@@ -73,6 +75,15 @@ function isRemoteAllowed(remote: string): boolean {
     x.includes("remote") ||
     x.includes("hybrid")
   );
+}
+
+/** Prefer geo string; when LinkedIn omits location, show workplace types (Remote/Hybrid) if present. */
+function displayLocationForRow(row: LinkedInJobRow): string {
+  const geo = row.location?.trim();
+  if (geo) return geo;
+  const wt = row.workplaceTypes?.filter(Boolean) ?? [];
+  if (wt.length) return wt.join(", ");
+  return "—";
 }
 
 export interface HiringSignalsToolbarTableExtrasProps {
@@ -353,7 +364,7 @@ export function HiringSignalsDataTable({
                   ) : null}
                   {vis.has("location") ? (
                     <td className="c360-px-3 c360-py-2 c360-align-top c360-text-2xs c360-text-ink-muted">
-                      {row.location || "—"}
+                      {displayLocationForRow(row)}
                     </td>
                   ) : null}
                   {vis.has("type") ? (

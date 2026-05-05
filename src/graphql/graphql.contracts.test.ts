@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -7,7 +8,6 @@ import {
   emptyDraftGroup,
   emptyDraftQuery,
 } from "@/lib/vqlDraft";
-import { describe, expect, it } from "vitest";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");

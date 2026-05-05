@@ -3,10 +3,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { STORAGE_KEYS } from "@/lib/constants";
 
-export type DataFiltersPeekScope =
-  | "contacts"
-  | "companies"
-  | "hiring-signals";
+export type DataFiltersPeekScope = "contacts" | "companies" | "hiring-signals";
 
 export interface DataFiltersPeekValue {
   pinned: boolean;

@@ -11,6 +11,12 @@ import { toast } from "sonner";
 const DEFAULT_URL =
   "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
 
+/** LinkedIn jobs search URL for Apify when using keywords mode (job.server requires non-empty `urls` on Apify backend). */
+function buildLinkedInJobsSearchUrl(keywords: string, geoId: number): string {
+  const q = encodeURIComponent(keywords.trim());
+  return `https://www.linkedin.com/jobs/search/?keywords=${q}&geoId=${geoId}&position=1&pageNum=0`;
+}
+
 type ScrapeMode = "keywords" | "urls";
 
 export interface RunScrapeModalProps {
@@ -83,10 +89,12 @@ export function RunScrapeModal({
         mode,
       };
       if (mode === "keywords") {
-        body.keywords = keywords.trim();
+        const kw = keywords.trim();
+        body.keywords = kw;
         body.geoId = geoId;
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.enableEnrichment = enableEnrichment;
+        body.urls = [buildLinkedInJobsSearchUrl(kw, geoId)];
       } else {
         const lines = urlsText
           .split(/\r?\n/)

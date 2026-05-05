@@ -13,10 +13,42 @@ export interface CircularTestimonial {
   href?: string;
 }
 
-/** Stable portrait crops via picsum seeds (next/image: hostname allowed in next.config). */
-function slideImage(seed: string): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1000`;
+/**
+ * Unsplash images matched to each slide theme (people/CRM, buildings, email, phone, etc.).
+ * `ixlib` + crop params match Unsplash’s CDN contract and avoid broken legacy URLs.
+ * Hostname allowlisted in next.config `images.remotePatterns`.
+ */
+function unsplashPhoto(photoId: string): string {
+  return `https://images.unsplash.com/photo-${photoId}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`;
 }
+
+/** One image per slide id — thematic pairing with the headline. */
+const SLIDE_IMAGE: Record<CircularTestimonial["id"], string> = {
+  // Team collaboration / relationship CRM
+  "crm-contacts": unsplashPhoto("1522071820081-009f0129c71c"),
+  // Corporate skyline / org scale
+  companies: unsplashPhoto("1486406146926-c627a92ad1ab"),
+  // Email & messaging / inbox workflow
+  "email-tools": unsplashPhoto("1563986768609-322da13575f3"),
+  // Mobile device / calls
+  phone: unsplashPhoto("1511707171634-5f897ff02aa9"),
+  // Strategy / campaign planning workspace
+  campaigns: unsplashPhoto("1552664730-d307ca884978"),
+  // Hiring & interviews / talent pipeline
+  "hiring-signals": unsplashPhoto("1521737711867-e3b97375f902"),
+  // Paperwork / documents / organized files
+  files: unsplashPhoto("1454165804606-c3d57bc86b40"),
+  // Professional handshake / B2B networking
+  linkedin: unsplashPhoto("1521737604893-d14cc237f11d"),
+  // Analytics dashboard / metrics wall
+  "activity-usage": unsplashPhoto("1551288049-bebda4e38f71"),
+  // AI / automation / neural imagery
+  "ai-chat": unsplashPhoto("1677442136019-21780ecad995"),
+  // Microphone / recording (replaces retired photo id that returned 404)
+  "live-voice": unsplashPhoto("1478737270239-2f02b77fc618"),
+  // Desk / documents / career (replaces retired photo id that returned 404)
+  resume: unsplashPhoto("1544716278-ca5e3f4abd8c"),
+};
 
 export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
   {
@@ -27,7 +59,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Filter with advanced VQL, manage columns, and use saved list views for repeat work.",
     href: ROUTES.CONTACTS,
     cta: "Open contacts",
-    src: slideImage("c360-crm-contacts"),
+    src: SLIDE_IMAGE["crm-contacts"],
   },
   {
     id: "companies",
@@ -37,7 +69,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Search companies, use facets, and keep org records aligned with your contact lists.",
     href: ROUTES.COMPANIES,
     cta: "Open companies",
-    src: slideImage("c360-companies"),
+    src: SLIDE_IMAGE.companies,
   },
   {
     id: "email-tools",
@@ -47,7 +79,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Find addresses, run bulk jobs, and verify deliverability before you send.",
     href: ROUTES.EMAIL,
     cta: "Email tools",
-    src: slideImage("c360-email-tools"),
+    src: SLIDE_IMAGE["email-tools"],
   },
   {
     id: "phone",
@@ -57,17 +89,16 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Find and validate phone numbers alongside your contact and company data.",
     href: ROUTES.PHONE,
     cta: "Phone tools",
-    src: slideImage("c360-phone"),
+    src: SLIDE_IMAGE.phone,
   },
   {
     id: "campaigns",
     name: "Campaigns & sequences",
     designation: "contact360.io",
-    quote:
-      "Build campaigns, templates, and multi-step sequences from one hub.",
+    quote: "Build campaigns, templates, and multi-step sequences from one hub.",
     href: ROUTES.CAMPAIGNS,
     cta: "Campaigns",
-    src: slideImage("c360-campaigns"),
+    src: SLIDE_IMAGE.campaigns,
   },
   {
     id: "hiring-signals",
@@ -77,7 +108,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Track job and hiring signals to prioritize outreach to the right orgs.",
     href: ROUTES.HIRING_SIGNALS,
     cta: "Hiring signals",
-    src: slideImage("c360-hiring-signals"),
+    src: SLIDE_IMAGE["hiring-signals"],
   },
   {
     id: "files",
@@ -87,7 +118,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Upload files, run batch flows, and keep assets tied to your workspace.",
     href: FILES_DRAWER_NAV_HREF,
     cta: "Open files",
-    src: slideImage("c360-files"),
+    src: SLIDE_IMAGE.files,
   },
   {
     id: "linkedin",
@@ -97,7 +128,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Export and work with LinkedIn data alongside your CRM in Contact360.",
     href: ROUTES.LINKEDIN,
     cta: "LinkedIn",
-    src: slideImage("c360-linkedin"),
+    src: SLIDE_IMAGE.linkedin,
   },
   {
     id: "activity-usage",
@@ -107,7 +138,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "See the activity feed, monitor feature usage, and check limits in one place.",
     href: activitiesTabRoute("usage"),
     cta: "View usage",
-    src: slideImage("c360-activity-usage"),
+    src: SLIDE_IMAGE["activity-usage"],
   },
   {
     id: "ai-chat",
@@ -117,7 +148,7 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Ask questions, summarize context, and draft outreach with your org data in scope.",
     href: ROUTES.AI_CHAT,
     cta: "Open AI chat",
-    src: slideImage("c360-ai-chat"),
+    src: SLIDE_IMAGE["ai-chat"],
   },
   {
     id: "live-voice",
@@ -127,16 +158,15 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
       "Open AI Chat and use the mic in the composer for real-time voice when your plan includes it.",
     href: ROUTES.AI_CHAT,
     cta: "Open AI chat",
-    src: slideImage("c360-live-voice"),
+    src: SLIDE_IMAGE["live-voice"],
   },
   {
     id: "resume",
     name: "Resume & profiles",
     designation: "contact360.io",
-    quote:
-      "Build and work with resume-centric flows for candidates and roles.",
+    quote: "Build and work with resume-centric flows for candidates and roles.",
     href: ROUTES.RESUME,
     cta: "Resume",
-    src: slideImage("c360-resume"),
+    src: SLIDE_IMAGE.resume,
   },
 ];

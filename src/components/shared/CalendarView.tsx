@@ -12,9 +12,20 @@ export interface CalendarEvent {
   color?: string;
 }
 
+export function sameCalendarDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 interface CalendarViewProps {
   events?: CalendarEvent[];
   height?: number | string;
+  /** Controlled selection (local midnight). Omit for uncontrolled. */
+  selectedDate?: Date | null;
+  onSelectDate?: (date: Date) => void;
 }
 
 const MONTHS = [
@@ -33,14 +44,31 @@ const MONTHS = [
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+function startOfLocalDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
 /**
  * Lightweight calendar rendered with CSS grid. Shows a month grid
  * with event indicator bars per day. No jQuery/FullCalendar dependency.
  */
-export function CalendarView({ events = [], height = 420 }: CalendarViewProps) {
+export function CalendarView({
+  events = [],
+  height = 420,
+  selectedDate: selectedDateProp,
+  onSelectDate,
+}: CalendarViewProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonthRaw] = useState(today.getMonth());
+  const [internalSelected, setInternalSelected] = useState<Date>(() =>
+    startOfLocalDay(today),
+  );
+
+  const controlled = selectedDateProp !== undefined;
+  const selectedDate = controlled ? selectedDateProp : internalSelected;
 
   const setMonth = (m: number) => {
     if (m < 0) {
@@ -75,6 +103,12 @@ export function CalendarView({ events = [], height = 420 }: CalendarViewProps) {
     today.getFullYear() === year && today.getMonth() === month
       ? today.getDate()
       : -1;
+
+  const selectDay = (day: number) => {
+    const d = startOfLocalDay(new Date(year, month, day));
+    onSelectDate?.(d);
+    if (!controlled) setInternalSelected(d);
+  };
 
   const rootRef = useCSSVars<HTMLDivElement>({
     "--c360-calendar-view-h":
@@ -117,57 +151,74 @@ export function CalendarView({ events = [], height = 420 }: CalendarViewProps) {
         {cells.map((day, i) => {
           const evs = day ? (eventsByDay[day] ?? []) : [];
           const isToday = day === todayDay;
+          const isSelected =
+            day != null &&
+            selectedDate != null &&
+            sameCalendarDay(
+              selectedDate,
+              startOfLocalDay(new Date(year, month, day)),
+            );
+
+          if (day == null) {
+            return (
+              <div
+                key={i}
+                className="c360-calendar-view__cell c360-calendar-view__cell--empty"
+                role="presentation"
+              />
+            );
+          }
+
           return (
-            <div
+            <button
               key={i}
+              type="button"
               className={cn(
                 "c360-calendar-view__cell",
-                day == null && "c360-calendar-view__cell--empty",
-                day != null && !isToday && "c360-calendar-view__cell--day",
+                !isToday && "c360-calendar-view__cell--day",
                 isToday && "c360-calendar-view__cell--today",
+                isSelected && "c360-calendar-view__cell--selected",
               )}
+              onClick={() => selectDay(day)}
+              aria-label={`${MONTHS[month]} ${day}, ${year}`}
             >
-              {day != null && (
-                <>
+              <span
+                className={cn(
+                  "c360-calendar-view__day-num",
+                  isToday
+                    ? "c360-calendar-view__day-num--today"
+                    : "c360-calendar-view__day-num--day",
+                )}
+              >
+                {day}
+              </span>
+              <div className="c360-calendar-view__events">
+                {evs.slice(0, 2).map((ev) => (
+                  <div
+                    key={ev.id}
+                    title={ev.title}
+                    className="c360-calendar-view__event-bar"
+                    ref={(el) =>
+                      applyVars(el, {
+                        "--c360-cal-event-bg": ev.color ?? null,
+                      })
+                    }
+                  />
+                ))}
+                {evs.length > 2 && (
                   <span
                     className={cn(
-                      "c360-calendar-view__day-num",
+                      "c360-calendar-view__more",
                       isToday
-                        ? "c360-calendar-view__day-num--today"
-                        : "c360-calendar-view__day-num--day",
+                        ? "c360-calendar-view__more--today"
+                        : "c360-calendar-view__more--muted",
                     )}
                   >
-                    {day}
+                    +{evs.length - 2}
                   </span>
-                  <div className="c360-calendar-view__events">
-                    {evs.slice(0, 2).map((ev) => (
-                      <div
-                        key={ev.id}
-                        title={ev.title}
-                        className="c360-calendar-view__event-bar"
-                        ref={(el) =>
-                          applyVars(el, {
-                            "--c360-cal-event-bg": ev.color ?? null,
-                          })
-                        }
-                      />
-                    ))}
-                    {evs.length > 2 && (
-                      <span
-                        className={cn(
-                          "c360-calendar-view__more",
-                          isToday
-                            ? "c360-calendar-view__more--today"
-                            : "c360-calendar-view__more--muted",
-                        )}
-                      >
-                        +{evs.length - 2}
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            </button>
           );
         })}
       </div>

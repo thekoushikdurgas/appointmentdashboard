@@ -587,7 +587,7 @@ export const billingService = {
   }) =>
     graphqlMutation<{
       billing: { uploadPaymentReceiptPhoto: PaymentReceiptUploadResult };
-    }>(UPLOAD_PAYMENT_RECEIPT_PHOTO, { input }),
+    }>(UPLOAD_PAYMENT_RECEIPT_PHOTO, { input }, { showToastOnError: false }),
 
   submitPaymentProof: (input: {
     amount: number;

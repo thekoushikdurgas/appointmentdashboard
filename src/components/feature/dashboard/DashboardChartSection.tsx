@@ -55,7 +55,11 @@ export function DashboardChartSection({
         <EmailActivityChart data={emailChartData} />
       </Card>
 
-      <Card title="Recent Activity" subtitle="Latest events">
+      <Card
+        title="Recent Activity"
+        subtitle="Latest events"
+        className="c360-dashboard-recent-activity-card"
+      >
         <DashboardActivityFeed items={activity} />
       </Card>
     </div>

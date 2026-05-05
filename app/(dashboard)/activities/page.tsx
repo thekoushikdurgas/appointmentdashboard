@@ -386,7 +386,22 @@ export default function ActivitiesPage() {
 
   return (
     <DashboardPageLayout className="c360-dashboard-layout--activities">
-      <div className="c360-dashboard-layout__activities-column">
+      {activeTab !== "usage" && (
+        <aside
+          className="c360-dashboard-layout__activities-filters"
+          aria-label="Activity filters"
+        >
+          <ActivityFiltersBar
+            layout="rail"
+            values={filterForm}
+            onChange={setFilterForm}
+            onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
+            disabled={loading}
+          />
+        </aside>
+      )}
+
+      <div className="c360-dashboard-layout__activities-main">
         {error && activeTab !== "usage" && (
           <p className="c360-input-error c360-mb-4" role="alert">
             {error}
@@ -395,13 +410,6 @@ export default function ActivitiesPage() {
 
         {activeTab !== "usage" && (
           <>
-            <ActivityFiltersBar
-              values={filterForm}
-              onChange={setFilterForm}
-              onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
-              disabled={loading}
-            />
-
             <div className="c360-flex c360-flex-wrap c360-justify-between c360-items-center c360-gap-3 c360-mb-4">
               <p className="c360-text-sm c360-text-muted c360-m-0">
                 Showing{" "}

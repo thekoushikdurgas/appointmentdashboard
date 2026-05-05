@@ -184,7 +184,9 @@ export default function DataPageLayout({
             className={cn(
               "c360-data-layout__filters",
               peekDesktop && "c360-data-layout__filters--peek-rail",
-              peekDesktop && filtersPeekPinned && "c360-data-layout__filters--peek-pinned",
+              peekDesktop &&
+                filtersPeekPinned &&
+                "c360-data-layout__filters--peek-pinned",
             )}
             aria-label={filtersAriaLabel}
           >

@@ -769,7 +769,7 @@ export default function ContactsPage() {
         })()}
 
       <Card padding="none">
-        <div className="c360-p-4">
+        <div className="c360-p-0">
           <ContactsDataTable
             contacts={contacts}
             total={total}

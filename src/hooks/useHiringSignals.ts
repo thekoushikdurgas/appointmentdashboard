@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
@@ -9,7 +10,80 @@ import {
   type HireSignalApiJson,
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
-import { toast } from "sonner";
+
+function strTrim(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  return s;
+}
+
+/** First non-empty string among top-level keys and nested raw_payload (scraper/apify). */
+function firstNonEmpty(...vals: unknown[]): string {
+  for (const v of vals) {
+    const s = strTrim(v);
+    if (s) return s;
+  }
+  return "";
+}
+
+function workplaceTypesFromRecord(o: Record<string, unknown>): string[] {
+  const wt = o.workplaceTypes ?? o.workplace_types;
+  if (!Array.isArray(wt)) return [];
+  return wt.map((x) => String(x)).filter(Boolean);
+}
+
+/** When API `title` is empty, derive a single-line label from description (runtime-confirmed gap). */
+function titleFromJobDescription(plain: string, htmlFallback: string): string {
+  const blocks = [
+    plain.trim(),
+    htmlFallback
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  ];
+  for (const block of blocks) {
+    if (!block) continue;
+    const lines = block
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    for (const line of lines) {
+      let cand = line;
+      const posMatch = /^position\s*:\s*(.+)$/i.exec(line);
+      if (posMatch?.[1]?.trim()) cand = posMatch[1].trim();
+      if (cand.length < 4 || cand.length > 240) continue;
+      const lower = cand.toLowerCase();
+      if (
+        /^(about the job|job description|overview|responsibilities)\b/.test(
+          lower,
+        )
+      )
+        continue;
+      return cand.length > 200 ? `${cand.slice(0, 197)}…` : cand;
+    }
+    const sentence = block.split(/(?<=[.!?])\s+/)[0]?.trim() ?? "";
+    if (sentence.length >= 4 && sentence.length <= 240) {
+      const lower = sentence.toLowerCase();
+      if (!/^(about the job|job description)\b/.test(lower))
+        return sentence.length > 200 ? `${sentence.slice(0, 197)}…` : sentence;
+    }
+  }
+  return "";
+}
+
+/** RFC3339 strings from API; omit Go zero times (`0001-01-01…`). */
+function strIso(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  if (!s) return "";
+  if (s.startsWith("0001-01-01")) return "";
+  const ms = Date.parse(s);
+  if (!Number.isNaN(ms)) {
+    const y = new Date(ms).getUTCFullYear();
+    if (y < 1970) return "";
+  }
+  return s;
+}
 
 function sevenDaysAgoYmd(): string {
   const d = new Date();
@@ -55,6 +129,8 @@ export interface LinkedInJobRow {
   companyDescription: string;
   location: string;
   lastSeen: string;
+  /** From job.server `workplaceTypes` — used when `remoteAllowed` is absent. */
+  workplaceTypes?: string[];
 }
 
 function parseJobListPayload(raw: unknown): {
@@ -72,6 +148,63 @@ function parseJobListPayload(raw: unknown): {
 
 function mapJobRow(item: unknown): LinkedInJobRow {
   const o = asRecord(item) ?? {};
+  const raw = asRecord(o.rawPayload) ?? asRecord(o.raw_payload) ?? {};
+
+  let title = firstNonEmpty(o.title, raw.job_title, raw.title, raw.name);
+  if (!title) {
+    title = titleFromJobDescription(
+      String(
+        o.descriptionText ?? raw.job_description ?? raw.description_text ?? "",
+      ),
+      String(
+        o.descriptionHTML ??
+          o.descriptionHtml ??
+          o.description ??
+          raw.description_html ??
+          "",
+      ),
+    );
+  }
+
+  const location = firstNonEmpty(
+    o.formattedLocationFull,
+    o.location,
+    o.location_str,
+    raw.job_location,
+    raw.location,
+    raw.formattedLocationFull,
+    raw.formatted_location_full,
+  );
+
+  const postedAt = firstNonEmpty(
+    strIso(o.postedAt),
+    strIso(o.posted_at),
+    strIso(raw.time_posted),
+    strIso(raw.postedAt),
+    strIso(raw.posted_at),
+    strIso(o.ingestedAt),
+    strIso(o.ingested_at),
+    strIso(o.updatedAt),
+    strIso(o.updated_at),
+  );
+
+  const jobUrl = firstNonEmpty(
+    o.jobUrl,
+    o.job_url,
+    o.link,
+    raw.linkedin_job_url,
+    raw.link,
+  );
+
+  const workplaceTypes = workplaceTypesFromRecord(o);
+  let remoteAllowed = String(o.remoteAllowed ?? o.remote_allowed ?? "");
+  if (!remoteAllowed.trim() && workplaceTypes.length > 0) {
+    const blob = workplaceTypes.join(" ").toLowerCase();
+    if (blob.includes("remote") || blob.includes("hybrid")) {
+      remoteAllowed = workplaceTypes.join(", ");
+    }
+  }
+
   return {
     id: typeof o.id === "string" ? o.id : String(o._id ?? ""),
     linkedinJobId: String(o.linkedinJobId ?? o.linkedin_job_id ?? ""),
@@ -88,14 +221,19 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     companyLogoUrl: String(o.companyLogoUrl ?? o.company_logo_url ?? ""),
     companyStaffCount:
       Number(o.companyStaffCount ?? o.company_staff_count ?? 0) || 0,
-    title: String(o.title ?? ""),
+    title,
     descriptionHtml: String(
-      o.descriptionHTML ?? o.descriptionHtml ?? o.description ?? "",
+      o.descriptionHTML ??
+        o.descriptionHtml ??
+        o.description ??
+        raw.description_html ??
+        raw.descriptionHtml ??
+        "",
     ),
-    postedAt: String(o.postedAt ?? o.posted_at ?? ""),
-    jobUrl: String(o.jobUrl ?? o.job_url ?? ""),
+    postedAt,
+    jobUrl,
     jobState: String(o.jobState ?? o.job_state ?? ""),
-    remoteAllowed: String(o.remoteAllowed ?? o.remote_allowed ?? ""),
+    remoteAllowed,
     employmentType: String(o.employmentType ?? o.employment_type ?? ""),
     seniority: String(o.seniorityLevel ?? o.seniority ?? ""),
     functionCategory: String(
@@ -108,10 +246,9 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     companyDescription: String(
       o.companyDescriptionV2 ?? o.company_description_v2 ?? "",
     ),
-    location: String(
-      o.formattedLocationFull ?? o.location_str ?? o.location ?? "",
-    ),
+    location,
     lastSeen: String(o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? ""),
+    workplaceTypes,
   };
 }
 

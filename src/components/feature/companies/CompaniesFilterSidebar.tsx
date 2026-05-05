@@ -107,10 +107,7 @@ export function CompaniesFilterSidebar({
       <div className="c360-contacts-filters__head-row">
         <div className="c360-contacts-filters__head-text">
           <div className="c360-contacts-filters__head">
-            <h2
-              id={drawerTitleId}
-              className="c360-contacts-filters__title"
-            >
+            <h2 id={drawerTitleId} className="c360-contacts-filters__title">
               Filters
             </h2>
           </div>

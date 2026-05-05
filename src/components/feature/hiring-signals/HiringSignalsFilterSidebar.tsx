@@ -320,10 +320,7 @@ export function HiringSignalsFilterSidebar({
       <div className="c360-contacts-filters__head-row">
         <div className="c360-contacts-filters__head-text">
           <div className="c360-contacts-filters__head">
-            <h2
-              id={drawerTitleId}
-              className="c360-contacts-filters__title"
-            >
+            <h2 id={drawerTitleId} className="c360-contacts-filters__title">
               Refine signals
             </h2>
           </div>
@@ -498,7 +495,7 @@ export function HiringSignalsFilterSidebar({
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Seniority
           </p>
-          <div className="c360-mb-2 c360-space-y-2">
+          <div className="c360-mb-2">
             <Select
               id="hsf-seniority-preset"
               value={draft.seniorityPreset}
@@ -507,18 +504,11 @@ export function HiringSignalsFilterSidebar({
               fullWidth
               inputSize="md"
             />
-            <Input
-              id="hsf-seniority-custom"
-              value={draft.seniorityCustom}
-              onChange={(e) => onDraftField("seniorityCustom", e.target.value)}
-              placeholder="Or custom seniority / regex token"
-              autoComplete="off"
-            />
           </div>
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Function / department
           </p>
-          <div className="c360-space-y-2">
+          <div>
             <Select
               id="hsf-func-preset"
               value={draft.functionPreset}
@@ -526,13 +516,6 @@ export function HiringSignalsFilterSidebar({
               options={FUNCTION_PRESET_OPTIONS}
               fullWidth
               inputSize="md"
-            />
-            <Input
-              id="hsf-func-custom"
-              value={draft.functionCustom}
-              onChange={(e) => onDraftField("functionCustom", e.target.value)}
-              placeholder="Or custom (function_category_v2)"
-              autoComplete="off"
             />
           </div>
         </ContactsCollapsibleFilterSection>
@@ -769,19 +752,6 @@ export function HiringSignalsFilterSidebar({
             onDraftField("postedBefore", "");
           }}
         >
-          <label
-            htmlFor="hsf-posted-after"
-            className="c360-block c360-text-2xs c360-text-ink-muted"
-          >
-            Posted after
-          </label>
-          <Input
-            id="hsf-posted-after"
-            type="date"
-            value={draft.postedAfter}
-            onChange={(e) => onDraftField("postedAfter", e.target.value)}
-            className="c360-mb-2"
-          />
           <label
             htmlFor="hsf-posted-before"
             className="c360-block c360-text-2xs c360-text-ink-muted"

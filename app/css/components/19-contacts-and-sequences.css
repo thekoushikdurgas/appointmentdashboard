@@ -534,7 +534,6 @@
   > .c360-data-layout
   > .c360-data-layout__filters {
   flex: 0 0 auto;
-  height: fit-content;
 }
 
 .c360-page.c360-contacts-page
@@ -555,6 +554,55 @@
   flex: 1;
   min-width: 0;
   gap: 0;
+}
+
+/* Contacts & companies: flush chrome for filter rail + toolbar + table card (aligned strip) */
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__filters--peek-rail,
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__filters--peek-rail {
+  border-radius: 0;
+}
+
+@media (hover: hover) {
+  .c360-page.c360-contacts-page
+    > .c360-data-layout
+    > .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    ):is(:hover, :focus-within),
+  .c360-page.c360-companies-page
+    > .c360-data-layout
+    > .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    ):is(:hover, :focus-within) {
+    border-radius: 0;
+  }
+}
+
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar
+  .c360-toolbar,
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar
+  .c360-toolbar {
+  border-radius: 0;
+}
+
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-card,
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-card {
+  border-radius: 0;
 }
 
 /* Stacked toolbar rows, full-width action cluster */

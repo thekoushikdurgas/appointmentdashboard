@@ -490,7 +490,31 @@ export async function fetchHireSignalJobFilterOptions(
     },
     HS_GQL,
   );
-  return parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
+  const parsed = parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
+  // #region agent log
+  if (field === "title") {
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "dca5f5",
+      },
+      body: JSON.stringify({
+        sessionId: "dca5f5",
+        location: "hiringSignalService.ts:fetchHireSignalJobFilterOptions",
+        message: "title jobFilterOptions parsed",
+        data: {
+          optionCount: parsed.length,
+          sampleValues: parsed.slice(0, 5).map((r) => r.value),
+        },
+        timestamp: Date.now(),
+        hypothesisId: "H-title-facet",
+        runId: "post-fix-verify",
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
+  return parsed;
 }
 
 export async function fetchHiringSignalStats() {

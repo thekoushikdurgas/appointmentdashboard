@@ -261,14 +261,13 @@ a:hover {
 }
 
 /* ─── Page enter animation ───────────────────────────────────────────────── */
+/* Opacity only — avoid transform on `.c360-page` or sticky descendants break (transform creates a containing block) */
 @keyframes c360-fade-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

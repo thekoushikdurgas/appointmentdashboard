@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "node",
+    globals: true,
     exclude: ["e2e/**", "node_modules/**", ".next/**"],
     // On Actions, add github-actions so Vitest writes the Job Summary (Vitest Test Report).
     // If you ever set reporters explicitly, the github-actions reporter must be listed or the summary disappears.

@@ -71,7 +71,11 @@ export function MobileBottomDock({
               title={label}
               onClick={() => onNavigate?.()}
             >
-              <Icon size={22} className="c360-shell-bottom-nav__icon" aria-hidden />
+              <Icon
+                size={22}
+                className="c360-shell-bottom-nav__icon"
+                aria-hidden
+              />
               <span className="c360-shell-bottom-nav__label">{label}</span>
             </Link>
           );
@@ -88,7 +92,11 @@ export function MobileBottomDock({
           aria-controls="c360-app-sidebar"
           title={mobileDrawerOpen ? "Close menu" : "Open menu"}
         >
-          <PanelLeft size={22} className="c360-shell-bottom-nav__icon" aria-hidden />
+          <PanelLeft
+            size={22}
+            className="c360-shell-bottom-nav__icon"
+            aria-hidden
+          />
           <span className="c360-shell-bottom-nav__label">Menu</span>
         </button>
       </div>

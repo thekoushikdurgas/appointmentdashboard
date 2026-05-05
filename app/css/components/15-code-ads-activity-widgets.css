@@ -322,14 +322,99 @@
   display: contents;
 }
 
-/* Activities page — calendar card: compact, columnar shell */
+/* Activities page — calendar card (activitycalender.md: month grid + footer slots) */
 .c360-card--activity-calendar-tab {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
   min-width: 0;
-  max-width: none;
+}
+
+.c360-card--activity-calendar-tab .c360-card__footer {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: var(--c360-spacing-4);
+  background: var(--c360-bg-elevated);
+}
+
+.c360-activity-calendar-tab__calendar-wrap {
+  padding: var(--c360-spacing-4) var(--c360-spacing-4) var(--c360-spacing-3);
+}
+
+.c360-activity-calendar-tab__footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+  width: 100%;
+}
+
+.c360-activity-calendar-tab__footer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  padding: 0 var(--c360-spacing-1);
+}
+
+.c360-activity-calendar-tab__selected-label {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+}
+
+.c360-activity-calendar-tab__add-btn {
+  min-width: 32px;
+  min-height: 32px;
+  padding: var(--c360-spacing-1);
+}
+
+.c360-activity-calendar-tab__event-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+}
+
+.c360-activity-calendar-tab__empty {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  padding: var(--c360-spacing-2) 0;
+}
+
+.c360-activity-calendar-tab__event-slot {
+  position: relative;
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2)
+    calc(var(--c360-spacing-2) + 6px);
+  background: var(--c360-bg-secondary);
+  box-sizing: border-box;
+}
+
+.c360-activity-calendar-tab__event-slot::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: var(--c360-spacing-2);
+  bottom: var(--c360-spacing-2);
+  width: 3px;
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-cal-slot-accent, var(--c360-primary));
+  opacity: 0.85;
+}
+
+.c360-activity-calendar-tab__event-title {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+}
+
+.c360-activity-calendar-tab__event-time {
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  margin-top: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

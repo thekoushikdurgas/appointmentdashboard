@@ -177,7 +177,7 @@ export default function DashboardPage() {
         ]);
 
         setActivity(
-          actItems.slice(0, 8).map((a) => ({
+          actItems.slice(0, 5).map((a) => ({
             id: a.id,
             text: `${a.serviceType} · ${a.actionType} · ${a.status}`,
             time: a.createdAt,

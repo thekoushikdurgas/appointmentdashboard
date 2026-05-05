@@ -392,9 +392,10 @@
   width: 100%;
 }
 
-.c360-page.c360-hiring-signals-page > .c360-data-layout > .c360-data-layout__filters {
+.c360-page.c360-hiring-signals-page
+  > .c360-data-layout
+  > .c360-data-layout__filters {
   flex: 0 0 auto;
-  height: fit-content;
 }
 
 .c360-page.c360-hiring-signals-page

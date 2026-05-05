@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useId, useMemo } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import {
@@ -66,19 +67,22 @@ function EmailActivityTooltip({
   return (
     <div className="c360-dashboard-email-chart__tooltip">
       <div className="c360-dashboard-email-chart__tooltip-date">{label}</div>
-      {payload.map((item) => (
-        <div
-          key={String(item.dataKey ?? item.name)}
-          className="c360-dashboard-email-chart__tooltip-row"
-        >
-          <span style={{ color: item.color }}>{item.name}</span>
-          <span className="c360-dashboard-email-chart__tooltip-value">
-            {typeof item.value === "number"
-              ? item.value.toLocaleString()
-              : item.value}
-          </span>
-        </div>
-      ))}
+      {payload.map((item) => {
+        const nameStyle: CSSProperties = { color: item.color };
+        return (
+          <div
+            key={String(item.dataKey ?? item.name)}
+            className="c360-dashboard-email-chart__tooltip-row"
+          >
+            <span style={nameStyle}>{item.name}</span>
+            <span className="c360-dashboard-email-chart__tooltip-value">
+              {typeof item.value === "number"
+                ? item.value.toLocaleString()
+                : item.value}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -147,6 +151,12 @@ export function EmailActivityChart({ data }: EmailActivityChartProps) {
   }
 
   const primaryRgb = rgbaFromHex(CHART_COLORS.primary, 0.35);
+  const legendPrimarySwatch: CSSProperties = {
+    background: CHART_COLORS.primary,
+  };
+  const legendAccentSwatch: CSSProperties = {
+    background: CHART_COLORS.accent,
+  };
 
   return (
     <div className="c360-dashboard-email-chart">
@@ -236,7 +246,7 @@ export function EmailActivityChart({ data }: EmailActivityChartProps) {
         <span className="c360-dashboard-email-chart__legend-item">
           <span
             className="c360-dashboard-email-chart__legend-swatch"
-            style={{ background: CHART_COLORS.primary }}
+            style={legendPrimarySwatch}
             aria-hidden
           />
           Email Finder
@@ -244,7 +254,7 @@ export function EmailActivityChart({ data }: EmailActivityChartProps) {
         <span className="c360-dashboard-email-chart__legend-item">
           <span
             className="c360-dashboard-email-chart__legend-swatch"
-            style={{ background: CHART_COLORS.accent }}
+            style={legendAccentSwatch}
             aria-hidden
           />
           Verifier

@@ -1,5 +1,6 @@
-﻿@echo off
-setlocal enabledelayedexpansion
+@echo off
+REM Save as UTF-8 without BOM. A leading BOM makes CMD fail on the first line (mojibake before @echo).
+setlocal EnableDelayedExpansion
 
 REM ========================================
 REM CONTACT360 DASHBOARD - CODEBASE STATE CHECK
@@ -43,23 +44,25 @@ set "START_TIME=%TIME%"
 set "TOTAL_SECTIONS=10"
 set "SECTION6_COVERAGE_STATUS=SKIPPED"
 
-REM Enable ANSI color support - Windows 10 or newer
-for /f %%A in ('echo prompt $E ^| cmd') do set "ESC=%%A"
-
+REM ANSI ESC (char 27). Avoid "prompt $E | cmd" — on some Windows builds it captures "(c)" / prompt text and
+REM breaks CALL :color_echo (parentheses in expanded args). PowerShell is reliable on modern Windows.
+set "ESC="
+for /f "delims=" %%A in ('powershell -NoProfile -Command "Write-Output ([char]27)" 2^>nul') do set "ESC=%%A"
 set "GREEN=%ESC%[92m"
 set "RED=%ESC%[91m"
 set "YELLOW=%ESC%[93m"
 set "BLUE=%ESC%[94m"
 set "CYAN=%ESC%[96m"
-set "RESET=%ESC%[0m"
 
 goto :main
 
 :color_echo
-setlocal enabledelayedexpansion
-set "color_code=%~1"
-set "text=%~2"
-echo !color_code!!text!
+setlocal EnableDelayedExpansion
+REM Prefix/strip: CMD treats values starting with "=" as part of the name (breaks separator lines of "=").
+set "_ce_c=%~1"
+set "_ce_t=x%~2"
+set "_ce_t=!_ce_t:~1!"
+echo !_ce_c!!_ce_t!
 endlocal
 goto :eof
 
