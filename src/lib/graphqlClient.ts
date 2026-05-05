@@ -247,6 +247,39 @@ export async function graphqlRequest<T = unknown>(
         }
 
         if (errors.length > 0) {
+          // #region agent log
+          const opMatch = query.match(/\b(query|mutation|subscription)\s+(\w+)/);
+          fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "6c3f2b",
+              },
+              body: JSON.stringify({
+                sessionId: "6c3f2b",
+                location: "graphqlClient.ts:graphqlRequest",
+                message: "GraphQL errors before throw",
+                data: {
+                  documentOp: opMatch?.[2] ?? null,
+                  variableKeys: variables ? Object.keys(variables) : [],
+                  errorsBrief: errors.map((e) => ({
+                    m: e.message,
+                    path: e.path,
+                    code: e.extensions?.code,
+                    service: e.extensions?.service,
+                    extOperation: e.extensions?.operation,
+                    resourceType: e.extensions?.resourceType,
+                    identifier: e.extensions?.identifier,
+                  })),
+                },
+                timestamp: Date.now(),
+                hypothesisId: "H1-H5",
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
           const parsed = parseGraphQLError(errors);
           const apiError = new Error(parsed.message) as Error & {
             parsedError?: ParsedGraphQLError;

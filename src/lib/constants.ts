@@ -69,6 +69,11 @@ export const STORAGE_KEYS = {
   THEME: "c360-theme",
   SIDEBAR_COLLAPSED: "c360-sidebar-collapsed",
   LAST_ROUTE: "c360-last-route",
+  /** Data page filter panel pin (desktop peek rail); one key per surface. */
+  DATA_FILTERS_PEEK_PINNED_CONTACTS: "c360-data-filters-peek-pinned-contacts",
+  DATA_FILTERS_PEEK_PINNED_COMPANIES: "c360-data-filters-peek-pinned-companies",
+  DATA_FILTERS_PEEK_PINNED_HIRING_SIGNALS:
+    "c360-data-filters-peek-pinned-hiring-signals",
 } as const;
 
 /* ─── Sidebar navigation (sections + leaves; see navConfig) ───────────────── */

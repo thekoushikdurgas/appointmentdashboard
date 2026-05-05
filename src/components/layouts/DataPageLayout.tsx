@@ -1,7 +1,20 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { SlidersHorizontal } from "lucide-react";
+"use client";
+
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
+import {
+  DataFiltersPeekProvider,
+  dataFiltersPeekPinnedStorageKey,
+  type DataFiltersPeekScope,
+} from "@/context/DataFiltersPeekContext";
+import { FilterPeekPinButton } from "@/components/layouts/FilterPeekPinButton";
 
 export interface DataPageLayoutProps {
   filters?: ReactNode;
@@ -28,11 +41,15 @@ export interface DataPageLayoutProps {
   mobileFiltersOpen?: boolean;
   onMobileFiltersClose?: () => void;
   /**
-   * Desktop: collapse filter rail (icon strip) until hover/focus-within peels it open —
-   * same UX idea as docs/frontend/ideas/mydesigns/sidebar.md (narrow rail → expand).
+   * Desktop: collapse filter panel until hover/focus-within peels it open —
+   * same UX idea as docs/frontend/ideas/mydesigns/sidebar.md (narrow strip → expand).
    * Ignored on mobile (filters use drawer).
    */
   filtersPeekRail?: boolean;
+  /**
+   * When `filtersPeekRail` is true, identifies which localStorage key to use for pin state.
+   */
+  filtersPeekScope?: DataFiltersPeekScope;
 }
 
 export default function DataPageLayout({
@@ -48,9 +65,14 @@ export default function DataPageLayout({
   mobileFiltersOpen = false,
   onMobileFiltersClose,
   filtersPeekRail = false,
+  filtersPeekScope,
 }: DataPageLayoutProps) {
   const isDesktop = useIsDesktop();
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [filtersPeekPinned, setFiltersPeekPinned] = useState(false);
+
+  const peekDesktop = Boolean(filtersPeekRail && isDesktop);
+  const peekWithPin = Boolean(peekDesktop && filtersPeekScope);
 
   useEffect(() => {
     if (!mobileFiltersOpen || isDesktop) return;
@@ -72,6 +94,35 @@ export default function DataPageLayout({
     return undefined;
   }, [mobileFiltersOpen, isDesktop]);
 
+  useEffect(() => {
+    if (!peekWithPin || !filtersPeekScope) return;
+    try {
+      const v = localStorage.getItem(
+        dataFiltersPeekPinnedStorageKey(filtersPeekScope),
+      );
+      setFiltersPeekPinned(v === "true");
+    } catch {
+      /* ignore */
+    }
+  }, [peekWithPin, filtersPeekScope]);
+
+  const toggleFiltersPeekPinned = useCallback(() => {
+    setFiltersPeekPinned((prev) => {
+      const next = !prev;
+      if (filtersPeekScope && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(
+            dataFiltersPeekPinnedStorageKey(filtersPeekScope),
+            next ? "true" : "false",
+          );
+        } catch {
+          /* ignore */
+        }
+      }
+      return next;
+    });
+  }, [filtersPeekScope]);
+
   const showFilterPanel = showFilters && filters;
   /** Drawer UX only when parent passes close handler (contacts page). */
   const filterDrawerControlled = onMobileFiltersClose !== undefined;
@@ -88,6 +139,17 @@ export default function DataPageLayout({
       drawerRef.current?.focus();
     }
   }, [drawerOpen]);
+
+  const filtersPeekShell = (
+    <div className="c360-data-layout__filters-body">
+      {peekWithPin ? (
+        <div className="c360-data-layout__filters-body-pin">
+          <FilterPeekPinButton />
+        </div>
+      ) : null}
+      <div className="c360-data-layout__filters-body-scroll">{filters}</div>
+    </div>
+  );
 
   if (!showFilterPanel) {
     return (
@@ -121,28 +183,24 @@ export default function DataPageLayout({
           <aside
             className={cn(
               "c360-data-layout__filters",
-              filtersPeekRail &&
-                isDesktop &&
-                "c360-data-layout__filters--peek-rail",
+              peekDesktop && "c360-data-layout__filters--peek-rail",
+              peekDesktop && filtersPeekPinned && "c360-data-layout__filters--peek-pinned",
             )}
             aria-label={filtersAriaLabel}
           >
-            {filtersPeekRail && isDesktop ? (
-              <>
-                <button
-                  type="button"
-                  className="c360-data-layout__filters-rail"
-                  aria-label={`Expand ${filtersAriaLabel}`}
+            {peekDesktop ? (
+              peekWithPin ? (
+                <DataFiltersPeekProvider
+                  value={{
+                    pinned: filtersPeekPinned,
+                    togglePinned: toggleFiltersPeekPinned,
+                  }}
                 >
-                  <SlidersHorizontal
-                    size={20}
-                    strokeWidth={2}
-                    className="c360-data-layout__filters-rail-svg"
-                    aria-hidden
-                  />
-                </button>
-                <div className="c360-data-layout__filters-body">{filters}</div>
-              </>
+                  {filtersPeekShell}
+                </DataFiltersPeekProvider>
+              ) : (
+                filtersPeekShell
+              )
             ) : (
               filters
             )}

@@ -257,10 +257,14 @@ export const contactsService = {
   }): Promise<ContactGeoAnalyticsResult> => {
     const data = await graphqlQuery<{
       contacts: { contactGeoAnalytics: ContactGeoAnalyticsResult };
-    }>(CONTACT_GEO_ANALYTICS_QUERY, {
-      query: args.query ?? null,
-      includeCities: args.includeCities ?? false,
-    });
+    }>(
+      CONTACT_GEO_ANALYTICS_QUERY,
+      {
+        query: args.query ?? null,
+        includeCities: args.includeCities ?? false,
+      },
+      { showToastOnError: false },
+    );
     return data.contacts.contactGeoAnalytics;
   },
 

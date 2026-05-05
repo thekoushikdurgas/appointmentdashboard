@@ -626,6 +626,7 @@ export default function ContactsPage() {
       filtersAriaLabel="Contact filters"
       filterDrawerTitleId="c360-filter-drawer-title"
       filtersPeekRail
+      filtersPeekScope="contacts"
       className="c360-contacts-page"
     >
       <Modal

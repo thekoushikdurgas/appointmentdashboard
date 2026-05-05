@@ -738,6 +738,7 @@ function HiringSignalsPageBody({
             filtersAriaLabel="Hiring signal filters"
             filterDrawerTitleId="c360-hs-filter-drawer-title"
             filtersPeekRail
+            filtersPeekScope="hiring-signals"
             toolbar={signalsToolbar}
             filters={
               <HiringSignalsFilterSidebar

@@ -367,6 +367,7 @@ export default function CompaniesPage() {
       filtersAriaLabel="Company filters"
       filterDrawerTitleId="c360-companies-filter-drawer-title"
       filtersPeekRail
+      filtersPeekScope="companies"
       className="c360-companies-page"
     >
       <CompanyExportModal
