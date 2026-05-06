@@ -90,7 +90,9 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
 export type HiringSignalDraftField = keyof HiringSignalFilterDraft;
 
 /** Rolling window start instant as ISO string for job.server `posted_after`. */
-export function postedAfterISOFromPreset(preset: Exclude<DatePostedPreset, "any" | "custom">): string {
+export function postedAfterISOFromPreset(
+  preset: Exclude<DatePostedPreset, "any" | "custom">,
+): string {
   const now = Date.now();
   const ms =
     preset === "24h"

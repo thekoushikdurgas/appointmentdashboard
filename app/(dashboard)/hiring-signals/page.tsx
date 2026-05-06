@@ -100,7 +100,6 @@ function HiringSignalsPageBody({
     filters,
     setFilters,
     setPage,
-    setFilterField,
     refetch,
     currentPage,
   } = hiring;

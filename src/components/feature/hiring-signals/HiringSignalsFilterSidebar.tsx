@@ -36,7 +36,10 @@ const WORKPLACE_OPTIONS = [
   { value: "On-site", label: "On-site" },
 ];
 
-const WORKPLACE_SELECT_OPTIONS = [{ value: "", label: "Any" }, ...WORKPLACE_OPTIONS];
+const WORKPLACE_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...WORKPLACE_OPTIONS,
+];
 
 const APPLY_METHOD_OPTIONS = [
   { value: "", label: "Any" },
@@ -437,14 +440,10 @@ export function HiringSignalsFilterSidebar({
     draft.datePostedPreset === "30d"
   ) {
     const pk = draft.datePostedPreset;
-    addChip(
-      "dpreset",
-      `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
-      () => {
-        onDraftField("datePostedPreset", "any");
-        onDraftField("postedAfter", "");
-      },
-    );
+    addChip("dpreset", `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`, () => {
+      onDraftField("datePostedPreset", "any");
+      onDraftField("postedAfter", "");
+    });
   } else if (draft.postedAfter.trim()) {
     addChip("after", `Posted after ${draft.postedAfter}`, () => {
       onDraftField("postedAfter", "");
@@ -506,9 +505,7 @@ export function HiringSignalsFilterSidebar({
     )
       ? normalizedExperienceBuckets[0]
       : "";
-  const normalizedRoleTracks = normalizeHiringSignalTokenList(
-    draft.roleTracks,
-  );
+  const normalizedRoleTracks = normalizeHiringSignalTokenList(draft.roleTracks);
   const roleTrackSelectValue =
     normalizedRoleTracks.length === 1 &&
     ROLE_TRACK_OPTIONS.some((o) => o.value === normalizedRoleTracks[0])
@@ -524,9 +521,7 @@ export function HiringSignalsFilterSidebar({
     )
       ? normalizedEducationLevelMins[0]
       : "";
-  const normalizedIndustries = normalizeHiringSignalTokenList(
-    draft.industries,
-  );
+  const normalizedIndustries = normalizeHiringSignalTokenList(draft.industries);
   const industryIncludeSelectValue =
     normalizedIndustries.length === 1 &&
     INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
@@ -666,7 +661,6 @@ export function HiringSignalsFilterSidebar({
       ) : null}
 
       <div className="c360-hs-filters__sections">
-
         {onTableDensityChange ? (
           <ContactsCollapsibleFilterSection
             title="View"
@@ -717,8 +711,9 @@ export function HiringSignalsFilterSidebar({
         >
           {signalTimePreset === "new_7d" ? (
             <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              The Signals &quot;New&quot; tab also enforces jobs from at least the last 7 days;
-              the stricter window wins when combined with these presets.
+              The Signals &quot;New&quot; tab also enforces jobs from at least
+              the last 7 days; the stricter window wins when combined with these
+              presets.
             </p>
           ) : null}
           <Select

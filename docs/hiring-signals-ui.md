@@ -2,25 +2,25 @@
 
 ## LinkedIn-style filter mapping (UI draft → GraphQL / job.server)
 
-| LinkedIn-style control | Draft field(s) | Applied `JobListFilters` / `extendedJobFilters` | job.server query |
-|------------------------|----------------|--------------------------------------------------|-------------------|
-| Sort: Most recent | `listSort` (UI only; default `recent`) | (not sent) | Always `posted_at` desc in `List` |
-| Sort: Most relevant | `listSort` (disabled in UI) | — | **Not supported** (needs ranking design) |
-| Date posted presets | `datePostedPreset`, `postedAfter` | `postedAfter` | `posted_after` (RFC3339 or date) |
-| Posted on or before | `postedBefore` | `postedBefore` | `posted_before` |
-| Experience: seniority | `seniorityPreset`, `seniorityCustom` | `seniority` | `seniority` (regex on `seniority_level`) |
-| Experience: buckets | `experienceBuckets` | `experienceBuckets` | `experience_bucket` `$in` |
-| Company | `companies`, `excludedCompanies` | `companies`, `excludedCompanies` | `company`, `excluded_company` |
-| Job type | `employmentType`, `employmentTypes` | `employmentTypes` | `employment_type` |
-| Remote / workplace | `workplaceTypes` | `workplaceTypes` | `workplace_type` |
-| LinkedIn Apply | `applyMethod`, toggle sets `ComplexOnsiteApply` | `applyMethod` | `apply_method` (regex) |
-| Location | `locations`, `excludedLocations` | … | `location`, `excluded_location` |
-| Industry | `industries`, `excludedIndustries` | … | `industry`, `excluded_industry` |
-| Job function | `functionPreset`, `functionCustom` | `functionCategory` | `function` → `function_category_v2` |
-| Title | `titles`, `excludedTitles` | … | `title`, `excluded_title` |
-| Country | `countries` | `countries` | `country` |
-| Role & education | `roleTracks`, `educationLevelMins` | `roleTracks`, `educationLevelMins` | `role_track`, `education_level_min` |
-| **Has verifications** | — | — | **No field** in job documents |
+| LinkedIn-style control | Draft field(s)                                  | Applied `JobListFilters` / `extendedJobFilters` | job.server query                         |
+| ---------------------- | ----------------------------------------------- | ----------------------------------------------- | ---------------------------------------- |
+| Sort: Most recent      | `listSort` (UI only; default `recent`)          | (not sent)                                      | Always `posted_at` desc in `List`        |
+| Sort: Most relevant    | `listSort` (disabled in UI)                     | —                                               | **Not supported** (needs ranking design) |
+| Date posted presets    | `datePostedPreset`, `postedAfter`               | `postedAfter`                                   | `posted_after` (RFC3339 or date)         |
+| Posted on or before    | `postedBefore`                                  | `postedBefore`                                  | `posted_before`                          |
+| Experience: seniority  | `seniorityPreset`, `seniorityCustom`            | `seniority`                                     | `seniority` (regex on `seniority_level`) |
+| Experience: buckets    | `experienceBuckets`                             | `experienceBuckets`                             | `experience_bucket` `$in`                |
+| Company                | `companies`, `excludedCompanies`                | `companies`, `excludedCompanies`                | `company`, `excluded_company`            |
+| Job type               | `employmentType`, `employmentTypes`             | `employmentTypes`                               | `employment_type`                        |
+| Remote / workplace     | `workplaceTypes`                                | `workplaceTypes`                                | `workplace_type`                         |
+| LinkedIn Apply         | `applyMethod`, toggle sets `ComplexOnsiteApply` | `applyMethod`                                   | `apply_method` (regex)                   |
+| Location               | `locations`, `excludedLocations`                | …                                               | `location`, `excluded_location`          |
+| Industry               | `industries`, `excludedIndustries`              | …                                               | `industry`, `excluded_industry`          |
+| Job function           | `functionPreset`, `functionCustom`              | `functionCategory`                              | `function` → `function_category_v2`      |
+| Title                  | `titles`, `excludedTitles`                      | …                                               | `title`, `excluded_title`                |
+| Country                | `countries`                                     | `countries`                                     | `country`                                |
+| Role & education       | `roleTracks`, `educationLevelMins`              | `roleTracks`, `educationLevelMins`              | `role_track`, `education_level_min`      |
+| **Has verifications**  | —                                               | —                                               | **No field** in job documents            |
 
 **Toolbar interaction:** When Signals is on **New (7d)**, `effectivePostedAfter` in [`useHiringSignals`](contact360.io/app/src/hooks/useHiringSignals.ts) merges with sidebar `postedAfter` (stricter date wins).
 

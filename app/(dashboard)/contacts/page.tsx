@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import {
-  Plus,
-  Download,
-  Trash2,
-  Mail,
-  Upload,
-  Globe,
-} from "lucide-react";
+import { Plus, Download, Trash2, Mail, Upload, Globe } from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -224,13 +217,6 @@ export default function ContactsPage() {
     if (isDesktop) setMobileFiltersOpen(false);
   }, [isDesktop]);
 
-  const verifiedOnPage = useMemo(
-    () =>
-      contacts.filter((c) => (c.emailStatus || "").toUpperCase() === "VALID")
-        .length,
-    [contacts],
-  );
-
   const toggleColumn = useCallback((id: ContactsDataTableColumnId) => {
     setVisibleColumns((prev) => {
       let next: ContactsDataTableColumnId[];
@@ -266,16 +252,6 @@ export default function ContactsPage() {
   const advancedVqlRuleCount = advancedListDraft
     ? countDraftConditions(advancedListDraft.rootGroup)
     : 0;
-
-  const hasAdvancedBuilderState = useMemo(() => {
-    if (!advancedListDraft) return false;
-    return (
-      advancedVqlRuleCount > 0 ||
-      advancedListDraft.sort.length > 0 ||
-      advancedListDraft.selectColumns.length > 0 ||
-      advancedListDraft.companyPopulate
-    );
-  }, [advancedListDraft, advancedVqlRuleCount]);
 
   const resetVisibleColumns = useCallback(() => {
     const next = [...CONTACTS_DT_DEFAULT_COLUMNS];
