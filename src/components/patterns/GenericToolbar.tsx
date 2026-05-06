@@ -5,6 +5,7 @@ import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 
 export interface ToolbarTab {
   label: string;
@@ -143,30 +144,20 @@ export function GenericToolbar({
         ) : null}
 
         {viewModes && viewModes.length > 0 ? (
-          <div
-            className={`${p}__view-toggle`}
-            role="group"
-            aria-label="View mode"
-          >
-            {viewModes.map((mode) => {
-              const isActive = viewMode === mode.value;
-              return (
-                <button
-                  key={mode.value}
-                  type="button"
-                  title={mode.label}
-                  aria-pressed={isActive ? "true" : "false"}
-                  className={cn(
-                    `${p}__view-btn`,
-                    isActive && `${p}__view-btn--active`,
-                  )}
-                  onClick={() => onViewModeChange?.(mode.value)}
-                >
-                  <mode.icon size={14} aria-hidden />
-                  <span className={`${p}__view-label`}>{mode.label}</span>
-                </button>
-              );
-            })}
+          <div className={`${p}__view-toggle`}>
+            <Select
+              id={`${p}-view-mode`}
+              aria-label="View mode"
+              value={viewMode ?? viewModes[0]?.value ?? ""}
+              onChange={(e) => onViewModeChange?.(e.target.value)}
+              options={viewModes.map((m) => ({
+                value: m.value,
+                label: m.label,
+              }))}
+              fullWidth={false}
+              inputSize="sm"
+              className={`${p}__view-select`}
+            />
           </div>
         ) : null}
 

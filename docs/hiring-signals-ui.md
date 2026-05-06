@@ -1,5 +1,42 @@
 # Hiring signals (UI + GraphQL)
 
+## LinkedIn-style filter mapping (UI draft → GraphQL / job.server)
+
+| LinkedIn-style control | Draft field(s) | Applied `JobListFilters` / `extendedJobFilters` | job.server query |
+|------------------------|----------------|--------------------------------------------------|-------------------|
+| Sort: Most recent | `listSort` (UI only; default `recent`) | (not sent) | Always `posted_at` desc in `List` |
+| Sort: Most relevant | `listSort` (disabled in UI) | — | **Not supported** (needs ranking design) |
+| Date posted presets | `datePostedPreset`, `postedAfter` | `postedAfter` | `posted_after` (RFC3339 or date) |
+| Posted on or before | `postedBefore` | `postedBefore` | `posted_before` |
+| Experience: seniority | `seniorityPreset`, `seniorityCustom` | `seniority` | `seniority` (regex on `seniority_level`) |
+| Experience: buckets | `experienceBuckets` | `experienceBuckets` | `experience_bucket` `$in` |
+| Company | `companies`, `excludedCompanies` | `companies`, `excludedCompanies` | `company`, `excluded_company` |
+| Job type | `employmentType`, `employmentTypes` | `employmentTypes` | `employment_type` |
+| Remote / workplace | `workplaceTypes` | `workplaceTypes` | `workplace_type` |
+| LinkedIn Apply | `applyMethod`, toggle sets `ComplexOnsiteApply` | `applyMethod` | `apply_method` (regex) |
+| Location | `locations`, `excludedLocations` | … | `location`, `excluded_location` |
+| Industry | `industries`, `excludedIndustries` | … | `industry`, `excluded_industry` |
+| Job function | `functionPreset`, `functionCustom` | `functionCategory` | `function` → `function_category_v2` |
+| Title | `titles`, `excludedTitles` | … | `title`, `excluded_title` |
+| Country | `countries` | `countries` | `country` |
+| Role & education | `roleTracks`, `educationLevelMins` | `roleTracks`, `educationLevelMins` | `role_track`, `education_level_min` |
+| **Has verifications** | — | — | **No field** in job documents |
+
+**Toolbar interaction:** When Signals is on **New (7d)**, `effectivePostedAfter` in [`useHiringSignals`](contact360.io/app/src/hooks/useHiringSignals.ts) merges with sidebar `postedAfter` (stricter date wins).
+
+## Verification checklist (manual)
+
+After **Apply filters**, each dimension should **narrow** the result set (monotonic `total`) when adding constraints, except sort (order only).
+
+1. **Date preset:** Apply Past week → note `total`; switch to Past 24 hours → `total` should be ≤ previous (same other filters).
+2. **Seniority / function:** Pick one preset; spot-check a few rows’ `seniorityLevel` / function fields in the table or network JSON.
+3. **Company / location / title / industry:** Add a token from a known job; that job should still appear.
+4. **Employment / workplace / LinkedIn Apply:** Match values visible on job rows / `raw_payload` from ingest.
+5. **Experience bucket:** Only rows whose ingest bucket matches selected enums.
+6. **Network:** Confirm GraphQL variables: `extendedJobFilters` matches [`buildExtendedJobFilters`](contact360.io/app/src/services/graphql/hiringSignalService.ts).
+
+**Known gaps:** relevance sort; LinkedIn “Has verifications” (no ingest field).
+
 ## `runId` on `hireSignal.jobs`
 
 The hiring-signals **Signals** list can be filtered by Apify run id when drilling down from the **Runs** tab (“Signals” on a satellite or tracked scrape row).
@@ -8,11 +45,11 @@ The app sends `runId` in `HireSignalJobs` (`src/services/graphql/hiringSignalSer
 
 ## UI patterns
 
-- **Filters:** `HireSignalFilterProvider` / `useHireSignalFilter` (`src/context/HireSignalFilterContext.tsx`) hold **draft** sidebar state; **`mergeResumeSuggestions`** merges resume parser output into the draft only (user must click **Apply filters** to query). `useHiringSignals` owns applied `JobListFilters` used for fetching.
+- **Filters:** `HireSignalFilterProvider` / `useHireSignalFilter` (`src/context/HireSignalFilterContext.tsx`) hold **draft** sidebar state. Changing the draft **debounced (~350ms)** calls `applyFilters`, merging draft into `JobListFilters` so the jobs table refetches without an Apply button. **`mergeResumeSuggestions`** updates the draft (same auto-apply path). `useHiringSignals` owns applied `JobListFilters` used for fetching.
 - **Text filters (title / company / location):** Draft fields `titles`, `companies`, `locations` are **string arrays**. The sidebar uses `HiringSignalTextFacetCombobox`, which loads distinct values via GraphQL `hireSignal.jobFilterOptions` (backed by job.server `GET /api/v1/jobs/filter-options`). Facet scoping includes draft selections for extended filters (workplace, employment types, etc.). Users can also **Add** a custom substring token. Applied filters map to `JobListFilters` and are sent through `HireSignalJobs` → `hireSignal.jobs`.
 - **Extended filters:** `JobListFilters` + GraphQL variable `extendedJobFilters` carry workplace types, multi employment types, industries / exclusions, minimum salary (USD), experience buckets, role track, education minimum, clearance mode, H1B flag, and skills (`skillsAll`). See `buildExtendedJobFilters` in `hiringSignalService.ts` and the grouped sidebar (`HiringSignalsFilterSidebar.tsx`).
 - **Semantics:** OR within each repeated token list dimension; AND across dimensions. Substrings are **literal** on the server (quoted regex). See `docs/backend/endpoints/job.server/HIRING-SIGNALS-FULL-CONTRACT.md`.
-- **Toolbar:** **Hide applied** toggles `hideApplied` (gateway merges applied job ids). **Import resume** opens file picker → `suggestHireSignalFiltersFromResumeUpload` → chips/draft updated; toast reminds user to review and apply. `DataToolbar` mirrors the contacts page (tabs, density, mobile filter badge, actions).
+- **Toolbar:** **Hide applied** and **Import resume** were removed from the Signals toolbar; filter behavior lives in the sidebar. `DataToolbar` still provides tabs, density, mobile filter badge, and actions (export / refresh / scrape).
 
 ## XLSX export (selected rows)
 
@@ -25,4 +62,4 @@ The app sends `runId` in `HireSignalJobs` (`src/services/graphql/hiringSignalSer
 
 1. Run Alembic migration for hire-signal prefs (hidden companies / applied jobs).
 2. Confirm job.server deploy with derived-field ingest + indexes.
-3. Manually verify: sidebar Apply, resume import → draft only → Apply, hide applied + export ID collection totals, run drill-down still honors filters.
+3. Manually verify: sidebar filter changes update the list automatically (debounced), resume merge → draft → auto-apply, hide applied + export ID collection totals (if re-enabled), run drill-down still honors filters.

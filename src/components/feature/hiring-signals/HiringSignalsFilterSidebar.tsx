@@ -7,19 +7,28 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import {
+  normalizeHiringSignalTokenList,
+  postedAfterISOFromPreset,
+  postedAtBoundToDateInputValue,
+  type DatePostedPreset,
+} from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+
+const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
 
 const EMPLOYMENT_OPTIONS = [
   { value: "", label: "Any" },
   { value: "Full-time", label: "Full-time" },
-  { value: "Contract", label: "Contract" },
   { value: "Part-time", label: "Part-time" },
+  { value: "Contract", label: "Contract" },
+  { value: "Temporary", label: "Temporary" },
+  { value: "Volunteer", label: "Volunteer" },
+  { value: "Internship", label: "Internship" },
   { value: "Remote", label: "Remote" },
+  { value: "Other", label: "Other" },
 ];
-
-const EMPLOYMENT_MULTI_OPTIONS = EMPLOYMENT_OPTIONS.filter((o) => o.value);
 
 const WORKPLACE_OPTIONS = [
   { value: "Remote", label: "Remote" },
@@ -27,18 +36,38 @@ const WORKPLACE_OPTIONS = [
   { value: "On-site", label: "On-site" },
 ];
 
+const WORKPLACE_SELECT_OPTIONS = [{ value: "", label: "Any" }, ...WORKPLACE_OPTIONS];
+
+const APPLY_METHOD_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "SimpleOnsiteApply", label: "Easy apply (onsite)" },
+  { value: "ComplexOnsiteApply", label: "LinkedIn apply" },
+  { value: "OffsiteApply", label: "Company website / external" },
+];
+
+/** Values match job.server ingest `experience_bucket`; labels mirror LinkedIn-style wording. */
 const EXPERIENCE_BUCKET_OPTIONS = [
-  { value: "intern", label: "Intern / new grad" },
-  { value: "entry", label: "Entry" },
-  { value: "mid", label: "Mid-level" },
+  { value: "intern", label: "Internship" },
+  { value: "entry", label: "Entry level" },
+  { value: "mid", label: "Associate / mid-level" },
   { value: "senior", label: "Senior" },
   { value: "lead_staff", label: "Lead / staff / principal" },
-  { value: "director_exec", label: "Director / exec" },
+  { value: "director_exec", label: "Director / executive" },
 ];
 
 const ROLE_TRACK_OPTIONS = [
   { value: "ic", label: "Individual contributor" },
   { value: "manager", label: "Manager / leadership title" },
+];
+
+const EXPERIENCE_BUCKET_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...EXPERIENCE_BUCKET_OPTIONS,
+];
+
+const ROLE_TRACK_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...ROLE_TRACK_OPTIONS,
 ];
 
 const EDUCATION_MIN_OPTIONS = [
@@ -50,20 +79,182 @@ const EDUCATION_MIN_OPTIONS = [
   { value: "phd", label: "PhD" },
 ];
 
+const EDUCATION_MIN_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...EDUCATION_MIN_OPTIONS,
+];
+
+/** Substring match on job `industries` text (denormalized from ingest). */
+const INDUSTRY_FILTER_OPTIONS = [
+  { value: "Software", label: "Software" },
+  { value: "Technology", label: "Technology" },
+  { value: "Financial Services", label: "Financial Services" },
+  { value: "Banking", label: "Banking" },
+  { value: "Insurance", label: "Insurance" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Hospital", label: "Hospital & health care" },
+  { value: "Pharmaceuticals", label: "Pharmaceuticals" },
+  { value: "Biotechnology", label: "Biotechnology" },
+  { value: "Retail", label: "Retail" },
+  { value: "Manufacturing", label: "Manufacturing" },
+  { value: "Automotive", label: "Automotive" },
+  { value: "Energy", label: "Energy" },
+  { value: "Telecommunications", label: "Telecommunications" },
+  { value: "IT Services", label: "IT services" },
+  { value: "Staffing", label: "Staffing & recruiting" },
+  { value: "Consulting", label: "Consulting" },
+  { value: "Education", label: "Education" },
+  { value: "Government", label: "Government" },
+  { value: "Media", label: "Media" },
+  { value: "Legal", label: "Legal" },
+  { value: "Real Estate", label: "Real estate" },
+  { value: "Construction", label: "Construction" },
+  { value: "Transportation", label: "Transportation" },
+  { value: "Logistics", label: "Logistics" },
+  { value: "Consumer Goods", label: "Consumer goods" },
+  { value: "Food", label: "Food & beverage" },
+  { value: "Aerospace", label: "Aerospace" },
+  { value: "Internet", label: "Internet" },
+];
+
+const INDUSTRY_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...INDUSTRY_FILTER_OPTIONS,
+];
+
+const COUNTRY_FILTER_OPTIONS = [
+  { value: "US", label: "United States (US)" },
+  { value: "CA", label: "Canada (CA)" },
+  { value: "GB", label: "United Kingdom (GB)" },
+  { value: "DE", label: "Germany (DE)" },
+  { value: "FR", label: "France (FR)" },
+  { value: "IN", label: "India (IN)" },
+  { value: "AU", label: "Australia (AU)" },
+  { value: "NL", label: "Netherlands (NL)" },
+  { value: "IE", label: "Ireland (IE)" },
+  { value: "SG", label: "Singapore (SG)" },
+  { value: "JP", label: "Japan (JP)" },
+  { value: "CN", label: "China (CN)" },
+  { value: "BR", label: "Brazil (BR)" },
+  { value: "MX", label: "Mexico (MX)" },
+  { value: "ES", label: "Spain (ES)" },
+  { value: "IT", label: "Italy (IT)" },
+  { value: "CH", label: "Switzerland (CH)" },
+  { value: "SE", label: "Sweden (SE)" },
+  { value: "NO", label: "Norway (NO)" },
+  { value: "DK", label: "Denmark (DK)" },
+  { value: "FI", label: "Finland (FI)" },
+  { value: "PL", label: "Poland (PL)" },
+  { value: "IL", label: "Israel (IL)" },
+  { value: "AT", label: "Austria (AT)" },
+  { value: "BE", label: "Belgium (BE)" },
+  { value: "PT", label: "Portugal (PT)" },
+  { value: "NZ", label: "New Zealand (NZ)" },
+  { value: "KR", label: "South Korea (KR)" },
+  { value: "TW", label: "Taiwan (TW)" },
+  { value: "HK", label: "Hong Kong (HK)" },
+  { value: "MY", label: "Malaysia (MY)" },
+  { value: "PH", label: "Philippines (PH)" },
+  { value: "TH", label: "Thailand (TH)" },
+  { value: "VN", label: "Vietnam (VN)" },
+  { value: "ID", label: "Indonesia (ID)" },
+  { value: "TR", label: "Turkey (TR)" },
+  { value: "ZA", label: "South Africa (ZA)" },
+  { value: "AE", label: "United Arab Emirates (AE)" },
+  { value: "SA", label: "Saudi Arabia (SA)" },
+  { value: "AR", label: "Argentina (AR)" },
+  { value: "CO", label: "Colombia (CO)" },
+  { value: "NG", label: "Nigeria (NG)" },
+  { value: "EG", label: "Egypt (EG)" },
+  { value: "PK", label: "Pakistan (PK)" },
+  { value: "BD", label: "Bangladesh (BD)" },
+  { value: "CZ", label: "Czech Republic (CZ)" },
+  { value: "RO", label: "Romania (RO)" },
+  { value: "UA", label: "Ukraine (UA)" },
+];
+
+const COUNTRY_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...COUNTRY_FILTER_OPTIONS,
+];
+
+/** Values align with job.server `skillKeywords` → ingested `skill_tags` (case-insensitive). */
+const SKILL_TAG_FILTER_OPTIONS = [
+  { value: "python", label: "Python" },
+  { value: "go", label: "Go" },
+  { value: "golang", label: "Golang" },
+  { value: "java", label: "Java" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "react", label: "React" },
+  { value: "node.js", label: "Node.js" },
+  { value: "kubernetes", label: "Kubernetes" },
+  { value: "docker", label: "Docker" },
+  { value: "aws", label: "AWS" },
+  { value: "sql", label: "SQL" },
+  { value: "postgres", label: "Postgres" },
+  { value: "mongodb", label: "MongoDB" },
+  { value: "redis", label: "Redis" },
+  { value: "kafka", label: "Kafka" },
+  { value: "machine learning", label: "Machine learning" },
+  { value: "tensorflow", label: "TensorFlow" },
+  { value: "pytorch", label: "PyTorch" },
+  { value: "data science", label: "Data science" },
+];
+
+const SKILL_TAG_SELECT_OPTIONS = [
+  { value: "", label: "Any" },
+  ...SKILL_TAG_FILTER_OPTIONS,
+];
+
 const CLEARANCE_OPTIONS = [
   { value: "", label: "No clearance filter" },
   { value: "hide", label: "Hide clearance-required" },
   { value: "only", label: "Only clearance-required" },
 ];
 
+/** Substring match on ingested `seniority_level` (LinkedIn-style titles). */
 const SENIORITY_PRESET_OPTIONS = [
   { value: "", label: "Any" },
+  { value: "Internship", label: "Internship" },
   { value: "Entry level", label: "Entry level" },
-  { value: "Mid-Senior", label: "Mid-Senior" },
+  { value: "Associate", label: "Associate" },
+  { value: "Mid-Senior", label: "Mid-Senior level" },
   { value: "Senior", label: "Senior" },
   { value: "Director", label: "Director" },
+  { value: "Executive", label: "Executive" },
   { value: "VP", label: "VP" },
   { value: "C-Suite", label: "C-Suite" },
+];
+
+const DATE_POSTED_PRESET_OPTIONS: {
+  value: DatePostedPreset;
+  label: string;
+}[] = [
+  { value: "any", label: "Any time" },
+  { value: "24h", label: "Past 24 hours" },
+  { value: "7d", label: "Past week" },
+  { value: "30d", label: "Past month" },
+  { value: "custom", label: "Custom range" },
+];
+
+const DATE_POSTED_PRESET_LABELS: Record<
+  Exclude<DatePostedPreset, "any" | "custom">,
+  string
+> = {
+  "24h": "Past 24 hours",
+  "7d": "Past week",
+  "30d": "Past month",
+};
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+];
+
+const VIEW_MODE_OPTIONS = [
+  { value: "comfortable", label: "Comfortable" },
+  { value: "compact", label: "Compact" },
 ];
 
 const FUNCTION_PRESET_OPTIONS = [
@@ -81,19 +272,6 @@ const FUNCTION_PRESET_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
-const TEXTAREA_CLASS =
-  "c360-min-h-[72px] c360-w-full c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-p-2 c360-text-2xs";
-
-function tokensFromLines(raw: string): string[] {
-  return normalizeHiringSignalTokenList(raw.split(/[\n,]+/));
-}
-
-function toggleInList(list: string[], token: string): string[] {
-  const t = token.trim();
-  if (!t) return list;
-  return list.includes(t) ? list.filter((x) => x !== t) : [...list, t];
-}
-
 export type {
   HiringSignalFilterDraft,
   HiringSignalDraftField,
@@ -101,7 +279,6 @@ export type {
 export { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 
 export interface HiringSignalsFilterSidebarProps {
-  onApply: () => void;
   /** Applied list filters (API state) — used to scope facet option queries. */
   appliedListFilters: JobListFilters;
   signalTimePreset: "all" | "new_7d";
@@ -110,18 +287,22 @@ export interface HiringSignalsFilterSidebarProps {
   onClearRunId?: () => void;
   className?: string;
   drawerTitleId?: string;
+  /** Table row density — mirrors the toolbar view-mode select. */
+  tableDensity?: "comfortable" | "compact";
+  onTableDensityChange?: (density: "comfortable" | "compact") => void;
 }
 
 export function HiringSignalsFilterSidebar({
-  onApply,
   appliedListFilters,
   signalTimePreset,
   appliedRunId,
   onClearRunId,
   className,
   drawerTitleId = "c360-hs-filter-drawer-title",
+  tableDensity = "comfortable",
+  onTableDensityChange,
 }: HiringSignalsFilterSidebarProps) {
-  const { draft, onDraftField, resetFilters } = useHireSignalFilter();
+  const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
 
@@ -139,6 +320,7 @@ export function HiringSignalsFilterSidebar({
       | "locations"
       | "employmentTypes"
       | "workplaceTypes"
+      | "countries"
       | "industries"
       | "excludedIndustries"
       | "excludedTitles"
@@ -166,7 +348,7 @@ export function HiringSignalsFilterSidebar({
   addTokenChips("loc", draft.locations, "Location", "locations");
   addTokenChips("emp", draft.employmentTypes, "Employment", "employmentTypes");
   if (draft.employmentType.trim())
-    addChip("emp-legacy", `Employment (legacy): ${draft.employmentType}`, () =>
+    addChip("emp-single", `Employment type: ${draft.employmentType}`, () =>
       onDraftField("employmentType", ""),
     );
   addTokenChips("wp", draft.workplaceTypes, "Workplace", "workplaceTypes");
@@ -204,6 +386,16 @@ export function HiringSignalsFilterSidebar({
     "educationLevelMins",
   );
   addTokenChips("sk", draft.skillsAll, "Skill", "skillsAll");
+  addTokenChips("ctry", draft.countries, "Country", "countries");
+
+  if (draft.applyMethod.trim())
+    addChip(
+      "applym",
+      draft.applyMethod === LINKEDIN_APPLY_METHOD
+        ? "LinkedIn Apply"
+        : `Apply method: ${draft.applyMethod}`,
+      () => onDraftField("applyMethod", ""),
+    );
 
   if (draft.salaryMin.trim())
     addChip("salary", `Min salary: $${draft.salaryMin.trim()}`, () =>
@@ -239,10 +431,26 @@ export function HiringSignalsFilterSidebar({
       onDraftField("functionCustom", "");
     });
   }
-  if (draft.postedAfter.trim())
-    addChip("after", `After ${draft.postedAfter}`, () =>
-      onDraftField("postedAfter", ""),
+  if (
+    draft.datePostedPreset === "24h" ||
+    draft.datePostedPreset === "7d" ||
+    draft.datePostedPreset === "30d"
+  ) {
+    const pk = draft.datePostedPreset;
+    addChip(
+      "dpreset",
+      `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
+      () => {
+        onDraftField("datePostedPreset", "any");
+        onDraftField("postedAfter", "");
+      },
     );
+  } else if (draft.postedAfter.trim()) {
+    addChip("after", `Posted after ${draft.postedAfter}`, () => {
+      onDraftField("postedAfter", "");
+      onDraftField("datePostedPreset", "any");
+    });
+  }
   if (draft.postedBefore.trim())
     addChip("before", `Before ${draft.postedBefore}`, () =>
       onDraftField("postedBefore", ""),
@@ -279,9 +487,73 @@ export function HiringSignalsFilterSidebar({
   const employmentCount =
     normalizeHiringSignalTokenList(draft.employmentTypes).length +
     (draft.employmentType.trim() ? 1 : 0);
-  const workplaceCount = normalizeHiringSignalTokenList(
+  const normalizedWorkplaceTypes = normalizeHiringSignalTokenList(
     draft.workplaceTypes,
-  ).length;
+  );
+  const workplaceCount = normalizedWorkplaceTypes.length;
+  const workplaceSelectValue =
+    normalizedWorkplaceTypes.length === 1 &&
+    WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
+      ? normalizedWorkplaceTypes[0]
+      : "";
+  const normalizedExperienceBuckets = normalizeHiringSignalTokenList(
+    draft.experienceBuckets,
+  );
+  const experienceBucketSelectValue =
+    normalizedExperienceBuckets.length === 1 &&
+    EXPERIENCE_BUCKET_OPTIONS.some(
+      (o) => o.value === normalizedExperienceBuckets[0],
+    )
+      ? normalizedExperienceBuckets[0]
+      : "";
+  const normalizedRoleTracks = normalizeHiringSignalTokenList(
+    draft.roleTracks,
+  );
+  const roleTrackSelectValue =
+    normalizedRoleTracks.length === 1 &&
+    ROLE_TRACK_OPTIONS.some((o) => o.value === normalizedRoleTracks[0])
+      ? normalizedRoleTracks[0]
+      : "";
+  const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
+    draft.educationLevelMins,
+  );
+  const educationMinSelectValue =
+    normalizedEducationLevelMins.length === 1 &&
+    EDUCATION_MIN_OPTIONS.some(
+      (o) => o.value === normalizedEducationLevelMins[0],
+    )
+      ? normalizedEducationLevelMins[0]
+      : "";
+  const normalizedIndustries = normalizeHiringSignalTokenList(
+    draft.industries,
+  );
+  const industryIncludeSelectValue =
+    normalizedIndustries.length === 1 &&
+    INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
+      ? normalizedIndustries[0]
+      : "";
+  const normalizedExcludedIndustries = normalizeHiringSignalTokenList(
+    draft.excludedIndustries,
+  );
+  const industryExcludeSelectValue =
+    normalizedExcludedIndustries.length === 1 &&
+    INDUSTRY_FILTER_OPTIONS.some(
+      (o) => o.value === normalizedExcludedIndustries[0],
+    )
+      ? normalizedExcludedIndustries[0]
+      : "";
+  const normalizedCountries = normalizeHiringSignalTokenList(draft.countries);
+  const countrySelectValue =
+    normalizedCountries.length === 1 &&
+    COUNTRY_FILTER_OPTIONS.some((o) => o.value === normalizedCountries[0])
+      ? normalizedCountries[0]
+      : "";
+  const normalizedSkillTags = normalizeHiringSignalTokenList(draft.skillsAll);
+  const skillTagSelectValue =
+    normalizedSkillTags.length === 1 &&
+    SKILL_TAG_FILTER_OPTIONS.some((o) => o.value === normalizedSkillTags[0])
+      ? normalizedSkillTags[0]
+      : "";
   const industriesCount = normalizeHiringSignalTokenList(
     draft.industries,
   ).length;
@@ -308,12 +580,42 @@ export function HiringSignalsFilterSidebar({
     draft.educationLevelMins,
   ).length;
   const skillsCount = normalizeHiringSignalTokenList(draft.skillsAll).length;
+  const countryCount = normalizeHiringSignalTokenList(draft.countries).length;
+  const applyMethodCount = draft.applyMethod.trim() ? 1 : 0;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
     draft.clearanceMode.trim() === "only"
       ? 1
       : 0;
   const h1bCount = draft.h1bOnly ? 1 : 0;
+
+  const datePostedCount =
+    draft.datePostedPreset !== "any"
+      ? 1
+      : draft.postedBefore.trim() || draft.postedAfter.trim()
+        ? 1
+        : 0;
+
+  const experienceLevelCount = seniorityCount + expBucketCount;
+
+  const sortActiveCount = draft.listSort === "oldest" ? 1 : 0;
+
+  const onDatePostedPresetChange = (raw: string) => {
+    const v = raw as DatePostedPreset;
+    if (v === "any") {
+      onDraftField("datePostedPreset", "any");
+      onDraftField("postedAfter", "");
+      return;
+    }
+    if (v === "custom") {
+      onDraftField("datePostedPreset", "custom");
+      return;
+    }
+    if (v === "24h" || v === "7d" || v === "30d") {
+      onDraftField("datePostedPreset", v);
+      onDraftField("postedAfter", postedAfterISOFromPreset(v));
+    }
+  };
 
   return (
     <div className={cn("c360-contacts-filters c360-hs-filters", className)}>
@@ -327,9 +629,6 @@ export function HiringSignalsFilterSidebar({
           <p className="c360-contacts-filters__subtitle">{totalChips} active</p>
         </div>
         <div className="c360-contacts-filters__head-actions">
-          <Button type="button" variant="primary" size="sm" onClick={onApply}>
-            Apply filters
-          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -367,155 +666,384 @@ export function HiringSignalsFilterSidebar({
       ) : null}
 
       <div className="c360-hs-filters__sections">
+
+        {onTableDensityChange ? (
+          <ContactsCollapsibleFilterSection
+            title="View"
+            count={tableDensity === "compact" ? 1 : 0}
+            defaultOpen={false}
+            onClear={() => onTableDensityChange("comfortable")}
+          >
+            <Select
+              id="hsf-view-mode"
+              value={tableDensity}
+              onChange={(e) =>
+                onTableDensityChange(
+                  e.target.value as "comfortable" | "compact",
+                )
+              }
+              options={VIEW_MODE_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </ContactsCollapsibleFilterSection>
+        ) : null}
+
         <ContactsCollapsibleFilterSection
-          title="Title"
-          count={titleValues.length}
-          defaultOpen
-          onClear={() => onDraftField("titles", [])}
+          title="Sort"
+          count={sortActiveCount}
+          defaultOpen={false}
+          onClear={() => onDraftField("listSort", "recent")}
         >
-          <HiringSignalTextFacetCombobox
-            field="title"
-            label="Job title"
-            draft={draft}
-            appliedListFilters={appliedListFilters}
-            signalTimePreset={signalTimePreset}
-            selectedValues={titleValues}
-            onSelectionChange={(v) => onDraftField("titles", v)}
+          <Select
+            id="hsf-sort"
+            value={draft.listSort === "oldest" ? "oldest" : "recent"}
+            onChange={(e) => onDraftField("listSort", e.target.value)}
+            options={SORT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Date posted"
+          count={datePostedCount}
+          defaultOpen={false}
+          onClear={() => {
+            onDraftField("datePostedPreset", "any");
+            onDraftField("postedAfter", "");
+            onDraftField("postedBefore", "");
+          }}
+        >
+          {signalTimePreset === "new_7d" ? (
+            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+              The Signals &quot;New&quot; tab also enforces jobs from at least the last 7 days;
+              the stricter window wins when combined with these presets.
+            </p>
+          ) : null}
+          <Select
+            id="hsf-date-preset"
+            value={draft.datePostedPreset}
+            onChange={(e) => onDatePostedPresetChange(e.target.value)}
+            options={DATE_POSTED_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+            className="c360-mb-2"
+          />
+          {draft.datePostedPreset === "custom" ? (
+            <div className="c360-mb-3 c360-space-y-2">
+              <label
+                htmlFor="hsf-posted-after"
+                className="c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Posted on or after (optional)
+              </label>
+              <Input
+                id="hsf-posted-after"
+                type="date"
+                value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    postedAfter: e.target.value.trim(),
+                    datePostedPreset: "custom",
+                  }))
+                }
+              />
+              <label
+                htmlFor="hsf-posted-before"
+                className="c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Posted on or before (optional)
+              </label>
+              <Input
+                id="hsf-posted-before"
+                type="date"
+                value={postedAtBoundToDateInputValue(draft.postedBefore)}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    postedBefore: e.target.value.trim(),
+                    datePostedPreset: "custom",
+                  }))
+                }
+              />
+            </div>
+          ) : null}
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Experience level"
+          count={experienceLevelCount}
+          defaultOpen={false}
+          onClear={() => {
+            onDraftField("seniorityPreset", "");
+            onDraftField("seniorityCustom", "");
+            onDraftField("experienceBuckets", []);
+          }}
+        >
+          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+            Seniority (matches ingested seniority text)
+          </p>
+          <Select
+            id="hsf-seniority-preset"
+            value={draft.seniorityPreset}
+            onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
+            options={SENIORITY_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+            className="c360-mb-3"
+          />
+          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+            Experience bucket (ingest-derived enum)
+          </p>
+          <Select
+            id="hsf-experience-bucket"
+            value={experienceBucketSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("experienceBuckets", v ? [v] : []);
+            }}
+            options={EXPERIENCE_BUCKET_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
           />
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
           title="Company"
-          count={companyValues.length}
+          count={companyValues.length + exCoCount}
           defaultOpen
-          onClear={() => onDraftField("companies", [])}
+          onClear={() => {
+            onDraftField("companies", []);
+            onDraftField("excludedCompanies", []);
+          }}
         >
-          <HiringSignalTextFacetCombobox
-            field="company"
-            label="Company"
-            draft={draft}
-            appliedListFilters={appliedListFilters}
-            signalTimePreset={signalTimePreset}
-            selectedValues={companyValues}
-            onSelectionChange={(v) => onDraftField("companies", v)}
-          />
+          <div className="c360-space-y-3">
+            <HiringSignalTextFacetCombobox
+              field="company"
+              label="Include company names"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={companyValues}
+              onSelectionChange={(v) => onDraftField("companies", v)}
+            />
+            <HiringSignalTextFacetCombobox
+              field="company"
+              label="Exclude company names"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={normalizeHiringSignalTokenList(
+                draft.excludedCompanies,
+              )}
+              onSelectionChange={(v) => onDraftField("excludedCompanies", v)}
+            />
+          </div>
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Location"
-          count={locationValues.length}
-          defaultOpen
-          onClear={() => onDraftField("locations", [])}
-        >
-          <HiringSignalTextFacetCombobox
-            field="location"
-            label="Location"
-            draft={draft}
-            appliedListFilters={appliedListFilters}
-            signalTimePreset={signalTimePreset}
-            selectedValues={locationValues}
-            onSelectionChange={(v) => onDraftField("locations", v)}
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Basic job criteria"
-          count={
-            employmentCount + workplaceCount + seniorityCount + functionCount
-          }
+          title="Job type"
+          count={employmentCount}
           defaultOpen={false}
           onClear={() => {
             onDraftField("employmentTypes", []);
             onDraftField("employmentType", "");
-            onDraftField("workplaceTypes", []);
-            onDraftField("seniorityPreset", "");
-            onDraftField("seniorityCustom", "");
-            onDraftField("functionPreset", "");
-            onDraftField("functionCustom", "");
           }}
         >
-          <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Employment type
-          </p>
-          <div className="c360-mb-3 c360-flex c360-flex-wrap c360-gap-2">
-            {EMPLOYMENT_MULTI_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className="c360-flex c360-items-center c360-gap-1.5 c360-text-2xs"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.employmentTypes.includes(o.value)}
-                  onChange={() =>
-                    onDraftField(
-                      "employmentTypes",
-                      toggleInList(draft.employmentTypes, o.value),
-                    )
-                  }
-                />
-                {o.label}
-              </label>
-            ))}
-          </div>
           <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
-            Legacy single type (used if none selected above)
+            Employment type (substring on ingested employment_type)
           </p>
           <Select
-            id="hsf-emp-legacy"
+            id="hsf-emp-type"
             value={draft.employmentType}
             onChange={(e) => onDraftField("employmentType", e.target.value)}
             options={EMPLOYMENT_OPTIONS}
             fullWidth
             inputSize="md"
-            className="c360-mb-3"
           />
-          <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Workplace
-          </p>
-          <div className="c360-mb-3 c360-flex c360-flex-wrap c360-gap-2">
-            {WORKPLACE_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className="c360-flex c360-items-center c360-gap-1.5 c360-text-2xs"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.workplaceTypes.includes(o.value)}
-                  onChange={() =>
-                    onDraftField(
-                      "workplaceTypes",
-                      toggleInList(draft.workplaceTypes, o.value),
-                    )
-                  }
-                />
-                {o.label}
-              </label>
-            ))}
-          </div>
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Seniority
-          </p>
-          <div className="c360-mb-2">
-            <Select
-              id="hsf-seniority-preset"
-              value={draft.seniorityPreset}
-              onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
-              options={SENIORITY_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Remote / workplace"
+          count={workplaceCount}
+          defaultOpen={false}
+          onClear={() => onDraftField("workplaceTypes", [])}
+        >
+          <Select
+            id="hsf-workplace"
+            value={workplaceSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("workplaceTypes", v ? [v] : []);
+            }}
+            options={WORKPLACE_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="LinkedIn Apply"
+          count={applyMethodCount}
+          defaultOpen={false}
+          onClear={() => onDraftField("applyMethod", "")}
+        >
+          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+            <input
+              type="checkbox"
+              className="c360-mt-0.5"
+              checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
+              onChange={(e) =>
+                onDraftField(
+                  "applyMethod",
+                  e.target.checked ? LINKEDIN_APPLY_METHOD : "",
+                )
+              }
+            />
+            <span>
+              LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches ingested
+              apply_method (substring).
+            </span>
+          </label>
+          <label
+            htmlFor="hsf-apply-method"
+            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+          >
+            Apply channel (fine-tune)
+          </label>
+          <Select
+            id="hsf-apply-method"
+            value={draft.applyMethod}
+            onChange={(e) => onDraftField("applyMethod", e.target.value)}
+            options={APPLY_METHOD_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Location"
+          count={locationValues.length + exLocCount}
+          defaultOpen
+          onClear={() => {
+            onDraftField("locations", []);
+            onDraftField("excludedLocations", []);
+          }}
+        >
+          <div className="c360-space-y-3">
+            <HiringSignalTextFacetCombobox
+              field="location"
+              label="Include locations"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={locationValues}
+              onSelectionChange={(v) => onDraftField("locations", v)}
+            />
+            <HiringSignalTextFacetCombobox
+              field="location"
+              label="Exclude locations"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={normalizeHiringSignalTokenList(
+                draft.excludedLocations,
+              )}
+              onSelectionChange={(v) => onDraftField("excludedLocations", v)}
             />
           </div>
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Industries"
+          count={industriesCount + exIndCount}
+          defaultOpen={false}
+          onClear={() => {
+            onDraftField("industries", []);
+            onDraftField("excludedIndustries", []);
+          }}
+        >
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Function / department
+            Include industry (substring match)
           </p>
-          <div>
-            <Select
-              id="hsf-func-preset"
-              value={draft.functionPreset}
-              onChange={(e) => onDraftField("functionPreset", e.target.value)}
-              options={FUNCTION_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
+          <Select
+            id="hsf-industry-include"
+            value={industryIncludeSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("industries", v ? [v] : []);
+            }}
+            options={INDUSTRY_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
+            className="c360-mb-3"
+          />
+          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+            Exclude industry
+          </p>
+          <Select
+            id="hsf-industry-exclude"
+            value={industryExcludeSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("excludedIndustries", v ? [v] : []);
+            }}
+            options={INDUSTRY_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Job function"
+          count={functionCount}
+          defaultOpen={false}
+          onClear={() => {
+            onDraftField("functionPreset", "");
+            onDraftField("functionCustom", "");
+          }}
+        >
+          <Select
+            id="hsf-func-preset"
+            value={draft.functionPreset}
+            onChange={(e) => onDraftField("functionPreset", e.target.value)}
+            options={FUNCTION_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        <ContactsCollapsibleFilterSection
+          title="Title"
+          count={titleValues.length + exTitleCount}
+          defaultOpen
+          onClear={() => {
+            onDraftField("titles", []);
+            onDraftField("excludedTitles", []);
+          }}
+        >
+          <div className="c360-space-y-3">
+            <HiringSignalTextFacetCombobox
+              field="title"
+              label="Include job titles"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={titleValues}
+              onSelectionChange={(v) => onDraftField("titles", v)}
+            />
+            <HiringSignalTextFacetCombobox
+              field="title"
+              label="Exclude job titles"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={normalizeHiringSignalTokenList(
+                draft.excludedTitles,
+              )}
+              onSelectionChange={(v) => onDraftField("excludedTitles", v)}
             />
           </div>
         </ContactsCollapsibleFilterSection>
@@ -544,158 +1072,64 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Industries & exclusions"
-          count={
-            industriesCount + exIndCount + exTitleCount + exCoCount + exLocCount
-          }
+          title="Country"
+          count={countryCount}
           defaultOpen={false}
           onClear={() => {
-            onDraftField("industries", []);
-            onDraftField("excludedIndustries", []);
-            onDraftField("excludedTitles", []);
-            onDraftField("excludedCompanies", []);
-            onDraftField("excludedLocations", []);
+            onDraftField("countries", []);
           }}
         >
-          <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
-            Industries (substring match, one per line)
-          </label>
-          <textarea
-            className={cn(TEXTAREA_CLASS, "c360-mb-2")}
-            value={draft.industries.join("\n")}
-            onChange={(e) =>
-              onDraftField("industries", tokensFromLines(e.target.value))
-            }
-            spellCheck={false}
-          />
-          <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
-            Excluded industries
-          </label>
-          <textarea
-            className={cn(TEXTAREA_CLASS, "c360-mb-2")}
-            value={draft.excludedIndustries.join("\n")}
-            onChange={(e) =>
-              onDraftField(
-                "excludedIndustries",
-                tokensFromLines(e.target.value),
-              )
-            }
-            spellCheck={false}
-          />
-          <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
-            Excluded titles
-          </label>
-          <textarea
-            className={cn(TEXTAREA_CLASS, "c360-mb-2")}
-            value={draft.excludedTitles.join("\n")}
-            onChange={(e) =>
-              onDraftField("excludedTitles", tokensFromLines(e.target.value))
-            }
-            spellCheck={false}
-          />
-          <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
-            Excluded companies
-          </label>
-          <textarea
-            className={cn(TEXTAREA_CLASS, "c360-mb-2")}
-            value={draft.excludedCompanies.join("\n")}
-            onChange={(e) =>
-              onDraftField("excludedCompanies", tokensFromLines(e.target.value))
-            }
-            spellCheck={false}
-          />
-          <label className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted">
-            Excluded locations
-          </label>
-          <textarea
-            className={cn(TEXTAREA_CLASS)}
-            value={draft.excludedLocations.join("\n")}
-            onChange={(e) =>
-              onDraftField("excludedLocations", tokensFromLines(e.target.value))
-            }
-            spellCheck={false}
+          <Select
+            id="hsf-country"
+            value={countrySelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("countries", v ? [v] : []);
+            }}
+            options={COUNTRY_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
           />
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Experience & education"
-          count={expBucketCount + eduCount + roleTrackCount}
+          title="Role & education"
+          count={roleTrackCount + eduCount}
           defaultOpen={false}
           onClear={() => {
-            onDraftField("experienceBuckets", []);
             onDraftField("educationLevelMins", []);
             onDraftField("roleTracks", []);
           }}
         >
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Experience bucket (from ingest)
-          </p>
-          <div className="c360-mb-3 c360-flex c360-flex-wrap c360-gap-2">
-            {EXPERIENCE_BUCKET_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className="c360-flex c360-items-center c360-gap-1.5 c360-text-2xs"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.experienceBuckets.includes(o.value)}
-                  onChange={() =>
-                    onDraftField(
-                      "experienceBuckets",
-                      toggleInList(draft.experienceBuckets, o.value),
-                    )
-                  }
-                />
-                {o.label}
-              </label>
-            ))}
-          </div>
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Role track (from title / description)
           </p>
-          <div className="c360-mb-3 c360-flex c360-flex-wrap c360-gap-2">
-            {ROLE_TRACK_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className="c360-flex c360-items-center c360-gap-1.5 c360-text-2xs"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.roleTracks.includes(o.value)}
-                  onChange={() =>
-                    onDraftField(
-                      "roleTracks",
-                      toggleInList(draft.roleTracks, o.value),
-                    )
-                  }
-                />
-                {o.label}
-              </label>
-            ))}
-          </div>
+          <Select
+            id="hsf-role-track"
+            value={roleTrackSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("roleTracks", v ? [v] : []);
+            }}
+            options={ROLE_TRACK_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
+            className="c360-mb-3"
+          />
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Minimum education (job posting mentions)
           </p>
-          <div className="c360-flex c360-flex-wrap c360-gap-2">
-            {EDUCATION_MIN_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className="c360-flex c360-items-center c360-gap-1.5 c360-text-2xs"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.educationLevelMins.includes(o.value)}
-                  onChange={() =>
-                    onDraftField(
-                      "educationLevelMins",
-                      toggleInList(draft.educationLevelMins, o.value),
-                    )
-                  }
-                />
-                {o.label}
-              </label>
-            ))}
-          </div>
+          <Select
+            id="hsf-education-min"
+            value={educationMinSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("educationLevelMins", v ? [v] : []);
+            }}
+            options={EDUCATION_MIN_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
@@ -727,42 +1161,19 @@ export function HiringSignalsFilterSidebar({
             />
             H1B / sponsorship mentioned
           </label>
-          <label className="c360-mt-2 c360-block c360-text-2xs c360-text-ink-muted">
-            Skills (all must match ingested skill tags)
-          </label>
-          <textarea
-            className={TEXTAREA_CLASS}
-            value={draft.skillsAll.join("\n")}
-            onChange={(e) =>
-              onDraftField("skillsAll", tokensFromLines(e.target.value))
-            }
-            spellCheck={false}
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Posted date"
-          count={
-            (draft.postedAfter.trim() ? 1 : 0) +
-            (draft.postedBefore.trim() ? 1 : 0)
-          }
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("postedAfter", "");
-            onDraftField("postedBefore", "");
-          }}
-        >
-          <label
-            htmlFor="hsf-posted-before"
-            className="c360-block c360-text-2xs c360-text-ink-muted"
-          >
-            Posted before
-          </label>
-          <Input
-            id="hsf-posted-before"
-            type="date"
-            value={draft.postedBefore}
-            onChange={(e) => onDraftField("postedBefore", e.target.value)}
+          <p className="c360-mt-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
+            Skill (all ingested tags must include selection)
+          </p>
+          <Select
+            id="hsf-skill-tag"
+            value={skillTagSelectValue}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("skillsAll", v ? [v] : []);
+            }}
+            options={SKILL_TAG_SELECT_OPTIONS}
+            fullWidth
+            inputSize="md"
           />
         </ContactsCollapsibleFilterSection>
       </div>

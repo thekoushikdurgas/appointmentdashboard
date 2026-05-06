@@ -8,8 +8,6 @@ import {
   Mail,
   Upload,
   Globe,
-  List,
-  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -470,6 +468,8 @@ export default function ContactsPage() {
         onAiQueryChange={setAiQuery}
         onAiSearch={handleAiSearch}
         aiSearching={aiSearching}
+        tableDensity={tableDensity}
+        onTableDensityChange={setTableDensity}
       />
     ),
     [
@@ -496,6 +496,8 @@ export default function ContactsPage() {
       handleFacetChange,
       loadMoreFilterData,
       setFilterSearch,
+      tableDensity,
+      setTableDensity,
     ],
   );
 
@@ -507,25 +509,6 @@ export default function ContactsPage() {
     );
   }, [countryData]);
 
-  const contactsToolbarMeta = (
-    <div className="c360-contacts-metadata c360-contacts-metadata--toolbar">
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Total (list)</span>
-        <span className="c360-contacts-metadata__value">
-          {total.toLocaleString()}
-        </span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Verified on page</span>
-        <span className="c360-contacts-metadata__value">{verifiedOnPage}</span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Rows this page</span>
-        <span className="c360-contacts-metadata__value">{contacts.length}</span>
-      </div>
-    </div>
-  );
-
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
@@ -536,13 +519,6 @@ export default function ContactsPage() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       totalCount={total}
-      meta={contactsToolbarMeta}
-      viewModes={[
-        { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
-        { value: "compact", label: "Compact", icon: List },
-      ]}
-      viewMode={tableDensity}
-      onViewModeChange={(m) => setTableDensity(m as "comfortable" | "compact")}
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -561,7 +537,6 @@ export default function ContactsPage() {
               inputSize="sm"
               aria-label="Rows per page"
             />
-            <span className="c360-contacts-dt__toolbar-label">entries</span>
           </div>
           <SavedSearchesMenu
             entity="contact"
@@ -571,20 +546,6 @@ export default function ContactsPage() {
         </>
       }
       actions={[
-        {
-          label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
-          onClick: () => setVqlOpen(true),
-          variant: "secondary" as const,
-        },
-        ...(hasAdvancedBuilderState
-          ? [
-              {
-                label: "Clear advanced",
-                onClick: clearVqlQuery,
-                variant: "ghost" as const,
-              },
-            ]
-          : []),
         {
           label: "Export",
           onClick: () => setExportOpen(true),

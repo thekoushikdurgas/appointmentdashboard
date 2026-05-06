@@ -7,8 +7,6 @@ import {
   Building2,
   ExternalLink,
   Users,
-  LayoutGrid,
-  List,
   Download,
   Upload,
   RefreshCw,
@@ -205,6 +203,8 @@ export default function CompaniesPage() {
         advancedVqlRuleCount={advancedVqlRuleCount}
         onClearVql={clearCompanyVql}
         onOpenAdvanced={() => setVqlOpen(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
     ),
     [
@@ -215,6 +215,8 @@ export default function CompaniesPage() {
       loadFilterData,
       advancedVqlRuleCount,
       clearCompanyVql,
+      viewMode,
+      setViewMode,
     ],
   );
 
@@ -274,37 +276,19 @@ export default function CompaniesPage() {
     }
   };
 
-  const companiesToolbarMeta = (
-    <div className="c360-contacts-metadata c360-contacts-metadata--toolbar">
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Total</span>
-        <span className="c360-contacts-metadata__value">
-          {total.toLocaleString()}
-        </span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">On this page</span>
-        <span className="c360-contacts-metadata__value">
-          {companies.length}
-        </span>
-      </div>
-      <div className="c360-contacts-metadata__item">
-        <span className="c360-contacts-metadata__label">Page size</span>
-        <span className="c360-contacts-metadata__value">{pageSize}</span>
-      </div>
-    </div>
-  );
-
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
-      meta={companiesToolbarMeta}
-      viewModes={[
-        { value: "list", label: "List", icon: List },
-        { value: "card", label: "Card", icon: LayoutGrid },
-      ]}
-      viewMode={viewMode}
-      onViewModeChange={(m) => setViewMode(m as ViewMode)}
+      meta={
+        totalPages > 1 ? (
+          <Pagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        ) : undefined
+      }
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -495,17 +479,6 @@ export default function CompaniesPage() {
               </div>
             ))}
           </div>
-          {totalPages > 1 ? (
-            <div className="c360-flex c360-justify-end c360-mt-4">
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                total={total}
-                pageSize={pageSize}
-              />
-            </div>
-          ) : null}
         </>
       ) : (
         /* Table list view */
@@ -578,17 +551,6 @@ export default function CompaniesPage() {
               </tbody>
             </table>
           </div>
-          {totalPages > 1 ? (
-            <div className="c360-table-footer">
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                total={total}
-                pageSize={pageSize}
-              />
-            </div>
-          ) : null}
         </Card>
       )}
       <CompanyImportModal

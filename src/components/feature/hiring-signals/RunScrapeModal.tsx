@@ -11,12 +11,6 @@ import { toast } from "sonner";
 const DEFAULT_URL =
   "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
 
-/** LinkedIn jobs search URL for Apify when using keywords mode (job.server requires non-empty `urls` on Apify backend). */
-function buildLinkedInJobsSearchUrl(keywords: string, geoId: number): string {
-  const q = encodeURIComponent(keywords.trim());
-  return `https://www.linkedin.com/jobs/search/?keywords=${q}&geoId=${geoId}&position=1&pageNum=0`;
-}
-
 type ScrapeMode = "keywords" | "urls";
 
 export interface RunScrapeModalProps {
@@ -89,19 +83,17 @@ export function RunScrapeModal({
         mode,
       };
       if (mode === "keywords") {
-        const kw = keywords.trim();
-        body.keywords = kw;
+        body.keywords = keywords.trim();
         body.geoId = geoId;
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.enableEnrichment = enableEnrichment;
-        body.urls = [buildLinkedInJobsSearchUrl(kw, geoId)];
       } else {
         const lines = urlsText
           .split(/\r?\n/)
           .map((s) => s.trim())
           .filter(Boolean);
         body.urls = lines;
-        body.count = Number.isFinite(count) ? count : 100;
+        body.maxJobs = Number.isFinite(count) ? count : 100;
         body.scrapeCompany = scrapeCompany;
         body.splitByLocation = splitByLocation;
       }
@@ -170,10 +162,10 @@ export function RunScrapeModal({
       }
     >
       <p className="c360-mb-4 c360-text-2xs c360-text-muted">
-        Body is sent to the gateway as{" "}
-        <code className="c360-break-all">triggerScrapeAndTrack</code> (saved in
-        Postgres + forwarded to job.server). Job ingest uses scraper.server when
-        configured there.
+        Queued via <code>triggerScrapeAndTrack</code> → job.server →{" "}
+        <strong>scraper.server</strong> (LinkedIn HTML scraper). Keywords + geo
+        mode is preferred. URL mode is legacy (Apify) and requires a{" "}
+        <code>keywords=</code> param in the URL for scraper-based ingest.
       </p>
       {validationError ? (
         <Alert variant="danger" className="c360-mb-3" title="Check your input">
@@ -208,8 +200,8 @@ export function RunScrapeModal({
             horizontal
             className="c360-flex-wrap"
           >
-            <Radio value="keywords" label="Keywords + geo" />
-            <Radio value="urls" label="LinkedIn URLs" />
+            <Radio value="keywords" label="Keywords + geo (scraper.server)" />
+            <Radio value="urls" label="LinkedIn URLs (Apify legacy)" />
           </RadioGroup>
         </div>
         {mode === "keywords" ? (
@@ -238,8 +230,7 @@ export function RunScrapeModal({
                 onChange={(e) => setGeoId(Number(e.target.value))}
               />
               <span className="c360-text-2xs c360-text-muted">
-                Example: 105080838 (United States). Must match job.server /
-                scraper.server geo filter.
+                Example: 105080838 (United States), 103644278 (India).
               </span>
             </label>
             <label className="c360-flex c360-items-center c360-gap-2">
@@ -292,7 +283,8 @@ export function RunScrapeModal({
                 onChange={(e) => setScrapeCompany(e.target.checked)}
               />
               <span className="c360-text-sm c360-text-ink">
-                scrapeCompany (Apify legacy)
+                scrapeCompany{" "}
+                <span className="c360-text-muted">(Apify only)</span>
               </span>
             </label>
             <label className="c360-flex c360-items-center c360-gap-2">
@@ -302,7 +294,8 @@ export function RunScrapeModal({
                 onChange={(e) => setSplitByLocation(e.target.checked)}
               />
               <span className="c360-text-sm c360-text-ink">
-                splitByLocation (Apify legacy)
+                splitByLocation{" "}
+                <span className="c360-text-muted">(Apify only)</span>
               </span>
             </label>
           </>

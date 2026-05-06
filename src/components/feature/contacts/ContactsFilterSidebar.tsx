@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import {
@@ -18,6 +19,11 @@ import {
   CONTACTS_DT_COLUMN_LABELS,
   type ContactsDataTableColumnId,
 } from "@/components/feature/contacts/ContactsDataTable";
+
+const VIEW_MODE_OPTIONS = [
+  { value: "comfortable", label: "Comfortable" },
+  { value: "compact", label: "Compact" },
+];
 
 export interface ContactsFilterSidebarProps {
   search: string;
@@ -58,6 +64,9 @@ export interface ContactsFilterSidebarProps {
   onAiQueryChange?: (value: string) => void;
   onAiSearch?: () => void;
   aiSearching?: boolean;
+  /** Table row density — mirrors the toolbar view-mode select. */
+  tableDensity?: "comfortable" | "compact";
+  onTableDensityChange?: (density: "comfortable" | "compact") => void;
 }
 
 export function ContactsFilterSidebar({
@@ -91,6 +100,8 @@ export function ContactsFilterSidebar({
   onAiQueryChange,
   onAiSearch,
   aiSearching = false,
+  tableDensity = "comfortable",
+  onTableDensityChange,
 }: ContactsFilterSidebarProps) {
   const facetActiveCount = useMemo(
     () =>
@@ -385,6 +396,26 @@ export function ContactsFilterSidebar({
       >
         <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
       </ContactsCollapsibleFilterSection>
+
+      {onTableDensityChange ? (
+        <ContactsCollapsibleFilterSection
+          title="View"
+          count={tableDensity === "compact" ? 1 : 0}
+          defaultOpen={false}
+          onClear={() => onTableDensityChange("comfortable")}
+        >
+          <Select
+            id="contacts-view-mode"
+            value={tableDensity}
+            onChange={(e) =>
+              onTableDensityChange(e.target.value as "comfortable" | "compact")
+            }
+            options={VIEW_MODE_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
+      ) : null}
 
       {filterSections.map((section) => {
         const vals = facetValues[section.filterKey] ?? [];

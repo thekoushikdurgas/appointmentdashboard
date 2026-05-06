@@ -5,8 +5,6 @@ import {
   History,
   RefreshCw,
   Play,
-  List,
-  LayoutGrid,
   LayoutDashboard,
   Zap,
   Download,
@@ -33,13 +31,7 @@ import {
 import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
-import {
-  HiringSignalsDataTable,
-  HiringSignalsToolbarTableExtras,
-  HS_DT_DEFAULT_COLUMNS,
-  type HiringSignalsDataTableColumnId,
-} from "@/components/feature/hiring-signals/HiringSignalsDataTable";
-import { HiringSignalsResumeImport } from "@/components/feature/hiring-signals/HiringSignalsResumeImport";
+import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import {
   HiringSignalsExportModal,
   type HiringSignalsExportIntent,
@@ -108,14 +100,12 @@ function HiringSignalsPageBody({
     filters,
     setFilters,
     setPage,
-    setPageSize,
     setFilterField,
     refetch,
     currentPage,
   } = hiring;
 
-  const { applyFilters, activeDraftCount, mergeResumeSuggestions } =
-    useHireSignalFilter();
+  const { activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isPro, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -138,9 +128,6 @@ function HiringSignalsPageBody({
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
   );
-  const [visibleColumns, setVisibleColumns] = useState<
-    HiringSignalsDataTableColumnId[]
-  >([...HS_DT_DEFAULT_COLUMNS]);
   const [satellitePage, setSatellitePage] = useState(1);
   const [trackedPage, setTrackedPage] = useState(1);
   const [exportBusy, setExportBusy] = useState(false);
@@ -195,20 +182,6 @@ function HiringSignalsPageBody({
   const clearRunFilter = useCallback(() => {
     setFilters((f) => ({ ...f, runId: undefined, offset: 0 }));
   }, [setFilters]);
-
-  const toggleHsColumn = useCallback(
-    (id: HiringSignalsDataTableColumnId, visible: boolean) => {
-      setVisibleColumns((prev) => {
-        const s = new Set(prev);
-        if (visible) s.add(id);
-        else s.delete(id);
-        const arr = [...s] as HiringSignalsDataTableColumnId[];
-        if (arr.length === 0) return [...HS_DT_DEFAULT_COLUMNS];
-        return arr;
-      });
-    },
-    [],
-  );
 
   const effectiveJobListFilters = useMemo(
     () => ({
@@ -507,29 +480,6 @@ function HiringSignalsPageBody({
   const signalsToolbar = (
     <DataToolbar
       cssPrefix="c360-toolbar"
-      actionPrefix={
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-3">
-          <label className="c360-flex c360-items-center c360-gap-2 c360-text-2xs c360-text-ink-muted">
-            <input
-              type="checkbox"
-              checked={Boolean(filters.hideApplied)}
-              onChange={(e) => setFilterField("hideApplied", e.target.checked)}
-            />
-            Hide applied
-          </label>
-          <HiringSignalsResumeImport
-            onSuggested={(titles, locs, ext) => {
-              mergeResumeSuggestions(titles, locs, ext);
-            }}
-          />
-          <HiringSignalsToolbarTableExtras
-            pageSize={filters.limit}
-            onPageSizeChange={setPageSize}
-            visibleColumns={visibleColumns}
-            onToggleColumn={toggleHsColumn}
-          />
-        </div>
-      }
       tabs={[
         {
           value: "all",
@@ -547,12 +497,6 @@ function HiringSignalsPageBody({
       activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
       onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
       totalCount={total}
-      viewModes={[
-        { value: "comfortable", label: "Comfortable", icon: LayoutGrid },
-        { value: "compact", label: "Compact", icon: List },
-      ]}
-      viewMode={tableDensity}
-      onViewModeChange={(m) => setTableDensity(m as "comfortable" | "compact")}
       filterConfig={{
         activeCount: activeDraftCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -743,14 +687,12 @@ function HiringSignalsPageBody({
             filters={
               <HiringSignalsFilterSidebar
                 drawerTitleId="c360-hs-filter-drawer-title"
-                onApply={() => {
-                  applyFilters();
-                  setMobileFiltersOpen(false);
-                }}
                 appliedListFilters={filters}
                 signalTimePreset={signalTimePreset}
                 appliedRunId={filters.runId}
                 onClearRunId={clearRunFilter}
+                tableDensity={tableDensity}
+                onTableDensityChange={setTableDensity}
               />
             }
             pagination={
@@ -811,7 +753,6 @@ function HiringSignalsPageBody({
               selectedKeys={selectedKeys}
               onSelectionChange={setSelectedKeys}
               density={tableDensity}
-              visibleColumns={visibleColumns}
             />
           </DataPageLayout>
         </TabsContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import type { ContactFilterData } from "@/graphql/generated/types";
 import {
@@ -10,6 +10,8 @@ import {
 import { effectivePostedAfter } from "@/hooks/useHiringSignals";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import { fetchHireSignalJobFilterOptions } from "@/services/graphql/hiringSignalService";
+
+const DEFAULT_PAGE_SIZE = 50;
 
 function buildFacetOptionBase(
   applied: JobListFilters,
@@ -109,6 +111,9 @@ export interface HiringSignalTextFacetComboboxProps {
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
   disabled?: boolean;
+  /** Distinct options per request (server max 200). Default 50 for infinite scroll pages. */
+  pageSize?: number;
+  className?: string;
 }
 
 export function HiringSignalTextFacetCombobox({
@@ -120,14 +125,31 @@ export function HiringSignalTextFacetCombobox({
   selectedValues,
   onSelectionChange,
   disabled = false,
+  pageSize = DEFAULT_PAGE_SIZE,
+  className,
 }: HiringSignalTextFacetComboboxProps) {
   const [searchText, setSearchText] = useState("");
   const [options, setOptions] = useState<ContactFilterData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const optionsLenRef = useRef(0);
+  const loadReqRef = useRef(0);
 
-  const load = useCallback(
-    async (q: string) => {
-      setLoading(true);
+  useEffect(() => {
+    optionsLenRef.current = options.length;
+  }, [options.length]);
+
+  const runFetch = useCallback(
+    async (mode: "replace" | "append") => {
+      const req = ++loadReqRef.current;
+      const offset = mode === "replace" ? 0 : optionsLenRef.current;
+      if (mode === "replace") {
+        setLoading(true);
+        setHasMore(false);
+      } else {
+        setLoadingMore(true);
+      }
       try {
         const base = buildFacetOptionBase(
           appliedListFilters,
@@ -135,46 +157,76 @@ export function HiringSignalTextFacetCombobox({
           signalTimePreset,
         );
         const rows = await fetchHireSignalJobFilterOptions(field, base, {
-          q,
-          limit: 50,
+          q: searchText,
+          limit: pageSize,
+          offset,
         });
-        setOptions(
-          rows.map((r) => ({
-            value: r.value,
-            displayValue: r.count > 0 ? `${r.value} (${r.count})` : r.value,
-          })),
-        );
+        if (req !== loadReqRef.current) return;
+        const mapped: ContactFilterData[] = rows.map((r) => ({
+          value: r.value,
+          displayValue: r.value,
+          count: r.count > 0 ? r.count : undefined,
+        }));
+        if (mode === "replace") {
+          setOptions(mapped);
+        } else {
+          setOptions((prev) => {
+            const seen = new Set(prev.map((p) => String(p.value)));
+            const out = [...prev];
+            for (const m of mapped) {
+              const v = String(m.value);
+              if (!seen.has(v)) {
+                seen.add(v);
+                out.push(m);
+              }
+            }
+            return out;
+          });
+        }
+        setHasMore(rows.length === pageSize);
       } catch {
-        setOptions([]);
+        if (req === loadReqRef.current) {
+          if (mode === "replace") setOptions([]);
+          setHasMore(false);
+        }
       } finally {
-        setLoading(false);
+        if (req === loadReqRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
     },
-    [appliedListFilters, draft, field, signalTimePreset],
+    [appliedListFilters, draft, field, pageSize, searchText, signalTimePreset],
   );
 
   useEffect(() => {
     const t = setTimeout(() => {
-      void load(searchText);
+      void runFetch("replace");
     }, 280);
     return () => clearTimeout(t);
-  }, [searchText, load]);
+  }, [searchText, runFetch]);
 
   const onOpen = useCallback(() => {
-    void load(searchText);
-  }, [load, searchText]);
+    void runFetch("replace");
+  }, [runFetch]);
+
+  const onLoadMore = useCallback(() => {
+    if (!hasMore || loading || loadingMore) return;
+    void runFetch("append");
+  }, [hasMore, loading, loadingMore, runFetch]);
 
   return (
-    <div className="c360-space-y-2">
+    <div className={className ?? "c360-space-y-2"}>
       <FilterCombobox
         label={label}
         options={options}
         selectedValues={selectedValues}
         onSelectionChange={onSelectionChange}
         loading={loading}
-        hasMore={false}
+        loadingMore={loadingMore}
+        hasMore={hasMore}
         onOpen={onOpen}
-        onLoadMore={() => {}}
+        onLoadMore={onLoadMore}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}

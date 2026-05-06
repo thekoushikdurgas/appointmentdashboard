@@ -4,7 +4,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -22,6 +24,7 @@ const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "locations",
   "employmentTypes",
   "workplaceTypes",
+  "countries",
   "industries",
   "excludedIndustries",
   "excludedTitles",
@@ -37,6 +40,15 @@ const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
 export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
   let n = 0;
   (Object.keys(d) as HiringSignalDraftField[]).forEach((k) => {
+    if (k === "listSort" && d.listSort === "recent") return;
+    if (k === "datePostedPreset" && d.datePostedPreset === "any") return;
+    if (
+      k === "postedAfter" &&
+      d.datePostedPreset !== "any" &&
+      d.datePostedPreset !== "custom"
+    ) {
+      return;
+    }
     const v = d[k];
     if (Array.isArray(v)) {
       if (normalizeHiringSignalTokenList(v).length > 0) n += 1;
@@ -56,7 +68,7 @@ export interface HireSignalFilterContextValue {
   ) => void;
   applyFilters: () => void;
   resetFilters: () => void;
-  /** Merge resume parser output into draft only — user still clicks Apply to search. */
+  /** Merge resume parser output into draft — applied filters update automatically. */
   mergeResumeSuggestions: (
     titles: string[],
     locations: string[],
@@ -117,11 +129,16 @@ export function HireSignalFilterProvider({
     );
     const skillsAll = normalizeHiringSignalTokenList(draft.skillsAll);
 
+    const countries = normalizeHiringSignalTokenList(draft.countries);
+
     const clearanceRaw = draft.clearanceMode.trim().toLowerCase();
     const clearanceMode: undefined | "" | "allow" | "hide" | "only" =
       clearanceRaw === "hide" || clearanceRaw === "only"
         ? clearanceRaw
         : undefined;
+
+    const listSort: "recent" | "oldest" =
+      draft.listSort === "oldest" ? "oldest" : "recent";
 
     setFilters((f) => ({
       ...f,
@@ -153,6 +170,8 @@ export function HireSignalFilterProvider({
       skillsAll: skillsAll.length ? skillsAll : undefined,
       clearanceMode: clearanceMode || undefined,
       h1bOnly: draft.h1bOnly ? true : undefined,
+      countries: countries.length ? countries : undefined,
+      applyMethod: draft.applyMethod.trim() || undefined,
       seniority:
         draft.seniorityCustom.trim() ||
         draft.seniorityPreset.trim() ||
@@ -161,9 +180,27 @@ export function HireSignalFilterProvider({
         draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
       postedAfter: draft.postedAfter.trim() || undefined,
       postedBefore: draft.postedBefore.trim() || undefined,
+      listSort,
       offset: 0,
     }));
   }, [draft, setFilters]);
+
+  const applyFiltersRef = useRef(applyFilters);
+  applyFiltersRef.current = applyFilters;
+
+  const skipInitialAutoApplyRef = useRef(true);
+
+  /** Debounce so rapid control changes and combobox token updates do not refetch on every tick. */
+  useEffect(() => {
+    if (skipInitialAutoApplyRef.current) {
+      skipInitialAutoApplyRef.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      applyFiltersRef.current();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [draft]);
 
   const resetFilters = useCallback(() => {
     setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
@@ -193,6 +230,9 @@ export function HireSignalFilterProvider({
       h1bOnly: undefined,
       skillsAll: undefined,
       hideApplied: false,
+      countries: undefined,
+      applyMethod: undefined,
+      listSort: undefined,
       offset: 0,
     }));
   }, [setFilters]);
@@ -266,6 +306,7 @@ export function HireSignalFilterProvider({
     }),
     [
       draft,
+      setDraft,
       onDraftField,
       applyFilters,
       resetFilters,

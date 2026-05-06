@@ -8,6 +8,11 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 
+const VIEW_MODE_OPTIONS = [
+  { value: "list", label: "List" },
+  { value: "card", label: "Card" },
+];
+
 export interface CompaniesFilterSidebarProps {
   search: string;
   onSearchChange: (value: string) => void;
@@ -20,6 +25,9 @@ export interface CompaniesFilterSidebarProps {
   onOpenAdvanced: () => void;
   /** Must match `DataPageLayout` `filterDrawerTitleId` (mobile drawer `aria-labelledby`). */
   drawerTitleId?: string;
+  /** List / card display mode. */
+  viewMode?: "list" | "card";
+  onViewModeChange?: (mode: "list" | "card") => void;
 }
 
 export function CompaniesFilterSidebar({
@@ -33,6 +41,8 @@ export function CompaniesFilterSidebar({
   onClearVql,
   onOpenAdvanced,
   drawerTitleId = "c360-companies-filter-drawer-title",
+  viewMode = "list",
+  onViewModeChange,
 }: CompaniesFilterSidebarProps) {
   const facetActiveCount = useMemo(
     () =>
@@ -159,6 +169,26 @@ export function CompaniesFilterSidebar({
             </button>
           ))}
         </div>
+      ) : null}
+
+      {onViewModeChange ? (
+        <ContactsCollapsibleFilterSection
+          title="View"
+          count={viewMode === "card" ? 1 : 0}
+          defaultOpen={false}
+          onClear={() => onViewModeChange("list")}
+        >
+          <Select
+            id="companies-view-mode"
+            value={viewMode}
+            onChange={(e) =>
+              onViewModeChange(e.target.value as "list" | "card")
+            }
+            options={VIEW_MODE_OPTIONS}
+            fullWidth
+            inputSize="md"
+          />
+        </ContactsCollapsibleFilterSection>
       ) : null}
 
       {filterSections.map((section) => {

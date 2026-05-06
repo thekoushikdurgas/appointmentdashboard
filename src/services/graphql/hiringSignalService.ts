@@ -94,6 +94,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
     $field: String!
     $q: String
     $optionLimit: Int
+    $optionOffset: Int
     $titles: [String!]
     $companies: [String!]
     $locations: [String!]
@@ -111,6 +112,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
         field: $field
         q: $q
         limit: $optionLimit
+        optionOffset: $optionOffset
         titles: $titles
         companies: $companies
         locations: $locations
@@ -373,6 +375,14 @@ export interface JobListFilters {
   skillsAll?: string[];
   /** Hide jobs the user marked applied (gateway-owned list). */
   hideApplied?: boolean;
+  /** Country codes / substrings (OR) — extendedJobFilters.countries → job.server country[]. */
+  countries?: string[];
+  /** Substring match on apply_method (e.g. SimpleOnsiteApply). */
+  applyMethod?: string;
+  /**
+   * Mirrors draft sort — sent as `extendedJobFilters.postedAtOrder` → job.server `posted_at` order.
+   */
+  listSort?: "recent" | "oldest";
   limit: number;
   offset: number;
 }
@@ -417,6 +427,11 @@ function buildExtendedJobFilters(
   }
   if (filters.h1bOnly) x.h1bOnly = true;
   if (filters.skillsAll?.length) x.skillsAll = filters.skillsAll;
+  if (filters.countries?.length) x.countries = filters.countries;
+  if (filters.applyMethod?.trim()) x.applyMethod = filters.applyMethod.trim();
+  if (filters.listSort === "oldest") {
+    x.postedAtOrder = "asc";
+  }
   return Object.keys(x).length > 0 ? x : null;
 }
 
@@ -476,7 +491,7 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
 export async function fetchHireSignalJobFilterOptions(
   field: "title" | "company" | "location",
   filters: JobListFilters,
-  options?: { q?: string; limit?: number },
+  options?: { q?: string; limit?: number; offset?: number },
 ) {
   const res = await graphqlQuery<{
     hireSignal: { jobFilterOptions: HireSignalApiJson };
@@ -486,35 +501,12 @@ export async function fetchHireSignalJobFilterOptions(
       field,
       q: options?.q?.trim() || null,
       optionLimit: options?.limit ?? 50,
+      optionOffset: options?.offset ?? 0,
       ...hireSignalJobListFilterVars(filters),
     },
     HS_GQL,
   );
-  const parsed = parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
-  // #region agent log
-  if (field === "title") {
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "dca5f5",
-      },
-      body: JSON.stringify({
-        sessionId: "dca5f5",
-        location: "hiringSignalService.ts:fetchHireSignalJobFilterOptions",
-        message: "title jobFilterOptions parsed",
-        data: {
-          optionCount: parsed.length,
-          sampleValues: parsed.slice(0, 5).map((r) => r.value),
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H-title-facet",
-        runId: "post-fix-verify",
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
-  return parsed;
+  return parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
 }
 
 export async function fetchHiringSignalStats() {

@@ -1955,6 +1955,7 @@ export type HireSignalQueryJobFilterOptionsArgs = {
   limit?: Scalars["Int"]["input"];
   location?: InputMaybe<Scalars["String"]["input"]>;
   locations?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  optionOffset?: Scalars["Int"]["input"];
   postedAfter?: InputMaybe<Scalars["String"]["input"]>;
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
   q?: InputMaybe<Scalars["String"]["input"]>;

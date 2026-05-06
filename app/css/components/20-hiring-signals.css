@@ -419,8 +419,9 @@
 }
 
 .c360-hs-filters .c360-contacts-filters__head-row {
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
   gap: 5px;
 }
 

@@ -688,6 +688,27 @@
   display: block;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Collapsible section bodies: popover wrapper must fill rail width (facet combobox triggers). */
+.c360-contacts-filters
+  .c360-contacts-filter-section__content
+  .c360-popover__trigger {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.c360-contacts-filters
+  .c360-contacts-filter-section__content
+  .c360-popover__trigger
+  > .c360-filter-combobox__trigger {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .c360-contacts-filters__head {
   display: flex;

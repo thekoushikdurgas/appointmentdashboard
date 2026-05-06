@@ -109,13 +109,14 @@
 .c360-toolbar__actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: var(--c360-spacing-2);
 }
 
 .c360-toolbar__action-prefix {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--c360-spacing-2);
 }
@@ -140,33 +141,16 @@
 
 .c360-toolbar__view-toggle {
   display: inline-flex;
-  border: 1px solid var(--c360-border);
-  border-radius: var(--c360-radius-md);
-  overflow: hidden;
-}
-
-.c360-toolbar__view-btn {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: none;
-  background: var(--c360-bg-elevated);
-  color: var(--c360-text-muted);
-  font-size: var(--c360-text-xs);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--c360-transition-fast);
 }
 
-.c360-toolbar__view-btn:hover {
-  background: var(--c360-bg-secondary);
-  color: var(--c360-text);
+.c360-toolbar__view-select.c360-input-group {
+  margin-bottom: 0;
+  min-width: 10.5rem;
 }
 
-.c360-toolbar__view-btn--active {
-  background: var(--c360-primary-light);
-  color: var(--c360-primary);
+.c360-toolbar__view-select .c360-select-wrap .c360-select {
+  min-height: 28px;
 }
 
 .c360-toolbar__divider {
@@ -176,9 +160,13 @@
   margin: 0 var(--c360-spacing-1);
 }
 
+.c360-contacts-page .c360-toolbar__divider {
+  display: none;
+}
+
 .c360-toolbar__action-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--c360-spacing-2);
 }
 
@@ -300,18 +288,34 @@
   gap: var(--c360-spacing-2);
   margin: calc(-1 * var(--c360-spacing-2)) calc(-1 * var(--c360-spacing-2))
     var(--c360-spacing-1);
-  padding: var(--c360-spacing-3) var(--c360-spacing-2);
+  padding: 0 var(--c360-spacing-2);
   border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-companies-filters .c360-contacts-filters__head-row {
+  padding: 0;
 }
 
 .c360-contacts-filters__head-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 5px;
   min-width: 0;
   flex: 1;
   justify-content: flex-start;
   align-items: flex-start;
+}
+
+.c360-hs-filters .c360-contacts-filters__head-text {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.c360-companies-filters .c360-contacts-filters__head-text {
+  flex-direction: row;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
 }
 
 .c360-contacts-filters__subtitle {
@@ -321,6 +325,10 @@
   color: var(--c360-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.c360-hs-filters .c360-contacts-filters__subtitle {
+  color: rgba(255, 0, 0, 1);
 }
 
 .c360-contacts-filters__head-actions {

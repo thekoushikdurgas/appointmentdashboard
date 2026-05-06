@@ -299,6 +299,9 @@ export function useHiringSignals(
     h1bOnly: initial.h1bOnly,
     skillsAll: initial.skillsAll,
     hideApplied: initial.hideApplied ?? false,
+    countries: initial.countries,
+    applyMethod: initial.applyMethod,
+    listSort: initial.listSort,
     limit: initial.limit ?? 25,
     offset: initial.offset ?? 0,
   });
