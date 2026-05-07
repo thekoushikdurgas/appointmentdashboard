@@ -28,15 +28,6 @@ export default function SettingsPage() {
 
   return (
     <DashboardPageLayout>
-      <div className="c360-page-header">
-        <div>
-          <h1 className="c360-page-header__title">Settings</h1>
-          <p className="c360-page-header__subtitle">
-            Manage your preferences and account security
-          </p>
-        </div>
-      </div>
-
       <div className="c360-settings-stack">
         {/* Theme */}
         <Card

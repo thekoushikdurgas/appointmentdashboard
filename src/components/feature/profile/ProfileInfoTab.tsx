@@ -1,14 +1,19 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { User, FileImage } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Progress } from "@/components/ui/Progress";
+import { resolveProfileAvatarSrc } from "@/lib/utils";
 
 interface ProfileInfoTabProps {
+  avatarUrl?: string | null;
+  isVerified: boolean;
   email: string;
   fullName: string;
   jobTitle: string;
@@ -28,6 +33,8 @@ interface ProfileInfoTabProps {
 }
 
 export function ProfileInfoTab({
+  avatarUrl,
+  isVerified,
   email,
   fullName,
   jobTitle,
@@ -49,6 +56,34 @@ export function ProfileInfoTab({
 
   return (
     <Card title="Personal Information" className="c360-max-w-560">
+      <div className="c360-mb-6 c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-4 c360-border-b c360-border-ink-8 c360-pb-6">
+        <div className="c360-flex c360-min-w-0 c360-items-center c360-gap-4">
+          <Image
+            src={resolveProfileAvatarSrc(
+              avatarUrl,
+              fullName || email || "",
+              email,
+              128,
+            )}
+            alt=""
+            width={64}
+            height={64}
+            className="c360-avatar c360-avatar--lg c360-shrink-0"
+            unoptimized
+          />
+          <div className="c360-min-w-0">
+            <p className="c360-m-0 c360-truncate c360-text-lg c360-font-semibold c360-text-ink">
+              {fullName.trim() || "Your Profile"}
+            </p>
+            <p className="c360-m-0 c360-truncate c360-text-sm c360-text-muted">
+              {email}
+            </p>
+          </div>
+        </div>
+        <Badge color={isVerified ? "green" : "orange"} dot>
+          {isVerified ? "Verified" : "Unverified"}
+        </Badge>
+      </div>
       {formError && (
         <Alert variant="danger" className="c360-mb-4">
           {formError}

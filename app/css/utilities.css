@@ -50,11 +50,16 @@
 .c360-flex-wrap {
   flex-wrap: wrap;
 }
+.c360-flex-nowrap {
+  flex-wrap: nowrap;
+}
 .c360-flex-1 {
   flex: 1;
 }
 .c360-flex-1-1-260 {
   flex: 1 1 260px;
+  width: 100%;
+  min-width: 0;
 }
 .c360-flex-1-1-160 {
   flex: 1 1 160px;
@@ -777,7 +782,19 @@
 }
 
 .c360-page-header--actions-only {
+  flex-direction: column;
   justify-content: flex-end;
+}
+
+.c360-page-header--actions-only .c360-page-header__actions {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+}
+
+.c360-page-header--actions-only .c360-page-header__actions .c360-field,
+.c360-page-header--actions-only .c360-page-header__actions .c360-input-wrap {
+  width: 100%;
 }
 
 .c360-page-header__title {
@@ -883,15 +900,16 @@
 
 /* ─── Toolbar ────────────────────────────────────────────────────────────── */
 .c360-toolbar {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: var(--c360-spacing-3);
-  flex-wrap: wrap;
   padding: var(--c360-spacing-3) var(--c360-spacing-4);
   background: var(--c360-bg-elevated);
   border: 1px solid var(--c360-border);
   border-radius: var(--c360-radius-lg);
+  flex-wrap: wrap;
+  display: flex;
+  flex-direction: row;
 }
 
 .c360-toolbar__left,
@@ -926,18 +944,22 @@
 
 /* ─── Stat card ──────────────────────────────────────────────────────────── */
 .c360-stat-card {
-  background: var(--c360-bg-elevated);
-  border-radius: var(--c360-radius-lg);
-  box-shadow: var(--c360-shadow-card);
-  border: 1px solid var(--c360-border);
+  /* background: var(--c360-bg-elevated); */
+  /* border-radius: var(--c360-radius-lg); */
+  /* box-shadow: var(--c360-shadow-card); */
+  /* border: 1px solid var(--c360-border); */
   padding: var(--c360-spacing-6);
-  display: flex;
-  flex-direction: column;
   gap: var(--c360-spacing-3);
   transition: box-shadow var(--c360-transition-fast);
+  display: flex;
+  /* background: transparent; */
 }
-
-.c360-stat-card:hover {
+.c360-stat-card__content{
+  width: max-content;
+display: flex;
+flex-direction: column;
+}
+/* .c360-stat-card:hover {
   box-shadow: var(--c360-shadow-md);
 }
 
@@ -945,7 +967,7 @@
   box-shadow:
     var(--c360-shadow-md),
     0 0 0 3px var(--c360-focus-ring);
-}
+} */
 
 /* Data-card style KPI row (title + icon header, value, description) — see docs/frontend/ideas/mydesigns/dashboardcomponet.md */
 .c360-stat-card__headline {
@@ -998,21 +1020,22 @@
 }
 
 .c360-stat-card__header {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  display: flex;
+  height: stretch;
 }
 
 .c360-stat-card__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--c360-radius-lg);
-  background: var(--c360-stat-icon-bg, var(--c360-primary-light));
-  color: var(--c360-stat-icon-fg, var(--c360-primary));
-  flex-shrink: 0;
+        /* border-radius: var(--c360-radius-lg); */
+    /* background: var(--c360-stat-icon-bg, var(--c360-primary-light)); */
+    /* width: 48px; */
+    /* height: 48px; */
+    color: var(--c360-stat-icon-fg, var(--c360-primary));
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
 .c360-stat-card__value {

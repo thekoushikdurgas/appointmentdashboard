@@ -20,7 +20,9 @@ import {
   type PerformanceMetricRow,
 } from "@/services/graphql/analyticsService";
 import { usePerformanceMetric } from "@/hooks/usePerformanceMetric";
+import { useRole } from "@/context/RoleContext";
 import { DashboardAdCarousel } from "@/components/feature/dashboard/DashboardAdCarousel";
+import { HiringSignalsHomeOverview } from "@/components/feature/hiring-signals/HiringSignalsHomeOverview";
 import {
   DashboardStatRow,
   type StatCardData,
@@ -73,6 +75,7 @@ function buildAreaDataFromMetrics(
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isAdmin, isPro } = useRole();
   // Record dashboard page-view performance metric (fire-and-forget)
   usePerformanceMetric("dashboard_view", undefined, { page: "dashboard" });
 
@@ -228,6 +231,12 @@ export default function DashboardPage() {
       <DashboardAdCarousel interval={6000} />
 
       <DashboardStatRow stats={stats} loading={statsLoading} />
+
+      {isPro() || isAdmin ? (
+        <section className="c360-mt-8" aria-label="Hiring signals overview">
+          <HiringSignalsHomeOverview />
+        </section>
+      ) : null}
 
       <DashboardChartSection liveData={liveData} activity={activity} />
     </DashboardPageLayout>

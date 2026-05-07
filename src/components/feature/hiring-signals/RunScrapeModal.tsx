@@ -11,6 +11,9 @@ import { toast } from "sonner";
 const DEFAULT_URL =
   "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
 
+/** Matches job.server `maxRescheduleAfterHours` (hours). */
+const MAX_RESCHEDULE_AFTER_HOURS = 168;
+
 type ScrapeMode = "keywords" | "urls";
 
 export interface RunScrapeModalProps {
@@ -33,6 +36,8 @@ export function RunScrapeModal({
   const [scrapeCompany, setScrapeCompany] = useState(false);
   const [splitByLocation, setSplitByLocation] = useState(false);
   const [trigger, setTrigger] = useState("manual");
+  /** Empty string = omit from payload; scraper repeats after N hours when set (> 0). */
+  const [rescheduleAfterHours, setRescheduleAfterHours] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -50,6 +55,7 @@ export function RunScrapeModal({
     setScrapeCompany(false);
     setSplitByLocation(false);
     setTrigger("manual");
+    setRescheduleAfterHours("");
     setValidationError(null);
   }, []);
 
@@ -74,6 +80,22 @@ export function RunScrapeModal({
         setValidationError("Enter a valid LinkedIn geoId (e.g. 105080838).");
         return;
       }
+      const rs = rescheduleAfterHours.trim();
+      if (rs !== "") {
+        const n = Math.floor(Number(rs));
+        if (!Number.isFinite(n) || n < 0) {
+          setValidationError(
+            "Repeat after hours must be a whole number between 0 and 168.",
+          );
+          return;
+        }
+        if (n > MAX_RESCHEDULE_AFTER_HOURS) {
+          setValidationError(
+            `Repeat after hours must be at most ${MAX_RESCHEDULE_AFTER_HOURS}.`,
+          );
+          return;
+        }
+      }
     }
     setValidationError(null);
     setSubmitting(true);
@@ -87,6 +109,13 @@ export function RunScrapeModal({
         body.geoId = geoId;
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.enableEnrichment = enableEnrichment;
+        const rs = rescheduleAfterHours.trim();
+        if (rs !== "") {
+          const n = Math.floor(Number(rs));
+          if (n > 0) {
+            body.rescheduleAfterHours = n;
+          }
+        }
       } else {
         const lines = urlsText
           .split(/\r?\n/)
@@ -127,6 +156,7 @@ export function RunScrapeModal({
     scrapeCompany,
     splitByLocation,
     trigger,
+    rescheduleAfterHours,
     onClose,
     onSuccess,
     reset,
@@ -241,6 +271,30 @@ export function RunScrapeModal({
               />
               <span className="c360-text-sm c360-text-ink">
                 Enable company website enrichment (OpenAI on scraper)
+              </span>
+            </label>
+            <label className="c360-flex c360-flex-col c360-gap-1">
+              <span className="c360-text-2xs c360-font-medium c360-text-ink">
+                Repeat scrape after (hours, optional)
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={MAX_RESCHEDULE_AFTER_HOURS}
+                step={1}
+                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+                value={rescheduleAfterHours}
+                onChange={(e) => setRescheduleAfterHours(e.target.value)}
+                placeholder="No repeat"
+                aria-describedby="hs-reschedule-hint"
+              />
+              <span
+                id="hs-reschedule-hint"
+                className="c360-text-2xs c360-text-muted"
+              >
+                After the run completes, scraper.server can queue the same search
+                again via Celery (not a second tracked run in job.server). Leave
+                empty or 0 for a single run.
               </span>
             </label>
           </>

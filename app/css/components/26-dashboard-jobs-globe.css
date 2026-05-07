@@ -1,0 +1,160 @@
+/* Dashboard — hiring-signal job locations globe (COBE + legend)
+ * Pair with HiringSignalJobsGlobe.tsx; inspired by docs/frontend/ideas/mydesigns/dashboardmap.md */
+
+.c360-dashboard-hiring-globe-card .c360-card__footer {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-dashboard-globe__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-dashboard-globe__title-icon {
+  color: var(--c360-primary);
+  flex-shrink: 0;
+}
+
+.c360-dashboard-globe {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 240px);
+  gap: var(--c360-spacing-5);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .c360-dashboard-globe {
+    grid-template-columns: 1fr;
+  }
+}
+
+.c360-dashboard-globe__canvas-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-3);
+  min-width: 0;
+}
+
+/* COBE wraps the canvas in nested divs (inline position:relative); keep them flex-centered */
+.c360-dashboard-globe__canvas-wrap div:has(.c360-dashboard-globe__canvas) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.c360-dashboard-globe__canvas {
+  width: min(100%, 420px);
+  aspect-ratio: 1 / 1;
+  max-height: min(72vw, 420px);
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 1s ease;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .c360-dashboard-globe__canvas {
+  box-shadow: none;
+}
+
+.c360-dashboard-globe__hint {
+  margin: 0;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  text-align: center;
+  max-width: 36rem;
+  line-height: 1.45;
+}
+
+.c360-dashboard-globe__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+  min-width: 0;
+}
+
+.c360-dashboard-globe__legend-skeleton {
+  min-height: 180px;
+  border-radius: var(--c360-radius-lg);
+  background: linear-gradient(
+    90deg,
+    var(--c360-bg-secondary) 0%,
+    color-mix(in srgb, var(--c360-bg-secondary) 65%, var(--c360-bg-elevated))
+      50%,
+    var(--c360-bg-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: c360-globe-skel 1.4s ease-in-out infinite;
+}
+
+@keyframes c360-globe-skel {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.c360-dashboard-globe__empty {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  line-height: 1.5;
+}
+
+.c360-dashboard-globe__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-dashboard-globe__list-item {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: baseline;
+  gap: var(--c360-spacing-2);
+  font-size: var(--c360-text-xs);
+}
+
+.c360-dashboard-globe__rank {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--c360-font-semibold);
+  color: var(--c360-text-muted);
+}
+
+.c360-dashboard-globe__region {
+  color: var(--c360-text);
+  font-weight: var(--c360-font-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c360-dashboard-globe__count {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--c360-font-semibold);
+  color: var(--c360-primary);
+}
+
+.c360-dashboard-globe__meta {
+  margin: 0;
+  font-size: var(--c360-text-2xs, 0.65rem);
+  color: var(--c360-text-muted);
+  line-height: 1.4;
+}
+
+.c360-dashboard-globe__footer {
+  display: flex;
+  justify-content: flex-end;
+}

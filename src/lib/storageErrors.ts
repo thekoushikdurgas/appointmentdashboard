@@ -22,6 +22,16 @@ export function getStorageErrorMessage(e: unknown): string {
 
     if (parsed) {
       if (parsed.isPermissionError) {
+        const raw = parsed.message ?? "";
+        // Storage gateway returns a detailed operator hint for S3/IAM issues; do not replace it
+        // with the generic account-permissions string (reserved for app RBAC-style 403s).
+        if (
+          /access denied to storage/i.test(raw) ||
+          /S3STORAGE_SERVER_API/i.test(raw) ||
+          /\bs3storage\b/i.test(raw)
+        ) {
+          return raw;
+        }
         return "Access denied. Check your account permissions.";
       }
       if (parsed.isNotFoundError) {

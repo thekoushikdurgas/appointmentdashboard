@@ -67,10 +67,6 @@ export function GenericToolbar({
   cssPrefix = "c360-toolbar",
 }: GenericToolbarProps) {
   const p = cssPrefix;
-  const hasActionClusterTail =
-    (filterConfig?.show !== false && !!filterConfig) ||
-    (viewModes && viewModes.length > 0) ||
-    actions.length > 0;
   const hasLeading = (tabs && tabs.length > 0) || meta != null;
 
   return (
@@ -121,9 +117,6 @@ export function GenericToolbar({
         {actionPrefix ? (
           <div className={`${p}__action-prefix`}>{actionPrefix}</div>
         ) : null}
-        {actionPrefix && hasActionClusterTail ? (
-          <div className={`${p}__divider`} aria-hidden />
-        ) : null}
         {filterConfig?.show !== false && filterConfig ? (
           <Button
             type="button"
@@ -159,11 +152,6 @@ export function GenericToolbar({
               className={`${p}__view-select`}
             />
           </div>
-        ) : null}
-
-        {(filterConfig || (viewModes && viewModes.length > 0)) &&
-        actions.length > 0 ? (
-          <div className={`${p}__divider`} aria-hidden />
         ) : null}
 
         <div className={`${p}__action-buttons`}>

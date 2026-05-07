@@ -15,6 +15,7 @@ import {
   type DataFiltersPeekScope,
 } from "@/context/DataFiltersPeekContext";
 import { FilterPeekPinButton } from "@/components/layouts/FilterPeekPinButton";
+import { Filter } from "lucide-react";
 
 export interface DataPageLayoutProps {
   filters?: ReactNode;
@@ -50,6 +51,11 @@ export interface DataPageLayoutProps {
    * When `filtersPeekRail` is true, identifies which localStorage key to use for pin state.
    */
   filtersPeekScope?: DataFiltersPeekScope;
+  /**
+   * When `filtersPeekRail` + `filtersPeekScope` are set (desktop peek rail), optional
+   * content rendered next to the pin control in the filter rail header row.
+   */
+  filtersPinExtra?: ReactNode;
 }
 
 export default function DataPageLayout({
@@ -66,6 +72,7 @@ export default function DataPageLayout({
   onMobileFiltersClose,
   filtersPeekRail = false,
   filtersPeekScope,
+  filtersPinExtra,
 }: DataPageLayoutProps) {
   const isDesktop = useIsDesktop();
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -144,7 +151,32 @@ export default function DataPageLayout({
     <div className="c360-data-layout__filters-body">
       {peekWithPin ? (
         <div className="c360-data-layout__filters-body-pin">
-          <FilterPeekPinButton />
+          <div
+            className="c360-data-layout__filters-peek-collapsed-hint"
+            aria-hidden
+          >
+            <Filter
+              className="c360-data-layout__filters-peek-collapsed-hint-icon"
+              size={18}
+              strokeWidth={2}
+              aria-hidden
+            />
+          </div>
+          <div
+            className={cn(
+              "c360-data-layout__filters-pin-expandable",
+              filtersPinExtra
+                ? "c360-data-layout__filters-pin-row"
+                : "c360-data-layout__filters-pin-expandable--solo",
+            )}
+          >
+            <FilterPeekPinButton />
+            {filtersPinExtra ? (
+              <div className="c360-data-layout__filters-pin-extra">
+                {filtersPinExtra}
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
       <div className="c360-data-layout__filters-body-scroll">{filters}</div>

@@ -50,6 +50,16 @@
   outline-offset: 2px;
 }
 
+.c360-tabs__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.c360-tabs__tab-text {
+  display: inline;
+}
+
 /* Panel region below tab list (vertical rhythm comes from .c360-tabs gap) */
 .c360-tabs__panel {
   width: 100%;
@@ -76,15 +86,222 @@
   flex-shrink: 0;
 }
 
-/* Email page — tab panels as horizontal flex, wrapped */
-.c360-tabs--email {
+/* Email / Phone / Profile — tab panel stacks vertically, centered (forms + tools) */
+.c360-tabs--email,
+.c360-tabs--phone,
+.c360-tabs--profile {
   width: 100%;
 }
-.c360-tabs--email .c360-tabs__panel {
+.c360-tabs--email .c360-tabs__panel,
+.c360-tabs--phone .c360-tabs__panel,
+.c360-tabs--profile .c360-tabs__panel {
   display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
   gap: var(--c360-spacing-4);
+}
+
+/* Email tools cards: global kit uses 50% width on `.c360-card__body`; stretch to panel width */
+.c360-tabs--email .c360-card .c360-card__body,
+.c360-tabs--email .c360-card .c360-card__footer {
+  width: 100%;
+}
+
+/* LinkedIn search — floating tabs; full-width result grids (not centered like email forms) */
+.c360-tabs--floating.c360-tabs--linkedin {
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Hiring signals — floating bottom tabs match email/phone; data layout stays full width */
+.c360-tabs--floating.c360-tabs--hiring-signals {
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Billing — wide panels (plans, checkout, tables) */
+.c360-tabs--floating.c360-tabs--billing {
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Activities — main page tabs (feed, calendar, analytics, …) */
+.c360-tabs--floating.c360-tabs--activities {
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+
+/* Activities — drop vertical rhythm padding reserved for bottom dock (browser preview) */
+.c360-tabs--floating.c360-tabs--activities.c360-tabs--floating-bottom {
+  padding-bottom: 0;
+}
+
+/* Floating pill nav (21st.dev / ruixenui–style sliding indicator) — Email tools, etc.
+   Tuned with docs/frontend/ideas/mydesigns/uiux.md */
+.c360-tabs--floating {
+  align-items: center;
+  width: 100%;
+}
+
+.c360-tabs--floating .c360-tabs__list--floating-wrap {
+  position: relative;
+  width: max-content;
+  max-width: min(100%, calc(100vw - var(--c360-spacing-4) * 2));
+  margin: 0 auto;
+  padding: var(--c360-spacing-2) var(--c360-spacing-1);
+  border-radius: 5px;
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border-strong);
+  box-shadow: var(--c360-shadow-lg);
+  box-sizing: border-box;
+}
+
+.c360-tabs--floating .c360-tabs__list--floating-track {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  gap: 2px;
+  flex-wrap: nowrap;
+  overflow: auto hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: none;
+}
+
+.c360-tabs__floating-indicator {
+  position: absolute;
+  top: var(--c360-spacing-1);
+  bottom: var(--c360-spacing-1);
+  left: 0;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--c360-primary) 14%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.c360-tabs--floating .c360-tabs__tab {
+  position: relative;
+  z-index: 1;
+  flex: auto;
+  width: 100px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-1);
+  border-bottom: none;
+  margin-bottom: 0;
+  padding: var(--c360-spacing-2) var(--c360-spacing-2);
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+}
+
+.c360-tabs--floating .c360-tabs__tab--active {
+  border-bottom: none;
+  color: var(--c360-primary);
+  font-weight: 600;
+}
+
+.c360-tabs--floating .c360-tabs__tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.c360-tabs--floating .c360-tabs__tab-text {
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  .c360-tabs--floating:not(.c360-tabs--floating-bottom) .c360-tabs__tab-text {
+    display: none;
+  }
+
+  .c360-tabs--floating:not(.c360-tabs--floating-bottom) .c360-tabs__tab {
+    width: auto;
+    min-width: 48px;
+    flex: 1 1 0;
+    padding-inline: var(--c360-spacing-1);
+  }
+}
+
+/* Floating tabs — bottom dock (docs/frontend/ideas/mydesigns/uiux.md) */
+.c360-tabs--floating.c360-tabs--floating-bottom {
+  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+}
+
+.c360-tabs--floating.c360-tabs--floating-bottom
+  .c360-tabs__list--floating-wrap {
+  position: fixed;
+  z-index: var(--c360-z-dropdown);
+  left: 0;
+  right: 0;
+  width: min-content;
+  max-width: calc(100vw - var(--c360-spacing-4) * 2);
+  margin-inline: auto;
+  transform: none;
+  margin-block: 0;
+  padding: 3px 2px;
+  box-shadow: var(--c360-shadow-md);
+  bottom: calc(var(--c360-spacing-3) + env(safe-area-inset-bottom, 0px));
+}
+
+.c360-tabs--floating.c360-tabs--floating-bottom
+  .c360-tabs__list--floating-track {
+  gap: 1px;
+}
+
+.c360-tabs--floating.c360-tabs--floating-bottom .c360-tabs__floating-indicator {
+  top: 3px;
+  bottom: 3px;
+  border-radius: 5px;
+}
+
+.c360-tabs--floating.c360-tabs--floating-bottom .c360-tabs__tab-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Narrow shell: stack above mobile bottom dock */
+.c360-shell--narrow-dock
+  .c360-tabs--floating.c360-tabs--floating-bottom
+  .c360-tabs__list--floating-wrap {
+  bottom: calc(
+    var(--c360-shell-bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
+      var(--c360-spacing-2)
+  );
+}
+
+@media (max-width: 1023px) {
+  .c360-tabs--floating-bottom .c360-tabs__tab-text {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .c360-tabs--floating.c360-tabs--floating-bottom {
+    padding-bottom: calc(46px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .c360-tabs--floating.c360-tabs--activities.c360-tabs--floating-bottom {
+    padding-bottom: 0;
+  }
+
+  .c360-tabs--floating.c360-tabs--floating-bottom
+    .c360-tabs__list--floating-wrap {
+    max-width: calc(100vw - var(--c360-spacing-2) * 2);
+    padding: 2px 1px;
+  }
 }
 
 /* Contained variant */

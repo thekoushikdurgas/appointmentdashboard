@@ -49,9 +49,11 @@ import {
 } from "@/lib/contactsColumnVql";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
+import { ContactPagination } from "@/components/feature/contacts/ContactPagination";
 import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
 import {
   SAVED_SEARCH_VERSION,
+  SAVED_SEARCH_VERSION_SIDEBAR,
   type ContactSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
 import type { VqlQueryInput } from "@/graphql/generated/types";
@@ -380,18 +382,68 @@ export default function ContactsPage() {
 
   const getContactSavedPayload = useCallback((): ContactSavedSearchPayload => {
     return {
-      version: SAVED_SEARCH_VERSION,
+      version: SAVED_SEARCH_VERSION_SIDEBAR,
       vqlQuery: vqlQuery as Partial<VqlQueryInput>,
       pageSize,
+      search,
+      statusFilter,
+      sortBy,
+      activeTab,
+      facetValues: { ...facetValues },
+      advancedListDraft: advancedListDraft
+        ? structuredClone(advancedListDraft)
+        : null,
     };
-  }, [vqlQuery, pageSize]);
+  }, [
+    vqlQuery,
+    pageSize,
+    search,
+    statusFilter,
+    sortBy,
+    activeTab,
+    facetValues,
+    advancedListDraft,
+  ]);
 
   const handleApplyContactSaved = useCallback(
     (p: ContactSavedSearchPayload) => {
-      setPageSize(p.pageSize);
-      applyVqlQuery(p.vqlQuery);
+      if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
+        setSearch(p.search);
+        setStatusFilter(p.statusFilter);
+        setSortBy(p.sortBy);
+        setActiveTab(p.activeTab);
+        setFacetValues({ ...p.facetValues });
+        setAdvancedListDraft(
+          p.advancedListDraft ? structuredClone(p.advancedListDraft) : null,
+        );
+        setPageSize(p.pageSize);
+        applyVqlQuery(p.vqlQuery);
+      } else if (p.version === SAVED_SEARCH_VERSION) {
+        setPageSize(p.pageSize);
+        applyVqlQuery(p.vqlQuery);
+      }
     },
-    [applyVqlQuery, setPageSize],
+    [
+      applyVqlQuery,
+      setPageSize,
+      setSearch,
+      setStatusFilter,
+      setSortBy,
+      setActiveTab,
+      setFacetValues,
+      setAdvancedListDraft,
+    ],
+  );
+
+  const contactSavedSearchesMenu = useMemo(
+    () => (
+      <SavedSearchesMenu
+        entity="contact"
+        getContactPayload={getContactSavedPayload}
+        onApplyContact={handleApplyContactSaved}
+      />
+    ),
+    [getContactSavedPayload, handleApplyContactSaved],
   );
 
   const handleAiSearch = useCallback(() => {
@@ -411,44 +463,53 @@ export default function ContactsPage() {
 
   const filtersSidebar = useMemo(
     () => (
-      <ContactsFilterSidebar
-        search={search}
-        onSearchChange={setSearch}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        filterSections={filterSections}
-        facetValues={facetValues}
-        onFacetChange={handleFacetChange}
-        onSectionExpand={loadFilterData}
-        onLoadMoreFacet={loadMoreFilterData}
-        setFacetSearch={setFilterSearch}
-        activeTab={activeTab}
-        onActiveTabChange={setActiveTab}
-        advancedVqlRuleCount={advancedVqlRuleCount}
-        onClearVql={clearVqlQuery}
-        onOpenAdvanced={() => setVqlOpen(true)}
-        visibleColumns={visibleColumns}
-        onToggleColumn={toggleColumn}
-        sortChipLabel={sortChipLabel}
-        hiddenColumnCount={hiddenColumnCount}
-        onResetVisibleColumns={resetVisibleColumns}
-        onRefreshFilters={handleRefreshFilters}
-        filtersRefreshing={filtersRefreshing}
-        filterDrawerTitleId="c360-filter-drawer-title"
-        onCloseDrawer={
-          isDesktop ? undefined : () => setMobileFiltersOpen(false)
-        }
-        aiQuery={aiQuery}
-        onAiQueryChange={setAiQuery}
-        onAiSearch={handleAiSearch}
-        aiSearching={aiSearching}
-        tableDensity={tableDensity}
-        onTableDensityChange={setTableDensity}
-      />
+      <>
+        {!isDesktop ? (
+          <div className="c360-data-layout__filters-mobile-saved">
+            {contactSavedSearchesMenu}
+          </div>
+        ) : null}
+        <ContactsFilterSidebar
+          search={search}
+          onSearchChange={setSearch}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          filterSections={filterSections}
+          facetValues={facetValues}
+          onFacetChange={handleFacetChange}
+          onSectionExpand={loadFilterData}
+          onLoadMoreFacet={loadMoreFilterData}
+          setFacetSearch={setFilterSearch}
+          activeTab={activeTab}
+          onActiveTabChange={setActiveTab}
+          advancedVqlRuleCount={advancedVqlRuleCount}
+          onClearVql={clearVqlQuery}
+          onOpenAdvanced={() => setVqlOpen(true)}
+          visibleColumns={visibleColumns}
+          onToggleColumn={toggleColumn}
+          sortChipLabel={sortChipLabel}
+          hiddenColumnCount={hiddenColumnCount}
+          onResetVisibleColumns={resetVisibleColumns}
+          onRefreshFilters={handleRefreshFilters}
+          filtersRefreshing={filtersRefreshing}
+          filterDrawerTitleId="c360-filter-drawer-title"
+          onCloseDrawer={
+            isDesktop ? undefined : () => setMobileFiltersOpen(false)
+          }
+          aiQuery={aiQuery}
+          onAiQueryChange={setAiQuery}
+          onAiSearch={handleAiSearch}
+          aiSearching={aiSearching}
+          tableDensity={tableDensity}
+          onTableDensityChange={setTableDensity}
+        />
+      </>
     ),
     [
+      contactSavedSearchesMenu,
+      isDesktop,
       search,
       statusFilter,
       sortBy,
@@ -465,7 +526,6 @@ export default function ContactsPage() {
       resetVisibleColumns,
       handleRefreshFilters,
       filtersRefreshing,
-      isDesktop,
       aiQuery,
       handleAiSearch,
       aiSearching,
@@ -501,25 +561,18 @@ export default function ContactsPage() {
         show: !isDesktop,
       }}
       actionPrefix={
-        <>
-          <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
-            <span className="c360-contacts-dt__toolbar-label">Show</span>
-            <Select
-              options={[...CONTACTS_DT_PAGE_SIZE_OPTIONS]}
-              value={String(pageSize)}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              fullWidth={false}
-              className="c360-contacts-dt__page-size"
-              inputSize="sm"
-              aria-label="Rows per page"
-            />
-          </div>
-          <SavedSearchesMenu
-            entity="contact"
-            getContactPayload={getContactSavedPayload}
-            onApplyContact={handleApplyContactSaved}
+        <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
+          <span className="c360-contacts-dt__toolbar-label">Show</span>
+          <Select
+            options={[...CONTACTS_DT_PAGE_SIZE_OPTIONS]}
+            value={String(pageSize)}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            fullWidth={false}
+            className="c360-contacts-dt__page-size"
+            inputSize="sm"
+            aria-label="Rows per page"
           />
-        </>
+        </div>
       }
       actions={[
         {
@@ -554,6 +607,8 @@ export default function ContactsPage() {
     />
   );
 
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   return (
     <DataPageLayout
       filters={filtersSidebar}
@@ -564,6 +619,17 @@ export default function ContactsPage() {
       filterDrawerTitleId="c360-filter-drawer-title"
       filtersPeekRail
       filtersPeekScope="contacts"
+      filtersPinExtra={contactSavedSearchesMenu}
+      pagination={
+        totalPages > 1 ? (
+          <ContactPagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        ) : undefined
+      }
       className="c360-contacts-page"
     >
       <Modal

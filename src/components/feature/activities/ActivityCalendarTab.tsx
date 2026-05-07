@@ -102,8 +102,8 @@ export function ActivityCalendarTab({ events }: ActivityCalendarTabProps) {
   return (
     <Card
       className="c360-card--activity-calendar-tab"
-      title="Activity Calendar"
-      subtitle="Events mapped to calendar days"
+      // title="Activity Calendar"
+      // subtitle="Events mapped to calendar days"
       padding="none"
       footer={footer}
     >

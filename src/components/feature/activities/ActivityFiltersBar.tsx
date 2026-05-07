@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 
-const SERVICE_OPTIONS = [
+export const ACTIVITY_SERVICE_OPTIONS = [
   { value: "", label: "All services" },
   { value: "contacts", label: "Contacts" },
   { value: "companies", label: "Companies" },
@@ -17,7 +17,7 @@ const SERVICE_OPTIONS = [
   { value: "imports", label: "Imports" },
 ];
 
-const ACTION_OPTIONS = [
+export const ACTIVITY_ACTION_OPTIONS = [
   { value: "", label: "All actions" },
   { value: "create", label: "Create" },
   { value: "update", label: "Update" },
@@ -34,7 +34,7 @@ const ACTION_OPTIONS = [
   { value: "scrape", label: "Scrape" },
 ];
 
-const STATUS_OPTIONS = [
+export const ACTIVITY_STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
   { value: "success", label: "Success" },
   { value: "failed", label: "Failed" },
@@ -49,13 +49,23 @@ export interface ActivityFiltersBarValues {
   endDate: string;
 }
 
+export function activityLast24hDateRange(): Pick<
+  ActivityFiltersBarValues,
+  "startDate" | "endDate"
+> {
+  const end = new Date();
+  const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const toLocal = (d: Date) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return { startDate: toLocal(start), endDate: toLocal(end) };
+}
+
 interface ActivityFiltersBarProps {
   values: ActivityFiltersBarValues;
   onChange: (next: ActivityFiltersBarValues) => void;
   onClear: () => void;
   disabled?: boolean;
-  /** `rail`: narrow left column (Activities page). `bar`: horizontal facet row. */
-  layout?: "rail" | "bar";
 }
 
 export function ActivityFiltersBar({
@@ -63,201 +73,91 @@ export function ActivityFiltersBar({
   onChange,
   onClear,
   disabled,
-  layout = "bar",
 }: ActivityFiltersBarProps) {
   const patch = (partial: Partial<ActivityFiltersBarValues>) =>
     onChange({ ...values, ...partial });
 
-  const rail = layout === "rail";
-
   return (
     <div
       className={cn(
-        "c360-card c360-activity-filters-bar c360-p-4",
-        rail && "c360-activity-filters-bar--rail",
-        !rail && "c360-mb-4",
+        "c360-card c360-activity-filters-bar c360-p-4 c360-mb-4",
       )}
-      {...(!rail
-        ? { role: "region" as const, "aria-label": "Activity filters" as const }
-        : {})}
+      role="region"
+      aria-label="Activity filters"
     >
-      <p
-        className={cn(
-          rail
-            ? "c360-activity-filters-rail__title"
-            : "c360-text-sm c360-text-muted",
-          !rail && "c360-mb-3",
-        )}
-      >
-        Filters
-      </p>
-      {rail ? (
-        <>
-          <div className="c360-activity-filters-rail__scroll">
-            <div className="c360-activity-filters-rail__fields">
-              <div className="c360-activity-filter-field--select">
-                <Select
-                  label="Service"
-                  options={SERVICE_OPTIONS}
-                  value={values.serviceType}
-                  onChange={(e) => patch({ serviceType: e.target.value })}
-                  disabled={disabled}
-                  inputSize="sm"
-                />
-              </div>
-              <div className="c360-activity-filter-field--select">
-                <Select
-                  label="Action"
-                  options={ACTION_OPTIONS}
-                  value={values.actionType}
-                  onChange={(e) => patch({ actionType: e.target.value })}
-                  disabled={disabled}
-                  inputSize="sm"
-                />
-              </div>
-              <div className="c360-activity-filter-field--status">
-                <Select
-                  label="Status"
-                  options={STATUS_OPTIONS}
-                  value={values.status}
-                  onChange={(e) => patch({ status: e.target.value })}
-                  disabled={disabled}
-                  inputSize="sm"
-                />
-              </div>
-              <div className="c360-activity-filter-field--date">
-                <Input
-                  label="Start (local)"
-                  type="datetime-local"
-                  value={values.startDate}
-                  onChange={(e) => patch({ startDate: e.target.value })}
-                  disabled={disabled}
-                  inputSize="sm"
-                />
-              </div>
-              <div className="c360-activity-filter-field--date">
-                <Input
-                  label="End (local)"
-                  type="datetime-local"
-                  value={values.endDate}
-                  onChange={(e) => patch({ endDate: e.target.value })}
-                  disabled={disabled}
-                  inputSize="sm"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="c360-activity-filters-rail__actions c360-flex c360-gap-2 c360-flex-shrink-0">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                const end = new Date();
-                const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
-                const toLocal = (d: Date) => {
-                  const pad = (n: number) => String(n).padStart(2, "0");
-                  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-                };
-                patch({ startDate: toLocal(start), endDate: toLocal(end) });
-              }}
-              disabled={disabled}
-            >
-              Last 24h
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onClear}
-              disabled={disabled}
-            >
-              Clear
-            </Button>
-          </div>
-        </>
-      ) : (
-        <div className="c360-filter-bar--facets">
-          <div className="c360-activity-filter-field--select">
-            <Select
-              label="Service"
-              options={SERVICE_OPTIONS}
-              value={values.serviceType}
-              onChange={(e) => patch({ serviceType: e.target.value })}
-              disabled={disabled}
-              inputSize="sm"
-            />
-          </div>
-          <div className="c360-activity-filter-field--select">
-            <Select
-              label="Action"
-              options={ACTION_OPTIONS}
-              value={values.actionType}
-              onChange={(e) => patch({ actionType: e.target.value })}
-              disabled={disabled}
-              inputSize="sm"
-            />
-          </div>
-          <div className="c360-activity-filter-field--status">
-            <Select
-              label="Status"
-              options={STATUS_OPTIONS}
-              value={values.status}
-              onChange={(e) => patch({ status: e.target.value })}
-              disabled={disabled}
-              inputSize="sm"
-            />
-          </div>
-          <div className="c360-activity-filter-field--date">
-            <Input
-              label="Start (local)"
-              type="datetime-local"
-              value={values.startDate}
-              onChange={(e) => patch({ startDate: e.target.value })}
-              disabled={disabled}
-              inputSize="sm"
-            />
-          </div>
-          <div className="c360-activity-filter-field--date">
-            <Input
-              label="End (local)"
-              type="datetime-local"
-              value={values.endDate}
-              onChange={(e) => patch({ endDate: e.target.value })}
-              disabled={disabled}
-              inputSize="sm"
-            />
-          </div>
-          <div className="c360-flex c360-items-end c360-gap-2 c360-flex-shrink-0">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                const end = new Date();
-                const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
-                const toLocal = (d: Date) => {
-                  const pad = (n: number) => String(n).padStart(2, "0");
-                  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-                };
-                patch({ startDate: toLocal(start), endDate: toLocal(end) });
-              }}
-              disabled={disabled}
-            >
-              Last 24h
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onClear}
-              disabled={disabled}
-            >
-              Clear
-            </Button>
-          </div>
+      <p className="c360-text-sm c360-text-muted c360-mb-3">Filters</p>
+      <div className="c360-filter-bar--facets">
+        <div className="c360-activity-filter-field--select">
+          <Select
+            label="Service"
+            options={ACTIVITY_SERVICE_OPTIONS}
+            value={values.serviceType}
+            onChange={(e) => patch({ serviceType: e.target.value })}
+            disabled={disabled}
+            inputSize="sm"
+          />
         </div>
-      )}
+        <div className="c360-activity-filter-field--select">
+          <Select
+            label="Action"
+            options={ACTIVITY_ACTION_OPTIONS}
+            value={values.actionType}
+            onChange={(e) => patch({ actionType: e.target.value })}
+            disabled={disabled}
+            inputSize="sm"
+          />
+        </div>
+        <div className="c360-activity-filter-field--status">
+          <Select
+            label="Status"
+            options={ACTIVITY_STATUS_OPTIONS}
+            value={values.status}
+            onChange={(e) => patch({ status: e.target.value })}
+            disabled={disabled}
+            inputSize="sm"
+          />
+        </div>
+        <div className="c360-activity-filter-field--date">
+          <Input
+            label="Start (local)"
+            type="datetime-local"
+            value={values.startDate}
+            onChange={(e) => patch({ startDate: e.target.value })}
+            disabled={disabled}
+            inputSize="sm"
+          />
+        </div>
+        <div className="c360-activity-filter-field--date">
+          <Input
+            label="End (local)"
+            type="datetime-local"
+            value={values.endDate}
+            onChange={(e) => patch({ endDate: e.target.value })}
+            disabled={disabled}
+            inputSize="sm"
+          />
+        </div>
+        <div className="c360-flex c360-items-end c360-gap-2 c360-flex-shrink-0">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => patch(activityLast24hDateRange())}
+            disabled={disabled}
+          >
+            Last 24h
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClear}
+            disabled={disabled}
+          >
+            Clear
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

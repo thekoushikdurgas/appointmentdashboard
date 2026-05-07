@@ -3,7 +3,11 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { STORAGE_KEYS } from "@/lib/constants";
 
-export type DataFiltersPeekScope = "contacts" | "companies" | "hiring-signals";
+export type DataFiltersPeekScope =
+  | "contacts"
+  | "companies"
+  | "hiring-signals"
+  | "activities";
 
 export interface DataFiltersPeekValue {
   pinned: boolean;
@@ -40,5 +44,7 @@ export function dataFiltersPeekPinnedStorageKey(
       return STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_COMPANIES;
     case "hiring-signals":
       return STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_HIRING_SIGNALS;
+    case "activities":
+      return STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_ACTIVITIES;
   }
 }

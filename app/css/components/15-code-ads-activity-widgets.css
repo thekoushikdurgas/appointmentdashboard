@@ -308,6 +308,10 @@
 }
 
 /* Activities page — Activity Feed card (browser-matched grid layout) */
+.c360-card.c360-card--activity-feed-tab {
+  border-radius: 0;
+}
+
 .c360-card--activity-feed-tab .c360-card__body--md {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -324,11 +328,12 @@
 
 /* Activities page — calendar card (activitycalender.md: month grid + footer slots) */
 .c360-card--activity-calendar-tab {
-  display: flex;
-  flex-direction: column;
+  flex-direction: row;
   width: 100%;
-  max-width: 400px;
-  min-width: 0;
+  /* min-width: 0; */
+  /* max-width: 400px; */
+  display: flex;
+  justify-content: center;
 }
 
 .c360-card--activity-calendar-tab .c360-card__footer {

@@ -2,7 +2,7 @@
 
 import { useRole } from "@/context/RoleContext";
 
-/** Credits summary for the account popover; Billing is linked from the menu row above/below in TopBar. */
+/** Credits summary in the account context menu panel. */
 export function TopBarCredits() {
   const { credits, creditsUsed, creditsLimit } = useRole();
 

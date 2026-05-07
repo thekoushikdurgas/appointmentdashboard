@@ -15,6 +15,8 @@ interface RangeSliderProps {
   showValue?: boolean;
   formatValue?: (v: number) => string;
   disabled?: boolean;
+  /** When false, min/max tick row is omitted (use custom labels below). */
+  showTicks?: boolean;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function RangeSlider({
   showValue = true,
   formatValue = (v) => String(v),
   disabled = false,
+  showTicks = true,
   className,
 }: RangeSliderProps) {
   const [internal, setInternal] = useState(defaultValue);
@@ -66,10 +69,12 @@ export function RangeSlider({
           ref={(el) => applyVars(el, { "--c360-range-pct": `${pct}%` })}
         />
       </div>
-      <div className="c360-range-slider__ticks">
-        <span className="c360-range-slider__tick">{formatValue(min)}</span>
-        <span className="c360-range-slider__tick">{formatValue(max)}</span>
-      </div>
+      {showTicks ? (
+        <div className="c360-range-slider__ticks">
+          <span className="c360-range-slider__tick">{formatValue(min)}</span>
+          <span className="c360-range-slider__tick">{formatValue(max)}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

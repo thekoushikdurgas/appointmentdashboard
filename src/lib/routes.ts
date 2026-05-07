@@ -25,7 +25,7 @@ export const ROUTES = {
 
 /** Deep link: Activities page with a given tab (and optional feature for Usage drill-down). */
 export function activitiesTabRoute(
-  tab: "feed" | "calendar" | "analytics" | "jobs" | "usage",
+  tab: "feed" | "calendar" | "analytics" | "jobs" | "saved_searches" | "usage",
   feature?: string,
 ): string {
   const p = new URLSearchParams();

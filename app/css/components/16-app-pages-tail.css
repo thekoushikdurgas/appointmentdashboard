@@ -1961,6 +1961,13 @@
   padding-top: var(--c360-spacing-3);
 }
 
+/* Campaigns — Campaign Reviews card: full-width body (overrides kit `.c360-card__body { width: 50% }`) */
+.c360-card--campaign-reviews .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 /* Review list (ReviewList + histogram) */
 .c360-review-list-summary {
   display: flex;

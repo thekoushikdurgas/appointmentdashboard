@@ -170,6 +170,7 @@
 
 .c360-card__body {
   padding: var(--c360-spacing-6);
+  width: 50%;
 }
 
 .c360-card__body--none {
@@ -190,6 +191,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--c360-spacing-3);
+  width: 50%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

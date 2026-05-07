@@ -66,7 +66,7 @@ export function StatCard({
           </span>
         )}
       </div>
-      <div>
+      <div className="c360-stat-card__content">
         <div className="c360-stat-card__value">{displayValue}</div>
         <div className="c360-stat-card__label">{label}</div>
       </div>

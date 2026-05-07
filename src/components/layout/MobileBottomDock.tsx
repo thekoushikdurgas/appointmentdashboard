@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   LayoutDashboard,
   Megaphone,
@@ -23,11 +23,22 @@ const DOCK_LINKS: {
   href: string;
   label: string;
   icon: LucideIcon;
+  tile: "home" | "contacts" | "campaigns" | "ai";
 }[] = [
-  { href: ROUTES.DASHBOARD, label: "Home", icon: LayoutDashboard },
-  { href: ROUTES.CONTACTS, label: "Contacts", icon: Users },
-  { href: ROUTES.CAMPAIGNS, label: "Campaigns", icon: Megaphone },
-  { href: ROUTES.AI_CHAT, label: "AI Chat", icon: MessageSquare },
+  {
+    href: ROUTES.DASHBOARD,
+    label: "Home",
+    icon: LayoutDashboard,
+    tile: "home",
+  },
+  { href: ROUTES.CONTACTS, label: "Contacts", icon: Users, tile: "contacts" },
+  {
+    href: ROUTES.CAMPAIGNS,
+    label: "Campaigns",
+    icon: Megaphone,
+    tile: "campaigns",
+  },
+  { href: ROUTES.AI_CHAT, label: "AI Chat", icon: MessageSquare, tile: "ai" },
 ];
 
 interface MobileBottomDockProps {
@@ -45,60 +56,100 @@ export function MobileBottomDock({
   onNavigate,
 }: MobileBottomDockProps) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
 
   if (!visible) return null;
+
+  const navTransition = reduceMotion
+    ? { duration: 0.22 }
+    : { type: "spring" as const, stiffness: 360, damping: 28 };
+  const tapWhile = reduceMotion ? undefined : { scale: 0.94 };
 
   return (
     <motion.nav
       className="c360-shell-bottom-nav"
       aria-label="Primary mobile navigation"
-      initial={{ y: 24, opacity: 0 }}
+      initial={reduceMotion ? { y: 0, opacity: 1 } : { y: 28, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+      transition={navTransition}
     >
       <div className="c360-shell-bottom-nav__dock">
-        {DOCK_LINKS.map(({ href, label, icon: Icon }) => {
+        {DOCK_LINKS.map(({ href, label, icon: Icon, tile }) => {
           const active = routeActive(href, pathname);
           return (
-            <Link
+            <motion.div
               key={href}
-              href={href}
-              className={cn(
-                "c360-shell-bottom-nav__item",
-                active && "c360-shell-bottom-nav__item--active",
-              )}
-              aria-current={active ? "page" : undefined}
-              title={label}
-              onClick={() => onNavigate?.()}
+              className="c360-shell-bottom-nav__slot"
+              whileTap={tapWhile}
             >
-              <Icon
+              <Link
+                href={href}
+                className={cn(
+                  "c360-shell-bottom-nav__item",
+                  active && "c360-shell-bottom-nav__item--active",
+                )}
+                aria-current={active ? "page" : undefined}
+                title={label}
+                onClick={() => onNavigate?.()}
+              >
+                <span
+                  className={cn(
+                    "c360-shell-bottom-nav__tile",
+                    `c360-shell-bottom-nav__tile--${tile}`,
+                  )}
+                >
+                  <span
+                    className="c360-shell-bottom-nav__tile-gloss"
+                    aria-hidden
+                  />
+                  <Icon
+                    size={22}
+                    className="c360-shell-bottom-nav__icon"
+                    aria-hidden
+                  />
+                </span>
+                {active ? (
+                  <span className="c360-shell-bottom-nav__pip" aria-hidden />
+                ) : null}
+                <span className="c360-shell-bottom-nav__label">{label}</span>
+              </Link>
+            </motion.div>
+          );
+        })}
+        <motion.div className="c360-shell-bottom-nav__slot" whileTap={tapWhile}>
+          <button
+            type="button"
+            className={cn(
+              "c360-shell-bottom-nav__item",
+              mobileDrawerOpen && "c360-shell-bottom-nav__item--active",
+            )}
+            onClick={onToggleSidebarDrawer}
+            title={mobileDrawerOpen ? "Close menu" : "Open menu"}
+            aria-label={
+              mobileDrawerOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
+          >
+            <span
+              className={cn(
+                "c360-shell-bottom-nav__tile",
+                "c360-shell-bottom-nav__tile--menu",
+              )}
+            >
+              <span className="c360-shell-bottom-nav__tile-gloss" aria-hidden />
+              <PanelLeft
                 size={22}
                 className="c360-shell-bottom-nav__icon"
                 aria-hidden
               />
-              <span className="c360-shell-bottom-nav__label">{label}</span>
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          className={cn(
-            "c360-shell-bottom-nav__item",
-            "c360-shell-bottom-nav__item--menu",
-            mobileDrawerOpen && "c360-shell-bottom-nav__item--active",
-          )}
-          onClick={onToggleSidebarDrawer}
-          aria-expanded={mobileDrawerOpen}
-          aria-controls="c360-app-sidebar"
-          title={mobileDrawerOpen ? "Close menu" : "Open menu"}
-        >
-          <PanelLeft
-            size={22}
-            className="c360-shell-bottom-nav__icon"
-            aria-hidden
-          />
-          <span className="c360-shell-bottom-nav__label">Menu</span>
-        </button>
+            </span>
+            {mobileDrawerOpen ? (
+              <span className="c360-shell-bottom-nav__pip" aria-hidden />
+            ) : null}
+            <span className="c360-shell-bottom-nav__label">Menu</span>
+          </button>
+        </motion.div>
       </div>
     </motion.nav>
   );

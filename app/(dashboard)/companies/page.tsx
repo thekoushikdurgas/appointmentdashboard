@@ -33,6 +33,7 @@ import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
 import {
   SAVED_SEARCH_VERSION,
+  SAVED_SEARCH_VERSION_SIDEBAR,
   type CompanySavedSearchPayload,
 } from "@/lib/savedSearchPayload";
 import {
@@ -175,39 +176,74 @@ export default function CompaniesPage() {
 
   const getCompanySavedPayload = useCallback((): CompanySavedSearchPayload => {
     return {
-      version: SAVED_SEARCH_VERSION,
+      version: SAVED_SEARCH_VERSION_SIDEBAR,
       vqlQuery: currentCompanyVqlQuery,
       search,
+      facetValues: { ...facetValues },
+      advancedCompanyDraft: advancedCompanyDraft
+        ? structuredClone(advancedCompanyDraft)
+        : null,
     };
-  }, [currentCompanyVqlQuery, search]);
+  }, [currentCompanyVqlQuery, search, facetValues, advancedCompanyDraft]);
 
   const handleApplyCompanySaved = useCallback(
     (p: CompanySavedSearchPayload) => {
-      setSearch(p.search);
-      applyVqlQuery(p.vqlQuery);
+      if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
+        setSearch(p.search);
+        setFacetValues({ ...p.facetValues });
+        setAdvancedCompanyDraft(
+          p.advancedCompanyDraft
+            ? structuredClone(p.advancedCompanyDraft)
+            : null,
+        );
+        applyVqlQuery(p.vqlQuery);
+      } else if (p.version === SAVED_SEARCH_VERSION) {
+        setSearch(p.search);
+        applyVqlQuery(p.vqlQuery);
+      }
     },
-    [applyVqlQuery, setSearch],
+    [applyVqlQuery, setSearch, setFacetValues, setAdvancedCompanyDraft],
+  );
+
+  const companySavedSearchesMenu = useMemo(
+    () => (
+      <SavedSearchesMenu
+        entity="company"
+        getCompanyPayload={getCompanySavedPayload}
+        onApplyCompany={handleApplyCompanySaved}
+      />
+    ),
+    [getCompanySavedPayload, handleApplyCompanySaved],
   );
 
   const filtersSidebar = useMemo(
     () => (
-      <CompaniesFilterSidebar
-        search={search}
-        onSearchChange={setSearch}
-        filterSections={filterSections}
-        facetValues={facetValues}
-        onFacetChange={(key, val) =>
-          setFacetValues((prev) => ({ ...prev, [key]: val }))
-        }
-        onSectionExpand={loadFilterData}
-        advancedVqlRuleCount={advancedVqlRuleCount}
-        onClearVql={clearCompanyVql}
-        onOpenAdvanced={() => setVqlOpen(true)}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      <>
+        {!isDesktop ? (
+          <div className="c360-data-layout__filters-mobile-saved">
+            {companySavedSearchesMenu}
+          </div>
+        ) : null}
+        <CompaniesFilterSidebar
+          search={search}
+          onSearchChange={setSearch}
+          filterSections={filterSections}
+          facetValues={facetValues}
+          onFacetChange={(key, val) =>
+            setFacetValues((prev) => ({ ...prev, [key]: val }))
+          }
+          onSectionExpand={loadFilterData}
+          advancedVqlRuleCount={advancedVqlRuleCount}
+          onClearVql={clearCompanyVql}
+          onOpenAdvanced={() => setVqlOpen(true)}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+      </>
     ),
     [
+      isDesktop,
+      companySavedSearchesMenu,
       search,
       setSearch,
       filterSections,
@@ -279,28 +315,11 @@ export default function CompaniesPage() {
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
-      meta={
-        totalPages > 1 ? (
-          <Pagination
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
-          />
-        ) : undefined
-      }
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
         show: !isDesktop,
       }}
-      actionPrefix={
-        <SavedSearchesMenu
-          entity="company"
-          getCompanyPayload={getCompanySavedPayload}
-          onApplyCompany={handleApplyCompanySaved}
-        />
-      }
       actions={[
         {
           label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
@@ -352,6 +371,17 @@ export default function CompaniesPage() {
       filterDrawerTitleId="c360-companies-filter-drawer-title"
       filtersPeekRail
       filtersPeekScope="companies"
+      filtersPinExtra={companySavedSearchesMenu}
+      pagination={
+        totalPages > 1 ? (
+          <Pagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        ) : undefined
+      }
       className="c360-companies-page"
     >
       <CompanyExportModal

@@ -1924,7 +1924,7 @@ export type HireSignalQueryExportJobStatusArgs = {
 };
 
 export type HireSignalQueryGetScrapeJobArgs = {
-  pollApify?: Scalars["Boolean"]["input"];
+  pollRun?: Scalars["Boolean"]["input"];
   scrapeJobId: Scalars["String"]["input"];
 };
 
@@ -3301,7 +3301,7 @@ export type SchedulerJob = {
 };
 
 export type ScrapeJobType = {
-  apifyRunId?: Maybe<Scalars["String"]["output"]>;
+  runId?: Maybe<Scalars["String"]["output"]>;
   completedAt?: Maybe<Scalars["DateTime"]["output"]>;
   createdAt: Scalars["DateTime"]["output"];
   error?: Maybe<Scalars["String"]["output"]>;

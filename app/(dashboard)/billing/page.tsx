@@ -24,6 +24,8 @@ import { parseOperationError } from "@/lib/errorParser";
 import {
   BillingPlanCards,
   type BillingPlanCard,
+  type BillingPeriod,
+  availableBillingPeriods,
 } from "@/components/feature/billing/BillingPlanCards";
 import { BillingCheckoutWizard } from "@/components/feature/billing/BillingCheckoutWizard";
 import { BillingInvoiceList } from "@/components/feature/billing/BillingInvoiceList";
@@ -120,6 +122,23 @@ export default function BillingPage() {
       }),
     [apiPlans],
   );
+
+  const [planBillingPeriod, setPlanBillingPeriod] =
+    useState<BillingPeriod>("monthly");
+
+  const planPeriodOptions = useMemo(
+    () => availableBillingPeriods(PLANS),
+    [PLANS],
+  );
+
+  useEffect(() => {
+    if (
+      planPeriodOptions.length > 0 &&
+      !planPeriodOptions.includes(planBillingPeriod)
+    ) {
+      setPlanBillingPeriod(planPeriodOptions[0]);
+    }
+  }, [planPeriodOptions, planBillingPeriod]);
 
   const [uploadingProof, setUploadingProof] = useState(false);
   const [livePlan, setLivePlan] = useState<string | null>(null);
@@ -298,32 +317,37 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} variant="dashboard">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        variant="floating"
+        className="c360-tabs--billing c360-tabs--floating-bottom"
+      >
         <TabsList>
-          <TabsTrigger value="plans" icon={<Star size={14} />}>
+          <TabsTrigger value="plans" icon={<Star size={16} />}>
             Plans
           </TabsTrigger>
-          <TabsTrigger value="checkout" icon={<CreditCard size={14} />}>
+          <TabsTrigger value="checkout" icon={<CreditCard size={16} />}>
             Checkout
           </TabsTrigger>
-          <TabsTrigger value="requests" icon={<ClipboardList size={14} />}>
+          <TabsTrigger value="requests" icon={<ClipboardList size={16} />}>
             Requests
           </TabsTrigger>
-          <TabsTrigger value="invoice" icon={<Receipt size={14} />}>
+          <TabsTrigger value="invoice" icon={<Receipt size={16} />}>
             Invoice
           </TabsTrigger>
-          <TabsTrigger value="history" icon={<History size={14} />}>
+          <TabsTrigger value="history" icon={<History size={16} />}>
             Credit History
           </TabsTrigger>
-          <TabsTrigger value="addons" icon={<Package size={14} />}>
+          <TabsTrigger value="addons" icon={<Package size={16} />}>
             Add-ons
           </TabsTrigger>
-          <TabsTrigger value="payment-proof" icon={<Upload size={14} />}>
+          <TabsTrigger value="payment-proof" icon={<Upload size={16} />}>
             Payment Proof
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="plans">
+        <TabsContent value="plans" className="c360-mt-6">
           <BillingPlanCards
             plans={PLANS}
             effectivePlan={effectivePlan}
@@ -333,16 +357,20 @@ export default function BillingPage() {
               setUploadingProof(false);
               setActiveTab("payment-proof");
             }}
+            billingPeriod={planBillingPeriod}
+            onBillingPeriodChange={setPlanBillingPeriod}
           />
         </TabsContent>
 
-        <TabsContent value="checkout">
+        <TabsContent value="checkout" className="c360-mt-6">
           <BillingCheckoutWizard
             plans={PLANS}
             addons={addons}
             effectivePlan={effectivePlan}
             selectedPlanId={selectedPlanId}
             onSelectPlan={setSelectedPlanId}
+            billingPeriod={planBillingPeriod}
+            onBillingPeriodChange={setPlanBillingPeriod}
             paymentInstructions={paymentInstructions}
             paymentInstructionsLoading={payInstrLoading}
             paymentInstructionsError={payInstrError}
@@ -351,11 +379,11 @@ export default function BillingPage() {
           />
         </TabsContent>
 
-        <TabsContent value="requests">
+        <TabsContent value="requests" className="c360-mt-6">
           <BillingMyPaymentRequests refreshKey={requestsRefresh} />
         </TabsContent>
 
-        <TabsContent value="invoice">
+        <TabsContent value="invoice" className="c360-mt-6">
           <BillingInvoiceList
             invoices={invoices}
             totalInvoices={totalInvoices}
@@ -366,7 +394,7 @@ export default function BillingPage() {
           />
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="c360-mt-6">
           <BillingCreditSummary
             invoices={invoices}
             addons={addons}
@@ -375,7 +403,7 @@ export default function BillingPage() {
           />
         </TabsContent>
 
-        <TabsContent value="addons">
+        <TabsContent value="addons" className="c360-mt-6">
           <BillingCreditSummary
             invoices={[]}
             addons={addons}
@@ -384,7 +412,7 @@ export default function BillingPage() {
           />
         </TabsContent>
 
-        <TabsContent value="payment-proof">
+        <TabsContent value="payment-proof" className="c360-mt-6">
           <BillingPaymentProofForm
             onSubmitted={() => {
               void refreshBilling();

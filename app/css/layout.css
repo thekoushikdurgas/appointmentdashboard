@@ -1,10 +1,15 @@
-/* Contact360 — Layout: sidebar + topbar + content shell */
+/* Contact360 — Layout: sidebar + main shell (floating theme dock; former top bar removed) */
 
 /* ─── App Shell ─────────────────────────────────────────────────────────── */
 .c360-shell {
   display: flex;
   min-height: 100vh;
   background: var(--c360-bg);
+}
+
+/* Stops account context menu from replacing native menu in fields; layout unchanged (display: contents). */
+.c360-shell__context-bubble-guard {
+  display: contents;
 }
 
 /* ─── Sidebar ────────────────────────────────────────────────────────────── */
@@ -37,16 +42,10 @@
 
 .c360-shell--sidebar-peek .c360-main.c360-main--collapsed {
   margin-left: var(--c360-sidebar-width);
-  margin-top: var(--c360-topbar-height);
-  min-height: calc(100vh - var(--c360-topbar-height));
 }
 
-.c360-shell--sidebar-peek .c360-topbar.c360-topbar--collapsed {
-  left: var(--c360-sidebar-width);
-  height: var(--c360-topbar-height);
-}
-
-/* ─── Mobile / tablet bottom dock (narrow viewport only; see MobileBottomDock) ─ */
+/* ─── Mobile / tablet bottom dock (narrow viewport only; see MobileBottomDock)
+     Visual language: glass “pill” + per-destination color tiles (docs/frontend/ideas/mydesigns/bottomnav.md) */
 .c360-shell-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -61,61 +60,150 @@
 .c360-shell-bottom-nav__dock {
   pointer-events: auto;
   margin: 0 auto;
-  max-width: min(520px, 100%);
+  max-width: min(540px, 100%);
   display: flex;
-  align-items: stretch;
-  justify-content: space-around;
-  gap: var(--c360-spacing-1);
-  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-3) var(--c360-spacing-4) var(--c360-spacing-4);
   border-radius: var(--c360-radius-2xl);
-  border: 1px solid var(--c360-border);
-  background: color-mix(in srgb, var(--c360-bg-elevated) 88%, transparent);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--c360-shadow-lg);
+  border: 1px solid
+    color-mix(in srgb, var(--c360-bg-elevated) 65%, var(--c360-border-strong));
+  box-shadow:
+    0 12px 40px rgba(15, 23, 42, 0.12),
+    0 0 0 1px color-mix(in srgb, #ffffff 24%, transparent);
+  background: color-mix(in srgb, var(--c360-bg-elevated) 62%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  backdrop-filter: blur(16px) saturate(1.35);
 }
 
-.c360-shell-bottom-nav__item {
+[data-theme="dark"] .c360-shell-bottom-nav__dock {
+  box-shadow:
+    0 14px 42px rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, #ffffff 10%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--c360-border) 70%,
+    var(--c360-bg-elevated)
+  );
+}
+
+.c360-shell-bottom-nav__slot {
   flex: 1;
   min-width: 0;
   display: flex;
+  justify-content: center;
+  max-width: 88px;
+}
+
+.c360-shell-bottom-nav__item {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: var(--c360-spacing-2) var(--c360-spacing-1);
-  min-height: 52px;
+  gap: var(--c360-spacing-1);
+  width: 100%;
+  padding: 0;
+  margin: 0;
   border: none;
-  border-radius: var(--c360-radius-lg);
+  border-radius: 0;
   background: transparent;
   color: var(--c360-text-muted);
   font-family: var(--c360-font-primary);
   font-size: var(--c360-text-xs);
-  font-weight: var(--c360-font-medium);
+  font-weight: var(--c360-font-semibold);
   text-decoration: none;
   cursor: pointer;
-  transition:
-    color var(--c360-transition-fast),
-    background var(--c360-transition-fast),
-    transform var(--c360-transition-fast);
-}
-
-.c360-shell-bottom-nav__item:hover {
-  color: var(--c360-text);
-  background: var(--c360-bg-secondary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .c360-shell-bottom-nav__item:focus-visible {
-  outline: 2px solid var(--c360-primary);
-  outline-offset: 2px;
+  outline: 2px solid var(--c360-focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--c360-radius-md);
 }
 
-.c360-shell-bottom-nav__item--active {
-  color: var(--c360-primary);
-  background: var(--c360-bg-hover);
+.c360-shell-bottom-nav__tile {
+  --c360-dock-tile: var(--c360-primary);
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--c360-radius-xl);
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--c360-dock-tile) 22%,
+    var(--c360-bg-elevated)
+  );
+  color: var(--c360-dock-tile);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--c360-dock-tile) 18%, transparent);
+  transition:
+    transform var(--c360-transition-fast),
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast),
+    box-shadow var(--c360-transition-fast);
 }
 
-.c360-shell-bottom-nav__item--active .c360-shell-bottom-nav__icon {
-  color: var(--c360-primary);
+.c360-shell-bottom-nav__item:hover .c360-shell-bottom-nav__tile,
+.c360-shell-bottom-nav__item:focus-visible .c360-shell-bottom-nav__tile {
+  transform: translateY(-3px);
+}
+
+.c360-shell-bottom-nav__item--active .c360-shell-bottom-nav__tile {
+  background: var(--c360-dock-tile);
+  color: #ffffff;
+  box-shadow: 0 6px 20px
+    color-mix(in srgb, var(--c360-dock-tile) 42%, transparent);
+}
+
+.c360-shell-bottom-nav__item--active .c360-shell-bottom-nav__label {
+  color: var(--c360-text);
+}
+
+.c360-shell-bottom-nav__tile-gloss {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #ffffff 28%, transparent) 0%,
+    transparent 52%
+  );
+  opacity: 0.35;
+}
+
+.c360-shell-bottom-nav__tile--home {
+  --c360-dock-tile: var(--c360-primary);
+}
+.c360-shell-bottom-nav__tile--contacts {
+  --c360-dock-tile: var(--c360-info);
+}
+.c360-shell-bottom-nav__tile--campaigns {
+  --c360-dock-tile: var(--c360-accent);
+}
+.c360-shell-bottom-nav__tile--ai {
+  --c360-dock-tile: var(--c360-success);
+}
+.c360-shell-bottom-nav__tile--menu {
+  --c360-dock-tile: color-mix(
+    in srgb,
+    var(--c360-text-muted) 55%,
+    var(--c360-text)
+  );
+}
+
+.c360-shell-bottom-nav__pip {
+  width: 5px;
+  height: 5px;
+  margin-top: 2px;
+  border-radius: var(--c360-radius-full);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
 .c360-shell-bottom-nav__icon {
@@ -129,6 +217,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
+  line-height: 1.15;
 }
 
 /* Reserve space above fixed dock so page content is not obscured */
@@ -139,13 +228,46 @@
 }
 .c360-sidebar__header {
   border-bottom: 1px solid var(--c360-border);
-  /* padding: var(--c360-spacing-2) var(--c360-spacing-4); */
   flex-shrink: 0;
-  align-items: center;
-  min-height: 54px;
+}
+
+.c360-sidebar__header-row {
   display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+  padding: 0 var(--c360-spacing-3);
+  min-height: 54px;
   justify-content: center;
 }
+
+.c360-sidebar__header-row--with-collapse {
+  justify-content: flex-start;
+}
+
+.c360-sidebar__header-row--with-collapse .c360-sidebar__brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.c360-sidebar--collapsed .c360-sidebar__header-row--with-collapse {
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--c360-spacing-2) 0;
+  min-height: auto;
+  gap: var(--c360-spacing-1);
+}
+
+.c360-sidebar--collapsed
+  .c360-sidebar__header-row--with-collapse
+  .c360-sidebar__brand {
+  flex: none;
+}
+
+.c360-sidebar__header-collapse {
+  flex-shrink: 0;
+}
+
 .c360-sidebar--collapsed.c360-sidebar--rail-expanded .c360-sidebar__header {
   display: flex;
   justify-content: flex-start;
@@ -435,6 +557,29 @@
   border-bottom: 1px solid var(--c360-border);
 }
 
+/* Former top-bar icon actions (tickets, notifications, jobs, files) */
+.c360-sidebar__quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-1);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3) var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-sidebar__quick-actions--rail {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  padding-left: var(--c360-spacing-2);
+  padding-right: var(--c360-spacing-2);
+}
+
+.c360-sidebar__quick-btn {
+  width: 36px;
+  height: 36px;
+}
+
 .c360-sidebar-search-trigger {
   display: flex;
   align-items: center;
@@ -674,13 +819,14 @@
 .c360-page {
   /* max-width: var(--c360-content-max-width); */
   /* margin: 0 auto; */
-  padding: var(--c360-container-padding);
+  /* padding: var(--c360-container-padding); */
   animation: c360-fade-in 200ms ease forwards;
 }
 
 .c360-page.c360-dashboard-layout {
-  padding: 5px;
-  justify-content: center;
+  /* padding: 0; */
+  /* gap: 0; */
+  /* justify-content: center; */
 }
 
 .c360-tabs--dashboard .c360-tabs__panel .c360-page {
@@ -848,65 +994,41 @@
 .c360-dashboard-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--c360-spacing-6);
+  /* gap: var(--c360-spacing-6); */
 }
 
 /* Activities: filter rail (left) + main column — mydesigns/sidebar.md rhythm (narrow surface + primary content) */
 .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--c360-spacing-4);
+  /* flex-direction: row; */
+  /* align-items: flex-start; */
+  /* gap: var(--c360-spacing-4); */
 }
 
-/* Full-height sticky band under topbar (same idea as main sidebar + contacts filter rail) */
-.c360-main:not(.c360-main--collapsed)
-  .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities
-  .c360-dashboard-layout__activities-filters,
-.c360-shell--sidebar-peek
-  .c360-main.c360-main--collapsed
-  .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities
-  .c360-dashboard-layout__activities-filters {
-  top: var(--c360-topbar-height);
-  min-height: calc(100dvh - var(--c360-topbar-height));
-  max-height: calc(100dvh - var(--c360-topbar-height));
-}
+/* Activities page uses DataPageLayout peek rail (same as contacts/companies); height + peel via .c360-data-layout__filters--peek-rail */
 
-.c360-shell:not(.c360-shell--sidebar-peek)
-  .c360-main.c360-main--collapsed
-  .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities
-  .c360-dashboard-layout__activities-filters {
-  top: var(--c360-topbar-height-collapsed);
-  min-height: calc(100dvh - var(--c360-topbar-height-collapsed));
-  max-height: calc(100dvh - var(--c360-topbar-height-collapsed));
-}
-
-.c360-dashboard-layout__activities-filters {
-  flex: 0 0 auto;
-  width: 260px;
-  min-width: 220px;
-  max-width: 280px;
-  position: sticky;
-  z-index: 1;
-  align-self: flex-start;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  padding: var(--c360-spacing-2) var(--c360-spacing-3) var(--c360-spacing-2) 0;
-  border-right: 1px solid var(--c360-border);
-  background: var(--c360-bg-elevated);
-  overflow: hidden;
-}
-
-.c360-dashboard-layout__activities-filters .c360-activity-filters-bar--rail {
+/* Activities filter shell inside peek rail scroll region + mobile drawer — transparent inner card; scroll on parent */
+.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-contacts-filters.c360-activities-filters,
+.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-contacts-filters.c360-activities-filters {
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
   margin-bottom: 0;
   background: transparent;
   border: none;
   box-shadow: none;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--select,
+.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--status,
+.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--date,
+.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--select,
+.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--status,
+.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--date {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 .c360-dashboard-layout__activities-main {
@@ -914,65 +1036,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--c360-spacing-6);
+  gap: 0;
   align-self: stretch;
-}
-
-.c360-activity-filters-rail__title {
-  flex-shrink: 0;
-  margin: 0 0 var(--c360-spacing-3);
-  font-size: var(--c360-text-xs);
-  font-weight: 600;
-  color: var(--c360-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.c360-activity-filters-rail__scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--c360-scrollbar-thumb) transparent;
-}
-
-.c360-activity-filters-rail__scroll::-webkit-scrollbar {
-  width: 5px;
-}
-
-.c360-activity-filters-rail__scroll::-webkit-scrollbar-thumb {
-  background: var(--c360-scrollbar-thumb);
-  border-radius: 5px;
-}
-
-.c360-activity-filters-rail__fields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c360-spacing-3);
-  align-items: stretch;
-}
-
-.c360-activity-filters-bar--rail .c360-activity-filter-field--select,
-.c360-activity-filters-bar--rail .c360-activity-filter-field--status,
-.c360-activity-filters-bar--rail .c360-activity-filter-field--date {
-  flex: none;
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-}
-
-.c360-activity-filters-rail__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  flex-shrink: 0;
-  width: 100%;
-  gap: var(--c360-spacing-2);
-  margin-top: var(--c360-spacing-2);
-  padding-top: var(--c360-spacing-3);
-  border-top: 1px solid var(--c360-border);
 }
 
 @media (max-width: 900px) {
@@ -980,29 +1045,6 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--c360-spacing-4);
-  }
-
-  .c360-dashboard-layout__activities-filters {
-    position: static;
-    z-index: auto;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    min-height: 0;
-    max-height: none;
-    top: auto;
-    padding: 0 0 var(--c360-spacing-4);
-    border-right: none;
-    border-bottom: 1px solid var(--c360-border);
-    overflow: visible;
-  }
-
-  .c360-dashboard-layout__activities-filters .c360-activity-filters-bar--rail {
-    flex: 0 1 auto;
-    overflow: visible;
-    background: var(--c360-bg-elevated);
-    border: 1px solid var(--c360-border);
-    box-shadow: var(--c360-shadow-card);
   }
 }
 
@@ -1015,13 +1057,23 @@
 /* Activities only: stats strip — flex, centered, no bottom margin (matches browser preview) */
 .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities
   .c360-dashboard-layout__stats {
-  box-sizing: content-box;
-  margin-bottom: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: var(--c360-spacing-4);
+    box-sizing: content-box;
+    justify-content: center;
+    align-items: stretch;
+    gap: var(--c360-spacing-4);
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+    display: flex;
+}
+
+.c360-dashboard-layout--activities .c360-toolbar {
+  flex-wrap: nowrap;
+  border-radius: 0;
+}
+
+/* Activities — filters rail matches square data chrome (browser preview) */
+.c360-dashboard-layout--activities .c360-data-layout__filters {
+  border-radius: 0;
 }
 
 .c360-dashboard-layout__stats {
@@ -1036,14 +1088,34 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-/* Stat tiles inside dashboard stats grids (Activities, compact row): horizontal card + preview sizing */
-.c360-dashboard-layout__stats .c360-stat-card:not(.c360-stat-card--data-card) {
+/* Activities toolbar stats — flat tiles, flush grid (browser preview) */
+.c360-dashboard-layout--activities .c360-dashboard-layout__stats .c360-stat-card:not(.c360-stat-card--data-card) {
+  /* background: unset; */
+  border-radius: 0;
   flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: fit-content;
-  height: fit-content;
-  max-width: 100%;
+  flex: 1 1 0;
+  justify-content: flex-start;
+  align-self: stretch;
+  align-items: flex-start;
+  /* width: auto; */
+  /* min-width: 0; */
+  /* max-width: 100%; */
+  /* height: auto; */
+  padding: 0;
+}
+
+.c360-dashboard-layout--activities
+  .c360-dashboard-layout__stats
+  .c360-stat-card:not(.c360-stat-card--data-card)
+  .c360-stat-card__value {
+  font-size: var(--c360-text-xl);
+}
+
+.c360-dashboard-layout--activities
+  .c360-dashboard-layout__stats
+  .c360-stat-card:not(.c360-stat-card--data-card)
+  .c360-stat-card__label {
+  font-size: 10px;
 }
 
 /* Data-card KPI layout on home dashboard (title + value + description + sparkline) */
@@ -1076,9 +1148,9 @@
 }
 
 .c360-data-layout {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: var(--c360-spacing-4);
+  display: flex;
+  /* grid-template-columns: 260px 1fr; */
+  /* gap: var(--c360-spacing-4); */
   min-height: calc(100vh - var(--c360-topbar-height) - 48px);
 }
 
@@ -1300,6 +1372,115 @@
   background: var(--c360-bg-elevated);
 }
 
+.c360-data-layout__filters-pin-row {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-data-layout__filters-pin-row .c360-data-layout__filters-pin-trigger {
+  width: auto;
+  flex: 0 0 auto;
+  min-width: 36px;
+}
+
+.c360-data-layout__filters-pin-extra {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Peek rail collapsed strip: funnel only; pin + Saved appear on hover / focus-within / pinned */
+.c360-data-layout__filters-peek-collapsed-hint {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  color: var(--c360-text-muted);
+}
+
+.c360-data-layout__filters-peek-collapsed-hint-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.c360-data-layout__filters-pin-expandable--solo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (hover: hover) {
+  .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    ):not(:hover):not(:focus-within)
+    .c360-data-layout__filters-peek-collapsed-hint {
+    display: flex;
+  }
+
+  .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    ):not(:hover):not(:focus-within)
+    .c360-data-layout__filters-pin-expandable {
+    display: none;
+  }
+
+  .c360-data-layout__filters--peek-rail.c360-data-layout__filters--peek-pinned
+    .c360-data-layout__filters-peek-collapsed-hint,
+  .c360-data-layout__filters--peek-rail:is(:hover, :focus-within)
+    .c360-data-layout__filters-peek-collapsed-hint {
+    display: none;
+  }
+
+  .c360-data-layout__filters--peek-rail.c360-data-layout__filters--peek-pinned
+    .c360-data-layout__filters-pin-expandable,
+  .c360-data-layout__filters--peek-rail:is(:hover, :focus-within)
+    .c360-data-layout__filters-pin-expandable {
+    display: flex;
+  }
+}
+
+@media not all and (hover: hover) {
+  .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    )
+    .c360-data-layout__filters-peek-collapsed-hint {
+    display: none;
+  }
+
+  .c360-data-layout__filters--peek-rail:not(
+      .c360-data-layout__filters--peek-pinned
+    )
+    .c360-data-layout__filters-pin-expandable {
+    display: flex;
+  }
+}
+
+/* Mobile filter drawer: Saved searches (companies) above filter form */
+.c360-data-layout__filters-mobile-saved {
+  flex-shrink: 0;
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+  background: var(--c360-bg-elevated);
+}
+
+.c360-data-layout__filters-mobile-saved .c360-popover__trigger {
+  display: flex;
+  width: 100%;
+}
+
+.c360-data-layout__filters-mobile-saved .c360-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 .c360-data-layout__filters-body-scroll {
   flex: 1 1 auto;
   min-width: 0;
@@ -1391,9 +1572,10 @@
 }
 
 .c360-data-layout__content {
-  display: flex;
-  flex-direction: column;
   gap: var(--c360-spacing-4);
+  flex-direction: column;
+  display: flex;
+  width: stretch;
 }
 
 /* ─── Resize handle ───────────────────────────────────────────────────────── */
@@ -1467,6 +1649,273 @@
 
 .c360-sidebar__user-menu-item--logout {
   color: var(--c360-danger);
+}
+
+/* ─── Radix context menu (primitives + account panel variant) ─────────────── */
+.c360-context-menu__content {
+  z-index: var(--c360-z-popover);
+  min-width: 8rem;
+  padding: var(--c360-spacing-2);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-shadow-lg);
+  font-family: var(--c360-font-primary);
+  overflow: hidden;
+}
+
+/* Account menu: matches docs/frontend/ideas/mydesigns/user-context-menu.md (w-60, rounded-md, bg-white, shadow-md) */
+.c360-context-menu__content--account {
+  width: 15rem;
+  max-width: min(15rem, calc(100vw - var(--c360-spacing-6)));
+  min-width: 15rem;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid var(--c360-border-strong);
+  border-radius: var(--c360-radius-md);
+  box-shadow: var(--c360-shadow-md);
+}
+
+[data-theme="dark"] .c360-context-menu__content--account {
+  background: var(--c360-dark-card);
+  border-color: color-mix(in srgb, var(--c360-border) 60%, transparent);
+}
+
+/* User context menu body (ruixenui / shadcn-style layout, c360 tokens) */
+.c360-user-context-menu {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--c360-font-primary);
+}
+
+.c360-user-context-menu__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-user-context-menu__name {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.c360-user-context-menu__role {
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c360-text-muted);
+}
+
+.c360-user-context-menu__credits {
+  padding: 0 var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-user-context-menu__credits .c360-topbar__credits--popover {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.c360-user-context-menu__list {
+  padding: var(--c360-spacing-2);
+}
+
+.c360-user-context-menu__row.c360-context-menu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+  min-height: 2rem;
+  padding: 6px 8px;
+  border-radius: var(--c360-radius-sm);
+  font-size: var(--c360-text-sm);
+  font-weight: 400;
+  color: var(--c360-text);
+  cursor: default;
+  outline: none;
+  text-decoration: none;
+  font-family: var(--c360-font-primary);
+  border: none;
+  background: transparent;
+  text-align: left;
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-user-context-menu__icon {
+  flex-shrink: 0;
+  color: var(--c360-text-muted);
+}
+
+.c360-user-context-menu__list
+  .c360-user-context-menu__row.c360-context-menu__item[data-highlighted] {
+  background: color-mix(in srgb, var(--c360-text) 7%, #ffffff);
+}
+
+[data-theme="dark"]
+  .c360-user-context-menu__list
+  .c360-user-context-menu__row.c360-context-menu__item[data-highlighted] {
+  background: color-mix(in srgb, #fff 8%, var(--c360-dark-card));
+}
+
+.c360-user-context-menu__row--sign-out {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .c360-user-context-menu__row--sign-out {
+  color: #f87171;
+}
+
+.c360-user-context-menu__row--sign-out .c360-user-context-menu__icon {
+  color: inherit;
+}
+
+.c360-user-context-menu__list
+  .c360-user-context-menu__row--sign-out.c360-context-menu__item[data-highlighted] {
+  background: color-mix(in srgb, #dc2626 12%, #ffffff);
+}
+
+[data-theme="dark"]
+  .c360-user-context-menu__list
+  .c360-user-context-menu__row--sign-out.c360-context-menu__item[data-highlighted] {
+  background: color-mix(in srgb, #f87171 16%, var(--c360-dark-card));
+}
+
+.c360-user-context-menu__list .c360-context-menu__separator {
+  height: 1px;
+  margin: var(--c360-spacing-1) calc(-1 * var(--c360-spacing-2));
+  background: var(--c360-border);
+}
+
+.c360-context-menu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border-radius: var(--c360-radius-md);
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+  cursor: default;
+  outline: none;
+}
+
+.c360-context-menu__item[data-highlighted] {
+  background: var(--c360-bg);
+}
+
+.c360-context-menu__separator {
+  height: 1px;
+  margin: var(--c360-spacing-1) calc(-1 * var(--c360-spacing-2));
+  background: var(--c360-border);
+}
+
+.c360-context-menu__sub-trigger {
+  display: flex;
+  cursor: default;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  border-radius: var(--c360-radius-sm);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  font-size: var(--c360-text-sm);
+  outline: none;
+}
+
+.c360-context-menu__sub-trigger[data-state="open"],
+.c360-context-menu__sub-trigger[data-highlighted] {
+  background: var(--c360-bg);
+}
+
+.c360-context-menu__sub-trigger--inset {
+  padding-left: var(--c360-spacing-8);
+}
+
+.c360-context-menu__sub-chevron {
+  margin-left: auto;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.c360-context-menu__sub-content {
+  z-index: var(--c360-z-popover);
+  min-width: 8rem;
+  padding: var(--c360-spacing-2);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  box-shadow: var(--c360-shadow-lg);
+}
+
+.c360-context-menu__checkbox-item,
+.c360-context-menu__radio-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  padding-left: var(--c360-spacing-8);
+  border-radius: var(--c360-radius-sm);
+  font-size: var(--c360-text-sm);
+  outline: none;
+  cursor: default;
+}
+
+.c360-context-menu__checkbox-item[data-highlighted],
+.c360-context-menu__radio-item[data-highlighted] {
+  background: var(--c360-bg);
+}
+
+.c360-context-menu__item-indicator {
+  position: absolute;
+  left: var(--c360-spacing-2);
+  display: flex;
+  height: 0.875rem;
+  width: 0.875rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.c360-context-menu__check {
+  width: 1rem;
+  height: 1rem;
+}
+
+.c360-context-menu__radio-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  fill: currentColor;
+}
+
+.c360-context-menu__label {
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  font-size: var(--c360-text-sm);
+  font-weight: 700;
+  color: var(--c360-text);
+}
+
+.c360-context-menu__label--inset {
+  padding-left: var(--c360-spacing-8);
+}
+
+.c360-context-menu__shortcut {
+  margin-left: auto;
+  font-size: var(--c360-text-xs);
+  letter-spacing: 0.08em;
+  color: var(--c360-text-muted);
+}
+
+.c360-context-menu__item--inset {
+  padding-left: var(--c360-spacing-8);
 }
 
 .c360-popover-nav {
@@ -1871,6 +2320,14 @@
 
 .c360-topbar__profile-trigger:hover {
   filter: brightness(1.08);
+}
+
+.c360-topbar__profile-trigger--static {
+  cursor: default;
+}
+
+.c360-topbar__profile-trigger--static:hover {
+  filter: none;
 }
 
 .c360-topbar__profile-greeting {

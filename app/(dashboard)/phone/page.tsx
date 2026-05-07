@@ -3,7 +3,6 @@
 import { Search, CheckCircle, Activity } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/patterns/PageHeader";
 import { PhoneFinderSingleTab } from "@/components/feature/phone/PhoneFinderSingleTab";
 import { PhoneVerifierSingleTab } from "@/components/feature/phone/PhoneVerifierSingleTab";
 import { PhoneJobStatusTab } from "@/components/feature/phone/PhoneJobStatusTab";
@@ -11,20 +10,19 @@ import { PhoneJobStatusTab } from "@/components/feature/phone/PhoneJobStatusTab"
 export default function PhonePage() {
   return (
     <DashboardPageLayout>
-      <PageHeader
-        title="Phone"
-        subtitle="Phone satellite — finder, verifier, and job status (GraphQL phone namespace)"
-      />
-
-      <Tabs defaultValue="finder-single">
+      <Tabs
+        defaultValue="finder-single"
+        variant="floating"
+        className="c360-tabs--phone c360-tabs--floating-bottom"
+      >
         <TabsList>
-          <TabsTrigger value="finder-single" icon={<Search size={14} />}>
+          <TabsTrigger value="finder-single" icon={<Search size={16} />}>
             Finder
           </TabsTrigger>
-          <TabsTrigger value="verifier-single" icon={<CheckCircle size={14} />}>
+          <TabsTrigger value="verifier-single" icon={<CheckCircle size={16} />}>
             Verifier
           </TabsTrigger>
-          <TabsTrigger value="job-status" icon={<Activity size={14} />}>
+          <TabsTrigger value="job-status" icon={<Activity size={16} />}>
             Job status
           </TabsTrigger>
         </TabsList>

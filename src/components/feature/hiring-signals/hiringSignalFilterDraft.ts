@@ -44,7 +44,7 @@ export type HiringSignalFilterDraft = {
   postedAfter: string;
   /** Upper bound: YYYY-MM-DD (date picker) or RFC3339; job.server accepts both. */
   postedBefore: string;
-  /** ISO codes; substring match on job.country; sidebar uses 0 or 1 via select. */
+  /** ISO codes; substring match on job.country; sidebar allows multiple (OR). */
   countries: string[];
   /** LinkedIn-style apply method token (substring match on apply_method). */
   applyMethod: string;

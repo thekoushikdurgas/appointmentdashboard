@@ -122,12 +122,13 @@ video {
   --c360-sidebar-width: 240px;
   /* Collapsed icon rail (search + nav icons) */
   --c360-sidebar-width-collapsed: 45px;
-  /* Top bar: full width sidebar rail vs collapsed rail (see .c360-topbar--collapsed) */
-  --c360-topbar-height: 57px;
-  --c360-topbar-height-collapsed: 45px;
+  /* Legacy top bar strip removed; main uses full viewport height below sidebar */
+  --c360-topbar-height: 0px;
+  --c360-topbar-height-collapsed: 0px;
   --c360-content-max-width: 1280px;
   --c360-container-padding: 24px;
-  --c360-shell-bottom-nav-height: 76px;
+  /* Mobile shell dock: tile row + label + padding (see layout.css shell bottom nav) */
+  --c360-shell-bottom-nav-height: 92px;
 
   /* Component heights */
   --c360-input-height: 40px;

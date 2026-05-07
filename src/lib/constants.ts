@@ -74,6 +74,8 @@ export const STORAGE_KEYS = {
   DATA_FILTERS_PEEK_PINNED_COMPANIES: "c360-data-filters-peek-pinned-companies",
   DATA_FILTERS_PEEK_PINNED_HIRING_SIGNALS:
     "c360-data-filters-peek-pinned-hiring-signals",
+  DATA_FILTERS_PEEK_PINNED_ACTIVITIES:
+    "c360-data-filters-peek-pinned-activities",
 } as const;
 
 /* ─── Sidebar navigation (sections + leaves; see navConfig) ───────────────── */

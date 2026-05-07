@@ -153,17 +153,6 @@
   min-height: 28px;
 }
 
-.c360-toolbar__divider {
-  width: 1px;
-  height: 24px;
-  background: var(--c360-border-strong);
-  margin: 0 var(--c360-spacing-1);
-}
-
-.c360-contacts-page .c360-toolbar__divider {
-  display: none;
-}
-
 .c360-toolbar__action-buttons {
   display: flex;
   flex-wrap: nowrap;
@@ -315,6 +304,17 @@
   flex-direction: row;
   gap: 10px;
   justify-content: center;
+  align-items: center;
+}
+
+.c360-activities-filters .c360-contacts-filters__head-row {
+  padding: 0;
+}
+
+.c360-activities-filters .c360-contacts-filters__head-text {
+  flex-direction: row;
+  gap: 10px;
+  justify-content: flex-start;
   align-items: center;
 }
 

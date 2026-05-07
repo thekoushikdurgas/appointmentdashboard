@@ -2,10 +2,9 @@
 
 import { Package } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { cn, formatDate } from "@/lib/utils";
 import type { Invoice, AddonPackage } from "@/graphql/generated/types";
+import { CreditHistoryCalendar } from "./CreditHistoryCalendar";
 
 interface BillingCreditSummaryProps {
   invoices: Invoice[];
@@ -24,69 +23,9 @@ export function BillingCreditSummary({
     <>
       <Card
         title="Credit History"
-        subtitle="All credit transactions on your account"
+        subtitle="Calendar view of billing activity; open month or year from the month label"
       >
-        <div className="c360-table-wrapper">
-          <table className="c360-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Credits</th>
-                <th>Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="c360-text-center c360-text-muted c360-p-8"
-                  >
-                    No credit history yet.
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((row) => (
-                  <tr key={row.id}>
-                    <td className="c360-text-sm c360-text-muted">
-                      {formatDate(row.createdAt)}
-                    </td>
-                    <td className="c360-text-sm">
-                      {row.description ?? "Invoice"}
-                    </td>
-                    <td>
-                      <span
-                        className={cn(
-                          "c360-font-semibold c360-text-sm",
-                          row.amount >= 0
-                            ? "c360-text-success"
-                            : "c360-text-danger",
-                        )}
-                      >
-                        {row.amount >= 0 ? "+" : ""}$
-                        {Math.abs(row.amount).toFixed(2)}
-                      </span>
-                    </td>
-                    <td>
-                      <Badge
-                        color={
-                          row.status === "paid"
-                            ? "green"
-                            : row.status === "pending"
-                              ? "yellow"
-                              : "gray"
-                        }
-                      >
-                        {row.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <CreditHistoryCalendar invoices={invoices} />
       </Card>
 
       <Card

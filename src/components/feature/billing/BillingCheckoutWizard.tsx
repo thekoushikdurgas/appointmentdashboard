@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, Upload } from "lucide-react";
 import { applyVars } from "@/lib/applyCssVars";
 import { Card } from "@/components/ui/Card";
@@ -9,7 +9,11 @@ import { Progress } from "@/components/ui/Progress";
 import { Radio, RadioGroup } from "@/components/ui/Radio";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
-import type { BillingPlanCard } from "./BillingPlanCards";
+import {
+  type BillingPlanCard,
+  type BillingPeriod,
+  availableBillingPeriods,
+} from "./BillingPlanCards";
 import { cn } from "@/lib/utils";
 import type {
   AddonPackage,
@@ -22,14 +26,15 @@ import { toast } from "sonner";
 
 const STEPS = ["Product", "Pay (UPI)", "Receipt"];
 
-type BillingPeriod = "monthly" | "quarterly" | "yearly";
-
 export interface BillingCheckoutWizardProps {
   plans: BillingPlanCard[];
   addons: AddonPackage[];
   effectivePlan: string;
   selectedPlanId: string | null;
   onSelectPlan: (id: string) => void;
+  /** When provided, billing period is controlled (e.g. synced with plan cards). */
+  billingPeriod?: BillingPeriod;
+  onBillingPeriodChange?: (period: BillingPeriod) => void;
   paymentInstructions: PaymentInstructions | null;
   paymentInstructionsLoading: boolean;
   paymentInstructionsError: string | null;
@@ -50,6 +55,8 @@ export function BillingCheckoutWizard({
   effectivePlan,
   selectedPlanId,
   onSelectPlan,
+  billingPeriod: billingPeriodProp,
+  onBillingPeriodChange,
   paymentInstructions,
   paymentInstructionsLoading,
   paymentInstructionsError,
@@ -58,7 +65,25 @@ export function BillingCheckoutWizard({
 }: BillingCheckoutWizardProps) {
   const [step, setStep] = useState(1);
   const [checkoutKind, setCheckoutKind] = useState<"plan" | "addon">("plan");
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [internalBillingPeriod, setInternalBillingPeriod] =
+    useState<BillingPeriod>("monthly");
+  const billingPeriod =
+    billingPeriodProp !== undefined ? billingPeriodProp : internalBillingPeriod;
+  const setBillingPeriod = (next: BillingPeriod) => {
+    if (billingPeriodProp === undefined) setInternalBillingPeriod(next);
+    onBillingPeriodChange?.(next);
+  };
+
+  const periodChoices = useMemo(() => availableBillingPeriods(plans), [plans]);
+
+  useEffect(() => {
+    if (!periodChoices.length) return;
+    if (!periodChoices.includes(billingPeriod)) {
+      const next = periodChoices[0];
+      if (billingPeriodProp === undefined) setInternalBillingPeriod(next);
+      onBillingPeriodChange?.(next);
+    }
+  }, [periodChoices, billingPeriod, billingPeriodProp, onBillingPeriodChange]);
   const [selectedAddonId, setSelectedAddonId] = useState<string | null>(null);
   const [screenshotKey, setScreenshotKey] = useState("");
   const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
@@ -239,17 +264,33 @@ export function BillingCheckoutWizard({
 
           {checkoutKind === "plan" && (
             <>
-              <RadioGroup
-                name="billing-period-checkout"
-                horizontal
-                value={billingPeriod}
-                onChange={(v) => setBillingPeriod(v as BillingPeriod)}
-                className="c360-mb-4"
-              >
-                <Radio value="monthly" label="Monthly" />
-                <Radio value="quarterly" label="Quarterly" />
-                <Radio value="yearly" label="Yearly" />
-              </RadioGroup>
+              {periodChoices.length > 0 ? (
+                <RadioGroup
+                  name="billing-period-checkout"
+                  horizontal
+                  value={billingPeriod}
+                  onChange={(v) => setBillingPeriod(v as BillingPeriod)}
+                  className="c360-mb-4"
+                >
+                  {periodChoices.map((per) => (
+                    <Radio
+                      key={per}
+                      value={per}
+                      label={
+                        per === "monthly"
+                          ? "Monthly"
+                          : per === "quarterly"
+                            ? "Quarterly"
+                            : "Yearly"
+                      }
+                    />
+                  ))}
+                </RadioGroup>
+              ) : (
+                <p className="c360-text-sm c360-text-muted c360-mb-4">
+                  No billing periods with prices are available yet.
+                </p>
+              )}
               <div className="c360-section-stack">
                 {upgradePlans.map((p) => (
                   <div

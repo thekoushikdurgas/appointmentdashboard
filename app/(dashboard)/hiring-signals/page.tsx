@@ -1,14 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  History,
-  RefreshCw,
-  Play,
-  LayoutDashboard,
-  Zap,
-  Download,
-} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { History, RefreshCw, Play, Zap, Download } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Pagination } from "@/components/patterns/Pagination";
@@ -29,7 +23,6 @@ import {
   useHireSignalFilter,
 } from "@/context/HireSignalFilterContext";
 import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
-import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import {
@@ -39,7 +32,6 @@ import {
 import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDescriptionModal";
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
 import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
-import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/HiringSignalsDashboard";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
 import { cn, formatDate } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
@@ -55,6 +47,11 @@ import { Alert } from "@/components/ui/Alert";
 import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { useRole } from "@/context/RoleContext";
+import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import {
+  HIRE_SIGNAL_SAVED_SEARCH_VERSION,
+  type HireSignalSavedSearchPayload,
+} from "@/lib/savedSearchPayload";
 
 const RUNS_PAGE_SIZE = 10;
 
@@ -93,9 +90,7 @@ function HiringSignalsPageBody({
   const {
     jobs,
     total,
-    stats,
     loading,
-    statsLoading,
     error,
     filters,
     setFilters,
@@ -106,23 +101,20 @@ function HiringSignalsPageBody({
 
   const { activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
-  const { isAdmin, isPro, isSuperAdmin } = useRole();
+  const { isAdmin, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
   const showRunsTab = isAdmin;
-  /** Charts + stats dashboard — professional/enterprise (`isPro`) plus admins/superadmins always. */
-  const showOverviewTab = isPro() || isAdmin;
-  /** More than just the Signals list — show Overview and/or Runs tab triggers. */
-  const showTabList = showOverviewTab || showRunsTab;
+  /** Tab strip only when Runs is available (Signals is always the default view). */
+  const showTabList = showRunsTab;
 
+  const searchParams = useSearchParams();
   const [scrapeModalOpen, setScrapeModalOpen] = useState(false);
   const [jd, setJd] = useState<LinkedInJobRow | null>(null);
   const [companyRow, setCompanyRow] = useState<LinkedInJobRow | null>(null);
   const [connectraRow, setConnectraRow] = useState<LinkedInJobRow | null>(null);
   const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-  const [mainTab, setMainTab] = useState<"overview" | "signals" | "runs">(
-    "signals",
-  );
+  const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
@@ -166,8 +158,6 @@ function HiringSignalsPageBody({
     return jobs.filter((j) => j.companyUuid === u);
   }, [drawerRow, jobs]);
 
-  const latestSatelliteRun = satelliteRunsRows[0];
-
   const drillSignalsByRun = useCallback(
     (runId: string) => {
       const id = runId.trim();
@@ -181,6 +171,34 @@ function HiringSignalsPageBody({
   const clearRunFilter = useCallback(() => {
     setFilters((f) => ({ ...f, runId: undefined, offset: 0 }));
   }, [setFilters]);
+
+  const getHireSignalSavedPayload =
+    useCallback((): HireSignalSavedSearchPayload => {
+      return {
+        version: HIRE_SIGNAL_SAVED_SEARCH_VERSION,
+        listFilters: structuredClone(filters),
+        signalTimePreset,
+      };
+    }, [filters, signalTimePreset]);
+
+  const handleApplyHireSignalSaved = useCallback(
+    (p: HireSignalSavedSearchPayload) => {
+      setSignalTimePreset(p.signalTimePreset);
+      setFilters({ ...p.listFilters, offset: 0 });
+    },
+    [setFilters, setSignalTimePreset],
+  );
+
+  const hireSignalSavedSearchesMenu = useMemo(
+    () => (
+      <SavedSearchesMenu
+        entity="hire_signal"
+        getHireSignalPayload={getHireSignalSavedPayload}
+        onApplyHireSignal={handleApplyHireSignalSaved}
+      />
+    ),
+    [getHireSignalSavedPayload, handleApplyHireSignalSaved],
+  );
 
   const effectiveJobListFilters = useMemo(
     () => ({
@@ -281,20 +299,13 @@ function HiringSignalsPageBody({
   }, [exportBanner?.jobId, exportBanner?.status]);
 
   useEffect(() => {
-    if (!showOverviewTab && mainTab === "overview") setMainTab("signals");
     if (!showRunsTab && mainTab === "runs") setMainTab("signals");
-  }, [showOverviewTab, showRunsTab, mainTab]);
+  }, [showRunsTab, mainTab]);
 
-  const renderStatsBar = () => (
-    <HiringSignalStatsBar
-      totalJobs={stats.totalJobs}
-      jobsWithCompany={stats.jobsWithCompany}
-      filterMatchTotal={total}
-      pageRowCount={jobs.length}
-      loading={statsLoading}
-      className="c360-mb-4"
-    />
-  );
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "runs" && showRunsTab) setMainTab("runs");
+  }, [searchParams, showRunsTab]);
 
   const trackedPaged = useMemo(() => {
     const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
@@ -420,10 +431,10 @@ function HiringSignalsPageBody({
         },
       },
       {
-        key: "apify",
-        header: "Apify run",
+        key: "runId",
+        header: "Run ID",
         render: (row) => {
-          const full = String(row.apifyRunId ?? "");
+          const full = String(row.runId ?? "");
           const short =
             full.length > 12 ? `${full.slice(0, 12)}…` : full || "—";
           return (
@@ -444,15 +455,15 @@ function HiringSignalsPageBody({
         align: "right",
         render: (row) => {
           const sid = String(row.id ?? "");
-          const apify = String(row.apifyRunId ?? "");
+          const runIdVal = String(row.runId ?? "");
           return (
             <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
-              {apify ? (
+              {runIdVal ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => drillSignalsByRun(apify)}
+                  onClick={() => drillSignalsByRun(runIdVal)}
                 >
                   Signals
                 </Button>
@@ -462,7 +473,7 @@ function HiringSignalsPageBody({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={scrapeDownloadId === sid || !apify}
+                  disabled={scrapeDownloadId === sid || !runIdVal}
                   onClick={() => void onDownloadCsv(sid)}
                 >
                   {scrapeDownloadId === sid ? "Exporting…" : "CSV"}
@@ -541,45 +552,24 @@ function HiringSignalsPageBody({
       <Tabs
         value={showTabList ? mainTab : "signals"}
         onValueChange={
-          showTabList
-            ? (v) => setMainTab(v as "overview" | "signals" | "runs")
-            : undefined
+          showTabList ? (v) => setMainTab(v as "signals" | "runs") : undefined
         }
-        variant="dashboard"
-        className="c360-mb-4"
+        variant={showTabList ? "floating" : "dashboard"}
+        className={cn(
+          "c360-tabs--hiring-signals",
+          showTabList && "c360-tabs--floating-bottom",
+          "c360-mb-4",
+        )}
       >
         {showTabList ? (
           <TabsList>
-            {showOverviewTab ? (
-              <TabsTrigger
-                value="overview"
-                icon={<LayoutDashboard size={14} />}
-              >
-                Overview
-              </TabsTrigger>
-            ) : null}
-            <TabsTrigger value="signals" icon={<Zap size={14} />}>
+            <TabsTrigger value="signals" icon={<Zap size={16} />}>
               Signals
             </TabsTrigger>
-            {showRunsTab ? (
-              <TabsTrigger value="runs" icon={<History size={14} />}>
-                Runs
-              </TabsTrigger>
-            ) : null}
+            <TabsTrigger value="runs" icon={<History size={16} />}>
+              Runs
+            </TabsTrigger>
           </TabsList>
-        ) : null}
-        {showOverviewTab ? (
-          <TabsContent value="overview">
-            <HiringSignalsDashboard
-              jobs={jobs}
-              loading={loading}
-              statsBar={renderStatsBar()}
-              onOpenCompanyDrawer={(row) => setDrawerRow(row)}
-              latestRun={latestSatelliteRun}
-              runsLoading={runsLoading}
-              onGoToRuns={showRunsTab ? () => setMainTab("runs") : undefined}
-            />
-          </TabsContent>
         ) : null}
         {showRunsTab ? (
           <TabsContent value="runs">
@@ -682,17 +672,25 @@ function HiringSignalsPageBody({
             filterDrawerTitleId="c360-hs-filter-drawer-title"
             filtersPeekRail
             filtersPeekScope="hiring-signals"
+            filtersPinExtra={hireSignalSavedSearchesMenu}
             toolbar={signalsToolbar}
             filters={
-              <HiringSignalsFilterSidebar
-                drawerTitleId="c360-hs-filter-drawer-title"
-                appliedListFilters={filters}
-                signalTimePreset={signalTimePreset}
-                appliedRunId={filters.runId}
-                onClearRunId={clearRunFilter}
-                tableDensity={tableDensity}
-                onTableDensityChange={setTableDensity}
-              />
+              <>
+                {!isDesktop ? (
+                  <div className="c360-data-layout__filters-mobile-saved">
+                    {hireSignalSavedSearchesMenu}
+                  </div>
+                ) : null}
+                <HiringSignalsFilterSidebar
+                  drawerTitleId="c360-hs-filter-drawer-title"
+                  appliedListFilters={filters}
+                  signalTimePreset={signalTimePreset}
+                  appliedRunId={filters.runId}
+                  onClearRunId={clearRunFilter}
+                  tableDensity={tableDensity}
+                  onTableDensityChange={setTableDensity}
+                />
+              </>
             }
             pagination={
               total > filters.limit ? (

@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { User, Shield, Key, Monitor, Users } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
-import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileGeneral } from "@/hooks/useProfileGeneral";
-import { cn, resolveProfileAvatarSrc } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ProfileInfoTab } from "@/components/feature/profile/ProfileInfoTab";
 import { ProfileSecurityTab } from "@/components/feature/profile/ProfileSecurityTab";
 import { ProfileApiKeysTab } from "@/components/feature/profile/ProfileApiKeysTab";
@@ -116,119 +114,93 @@ export default function ProfilePage() {
 
   return (
     <DashboardPageLayout>
-      <div className="c360-page-header">
-        <div className="c360-flex c360-items-center c360-gap-4">
-          <Image
-            src={resolveProfileAvatarSrc(
-              user?.avatar_url,
-              user?.full_name || "",
-              user?.email || "",
-              128,
-            )}
-            alt=""
-            width={64}
-            height={64}
-            className="c360-avatar c360-avatar--lg"
-            unoptimized
-          />
-          <div>
-            <h1 className="c360-page-title c360-m-0">
-              {user?.full_name || "Your Profile"}
-            </h1>
-            <p className="c360-page-subtitle c360-m-0">{user?.email}</p>
-          </div>
-        </div>
-        <Badge color={user?.is_verified ? "green" : "orange"} dot>
-          {user?.is_verified ? "Verified" : "Unverified"}
-        </Badge>
-      </div>
-
       {profileError && (
         <Alert variant="danger" className="c360-mb-4">
           {profileError}
         </Alert>
       )}
 
-      <div className="c360-tabs c360-mb-6">
-        <div className="c360-tabs__list">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as ProfileTab)}
+        variant="floating"
+        className="c360-tabs--profile c360-tabs--floating-bottom"
+      >
+        <TabsList>
           {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={cn(
-                "c360-tabs__tab",
-                activeTab === tab.id && "c360-tabs__tab--active",
-              )}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.icon}
+            <TabsTrigger key={tab.id} value={tab.id} icon={tab.icon}>
               {tab.label}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
-      </div>
+        </TabsList>
 
-      {activeTab === "general" && (
-        <ProfileInfoTab
-          email={user?.email || ""}
-          fullName={fullName}
-          jobTitle={jobTitle}
-          bio={bio}
-          timezone={timezone}
-          saving={saving}
-          saveSuccess={saveSuccess}
-          formError={generalFormError}
-          avatarUploading={avatarUploading}
-          onFullNameChange={setFullName}
-          onJobTitleChange={setJobTitle}
-          onBioChange={setBio}
-          onTimezoneChange={setTimezone}
-          onSave={() => void saveGeneral()}
-          onCancel={resetGeneralForm}
-          onAvatarFile={(file) => void uploadAvatar(file)}
-        />
-      )}
+        <TabsContent value="general" className="c360-mt-6">
+          <ProfileInfoTab
+            avatarUrl={user?.avatar_url}
+            isVerified={Boolean(user?.is_verified)}
+            email={user?.email || ""}
+            fullName={fullName}
+            jobTitle={jobTitle}
+            bio={bio}
+            timezone={timezone}
+            saving={saving}
+            saveSuccess={saveSuccess}
+            formError={generalFormError}
+            avatarUploading={avatarUploading}
+            onFullNameChange={setFullName}
+            onJobTitleChange={setJobTitle}
+            onBioChange={setBio}
+            onTimezoneChange={setTimezone}
+            onSave={() => void saveGeneral()}
+            onCancel={resetGeneralForm}
+            onAvatarFile={(file) => void uploadAvatar(file)}
+          />
+        </TabsContent>
 
-      {activeTab === "security" && <ProfileSecurityTab />}
+        <TabsContent value="security" className="c360-mt-6">
+          <ProfileSecurityTab />
+        </TabsContent>
 
-      {activeTab === "apikeys" && (
-        <ProfileApiKeysTab
-          apiKeys={apiKeys}
-          loading={loading}
-          creatingKey={creatingKey}
-          newKeyValue={newKeyValue}
-          copied={copied}
-          onCreateKey={async (input) => {
-            await handleCreateApiKey(input);
-          }}
-          onDeleteKey={(id) => void deleteApiKey(id)}
-          onCopyKey={handleCopyKey}
-        />
-      )}
+        <TabsContent value="apikeys" className="c360-mt-6">
+          <ProfileApiKeysTab
+            apiKeys={apiKeys}
+            loading={loading}
+            creatingKey={creatingKey}
+            newKeyValue={newKeyValue}
+            copied={copied}
+            onCreateKey={async (input) => {
+              await handleCreateApiKey(input);
+            }}
+            onDeleteKey={(id) => void deleteApiKey(id)}
+            onCopyKey={handleCopyKey}
+          />
+        </TabsContent>
 
-      {activeTab === "sessions" && (
-        <ProfileSessionsTab
-          sessions={sessions}
-          loading={loading}
-          onRevokeSession={(id) => void revokeSession(id)}
-          onRevokeAll={() => void revokeAllOtherSessions()}
-        />
-      )}
+        <TabsContent value="sessions" className="c360-mt-6">
+          <ProfileSessionsTab
+            sessions={sessions}
+            loading={loading}
+            onRevokeSession={(id) => void revokeSession(id)}
+            onRevokeAll={() => void revokeAllOtherSessions()}
+          />
+        </TabsContent>
 
-      {activeTab === "team" && (
-        <ProfileTeamTab
-          teamMembers={teamMembers}
-          loading={loading}
-          teamError={teamError}
-          teamForbidden={teamForbidden}
-          inviting={inviting}
-          updatingRoleId={updatingRoleId}
-          onInvite={async (input) => {
-            await handleInvite(input);
-          }}
-          onUpdateRole={handleUpdateRole}
-          onRemoveMember={(id) => void removeTeamMember(id)}
-        />
-      )}
+        <TabsContent value="team" className="c360-mt-6">
+          <ProfileTeamTab
+            teamMembers={teamMembers}
+            loading={loading}
+            teamError={teamError}
+            teamForbidden={teamForbidden}
+            inviting={inviting}
+            updatingRoleId={updatingRoleId}
+            onInvite={async (input) => {
+              await handleInvite(input);
+            }}
+            onUpdateRole={handleUpdateRole}
+            onRemoveMember={(id) => void removeTeamMember(id)}
+          />
+        </TabsContent>
+      </Tabs>
     </DashboardPageLayout>
   );
 }

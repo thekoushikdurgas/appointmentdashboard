@@ -296,6 +296,7 @@ export default function CampaignsPage() {
 
         <div className="c360-mt-6">
           <Card
+            className="c360-card--campaign-reviews"
             title="Campaign Reviews"
             subtitle="User feedback on your campaigns"
             actions={<Star size={16} className="c360-text-warning" />}

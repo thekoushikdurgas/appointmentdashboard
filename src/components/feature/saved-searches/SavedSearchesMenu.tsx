@@ -14,20 +14,24 @@ import {
 import {
   type ContactSavedSearchPayload,
   type CompanySavedSearchPayload,
+  type HireSignalSavedSearchPayload,
   isContactSavedSearchPayload,
   isCompanySavedSearchPayload,
+  isHireSignalSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
 import { parseOperationError } from "@/lib/errorParser";
 import { cn } from "@/lib/utils";
 
-type Entity = "contact" | "company";
+type Entity = "contact" | "company" | "hire_signal";
 
 interface SavedSearchesMenuProps {
   entity: Entity;
   getContactPayload?: () => ContactSavedSearchPayload;
   getCompanyPayload?: () => CompanySavedSearchPayload;
+  getHireSignalPayload?: () => HireSignalSavedSearchPayload;
   onApplyContact?: (payload: ContactSavedSearchPayload) => void;
   onApplyCompany?: (payload: CompanySavedSearchPayload) => void;
+  onApplyHireSignal?: (payload: HireSignalSavedSearchPayload) => void;
   className?: string;
 }
 
@@ -35,8 +39,10 @@ export function SavedSearchesMenu({
   entity,
   getContactPayload,
   getCompanyPayload,
+  getHireSignalPayload,
   onApplyContact,
   onApplyCompany,
+  onApplyHireSignal,
   className,
 }: SavedSearchesMenuProps) {
   const [list, setList] = useState<SavedSearch[]>([]);
@@ -45,8 +51,18 @@ export function SavedSearchesMenu({
   const [saveName, setSaveName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const typeFilter = entity === "contact" ? "contact" : "company";
-  const errorDomain = entity === "contact" ? "contacts" : "companies";
+  const typeFilter =
+    entity === "contact"
+      ? "contact"
+      : entity === "company"
+        ? "company"
+        : "hire_signal";
+  const errorDomain =
+    entity === "contact"
+      ? "contacts"
+      : entity === "company"
+        ? "companies"
+        : "jobs";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,7 +83,11 @@ export function SavedSearchesMenu({
     const name = saveName.trim();
     if (!name) return;
     const filters =
-      entity === "contact" ? getContactPayload?.() : getCompanyPayload?.();
+      entity === "contact"
+        ? getContactPayload?.()
+        : entity === "company"
+          ? getCompanyPayload?.()
+          : getHireSignalPayload?.();
     if (!filters) {
       toast.error("Could not build a payload for this view.");
       return;
@@ -100,6 +120,12 @@ export function SavedSearchesMenu({
         await savedSearchesService.updateUsage(row.id);
       } else if (entity === "company" && isCompanySavedSearchPayload(raw)) {
         onApplyCompany?.(raw);
+        await savedSearchesService.updateUsage(row.id);
+      } else if (
+        entity === "hire_signal" &&
+        isHireSignalSavedSearchPayload(raw)
+      ) {
+        onApplyHireSignal?.(raw);
         await savedSearchesService.updateUsage(row.id);
       } else {
         toast.error(

@@ -1,5 +1,12 @@
 /* Email Activity dashboard chart — rhythm aligned with docs/frontend/ideas/mydesigns/dashboardgraph.md */
 
+/* Full-width card body (kit default is `width: 50%` on `.c360-card__body`) */
+.c360-dashboard-email-activity-card .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .c360-dashboard-email-chart {
   display: flex;
   flex-direction: column;

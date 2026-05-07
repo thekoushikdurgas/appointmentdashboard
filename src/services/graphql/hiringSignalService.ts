@@ -171,7 +171,7 @@ const HIRE_SIGNAL_TRIGGER_TRACK = gql`
         id
         userId
         status
-        apifyRunId
+        runId
         error
         createdAt
         jobServerResponse
@@ -543,7 +543,7 @@ export type HireSignalScrapeJobRow = {
   id: string;
   userId?: string;
   status?: string;
-  apifyRunId?: string | null;
+  runId?: string | null;
   error?: string | null;
   itemCount?: number | null;
   createdAt?: string | null;

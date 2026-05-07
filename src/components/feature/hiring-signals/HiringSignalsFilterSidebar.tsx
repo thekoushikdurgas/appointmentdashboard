@@ -17,6 +17,8 @@ import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signa
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
+/** Matches scraper.server `infer_apply_method_guest` → `SimpleOnsiteApply`. */
+const EASY_APPLY_METHOD = "SimpleOnsiteApply";
 
 const EMPLOYMENT_OPTIONS = [
   { value: "", label: "Any" },
@@ -176,11 +178,6 @@ const COUNTRY_FILTER_OPTIONS = [
   { value: "UA", label: "Ukraine (UA)" },
 ];
 
-const COUNTRY_SELECT_OPTIONS = [
-  { value: "", label: "Any" },
-  ...COUNTRY_FILTER_OPTIONS,
-];
-
 /** Values align with job.server `skillKeywords` → ingested `skill_tags` (case-insensitive). */
 const SKILL_TAG_FILTER_OPTIONS = [
   { value: "python", label: "Python" },
@@ -285,7 +282,7 @@ export interface HiringSignalsFilterSidebarProps {
   /** Applied list filters (API state) — used to scope facet option queries. */
   appliedListFilters: JobListFilters;
   signalTimePreset: "all" | "new_7d";
-  /** Active Apify run filter (from Runs tab drill-down). */
+  /** Active job.server ingest run filter (from Runs tab drill-down). */
   appliedRunId?: string;
   onClearRunId?: () => void;
   className?: string;
@@ -306,6 +303,16 @@ export function HiringSignalsFilterSidebar({
   onTableDensityChange,
 }: HiringSignalsFilterSidebarProps) {
   const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
+
+  const toggleCountryCode = (code: string, checked: boolean) => {
+    const cur = normalizeHiringSignalTokenList(draft.countries);
+    const next = checked
+      ? cur.includes(code)
+        ? cur
+        : [...cur, code]
+      : cur.filter((c) => c !== code);
+    onDraftField("countries", next);
+  };
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
 
@@ -395,8 +402,10 @@ export function HiringSignalsFilterSidebar({
     addChip(
       "applym",
       draft.applyMethod === LINKEDIN_APPLY_METHOD
-        ? "LinkedIn Apply"
-        : `Apply method: ${draft.applyMethod}`,
+        ? "LinkedIn Apply (hosted)"
+        : draft.applyMethod === EASY_APPLY_METHOD
+          ? "Easy apply (LinkedIn)"
+          : `Apply method: ${draft.applyMethod}`,
       () => onDraftField("applyMethod", ""),
     );
 
@@ -538,11 +547,6 @@ export function HiringSignalsFilterSidebar({
       ? normalizedExcludedIndustries[0]
       : "";
   const normalizedCountries = normalizeHiringSignalTokenList(draft.countries);
-  const countrySelectValue =
-    normalizedCountries.length === 1 &&
-    COUNTRY_FILTER_OPTIONS.some((o) => o.value === normalizedCountries[0])
-      ? normalizedCountries[0]
-      : "";
   const normalizedSkillTags = normalizeHiringSignalTokenList(draft.skillsAll);
   const skillTagSelectValue =
     normalizedSkillTags.length === 1 &&
@@ -889,6 +893,23 @@ export function HiringSignalsFilterSidebar({
             <input
               type="checkbox"
               className="c360-mt-0.5"
+              checked={draft.applyMethod === EASY_APPLY_METHOD}
+              onChange={(e) =>
+                onDraftField(
+                  "applyMethod",
+                  e.target.checked ? EASY_APPLY_METHOD : "",
+                )
+              }
+            />
+            <span>
+              Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
+              (substring).
+            </span>
+          </label>
+          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+            <input
+              type="checkbox"
+              className="c360-mt-0.5"
               checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
               onChange={(e) =>
                 onDraftField(
@@ -1074,17 +1095,29 @@ export function HiringSignalsFilterSidebar({
             onDraftField("countries", []);
           }}
         >
-          <Select
-            id="hsf-country"
-            value={countrySelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("countries", v ? [v] : []);
-            }}
-            options={COUNTRY_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
+          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+            Match jobs whose inferred country overlaps any selected ISO code (OR).
+          </p>
+          <div className="c360-max-h-48 c360-overflow-y-auto c360-rounded-md c360-border c360-border-ink-8 c360-p-2">
+            <div className="c360-grid c360-grid-cols-1 c360-gap-1 sm:c360-grid-cols-2">
+              {COUNTRY_FILTER_OPTIONS.map((o) => (
+                <label
+                  key={o.value}
+                  className="c360-flex c360-cursor-pointer c360-items-start c360-gap-2 c360-text-2xs"
+                >
+                  <input
+                    type="checkbox"
+                    className="c360-mt-0.5"
+                    checked={normalizedCountries.includes(o.value)}
+                    onChange={(e) =>
+                      toggleCountryCode(o.value, e.target.checked)
+                    }
+                  />
+                  <span>{o.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection

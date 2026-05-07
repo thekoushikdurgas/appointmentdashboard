@@ -603,6 +603,23 @@
   > .c360-data-layout__content
   > .c360-card {
   border-radius: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Full-width table card: overrides global `.c360-card__body { width: 50% }` in card-badge sheet */
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-card
+  > .c360-card__body,
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-card
+  > .c360-card__body {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Stacked toolbar rows, full-width action cluster */
@@ -610,7 +627,7 @@
 .c360-page.c360-companies-page .c360-toolbar {
   width: 100%;
   box-sizing: border-box;
-  flex-direction: column;
+  /* flex-direction: column; */
   flex-wrap: nowrap;
   align-items: flex-start;
   justify-content: flex-start;
@@ -618,13 +635,13 @@
 
 .c360-page.c360-contacts-page .c360-toolbar__leading,
 .c360-page.c360-companies-page .c360-toolbar__leading {
-  width: 100%;
+  /* width: 100%; */
   box-sizing: border-box;
 }
 
 .c360-page.c360-contacts-page .c360-toolbar__actions,
 .c360-page.c360-companies-page .c360-toolbar__actions {
-  width: 100%;
+  /* width: 100%; */
   box-sizing: border-box;
   flex-wrap: nowrap;
   justify-content: center;

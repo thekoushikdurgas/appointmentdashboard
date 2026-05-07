@@ -1,5 +1,9 @@
 # Hiring signals (UI + GraphQL)
 
+## Dashboard overview (charts + latest run)
+
+The former **Hiring signals → Overview** block (stats bar, charts, latest satellite run, company drawer) lives on the main **Dashboard** as [`HiringSignalsHomeOverview`](contact360.io/app/src/components/feature/hiring-signals/HiringSignalsHomeOverview.tsx) for Pro / Enterprise / super-admin and workspace admins. **Go to runs** routes to `/hiring-signals?tab=runs`.
+
 ## LinkedIn-style filter mapping (UI draft → GraphQL / job.server)
 
 | LinkedIn-style control | Draft field(s)                                  | Applied `JobListFilters` / `extendedJobFilters` | job.server query                         |

@@ -20,6 +20,7 @@ import { Alert } from "@/components/ui/Alert";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { PageHeader } from "@/components/patterns/PageHeader";
 import { SearchBar } from "@/components/patterns/SearchBar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Input } from "@/components/ui/Input";
 import { formatDate, getAvatarUrl } from "@/lib/utils";
 import { linkedinService } from "@/services/graphql/linkedinService";
@@ -33,7 +34,7 @@ import { parseOperationError } from "@/lib/errorParser";
 import { toast } from "sonner";
 
 export default function LinkedInPage() {
-  const { checkAccess, credits, refreshBillingLimits } = useRole();
+  const { checkAccess, refreshBillingLimits } = useRole();
   const canAccess = checkAccess("linkedin_export");
 
   const {
@@ -196,7 +197,6 @@ export default function LinkedInPage() {
   if (!canAccess) {
     return (
       <DashboardPageLayout>
-        <PageHeader title="LinkedIn" />
         <Alert variant="warning">
           {FEATURE_GATES.linkedin_export.label} is available on{" "}
           <strong>Professional</strong> and <strong>Enterprise</strong> plans.{" "}
@@ -209,13 +209,12 @@ export default function LinkedInPage() {
   return (
     <DashboardPageLayout>
       <PageHeader
-        title="LinkedIn"
         actions={
           <>
-            <div className="c360-flex-row-wrap c360-items-end c360-gap-2">
+            <div className="c360-flex c360-flex-nowrap c360-justify-center c360-items-center c360-gap-2">
               <div className="c360-flex-1-1-260">
                 <Input
-                  label="LinkedIn URL"
+                  aria-label="LinkedIn URL"
                   value={url}
                   onChange={(e) => {
                     setUrl(e.target.value);
@@ -264,11 +263,6 @@ export default function LinkedInPage() {
         }
       />
 
-      <p className="c360-text-sm c360-text-muted c360-mb-4">
-        Credits remaining: <strong>{credits}</strong> · Each search / import may
-        consume credits per your plan.
-      </p>
-
       {searchError && (
         <Alert
           variant="danger"
@@ -299,18 +293,6 @@ export default function LinkedInPage() {
         </div>
       )}
 
-      {bulkImporting && bulkTotal > 0 && (
-        <div className="c360-mb-4">
-          <ProgressBar
-            value={Math.round((bulkProgress / bulkTotal) * 100)}
-            tone="primary"
-            animated={bulkProgress === 0}
-            label={`Importing ${bulkProgress} / ${bulkTotal} contacts…`}
-            showValue
-          />
-        </div>
-      )}
-
       {filtered.length === 0 && filteredCompanies.length === 0 && (
         <Card>
           <p className="c360-empty-state">
@@ -321,139 +303,183 @@ export default function LinkedInPage() {
         </Card>
       )}
 
-      {filtered.length > 0 && (
-        <div className="c360-mb-6">
-          <h2 className="c360-linkedin-section-title">
-            Contacts ({filtered.length})
-          </h2>
-          <div className="c360-result-grid">
-            {filtered.map((profile) => (
-              <Card key={profile.id} padding="md">
-                <div className="c360-linkedin-card-inner">
-                  <input
-                    type="checkbox"
-                    aria-label={`Select ${profile.fullName}`}
-                    className="c360-checkbox__input"
-                    checked={selected.includes(profile.id)}
-                    onChange={(e) =>
-                      setSelected((prev) =>
-                        e.target.checked
-                          ? [...prev, profile.id]
-                          : prev.filter((i) => i !== profile.id),
-                      )
-                    }
-                  />
-                  <Image
-                    src={getAvatarUrl(profile.fullName, 48)}
-                    alt=""
-                    width={48}
-                    height={48}
-                    className="c360-linkedin-avatar"
-                  />
-                  <div className="c360-flex-1">
-                    <div className="c360-flex c360-items-center c360-gap-2 c360-mb-0-5">
-                      <span className="c360-text-primary c360-font-semibold">
-                        {profile.fullName}
-                      </span>
-                      <Badge
-                        color={
-                          profile.connectionDegree === 1 ? "green" : "blue"
-                        }
-                      >
-                        {profile.connectionDegree}° connection
-                      </Badge>
-                    </div>
-                    {(profile.title || profile.company) && (
-                      <div className="c360-text-sm c360-text-muted">
-                        {[profile.title, profile.company]
-                          .filter(Boolean)
-                          .join(" at ")}
+      {(filtered.length > 0 || filteredCompanies.length > 0) && (
+        <Tabs
+          defaultValue="contacts"
+          variant="floating"
+          className="c360-tabs--linkedin c360-tabs--floating-bottom"
+        >
+          <TabsList>
+            <TabsTrigger value="contacts" icon={<Users size={16} />}>
+              Contacts
+            </TabsTrigger>
+            <TabsTrigger value="companies" icon={<Building2 size={16} />}>
+              Companies
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="contacts" className="c360-mt-6">
+            {bulkImporting && bulkTotal > 0 && (
+              <div className="c360-mb-4">
+                <ProgressBar
+                  value={Math.round((bulkProgress / bulkTotal) * 100)}
+                  tone="primary"
+                  animated={bulkProgress === 0}
+                  label={`Importing ${bulkProgress} / ${bulkTotal} contacts…`}
+                  showValue
+                />
+              </div>
+            )}
+            {filtered.length > 0 ? (
+              <div className="c360-mb-6">
+                <h2 className="c360-linkedin-section-title">
+                  Contacts ({filtered.length})
+                </h2>
+                <div className="c360-result-grid">
+                  {filtered.map((profile) => (
+                    <Card key={profile.id} padding="md">
+                      <div className="c360-linkedin-card-inner">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${profile.fullName}`}
+                          className="c360-checkbox__input"
+                          checked={selected.includes(profile.id)}
+                          onChange={(e) =>
+                            setSelected((prev) =>
+                              e.target.checked
+                                ? [...prev, profile.id]
+                                : prev.filter((i) => i !== profile.id),
+                            )
+                          }
+                        />
+                        <Image
+                          src={getAvatarUrl(profile.fullName, 48)}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="c360-linkedin-avatar"
+                        />
+                        <div className="c360-flex-1">
+                          <div className="c360-flex c360-items-center c360-gap-2 c360-mb-0-5">
+                            <span className="c360-text-primary c360-font-semibold">
+                              {profile.fullName}
+                            </span>
+                            <Badge
+                              color={
+                                profile.connectionDegree === 1
+                                  ? "green"
+                                  : "blue"
+                              }
+                            >
+                              {profile.connectionDegree}° connection
+                            </Badge>
+                          </div>
+                          {(profile.title || profile.company) && (
+                            <div className="c360-text-sm c360-text-muted">
+                              {[profile.title, profile.company]
+                                .filter(Boolean)
+                                .join(" at ")}
+                            </div>
+                          )}
+                          <div className="c360-text-xs c360-text-light">
+                            {profile.location && `${profile.location} · `}
+                            Imported {formatDate(profile.importedAt)}
+                          </div>
+                        </div>
+                        <div className="c360-badge-row">
+                          {profile.linkedinUrl && (
+                            <a
+                              href={profile.linkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                leftIcon={<Linkedin size={14} />}
+                              >
+                                View
+                              </Button>
+                            </a>
+                          )}
+                          <Button
+                            size="sm"
+                            leftIcon={<UserPlus size={14} />}
+                            loading={importingId === profile.id}
+                            onClick={() => void handleAddToContacts(profile)}
+                          >
+                            Add to Contacts
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                    <div className="c360-text-xs c360-text-light">
-                      {profile.location && `${profile.location} · `}Imported{" "}
-                      {formatDate(profile.importedAt)}
-                    </div>
-                  </div>
-                  <div className="c360-badge-row">
-                    {profile.linkedinUrl && (
-                      <a
-                        href={profile.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          leftIcon={<Linkedin size={14} />}
-                        >
-                          View
-                        </Button>
-                      </a>
-                    )}
-                    <Button
-                      size="sm"
-                      leftIcon={<UserPlus size={14} />}
-                      loading={importingId === profile.id}
-                      onClick={() => void handleAddToContacts(profile)}
-                    >
-                      Add to Contacts
-                    </Button>
-                  </div>
+                    </Card>
+                  ))}
                 </div>
+              </div>
+            ) : (
+              <Card className="c360-mb-4">
+                <p className="c360-empty-state c360-m-0">
+                  No contacts in this search.
+                </p>
               </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {filteredCompanies.length > 0 && (
-        <div>
-          <h2 className="c360-linkedin-section-title">
-            Companies ({filteredCompanies.length})
-          </h2>
-          <div className="c360-result-grid">
-            {filteredCompanies.map((company) => (
-              <Card key={company.id} padding="md">
-                <div className="c360-linkedin-card-inner">
-                  <div className="c360-linkedin-icon-box">
-                    <Building2 size={20} className="c360-text-muted" />
-                  </div>
-                  <div className="c360-flex-1">
-                    <span className="c360-text-primary c360-font-semibold">
-                      {company.name}
-                    </span>
-                  </div>
-                  <div className="c360-badge-row">
-                    {company.linkedinUrl && (
-                      <a
-                        href={company.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          leftIcon={<Linkedin size={14} />}
-                        >
-                          View on LinkedIn
-                        </Button>
-                      </a>
-                    )}
-                    <Button
-                      size="sm"
-                      leftIcon={<Plus size={14} />}
-                      loading={importingCompanyId === company.id}
-                      onClick={() => void handleAddCompany(company)}
-                    >
-                      Import company
-                    </Button>
-                  </div>
+            )}
+          </TabsContent>
+          <TabsContent value="companies" className="c360-mt-6">
+            {filteredCompanies.length > 0 ? (
+              <div>
+                <h2 className="c360-linkedin-section-title">
+                  Companies ({filteredCompanies.length})
+                </h2>
+                <div className="c360-result-grid">
+                  {filteredCompanies.map((company) => (
+                    <Card key={company.id} padding="md">
+                      <div className="c360-linkedin-card-inner">
+                        <div className="c360-linkedin-icon-box">
+                          <Building2 size={20} className="c360-text-muted" />
+                        </div>
+                        <div className="c360-flex-1">
+                          <span className="c360-text-primary c360-font-semibold">
+                            {company.name}
+                          </span>
+                        </div>
+                        <div className="c360-badge-row">
+                          {company.linkedinUrl && (
+                            <a
+                              href={company.linkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                leftIcon={<Linkedin size={14} />}
+                              >
+                                View on LinkedIn
+                              </Button>
+                            </a>
+                          )}
+                          <Button
+                            size="sm"
+                            leftIcon={<Plus size={14} />}
+                            loading={importingCompanyId === company.id}
+                            onClick={() => void handleAddCompany(company)}
+                          >
+                            Import company
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
+              </div>
+            ) : (
+              <Card>
+                <p className="c360-empty-state c360-m-0">
+                  No companies in this search.
+                </p>
               </Card>
-            ))}
-          </div>
-        </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
     </DashboardPageLayout>
   );

@@ -3,7 +3,6 @@
 import { Search, Users, CheckCircle, List, Globe, AtSign } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/patterns/PageHeader";
 import { EmailFinderSingleTab } from "@/components/feature/email/EmailFinderSingleTab";
 import { EmailBulkFinderTab } from "@/components/feature/email/EmailBulkFinderTab";
 import { EmailBulkVerifierTab } from "@/components/feature/email/EmailBulkVerifierTab";
@@ -14,29 +13,28 @@ import { EmailPatternsTab } from "@/components/feature/email/EmailPatternsTab";
 export default function EmailPage() {
   return (
     <DashboardPageLayout>
-      <PageHeader
-        title="Email"
-        subtitle="Find and verify professional email addresses"
-      />
-
-      <Tabs defaultValue="finder-single" className="c360-tabs--email">
+      <Tabs
+        defaultValue="finder-single"
+        variant="floating"
+        className="c360-tabs--email c360-tabs--floating-bottom"
+      >
         <TabsList>
-          <TabsTrigger value="finder-single" icon={<Search size={14} />}>
+          <TabsTrigger value="finder-single" icon={<Search size={16} />}>
             Single Finder
           </TabsTrigger>
-          <TabsTrigger value="finder-bulk" icon={<Users size={14} />}>
+          <TabsTrigger value="finder-bulk" icon={<Users size={16} />}>
             Bulk Finder
           </TabsTrigger>
-          <TabsTrigger value="verifier-single" icon={<CheckCircle size={14} />}>
+          <TabsTrigger value="verifier-single" icon={<CheckCircle size={16} />}>
             Single Verifier
           </TabsTrigger>
-          <TabsTrigger value="verifier-bulk" icon={<List size={14} />}>
+          <TabsTrigger value="verifier-bulk" icon={<List size={16} />}>
             Bulk Verifier
           </TabsTrigger>
-          <TabsTrigger value="web-search" icon={<Globe size={14} />}>
+          <TabsTrigger value="web-search" icon={<Globe size={16} />}>
             Web Search
           </TabsTrigger>
-          <TabsTrigger value="patterns" icon={<AtSign size={14} />}>
+          <TabsTrigger value="patterns" icon={<AtSign size={16} />}>
             Email Patterns
           </TabsTrigger>
         </TabsList>

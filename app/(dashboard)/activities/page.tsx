@@ -11,10 +11,12 @@ import {
   Clock,
   PieChart,
   RefreshCw,
+  Bookmark,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
-import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -36,10 +38,9 @@ import {
   type AnalyticsDataPoint,
   type JobStatPoint,
 } from "@/components/feature/activities/ActivityAnalyticsTab";
-import {
-  ActivityFiltersBar,
-  type ActivityFiltersBarValues,
-} from "@/components/feature/activities/ActivityFiltersBar";
+import type { ActivityFiltersBarValues } from "@/components/feature/activities/ActivityFiltersBar";
+import { ActivitiesFilterSidebar } from "@/components/feature/activities/ActivitiesFilterSidebar";
+import { SavedSearchesTab } from "@/components/feature/activities/SavedSearchesTab";
 import { humanizeToken } from "@/lib/activityDisplay";
 import { useUsage } from "@/hooks/useUsage";
 import { useFeatureOverview } from "@/hooks/useFeatureOverview";
@@ -47,6 +48,7 @@ import { useRole } from "@/context/RoleContext";
 import { FeatureUsageCard } from "@/components/feature/usage/FeatureUsageCard";
 import { FeatureOverviewPanel } from "@/components/feature/usage/FeatureOverviewPanel";
 import { cn, formatNumber } from "@/lib/utils";
+import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
 const PAGE_SIZE = 20;
 
@@ -65,6 +67,7 @@ const ACTIVITY_TABS = [
   "calendar",
   "analytics",
   "jobs",
+  "saved_searches",
   "usage",
 ] as const;
 type ActivityTab = (typeof ACTIVITY_TABS)[number];
@@ -133,6 +136,15 @@ function buildAnalyticsFromItems(items: ActivityRow[]): AnalyticsDataPoint[] {
   return Object.values(buckets).slice(-7);
 }
 
+function activityFilterActiveCount(values: ActivityFiltersBarValues): number {
+  let n = 0;
+  if (values.serviceType.trim() !== "") n += 1;
+  if (values.actionType.trim() !== "") n += 1;
+  if (values.status.trim() !== "") n += 1;
+  if (values.startDate || values.endDate) n += 1;
+  return n;
+}
+
 function successRatePercent(byStatus: unknown): number | null {
   if (!byStatus || typeof byStatus !== "object") return null;
   const o = byStatus as Record<string, unknown>;
@@ -174,6 +186,21 @@ export default function ActivitiesPage() {
   );
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [resetProcessing, setResetProcessing] = useState(false);
+
+  const isDesktop = useIsDesktop();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const showActivityFilters =
+    activeTab !== "usage" && activeTab !== "saved_searches";
+
+  useEffect(() => {
+    if (isDesktop) setMobileFiltersOpen(false);
+  }, [isDesktop]);
+
+  const activityFilterCount = useMemo(
+    () => activityFilterActiveCount(filterForm),
+    [filterForm],
+  );
 
   const { overview, loading: overviewLoading } = useFeatureOverview(
     activeTab === "usage" &&
@@ -288,6 +315,21 @@ export default function ActivitiesPage() {
     offset: (page - 1) * PAGE_SIZE,
   });
 
+  const filtersSidebar = useMemo(
+    () => (
+      <ActivitiesFilterSidebar
+        values={filterForm}
+        onChange={setFilterForm}
+        onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
+        disabled={loading}
+        onCloseDrawer={
+          isDesktop ? undefined : () => setMobileFiltersOpen(false)
+        }
+      />
+    ),
+    [filterForm, loading, isDesktop],
+  );
+
   const feedItems: FeedActivityItem[] = useMemo(
     () =>
       actRows.map((a) => ({
@@ -385,39 +427,60 @@ export default function ActivitiesPage() {
   const rangeEnd = pageOffset + actRows.length;
 
   return (
-    <DashboardPageLayout className="c360-dashboard-layout--activities">
-      {activeTab !== "usage" && (
-        <aside
-          className="c360-dashboard-layout__activities-filters"
-          aria-label="Activity filters"
-        >
-          <ActivityFiltersBar
-            layout="rail"
-            values={filterForm}
-            onChange={setFilterForm}
-            onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
-            disabled={loading}
-          />
-        </aside>
-      )}
-
+    <DataPageLayout
+      className="c360-dashboard-layout c360-dashboard-layout--activities"
+      filters={filtersSidebar}
+      showFilters={showActivityFilters}
+      mobileFiltersOpen={mobileFiltersOpen}
+      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
+      filtersAriaLabel="Activity filters"
+      filterDrawerTitleId="c360-activities-filter-drawer-title"
+      filtersPeekRail
+      filtersPeekScope="activities"
+    >
       <div className="c360-dashboard-layout__activities-main">
-        {error && activeTab !== "usage" && (
+        {error && activeTab !== "usage" && activeTab !== "saved_searches" && (
           <p className="c360-input-error c360-mb-4" role="alert">
             {error}
           </p>
         )}
 
-        {activeTab !== "usage" && (
-          <>
-            <div className="c360-flex c360-flex-wrap c360-justify-between c360-items-center c360-gap-3 c360-mb-4">
-              <p className="c360-text-sm c360-text-muted c360-m-0">
-                Showing{" "}
-                <strong>
-                  {rangeStart}-{rangeEnd}
-                </strong>{" "}
-                of <strong>{total}</strong>
-              </p>
+        {activeTab !== "usage" && activeTab !== "saved_searches" && (
+          <div className="c360-toolbar" role="region" aria-label="List toolbar">
+            <div className="c360-dashboard-layout__stats">
+              {statsRow.map((s) => (
+                <StatCard key={s.label} {...s} />
+              ))}
+            </div>
+            <div className="c360-flex c360-flex-nowrap c360-justify-between c360-items-center c360-gap-3">
+              <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-3 c360-min-w-0">
+                {!isDesktop && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Filter size={16} aria-hidden />}
+                    onClick={() => setMobileFiltersOpen(true)}
+                    aria-label={
+                      activityFilterCount > 0
+                        ? `Open filters, ${activityFilterCount} active`
+                        : "Open filters"
+                    }
+                  >
+                    Filters
+                    {activityFilterCount > 0 ? (
+                      <span className="c360-ml-1">({activityFilterCount})</span>
+                    ) : null}
+                  </Button>
+                )}
+                <p className="c360-text-sm c360-text-muted c360-m-0">
+                  Showing{" "}
+                  <strong>
+                    {rangeStart}-{rangeEnd}
+                  </strong>{" "}
+                  of <strong>{total}</strong>
+                </p>
+              </div>
               <div className="c360-flex c360-gap-2">
                 <Button
                   type="button"
@@ -448,52 +511,61 @@ export default function ActivitiesPage() {
                 </Button>
               </div>
             </div>
-
-            <div className="c360-dashboard-layout__stats">
-              {statsRow.map((s) => (
-                <StatCard key={s.label} {...s} />
-              ))}
-            </div>
-          </>
+          </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <div className="c360-mb-4">
-            <TabsList>
-              <TabsTrigger value="feed" icon={<Activity size={14} />}>
-                Activity Feed
-              </TabsTrigger>
-              <TabsTrigger value="calendar" icon={<Calendar size={14} />}>
-                Calendar
-              </TabsTrigger>
-              <TabsTrigger value="analytics" icon={<BarChart2 size={14} />}>
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="jobs" icon={<TrendingUp size={14} />}>
-                Live Job Stats
-              </TabsTrigger>
-              <TabsTrigger value="usage" icon={<PieChart size={14} />}>
-                Usage
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          variant="floating"
+          className="c360-tabs--activities c360-tabs--floating-bottom"
+        >
+          <TabsList>
+            <TabsTrigger value="feed" icon={<Activity size={16} />}>
+              Activity Feed
+            </TabsTrigger>
+            <TabsTrigger value="calendar" icon={<Calendar size={16} />}>
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger value="analytics" icon={<BarChart2 size={16} />}>
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="jobs" icon={<TrendingUp size={16} />}>
+              Live Job Stats
+            </TabsTrigger>
+            <TabsTrigger value="saved_searches" icon={<Bookmark size={16} />}>
+              Saved searches
+            </TabsTrigger>
+            <TabsTrigger value="usage" icon={<PieChart size={16} />}>
+              Usage
+            </TabsTrigger>
+          </TabsList>
 
-          {activeTab === "feed" && (
+          <TabsContent value="feed">
             <ActivityFeedTab activities={feedItems} loading={loading} />
-          )}
-          {activeTab === "calendar" && (
+          </TabsContent>
+
+          <TabsContent value="calendar">
             <ActivityCalendarTab events={calendarEvents} />
-          )}
-          {activeTab === "analytics" && (
+          </TabsContent>
+
+          <TabsContent value="analytics">
             <ActivityAnalyticsTab
               analyticsData={analyticsData}
               stats={stats}
               statsLoading={loading}
             />
-          )}
-          {activeTab === "jobs" && <JobStatsTab jobStats={jobStats} />}
+          </TabsContent>
 
-          {activeTab === "usage" && (
+          <TabsContent value="jobs">
+            <JobStatsTab jobStats={jobStats} />
+          </TabsContent>
+
+          <TabsContent value="saved_searches">
+            <SavedSearchesTab />
+          </TabsContent>
+
+          <TabsContent value="usage">
             <div className="c360-section-stack">
               {usageError && (
                 <Alert variant="danger" className="c360-mb-4">
@@ -610,7 +682,7 @@ export default function ActivitiesPage() {
                 title="Billing cycle"
                 subtitle="Usage periods follow gateway rules (often monthly)"
                 padding="md"
-                className="c360-mt-6"
+               
               >
                 <div className="c360-billing-info-row">
                   <div>
@@ -634,9 +706,9 @@ export default function ActivitiesPage() {
                 </div>
               </Card>
             </div>
-          )}
+          </TabsContent>
         </Tabs>
       </div>
-    </DashboardPageLayout>
+    </DataPageLayout>
   );
 }

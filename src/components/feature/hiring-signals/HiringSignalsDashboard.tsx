@@ -30,6 +30,8 @@ export interface HiringSignalsDashboardProps {
   jobs: LinkedInJobRow[];
   loading: boolean;
   statsBar: React.ReactNode;
+  /** Inserted after the stats bar (e.g. jobs globe). */
+  belowStatsSlot?: React.ReactNode;
   onOpenCompanyDrawer: (row: LinkedInJobRow) => void;
   /** First row from satellite runs payload (recent scrape run). */
   latestRun?: Record<string, unknown>;
@@ -42,6 +44,7 @@ export function HiringSignalsDashboard({
   jobs,
   loading,
   statsBar,
+  belowStatsSlot,
   onOpenCompanyDrawer,
   latestRun,
   runsLoading,
@@ -134,6 +137,8 @@ export function HiringSignalsDashboard({
       ) : null}
 
       {statsBar}
+
+      {belowStatsSlot}
 
       <HiringSignalCharts jobs={jobs} />
 

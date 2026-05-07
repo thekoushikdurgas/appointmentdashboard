@@ -20,6 +20,8 @@ import {
   Brain,
   Wrench,
   Zap,
+  PanelLeft,
+  PanelRight,
   Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -30,6 +32,7 @@ import { usePathname } from "next/navigation";
 import { useRole } from "@/context/RoleContext";
 import { SidebarSearch } from "@/components/shared/SidebarSearch";
 import { SidebarNav } from "./SidebarNav";
+import { SidebarQuickActions } from "./SidebarQuickActions";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -62,6 +65,9 @@ interface SidebarProps {
   onPeekChange?: (peek: boolean) => void;
   /** When true, show full labels on a collapsed rail (hover peek). */
   peekOpen?: boolean;
+  /** Desktop: sidebar rail collapse control (moved from former top bar). */
+  showDesktopCollapseToggle?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export default function Sidebar({
@@ -71,6 +77,8 @@ export default function Sidebar({
   peekAllowed = false,
   onPeekChange,
   peekOpen = false,
+  showDesktopCollapseToggle = false,
+  onToggleCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
   const { isSuperAdmin } = useRole();
@@ -130,21 +138,50 @@ export default function Sidebar({
         onMouseLeave={handlePeekLeave}
       >
         <div className="c360-sidebar__header">
-          <Link
-            href={ROUTES.DASHBOARD}
-            className="c360-sidebar__brand"
-            onClick={onMobileClose}
+          <div
+            className={cn(
+              "c360-sidebar__header-row",
+              showDesktopCollapseToggle &&
+                onToggleCollapse &&
+                "c360-sidebar__header-row--with-collapse",
+            )}
           >
-            <span className="c360-sidebar__brand-mark" aria-hidden>
-              C
-            </span>
-            <span className="c360-sidebar__brand-text">Contact360</span>
-          </Link>
+            {showDesktopCollapseToggle && onToggleCollapse ? (
+              <button
+                type="button"
+                className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__header-collapse"
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                onClick={onToggleCollapse}
+              >
+                {collapsed ? (
+                  <PanelRight size={20} aria-hidden />
+                ) : (
+                  <PanelLeft size={20} aria-hidden />
+                )}
+              </button>
+            ) : null}
+            <Link
+              href={ROUTES.DASHBOARD}
+              className="c360-sidebar__brand"
+              onClick={onMobileClose}
+            >
+              <span className="c360-sidebar__brand-mark" aria-hidden>
+                C
+              </span>
+              <span className="c360-sidebar__brand-text">Contact360</span>
+            </Link>
+          </div>
         </div>
 
         <div className="c360-sidebar__search">
           <SidebarSearch collapsed={railCollapsed} />
         </div>
+
+        <SidebarQuickActions
+          railCollapsed={railCollapsed}
+          onMobileClose={onMobileClose}
+        />
 
         <div className="c360-sidebar__main">
           <nav className="c360-sidebar__nav" aria-label="Primary navigation">

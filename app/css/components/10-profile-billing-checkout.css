@@ -426,3 +426,551 @@
   gap: 6px;
   align-items: flex-end;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD PRICING PLANS (dashboardpricingplans.md — sliders + card grid)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-billing-pricing {
+  margin-bottom: var(--c360-spacing-6);
+}
+
+.c360-billing-pricing__intro {
+  text-align: center;
+  max-width: 36rem;
+  margin: 0 auto var(--c360-spacing-6);
+}
+
+.c360-billing-pricing__title {
+  margin: 0 0 var(--c360-spacing-2);
+  font-size: var(--c360-text-xl);
+  font-weight: 700;
+  color: var(--c360-text);
+}
+
+.c360-billing-pricing__subtitle {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  line-height: 1.5;
+}
+
+.c360-billing-pricing__sliders {
+  max-width: 28rem;
+  margin: 0 auto var(--c360-spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-5);
+}
+
+.c360-billing-pricing__slider--basis {
+  padding-top: var(--c360-spacing-1);
+  border-top: 1px solid var(--c360-border);
+}
+
+.c360-billing-pricing__single-period {
+  text-align: center;
+}
+
+.c360-billing-pricing__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
+.c360-billing-pricing__scale-item {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--c360-text-light);
+  flex: 1;
+  text-align: center;
+}
+
+.c360-billing-pricing__scale-item--active {
+  color: var(--c360-primary);
+  font-weight: 700;
+}
+
+.c360-billing-pricing__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--c360-spacing-5);
+  align-items: stretch;
+}
+
+@media (min-width: 900px) {
+  .c360-billing-pricing__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.c360-billing-pricing-card {
+  position: relative;
+  border-radius: var(--c360-radius-lg);
+  border: 1px solid var(--c360-border);
+  background: var(--c360-bg-elevated);
+  box-shadow: var(--c360-shadow-card);
+  transition:
+    transform var(--c360-transition-fast),
+    box-shadow var(--c360-transition-fast),
+    border-color var(--c360-transition-fast);
+}
+
+.c360-billing-pricing-card--popular {
+  z-index: 2;
+  transform: scale(1.02);
+  border-color: color-mix(in srgb, var(--c360-primary) 45%, var(--c360-border));
+  box-shadow:
+    var(--c360-shadow-md),
+    0 0 0 1px color-mix(in srgb, var(--c360-primary) 18%, transparent);
+}
+
+@media (max-width: 640px) {
+  .c360-billing-pricing-card--popular {
+    transform: none;
+  }
+}
+
+.c360-billing-pricing-card--current {
+  border-color: var(--c360-primary);
+  box-shadow: 0 0 0 2px var(--c360-primary-light);
+}
+
+.c360-billing-pricing-card__ribbon {
+  position: absolute;
+  top: -10px;
+  right: var(--c360-spacing-4);
+  z-index: 1;
+}
+
+.c360-billing-pricing-card__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--c360-spacing-6) var(--c360-spacing-5);
+  height: 100%;
+}
+
+.c360-billing-pricing-card__badge-name {
+  margin-bottom: var(--c360-spacing-3);
+}
+
+.c360-billing-pricing-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--c360-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--c360-spacing-3);
+  background: var(--c360-billing-plan-icon-bg);
+  color: var(--c360-billing-plan-icon-fg);
+}
+
+.c360-billing-pricing-card__price {
+  margin: 0;
+  font-size: var(--c360-text-2xl);
+  font-weight: 800;
+  color: var(--c360-primary);
+  line-height: 1.2;
+}
+
+.c360-billing-pricing-card__price-sub {
+  margin: var(--c360-spacing-2) 0 0;
+  font-size: var(--c360-text-xs);
+  line-height: 1.4;
+}
+
+.c360-billing-pricing-card__credits-hint {
+  margin: var(--c360-spacing-2) 0 0;
+  color: var(--c360-text-secondary);
+}
+
+.c360-billing-pricing-card__rule {
+  width: 100%;
+  height: 1px;
+  background: var(--c360-border);
+  margin: var(--c360-spacing-4) 0;
+}
+
+.c360-billing-pricing-card__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+  flex: 1;
+}
+
+.c360-billing-pricing-card__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--c360-spacing-2);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-secondary);
+  line-height: 1.35;
+}
+
+.c360-billing-pricing-card__check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c360-success);
+}
+
+.c360-billing-pricing-card__cta {
+  width: 100%;
+  margin-top: var(--c360-spacing-5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CREDIT HISTORY — inline calendar (Ark UI date picker; see creditcalender.md)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-credit-cal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-5);
+}
+
+.c360-credit-cal__hint {
+  max-width: 52rem;
+}
+
+.c360-credit-cal__content {
+  display: inline-block;
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-shadow-card);
+  padding: var(--c360-spacing-3) 0;
+  max-width: 100%;
+}
+
+.c360-credit-cal__day-view {
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+  gap: 0;
+}
+
+.c360-credit-cal__month-col {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 0 var(--c360-spacing-3);
+}
+
+.c360-credit-cal__month-col + .c360-credit-cal__month-col {
+  border-left: 1px solid var(--c360-border);
+}
+
+@media (max-width: 640px) {
+  .c360-credit-cal__month-col + .c360-credit-cal__month-col {
+    border-left: none;
+    border-top: 1px solid var(--c360-border);
+    padding-top: var(--c360-spacing-3);
+    margin-top: var(--c360-spacing-2);
+  }
+}
+
+.c360-credit-cal__nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--c360-spacing-3);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.c360-credit-cal__nav-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--c360-spacing-2);
+  border: none;
+  border-radius: var(--c360-radius-md);
+  background: transparent;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-credit-cal__nav-btn:hover {
+  background: var(--c360-bg-secondary);
+  color: var(--c360-text);
+}
+
+.c360-credit-cal__nav-btn:focus-visible {
+  outline: 2px solid var(--c360-focus-ring);
+  outline-offset: 2px;
+}
+
+.c360-credit-cal__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.c360-credit-cal__month-title-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 var(--c360-spacing-10) var(--c360-spacing-1);
+  min-height: 36px;
+}
+
+.c360-credit-cal__month-title {
+  z-index: 3;
+  border: none;
+  background: transparent;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+  padding: var(--c360-spacing-1) var(--c360-spacing-2);
+  border-radius: var(--c360-radius-md);
+  cursor: pointer;
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-credit-cal__month-title:hover {
+  background: var(--c360-bg-secondary);
+}
+
+.c360-credit-cal__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+}
+
+.c360-credit-cal__weekday {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text-muted);
+  width: 3rem;
+  height: 28px;
+  text-align: center;
+}
+
+.c360-credit-cal__cell {
+  padding: 0;
+}
+
+.c360-credit-cal__cell-trigger {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto;
+  border: none;
+  border-radius: var(--c360-radius-md);
+  background: transparent;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+  cursor: pointer;
+  transition:
+    background var(--c360-transition-fast),
+    color var(--c360-transition-fast);
+}
+
+.c360-credit-cal__cell-trigger:hover {
+  background: var(--c360-bg-secondary);
+}
+
+.c360-credit-cal__cell-trigger[data-outside-range] {
+  visibility: hidden;
+}
+
+.c360-credit-cal__cell-trigger[data-selected] {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-credit-cal__cell-trigger[data-selected]:hover {
+  background: var(--c360-primary-hover);
+  color: #fff;
+}
+
+.c360-credit-cal__cell-trigger[data-today]:not([data-selected])::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--c360-primary);
+}
+
+.c360-credit-cal__cell-amount {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  max-width: 3.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c360-credit-cal__cell-trigger--net-pos .c360-credit-cal__cell-amount {
+  color: var(--c360-success);
+}
+
+.c360-credit-cal__cell-trigger--net-neg .c360-credit-cal__cell-amount {
+  color: var(--c360-danger);
+}
+
+.c360-credit-cal__cell-trigger[data-selected] .c360-credit-cal__cell-amount {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.c360-credit-cal__cell-trigger[data-selected].c360-credit-cal__cell-trigger--net-pos
+  .c360-credit-cal__cell-amount {
+  color: #b8f5cb;
+}
+
+.c360-credit-cal__cell-trigger[data-selected].c360-credit-cal__cell-trigger--net-neg
+  .c360-credit-cal__cell-amount {
+  color: #ffc8d4;
+}
+
+.c360-credit-cal__drill-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--c360-spacing-4);
+  padding: 0 var(--c360-spacing-3);
+}
+
+.c360-credit-cal__drill-title {
+  border: none;
+  background: transparent;
+  font-size: var(--c360-text-base);
+  font-weight: 700;
+  color: var(--c360-text);
+  padding: var(--c360-spacing-1) var(--c360-spacing-2);
+  border-radius: var(--c360-radius-md);
+  cursor: pointer;
+}
+
+.c360-credit-cal__drill-title:hover {
+  background: var(--c360-bg-secondary);
+}
+
+.c360-credit-cal__grid-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  padding: 0 var(--c360-spacing-3) var(--c360-spacing-2);
+}
+
+.c360-credit-cal__grid-cell {
+  width: 4rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: var(--c360-radius-md);
+  background: transparent;
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+  color: var(--c360-text);
+  cursor: pointer;
+  transition: background var(--c360-transition-fast);
+}
+
+.c360-credit-cal__grid-cell:hover {
+  background: var(--c360-bg-secondary);
+}
+
+.c360-credit-cal__grid-cell[data-selected] {
+  background: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-credit-cal__detail {
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-lg);
+  background: var(--c360-bg-secondary);
+  padding: var(--c360-spacing-4);
+}
+
+.c360-credit-cal__detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-3);
+  padding-bottom: var(--c360-spacing-3);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-credit-cal__detail-date {
+  font-weight: 700;
+  font-size: var(--c360-text-base);
+  color: var(--c360-text);
+}
+
+.c360-credit-cal__detail-net {
+  font-size: var(--c360-text-sm);
+  font-weight: 600;
+}
+
+.c360-credit-cal__detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-credit-cal__detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  padding: var(--c360-spacing-3);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-bg-elevated);
+  border: 1px solid var(--c360-border);
+}
+
+.c360-credit-cal__detail-main {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.c360-credit-cal__detail-desc {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text);
+}
+
+.c360-credit-cal__detail-time {
+  font-size: var(--c360-text-xs);
+}
+
+.c360-credit-cal__detail-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-credit-cal__detail-empty {
+  padding: var(--c360-spacing-2) 0;
+}
