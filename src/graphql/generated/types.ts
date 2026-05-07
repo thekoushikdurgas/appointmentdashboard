@@ -1836,6 +1836,7 @@ export type HealthQuery = {
 export type HireSignalMutation = {
   addHireSignalHiddenCompany: Scalars["JSON"]["output"];
   cancelHireSignalRun: Scalars["JSON"]["output"];
+  deleteScrapeJob: Scalars["Boolean"]["output"];
   exportSelectedJobs: SchedulerJob;
   recordHireSignalJobApplied: Scalars["Boolean"]["output"];
   removeHireSignalHiddenCompany: Scalars["Boolean"]["output"];
@@ -1851,6 +1852,10 @@ export type HireSignalMutationAddHireSignalHiddenCompanyArgs = {
 
 export type HireSignalMutationCancelHireSignalRunArgs = {
   runId: Scalars["String"]["input"];
+};
+
+export type HireSignalMutationDeleteScrapeJobArgs = {
+  scrapeJobId: Scalars["String"]["input"];
 };
 
 export type HireSignalMutationExportSelectedJobsArgs = {
@@ -1886,6 +1891,7 @@ export type HireSignalQuery = {
   exportDownloadUrl?: Maybe<S3DownloadUrlResponse>;
   exportJobStatus: SchedulerJob;
   getScrapeJob: Scalars["JSON"]["output"];
+  hireSignalRunMetrics: Scalars["JSON"]["output"];
   job: Scalars["JSON"]["output"];
   jobConnectraCompany: Scalars["JSON"]["output"];
   jobConnectraContacts: Scalars["JSON"]["output"];
@@ -3311,9 +3317,9 @@ export type ScrapeJobType = {
   error?: Maybe<Scalars["String"]["output"]>;
   id: Scalars["String"]["output"];
   itemCount?: Maybe<Scalars["Int"]["output"]>;
-  jobServerResponse?: Maybe<Scalars["JSON"]["output"]>;
   requestBody: Scalars["JSON"]["output"];
   runId?: Maybe<Scalars["String"]["output"]>;
+  scraperResponse?: Maybe<Scalars["JSON"]["output"]>;
   status: Scalars["String"]["output"];
   updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   userId: Scalars["String"]["output"];

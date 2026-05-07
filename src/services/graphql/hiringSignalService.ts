@@ -1,5 +1,5 @@
 /**
- * Hiring signal — GraphQL to gateway `hireSignal` (proxies job.server).
+ * Hiring signal — GraphQL to gateway `hireSignal` (scrape via scraper.server, reads via job.server).
  */
 
 import { gql } from "graphql-request";
@@ -18,11 +18,18 @@ export function asRecord(v: unknown): Record<string, unknown> | null {
     : null;
 }
 
-/** Normalized rows + total from `hireSignal.runs` JSON (job.server list envelope). */
+/** Normalized rows + total from `hireSignal.runs` JSON (scraper.server sessions envelope). */
 export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
   rows: Record<string, unknown>[];
   total: number;
 } {
+  if (Array.isArray(raw)) {
+    const rows = raw.filter(
+      (x): x is Record<string, unknown> =>
+        !!x && typeof x === "object" && !Array.isArray(x),
+    );
+    return { rows, total: rows.length };
+  }
   const r = asRecord(raw);
   const data = r?.data;
   const rows = Array.isArray(data)
@@ -174,7 +181,7 @@ const HIRE_SIGNAL_TRIGGER_TRACK = gql`
         runId
         error
         createdAt
-        jobServerResponse
+        scraperResponse
       }
     }
   }
@@ -550,12 +557,13 @@ export async function triggerHireSignalScrape(
 export type HireSignalScrapeJobRow = {
   id: string;
   userId?: string;
+  /** scraper.server status: "pending" | "running" | "done" | "failed" | "cancelled" */
   status?: string;
   runId?: string | null;
   error?: string | null;
   itemCount?: number | null;
   createdAt?: string | null;
-  jobServerResponse?: Record<string, unknown> | null;
+  scraperResponse?: Record<string, unknown> | null;
 };
 
 export async function triggerHireSignalScrapeAndTrack(

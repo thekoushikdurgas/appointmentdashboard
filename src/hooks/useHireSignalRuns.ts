@@ -15,6 +15,17 @@ import {
   linkedinJobsPayloadToCsv,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
+/**
+ * True when a scraper.server session is in a state that allows cancellation.
+ * Scraper statuses: "pending" | "running" | "done" | "failed" | "cancelled"
+ */
+export function hireSignalRunCanCancel(
+  status: string | undefined | null,
+): boolean {
+  const s = (status ?? "").toLowerCase();
+  return s === "pending" || s === "running";
+}
+
 /** How many satellite runs to load for Overview “latest run” preview (first page). */
 export const HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT = 25;
 
@@ -119,7 +130,7 @@ export function useHireSignalRuns(
       if (!csv) {
         toast.message("No rows yet", {
           description:
-            "Wait until the run succeeds and jobs are ingested, then try again.",
+            "Wait until the scrape session is done and jobs are collected, then try again.",
         });
         return;
       }

@@ -12,13 +12,8 @@ import {
 } from "@/lib/graphqlClient";
 import { toast } from "sonner";
 
-const DEFAULT_URL =
-  "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
-
-/** Matches job.server reschedule_after_hours max (168 hours). */
+/** Matches scraper.server reschedule_after_hours max (168 hours). */
 const MAX_RESCHEDULE_AFTER_HOURS = 168;
-
-type ScrapeMode = "keywords" | "urls";
 
 export interface RunScrapeModalProps {
   isOpen: boolean;
@@ -31,14 +26,10 @@ export function RunScrapeModal({
   onClose,
   onSuccess,
 }: RunScrapeModalProps) {
-  const [mode, setMode] = useState<ScrapeMode>("keywords");
   const [keywords, setKeywords] = useState("golang developer");
   const [geoId, setGeoId] = useState(105080838);
-  const [urlsText, setUrlsText] = useState(DEFAULT_URL);
   const [count, setCount] = useState(100);
   const [enableEnrichment, setEnableEnrichment] = useState(false);
-  const [scrapeCompany, setScrapeCompany] = useState(false);
-  const [splitByLocation, setSplitByLocation] = useState(false);
   const [trigger, setTrigger] = useState("manual");
   /** Empty string = omit from payload; scraper repeats after N hours when set (> 0). */
   const [repeatAfterHours, setRepeatAfterHours] = useState("");
@@ -50,40 +41,23 @@ export function RunScrapeModal({
   }, [isOpen]);
 
   const reset = useCallback(() => {
-    setMode("keywords");
     setKeywords("golang developer");
     setGeoId(105080838);
-    setUrlsText(DEFAULT_URL);
     setCount(100);
     setEnableEnrichment(false);
-    setScrapeCompany(false);
-    setSplitByLocation(false);
     setTrigger("manual");
     setRepeatAfterHours("");
     setValidationError(null);
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (mode === "urls") {
-      const lines = urlsText
-        .split(/\r?\n/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (lines.length === 0) {
-        setValidationError(
-          "Add at least one LinkedIn jobs search URL (one per line).",
-        );
-        return;
-      }
-    } else {
-      if (!keywords.trim()) {
-        setValidationError("Enter search keywords.");
-        return;
-      }
-      if (!Number.isFinite(geoId) || geoId <= 0) {
-        setValidationError("Enter a valid LinkedIn geoId (e.g. 105080838).");
-        return;
-      }
+    if (!keywords.trim()) {
+      setValidationError("Enter search keywords.");
+      return;
+    }
+    if (!Number.isFinite(geoId) || geoId <= 0) {
+      setValidationError("Enter a valid LinkedIn geoId (e.g. 105080838).");
+      return;
     }
     const rsCommon = repeatAfterHours.trim();
     if (rsCommon !== "") {
@@ -106,40 +80,20 @@ export function RunScrapeModal({
     try {
       const body: Record<string, unknown> = {
         trigger: trigger.trim() || "manual",
-        mode,
+        keywords: keywords.trim(),
+        geo_id: geoId,
+        max_jobs: Number.isFinite(count) ? count : 100,
+        enable_enrichment: enableEnrichment,
+        batch_size: 25,
       };
-      if (mode === "keywords") {
-        body.keywords = keywords.trim();
-        body.geoId = geoId;
-        body.maxJobs = Number.isFinite(count) ? count : 100;
-        body.enableEnrichment = enableEnrichment;
-        // Align with curl POST /scrape/start (snake_case on wire via job.server).
-        body.batchSize = 25;
-        if (enableEnrichment) {
-          body.openaiModel = "gpt-4-turbo";
-        }
-        const rs = repeatAfterHours.trim();
-        if (rs !== "") {
-          const n = Math.floor(Number(rs));
-          if (n > 0) {
-            body["reschedule_after_hours"] = n;
-          }
-        }
-      } else {
-        const lines = urlsText
-          .split(/\r?\n/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        body.urls = lines;
-        body.maxJobs = Number.isFinite(count) ? count : 100;
-        body.scrapeCompany = scrapeCompany;
-        body.splitByLocation = splitByLocation;
-        const rs = repeatAfterHours.trim();
-        if (rs !== "") {
-          const n = Math.floor(Number(rs));
-          if (n > 0) {
-            body["reschedule_after_hours"] = n;
-          }
+      if (enableEnrichment) {
+        body.openai_model = "gpt-4-turbo";
+      }
+      const rs = repeatAfterHours.trim();
+      if (rs !== "") {
+        const n = Math.floor(Number(rs));
+        if (n > 0) {
+          body.reschedule_after_hours = n;
         }
       }
       const res = await triggerHireSignalScrapeAndTrack(body);
@@ -172,14 +126,10 @@ export function RunScrapeModal({
       setSubmitting(false);
     }
   }, [
-    mode,
     keywords,
     geoId,
-    urlsText,
     count,
     enableEnrichment,
-    scrapeCompany,
-    splitByLocation,
     trigger,
     repeatAfterHours,
     onClose,
@@ -217,10 +167,10 @@ export function RunScrapeModal({
       }
     >
       <p className="c360-mb-4 c360-text-2xs c360-text-muted">
-        Queued via <code>triggerScrapeAndTrack</code> → job.server →{" "}
-        <strong>scraper.server</strong> (LinkedIn HTML scraper). Keywords + geo
-        mode is preferred. URL mode is legacy (Apify) and requires a{" "}
-        <code>keywords=</code> param in the URL for scraper-based ingest.
+        Queued via <code>triggerScrapeAndTrack</code> →{" "}
+        <strong>scraper.server</strong> (LinkedIn HTML scraper via Celery).
+        Payload sent directly as <code>POST /scrape/start</code> snake_case
+        fields.
       </p>
       {validationError ? (
         <Alert variant="danger" className="c360-mb-3" title="Check your input">
@@ -244,109 +194,36 @@ export function RunScrapeModal({
             <Radio value="cron" label="Cron / scheduled" />
           </RadioGroup>
         </div>
-        <div className="c360-flex c360-flex-col c360-gap-2">
-          <span className="c360-text-2xs c360-font-medium c360-text-ink">
-            Search mode
-          </span>
-          <RadioGroup
-            name="hs-mode"
-            value={mode}
-            onChange={(v) => setMode(v as ScrapeMode)}
-            horizontal
-            className="c360-flex-wrap"
-          >
-            <Radio value="keywords" label="Keywords + geo (scraper.server)" />
-            <Radio value="urls" label="LinkedIn URLs (Apify legacy)" />
-          </RadioGroup>
-        </div>
-        {mode === "keywords" ? (
-          <>
-            <label className="c360-flex c360-flex-col c360-gap-1">
-              <span className="c360-text-2xs c360-font-medium c360-text-ink">
-                Keywords
-              </span>
-              <input
-                type="text"
-                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                placeholder='e.g. "golang developer OR kubernetes"'
-              />
-            </label>
-            <label className="c360-flex c360-flex-col c360-gap-1">
-              <span className="c360-text-2xs c360-font-medium c360-text-ink">
-                LinkedIn geoId
-              </span>
-              <input
-                type="number"
-                min={1}
-                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
-                value={geoId}
-                onChange={(e) => setGeoId(Number(e.target.value))}
-              />
-              <span className="c360-text-2xs c360-text-muted">
-                Example: 105080838 (United States), 103644278 (India).
-              </span>
-            </label>
-            <label className="c360-flex c360-items-center c360-gap-2">
-              <input
-                type="checkbox"
-                checked={enableEnrichment}
-                onChange={(e) => setEnableEnrichment(e.target.checked)}
-              />
-              <span className="c360-text-sm c360-text-ink">
-                Enable company website enrichment (OpenAI on scraper)
-              </span>
-            </label>
-            <label className="c360-flex c360-flex-col c360-gap-1">
-              <span className="c360-text-2xs c360-font-medium c360-text-ink">
-                Repeat scrape after (hours, optional)
-              </span>
-              <input
-                type="number"
-                min={0}
-                max={MAX_RESCHEDULE_AFTER_HOURS}
-                step={1}
-                className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
-                value={repeatAfterHours}
-                onChange={(e) => setRepeatAfterHours(e.target.value)}
-                placeholder="No repeat"
-                aria-describedby="hs-reschedule-hint"
-              />
-              <span
-                id="hs-reschedule-hint"
-                className="c360-text-2xs c360-text-muted"
-              >
-                Same field as{" "}
-                <code className="c360-break-all">POST …/scrape/start</code> (
-                <code>reschedule_after_hours</code>). Requires job.server to use
-                scraper.server (<code>SCRAPER_SERVER_URL</code>), not Apify-only
-                mode. After completion, scraper can re-queue the search via
-                Celery. Leave empty or 0 for one shot.
-              </span>
-            </label>
-          </>
-        ) : (
-          <label className="c360-flex c360-flex-col c360-gap-1">
-            <span className="c360-text-2xs c360-font-medium c360-text-ink">
-              LinkedIn jobs search URLs (one per line)
-            </span>
-            <textarea
-              className="c360-min-h-[120px] c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-p-2 c360-font-mono c360-text-2xs"
-              value={urlsText}
-              onChange={(e) => setUrlsText(e.target.value)}
-              spellCheck={false}
-            />
-            <span className="c360-text-2xs c360-text-muted">
-              URLs must include a{" "}
-              <code className="c360-break-all">keywords=</code> query param for
-              scraper-based ingest.
-            </span>
-          </label>
-        )}
         <label className="c360-flex c360-flex-col c360-gap-1">
           <span className="c360-text-2xs c360-font-medium c360-text-ink">
-            {mode === "keywords" ? "Max jobs" : "Count / max jobs"}
+            Keywords
+          </span>
+          <input
+            type="text"
+            className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            placeholder='e.g. "golang developer OR kubernetes"'
+          />
+        </label>
+        <label className="c360-flex c360-flex-col c360-gap-1">
+          <span className="c360-text-2xs c360-font-medium c360-text-ink">
+            LinkedIn geoId
+          </span>
+          <input
+            type="number"
+            min={1}
+            className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+            value={geoId}
+            onChange={(e) => setGeoId(Number(e.target.value))}
+          />
+          <span className="c360-text-2xs c360-text-muted">
+            Example: 105080838 (United States), 103644278 (India).
+          </span>
+        </label>
+        <label className="c360-flex c360-flex-col c360-gap-1">
+          <span className="c360-text-2xs c360-font-medium c360-text-ink">
+            Max jobs
           </span>
           <input
             type="number"
@@ -356,32 +233,41 @@ export function RunScrapeModal({
             onChange={(e) => setCount(Number(e.target.value))}
           />
         </label>
-        {mode === "urls" ? (
-          <>
-            <label className="c360-flex c360-items-center c360-gap-2">
-              <input
-                type="checkbox"
-                checked={scrapeCompany}
-                onChange={(e) => setScrapeCompany(e.target.checked)}
-              />
-              <span className="c360-text-sm c360-text-ink">
-                scrapeCompany{" "}
-                <span className="c360-text-muted">(Apify only)</span>
-              </span>
-            </label>
-            <label className="c360-flex c360-items-center c360-gap-2">
-              <input
-                type="checkbox"
-                checked={splitByLocation}
-                onChange={(e) => setSplitByLocation(e.target.checked)}
-              />
-              <span className="c360-text-sm c360-text-ink">
-                splitByLocation{" "}
-                <span className="c360-text-muted">(Apify only)</span>
-              </span>
-            </label>
-          </>
-        ) : null}
+        <label className="c360-flex c360-items-center c360-gap-2">
+          <input
+            type="checkbox"
+            checked={enableEnrichment}
+            onChange={(e) => setEnableEnrichment(e.target.checked)}
+          />
+          <span className="c360-text-sm c360-text-ink">
+            Enable company website enrichment (OpenAI on scraper)
+          </span>
+        </label>
+        <label className="c360-flex c360-flex-col c360-gap-1">
+          <span className="c360-text-2xs c360-font-medium c360-text-ink">
+            Repeat scrape after (hours, optional)
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={MAX_RESCHEDULE_AFTER_HOURS}
+            step={1}
+            className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
+            value={repeatAfterHours}
+            onChange={(e) => setRepeatAfterHours(e.target.value)}
+            placeholder="No repeat"
+            aria-describedby="hs-reschedule-hint"
+          />
+          <span
+            id="hs-reschedule-hint"
+            className="c360-text-2xs c360-text-muted"
+          >
+            Sent as <code>reschedule_after_hours</code> to{" "}
+            <code className="c360-break-all">POST /scrape/start</code>. After
+            completion, scraper re-queues via Celery. Leave empty or 0 for one
+            shot.
+          </span>
+        </label>
       </div>
     </Modal>
   );

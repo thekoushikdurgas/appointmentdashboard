@@ -95,7 +95,7 @@ export function HiringSignalsDashboard({
       {latestRun && Object.keys(latestRun).length > 0 ? (
         <Card
           title="Latest scrape run"
-          subtitle="Most recent scrape run (job.server)"
+          subtitle="Most recent scrape session (scraper.server)"
         >
           <div className="c360-flex c360-flex-col c360-gap-3 c360-hs-latest-run-inner">
             <div className="c360-min-w-0 c360-space-y-2">
