@@ -327,17 +327,7 @@ export function HiringSignalsDataTable({
                     <td className="c360-px-3 c360-py-2 c360-align-top c360-text-ink-muted">
                       <div className="c360-flex c360-items-center c360-gap-2">
                         <div className="c360-hs-avatar">
-                          {row.companyLogoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={row.companyLogoUrl}
-                              alt=""
-                              width={32}
-                              height={32}
-                            />
-                          ) : (
-                            hiringSignalInitials(row.companyName || "C")
-                          )}
+                          {hiringSignalInitials(row.companyName || "C")}
                         </div>
                         <div className="c360-min-w-0">
                           {onOpenCompanyDrawer && row.companyUuid ? (

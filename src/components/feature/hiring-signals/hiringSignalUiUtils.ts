@@ -1,4 +1,5 @@
-import type { BadgeProps } from "@/components/ui/Badge";
+import type { BadgeColor, BadgeProps } from "@/components/ui/Badge";
+import type { ProgressProps } from "@/components/ui/Progress";
 import { asRecord } from "@/services/graphql/hiringSignalService";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 
@@ -44,6 +45,140 @@ function stripDangerousTagBlocks(html: string): string {
     out = out.replace(new RegExp(`<${tag}\\b[^>]*/>`, "gi"), "");
   }
   return out;
+}
+
+/** Badge tone for scraper.server session statuses (gateway + satellite). */
+export function scrapeStatusBadgeColor(status: string): BadgeColor {
+  const s = (status ?? "").trim().toLowerCase();
+  if (s === "done" || s === "succeeded") return "success";
+  if (s === "running" || s === "pending") return "warning";
+  if (s === "paused") return "info";
+  if (s === "failed") return "danger";
+  if (s === "cancelled") return "gray";
+  return "gray";
+}
+
+/** Normalize tracked scrape row ``requestBody`` (camelCase or snake_case). */
+export function parseScrapeRequestBody(requestBody: unknown): {
+  keywords?: string;
+  geoId?: number;
+  maxJobs?: number;
+  rescheduleAfterHours?: number;
+} {
+  const o = asRecord(requestBody);
+  if (!o) return {};
+  const keywords = typeof o.keywords === "string" ? o.keywords : undefined;
+  const g = o.geo_id ?? o.geoId;
+  let geoId: number | undefined;
+  if (typeof g === "number" && Number.isFinite(g)) geoId = g;
+  else if (g != null && g !== "") {
+    const n = Number(g);
+    if (Number.isFinite(n)) geoId = n;
+  }
+  const m = o.max_jobs ?? o.maxJobs;
+  let maxJobs: number | undefined;
+  if (typeof m === "number" && Number.isFinite(m)) maxJobs = m;
+  else if (m != null && m !== "") {
+    const n = Number(m);
+    if (Number.isFinite(n)) maxJobs = n;
+  }
+  const r = o.reschedule_after_hours ?? o.rescheduleAfterHours;
+  let rescheduleAfterHours: number | undefined;
+  if (typeof r === "number" && Number.isFinite(r))
+    rescheduleAfterHours = Math.floor(r);
+  else if (r != null && r !== "") {
+    const n = Math.floor(Number(r));
+    if (Number.isFinite(n)) rescheduleAfterHours = n;
+  }
+  return { keywords, geoId, maxJobs, rescheduleAfterHours };
+}
+
+/** Resolve satellite session id from list_sessions / metrics rows. */
+export function satelliteRunIdFromRow(row: Record<string, unknown>): string {
+  return String(row.job_id ?? row.runId ?? row.run_id ?? row.id ?? "");
+}
+
+/** Jobs ingested so far for a scraper.server session row (snake/camel aliases). */
+export function satelliteJobsCollected(row: Record<string, unknown>): number {
+  const raw =
+    row.jobs_collected ??
+    row.itemCount ??
+    row.item_count ??
+    row.jobsCollected ??
+    0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+}
+
+/** Target max jobs when the API returns `max_jobs`; null means unlimited. */
+export function satelliteMaxJobsGoal(
+  row: Record<string, unknown>,
+): number | null {
+  const m = row.max_jobs ?? row.maxJobs;
+  if (m == null || m === "") return null;
+  const n = Number(m);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.floor(n);
+}
+
+/**
+ * Props for a `Progress` bar on satellite session rows: capped runs show % toward max_jobs;
+ * uncapped active runs use indeterminate animation; uncapped finished runs fill relative to count.
+ */
+export function satelliteSessionProgressProps(row: Record<string, unknown>): {
+  value: number;
+  max: number;
+  indeterminate: boolean;
+  color: NonNullable<ProgressProps["color"]>;
+  showValue: boolean;
+  label: string;
+} {
+  const status = String(row.status ?? "").toLowerCase();
+  const collected = satelliteJobsCollected(row);
+  const cap = satelliteMaxJobsGoal(row);
+  const unlimited = cap == null;
+
+  let color: NonNullable<ProgressProps["color"]> = "primary";
+  if (status === "failed") color = "danger";
+  else if (status === "done" || status === "succeeded") color = "success";
+  else if (status === "cancelled") color = "warning";
+
+  const active =
+    status === "pending" || status === "running" || status === "paused";
+
+  if (unlimited && active) {
+    return {
+      value: 0,
+      max: 100,
+      indeterminate: true,
+      color,
+      showValue: false,
+      label: `${collected.toLocaleString()} jobs (no max)`,
+    };
+  }
+
+  if (unlimited && !active) {
+    const max = Math.max(collected, 1);
+    return {
+      value: collected,
+      max,
+      indeterminate: false,
+      color,
+      showValue: false,
+      label: `${collected.toLocaleString()} jobs`,
+    };
+  }
+
+  const max = cap!;
+  const value = Math.min(collected, max);
+  return {
+    value,
+    max,
+    indeterminate: false,
+    color,
+    showValue: true,
+    label: "Jobs collected",
+  };
 }
 
 /** Strip risky HTML for job descriptions (lightweight; job.server-sourced). */

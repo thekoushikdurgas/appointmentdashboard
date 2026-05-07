@@ -113,9 +113,6 @@ export interface LinkedInJobRow {
   apifyItemId: string;
   companyUuid: string;
   companyName: string;
-  companyLinkedin: string;
-  companyLogoUrl: string;
-  companyStaffCount: number;
   title: string;
   descriptionHtml: string;
   postedAt: string;
@@ -126,7 +123,6 @@ export interface LinkedInJobRow {
   seniority: string;
   functionCategory: string;
   industries: string;
-  companyDescription: string;
   location: string;
   lastSeen: string;
   /** From job.server `workplaceTypes` — used when `remoteAllowed` is absent. */
@@ -212,15 +208,6 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     apifyItemId: String(o.apifyItemId ?? o.apify_item_id ?? ""),
     companyUuid: String(o.companyUuid ?? o.company_uuid ?? ""),
     companyName: String(o.companyName ?? o.company_name ?? ""),
-    companyLinkedin: String(
-      o.companyLinkedinUrl ??
-        o.company_linkedin_url ??
-        o.company_linkedin ??
-        "",
-    ),
-    companyLogoUrl: String(o.companyLogoUrl ?? o.company_logo_url ?? ""),
-    companyStaffCount:
-      Number(o.companyStaffCount ?? o.company_staff_count ?? 0) || 0,
     title,
     descriptionHtml: String(
       o.descriptionHTML ??
@@ -243,9 +230,6 @@ function mapJobRow(item: unknown): LinkedInJobRow {
         "",
     ),
     industries: String(o.industries ?? ""),
-    companyDescription: String(
-      o.companyDescriptionV2 ?? o.company_description_v2 ?? "",
-    ),
     location,
     lastSeen: String(o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? ""),
     workplaceTypes,

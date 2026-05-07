@@ -1838,8 +1838,10 @@ export type HireSignalMutation = {
   cancelHireSignalRun: Scalars["JSON"]["output"];
   deleteScrapeJob: Scalars["Boolean"]["output"];
   exportSelectedJobs: SchedulerJob;
+  pauseHireSignalRun: Scalars["JSON"]["output"];
   recordHireSignalJobApplied: Scalars["Boolean"]["output"];
   removeHireSignalHiddenCompany: Scalars["Boolean"]["output"];
+  resumeHireSignalRun: Scalars["JSON"]["output"];
   suggestHireSignalFiltersFromResumeUpload: Scalars["JSON"]["output"];
   triggerScrape: Scalars["JSON"]["output"];
   triggerScrapeAndTrack: ScrapeJobType;
@@ -1862,12 +1864,20 @@ export type HireSignalMutationExportSelectedJobsArgs = {
   linkedinJobIds: Array<Scalars["String"]["input"]>;
 };
 
+export type HireSignalMutationPauseHireSignalRunArgs = {
+  runId: Scalars["String"]["input"];
+};
+
 export type HireSignalMutationRecordHireSignalJobAppliedArgs = {
   linkedinJobId: Scalars["String"]["input"];
 };
 
 export type HireSignalMutationRemoveHireSignalHiddenCompanyArgs = {
   hiddenCompanyId: Scalars["String"]["input"];
+};
+
+export type HireSignalMutationResumeHireSignalRunArgs = {
+  runId: Scalars["String"]["input"];
 };
 
 export type HireSignalMutationSuggestHireSignalFiltersFromResumeUploadArgs = {

@@ -8,21 +8,17 @@ import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Pagination } from "@/components/patterns/Pagination";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { Table, type TableColumn } from "@/components/ui/Table";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
-import { Tooltip } from "@/components/ui/Tooltip";
-import { Button } from "@/components/ui/Button";
 import {
   effectivePostedAfter,
   useHiringSignals,
   type LinkedInJobRow,
 } from "@/hooks/useHiringSignals";
-import { useHireSignalRuns } from "@/hooks/useHireSignalRuns";
 import {
   HireSignalFilterProvider,
   useHireSignalFilter,
 } from "@/context/HireSignalFilterContext";
 import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
+import { RunsTab } from "@/components/feature/hiring-signals/RunsTab";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import {
@@ -33,7 +29,7 @@ import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDesc
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
 import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
 import { parseOperationError } from "@/lib/errorParser";
@@ -52,37 +48,6 @@ import {
   HIRE_SIGNAL_SAVED_SEARCH_VERSION,
   type HireSignalSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
-
-const RUNS_PAGE_SIZE = 10;
-
-function runStatusBadgeColor(status: string): BadgeColor {
-  const s = status.toUpperCase();
-  if (s.includes("SUCCESS") || s === "SUCCEEDED") return "success";
-  if (s.includes("RUNNING") || s.includes("PENDING")) return "warning";
-  if (
-    s.includes("FAIL") ||
-    s.includes("ERROR") ||
-    s.includes("TIME") ||
-    s.includes("ABORT")
-  )
-    return "danger";
-  return "gray";
-}
-
-/** True when the run may still be aborted (not in a known terminal state). */
-function hireSignalRunCanCancel(status: string): boolean {
-  const s = status.trim().toUpperCase();
-  if (!s || s === "—") return false;
-  if (s.includes("SUCCESS") || s === "SUCCEEDED" || s === "DONE") return false;
-  if (s.includes("FAIL") || s.includes("ABORT") || s.includes("CANCEL"))
-    return false;
-  if (s.includes("TIME") && s.includes("OUT")) return false;
-  return true;
-}
-
-function satelliteRunId(row: Record<string, unknown>): string {
-  return String(row.runId ?? row.run_id ?? row.id ?? "");
-}
 
 type HiringPageHiring = ReturnType<typeof useHiringSignals>;
 
@@ -126,44 +91,17 @@ function HiringSignalsPageBody({
   const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
+  const [runsReloadTick, setRunsReloadTick] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
   );
-  const [satellitePage, setSatellitePage] = useState(1);
-  const [trackedPage, setTrackedPage] = useState(1);
   const [exportBusy, setExportBusy] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportBanner, setExportBanner] = useState<{
     jobId: string;
     status: string;
   } | null>(null);
-
-  const {
-    runsLoading,
-    runActionId,
-    cancelRunId,
-    scrapeDownloadId,
-    satelliteRunsRows,
-    satelliteRunsTotal,
-    trackedScrapeRows,
-    loadRuns,
-    onRefreshRun,
-    onCancelRun,
-    onDownloadCsv,
-  } = useHireSignalRuns(mainTab, {
-    satellitePage,
-    runsPageSize: RUNS_PAGE_SIZE,
-  });
-
-  useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil(satelliteRunsTotal / RUNS_PAGE_SIZE));
-    if (satellitePage > maxPage) setSatellitePage(maxPage);
-  }, [satelliteRunsTotal, satellitePage]);
-
-  useEffect(() => {
-    setTrackedPage(1);
-  }, [trackedScrapeRows.length]);
 
   const previewJobsForDrawer = useMemo(() => {
     if (!drawerRow?.companyUuid) return [];
@@ -320,218 +258,6 @@ function HiringSignalsPageBody({
     if (tab === "runs" && showRunsTab) setMainTab("runs");
   }, [searchParams, showRunsTab]);
 
-  const trackedPaged = useMemo(() => {
-    const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
-    return trackedScrapeRows.slice(start, start + RUNS_PAGE_SIZE);
-  }, [trackedScrapeRows, trackedPage]);
-
-  const satelliteColumns: TableColumn<Record<string, unknown>>[] = useMemo(
-    () => [
-      {
-        key: "runId",
-        header: "Run ID",
-        render: (row) => {
-          const full = satelliteRunId(row);
-          const short = full.length > 14 ? `${full.slice(0, 14)}…` : full;
-          return (
-            <Tooltip content={full || "—"} placement="top">
-              <span className="c360-font-mono c360-text-2xs">
-                {short || "—"}
-              </span>
-            </Tooltip>
-          );
-        },
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => {
-          const st = String(row.status ?? "—");
-          return (
-            <Badge color={runStatusBadgeColor(st)} size="sm">
-              {st}
-            </Badge>
-          );
-        },
-      },
-      {
-        key: "items",
-        header: "Items",
-        align: "right",
-        render: (row) => (
-          <span>{String(row.itemCount ?? row.item_count ?? "—")}</span>
-        ),
-      },
-      {
-        key: "started",
-        header: "Started",
-        render: (row) =>
-          formatDate(
-            String(row.startedAt ?? row.started_at ?? "") || undefined,
-          ),
-      },
-      {
-        key: "finished",
-        header: "Finished",
-        render: (row) =>
-          formatDate(
-            String(row.finishedAt ?? row.finished_at ?? "") || undefined,
-          ),
-      },
-      {
-        key: "actions",
-        header: "",
-        align: "right",
-        render: (row) => {
-          const rid = satelliteRunId(row);
-          const st = String(row.status ?? "");
-          const canCancel = hireSignalRunCanCancel(st);
-          return (
-            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
-              {rid ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => drillSignalsByRun(rid)}
-                >
-                  Signals
-                </Button>
-              ) : null}
-              {rid && canCancel ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={cancelRunId === rid}
-                  onClick={() => void onCancelRun(rid)}
-                >
-                  {cancelRunId === rid ? "Cancelling…" : "Cancel"}
-                </Button>
-              ) : null}
-              {rid ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={runActionId === rid}
-                  onClick={() => void onRefreshRun(rid)}
-                >
-                  {runActionId === rid ? "Refreshing…" : "Refresh"}
-                </Button>
-              ) : null}
-            </div>
-          );
-        },
-      },
-    ],
-    [drillSignalsByRun, onRefreshRun, onCancelRun, runActionId, cancelRunId],
-  );
-
-  const trackedColumns: TableColumn<Record<string, unknown>>[] = useMemo(
-    () => [
-      {
-        key: "id",
-        header: "Scrape job",
-        render: (row) => {
-          const full = String(row.id ?? "");
-          const short =
-            full.length > 12 ? `${full.slice(0, 12)}…` : full || "—";
-          return (
-            <Tooltip content={full || "—"} placement="top">
-              <span className="c360-font-mono c360-text-2xs">{short}</span>
-            </Tooltip>
-          );
-        },
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => {
-          const st = String(row.status ?? "—");
-          return (
-            <Badge color={runStatusBadgeColor(st)} size="sm">
-              {st}
-            </Badge>
-          );
-        },
-      },
-      {
-        key: "runId",
-        header: "Run ID",
-        render: (row) => {
-          const full = String(row.runId ?? "");
-          const short =
-            full.length > 12 ? `${full.slice(0, 12)}…` : full || "—";
-          return (
-            <Tooltip content={full || "—"} placement="top">
-              <span className="c360-font-mono c360-text-2xs">{short}</span>
-            </Tooltip>
-          );
-        },
-      },
-      {
-        key: "created",
-        header: "Created",
-        render: (row) => formatDate(String(row.createdAt ?? "") || undefined),
-      },
-      {
-        key: "actions",
-        header: "",
-        align: "right",
-        render: (row) => {
-          const sid = String(row.id ?? "");
-          const runIdVal = String(row.runId ?? "");
-          const st = String(row.status ?? "");
-          const canCancel = hireSignalRunCanCancel(st) && !!runIdVal;
-          return (
-            <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
-              {runIdVal ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => drillSignalsByRun(runIdVal)}
-                >
-                  Signals
-                </Button>
-              ) : null}
-              {canCancel ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={cancelRunId === runIdVal}
-                  onClick={() => void onCancelRun(runIdVal)}
-                >
-                  {cancelRunId === runIdVal ? "Cancelling…" : "Cancel"}
-                </Button>
-              ) : null}
-              {sid ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={scrapeDownloadId === sid || !runIdVal}
-                  onClick={() => void onDownloadCsv(sid)}
-                >
-                  {scrapeDownloadId === sid ? "Exporting…" : "CSV"}
-                </Button>
-              ) : null}
-            </div>
-          );
-        },
-      },
-    ],
-    [
-      drillSignalsByRun,
-      onDownloadCsv,
-      scrapeDownloadId,
-      onCancelRun,
-      cancelRunId,
-    ],
-  );
-
   const signalsToolbar = (
     <DataToolbar
       cssPrefix="c360-toolbar"
@@ -618,93 +344,13 @@ function HiringSignalsPageBody({
         ) : null}
         {showRunsTab ? (
           <TabsContent value="runs">
-            <div className="c360-flex c360-flex-col c360-gap-6 c360-px-4">
-              <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-                <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
-                  Job.server runs &amp; your scrape history
-                </h2>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="c360-gap-2"
-                  onClick={() => void loadRuns()}
-                  disabled={runsLoading}
-                  leftIcon={
-                    <RefreshCw
-                      size={15}
-                      className={cn(runsLoading && "c360-spin")}
-                    />
-                  }
-                >
-                  Reload
-                </Button>
-              </div>
-
-              <section>
-                <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
-                  Recent Apify runs (satellite)
-                </h3>
-                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                  <Table<Record<string, unknown>>
-                    columns={satelliteColumns}
-                    data={satelliteRunsRows}
-                    keyExtractor={(row) =>
-                      satelliteRunId(row) || JSON.stringify(row).slice(0, 48)
-                    }
-                    loading={runsLoading && satelliteRunsRows.length === 0}
-                    emptyState={
-                      <p className="c360-m-0 c360-text-sm">No runs yet.</p>
-                    }
-                  />
-                </div>
-                {satelliteRunsTotal > RUNS_PAGE_SIZE ? (
-                  <Pagination
-                    className="c360-hs-table-pagination"
-                    page={satellitePage}
-                    pageSize={RUNS_PAGE_SIZE}
-                    total={satelliteRunsTotal}
-                    onPageChange={setSatellitePage}
-                  />
-                ) : null}
-              </section>
-
-              <section>
-                <h3 className="c360-mb-2 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
-                  Your tracked scrapes (gateway)
-                </h3>
-                <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
-                  <Table<Record<string, unknown>>
-                    columns={trackedColumns}
-                    data={trackedPaged}
-                    keyExtractor={(row) =>
-                      String(row.id ?? JSON.stringify(row))
-                    }
-                    loading={runsLoading && trackedScrapeRows.length === 0}
-                    emptyState={
-                      <p className="c360-m-0 c360-text-sm">
-                        No tracked scrapes yet.
-                        {isSuperAdmin ? (
-                          <>
-                            {" "}
-                            Use <strong>Run scrape</strong> to queue one.
-                          </>
-                        ) : null}
-                      </p>
-                    }
-                  />
-                </div>
-                {trackedScrapeRows.length > RUNS_PAGE_SIZE ? (
-                  <Pagination
-                    className="c360-hs-table-pagination"
-                    page={trackedPage}
-                    pageSize={RUNS_PAGE_SIZE}
-                    total={trackedScrapeRows.length}
-                    onPageChange={setTrackedPage}
-                  />
-                ) : null}
-              </section>
-            </div>
+            <RunsTab
+              isAdmin={isAdmin}
+              isSuperAdmin={isSuperAdmin}
+              onOpenRunScrapeModal={() => setScrapeModalOpen(true)}
+              drillSignalsByRun={drillSignalsByRun}
+              reloadTick={runsReloadTick}
+            />
           </TabsContent>
         ) : null}
         <TabsContent value="signals">
@@ -841,7 +487,7 @@ function HiringSignalsPageBody({
           onClose={() => setScrapeModalOpen(false)}
           onSuccess={() => {
             void refetch();
-            void loadRuns();
+            setRunsReloadTick((t) => t + 1);
           }}
         />
       ) : null}

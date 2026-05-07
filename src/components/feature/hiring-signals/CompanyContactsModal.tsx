@@ -41,12 +41,6 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     apifyItemId: String(o.apifyItemId ?? o.apify_item_id ?? ""),
     companyUuid: String(o.companyUuid ?? o.company_uuid ?? ""),
     companyName: String(o.companyName ?? o.company_name ?? ""),
-    companyLinkedin: String(
-      o.companyLinkedinUrl ?? o.company_linkedin_url ?? "",
-    ),
-    companyLogoUrl: String(o.companyLogoUrl ?? o.company_logo_url ?? ""),
-    companyStaffCount:
-      Number(o.companyStaffCount ?? o.company_staff_count ?? 0) || 0,
     title: String(o.title ?? ""),
     descriptionHtml: String(
       o.descriptionHTML ?? o.descriptionHtml ?? o.description ?? "",
@@ -64,9 +58,6 @@ function rowFromItem(item: unknown): LinkedInJobRow {
         "",
     ),
     industries: String(o.industries ?? ""),
-    companyDescription: String(
-      o.companyDescriptionV2 ?? o.company_description_v2 ?? "",
-    ),
     location: String(
       o.formattedLocationFull ?? o.location_str ?? o.location ?? "",
     ),

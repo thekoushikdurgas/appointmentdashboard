@@ -195,6 +195,38 @@ const HIRE_SIGNAL_RUN_CANCEL = gql`
   }
 `;
 
+const HIRE_SIGNAL_RUN_PAUSE = gql`
+  mutation HireSignalPauseRun($runId: String!) {
+    hireSignal {
+      pauseHireSignalRun(runId: $runId)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_RUN_RESUME = gql`
+  mutation HireSignalResumeRun($runId: String!) {
+    hireSignal {
+      resumeHireSignalRun(runId: $runId)
+    }
+  }
+`;
+
+const HIRE_SIGNAL_RUN_METRICS = gql`
+  query HireSignalQueueMetrics {
+    hireSignal {
+      hireSignalRunMetrics
+    }
+  }
+`;
+
+const HIRE_SIGNAL_GET_SCRAPE_JOB = gql`
+  query HireSignalGetScrapeJob($scrapeJobId: String!, $pollRun: Boolean) {
+    hireSignal {
+      getScrapeJob(scrapeJobId: $scrapeJobId, pollRun: $pollRun)
+    }
+  }
+`;
+
 const HIRE_SIGNAL_RUNS = gql`
   query HireSignalRuns($limit: Int, $offset: Int) {
     hireSignal {
@@ -597,6 +629,39 @@ export async function cancelHireSignalRun(runId: string) {
   return graphqlMutation<{
     hireSignal: { cancelHireSignalRun: HireSignalApiJson };
   }>(HIRE_SIGNAL_RUN_CANCEL, { runId: rid }, HS_GQL);
+}
+
+export async function pauseHireSignalRun(runId: string) {
+  const rid = runId.trim();
+  return graphqlMutation<{
+    hireSignal: { pauseHireSignalRun: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN_PAUSE, { runId: rid }, HS_GQL);
+}
+
+export async function resumeHireSignalRun(runId: string) {
+  const rid = runId.trim();
+  return graphqlMutation<{
+    hireSignal: { resumeHireSignalRun: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN_RESUME, { runId: rid }, HS_GQL);
+}
+
+export async function fetchHireSignalRunMetrics() {
+  return graphqlQuery<{
+    hireSignal: { hireSignalRunMetrics: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN_METRICS, {}, HS_GQL);
+}
+
+export async function fetchGetScrapeJob(
+  scrapeJobId: string,
+  pollRun: boolean = true,
+) {
+  return graphqlQuery<{
+    hireSignal: { getScrapeJob: HireSignalApiJson };
+  }>(
+    HIRE_SIGNAL_GET_SCRAPE_JOB,
+    { scrapeJobId: scrapeJobId.trim(), pollRun },
+    HS_GQL,
+  );
 }
 
 export async function fetchListScrapeJobs(limit = 50, offset = 0) {

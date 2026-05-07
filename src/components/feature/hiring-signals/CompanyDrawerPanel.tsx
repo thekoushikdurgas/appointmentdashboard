@@ -198,12 +198,12 @@ export function CompanyDrawerPanel({
                   </span>{" "}
                   on this page: {previewJobs.length}
                 </p>
-                {anchor.companyStaffCount ? (
+                {co.employees ? (
                   <p className="c360-m-0 c360-text-muted">
                     <span className="c360-font-medium c360-text-ink">
-                      Staff (job row)
+                      Employees (Connectra)
                     </span>{" "}
-                    ~{anchor.companyStaffCount.toLocaleString()}
+                    ~{co.employees}
                   </p>
                 ) : null}
                 {co.website ? (
