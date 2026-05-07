@@ -113,6 +113,11 @@ export function RunScrapeModal({
         body.geoId = geoId;
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.enableEnrichment = enableEnrichment;
+        // Align with curl POST /scrape/start (snake_case on wire via job.server).
+        body.batchSize = 25;
+        if (enableEnrichment) {
+          body.openaiModel = "gpt-4-turbo";
+        }
         const rs = repeatAfterHours.trim();
         if (rs !== "") {
           const n = Math.floor(Number(rs));
