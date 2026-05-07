@@ -213,8 +213,20 @@ export function CompanyContactsModal({
       size="lg"
     >
       <div className="c360-mb-3 c360-flex c360-items-start c360-gap-3 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-2/15 c360-p-3">
-        <div className="c360-stat-card__icon" aria-hidden>
-          {hiringSignalInitials(companyName)}
+        <div
+          className="c360-stat-card__icon c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-overflow-hidden c360-rounded-full"
+          aria-hidden
+        >
+          {co.profilePic ? (
+            // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+            <img
+              src={co.profilePic}
+              alt=""
+              className="c360-h-full c360-w-full c360-object-cover"
+            />
+          ) : (
+            hiringSignalInitials(companyName)
+          )}
         </div>
         <div className="c360-min-w-0 c360-flex-1">
           <p className="c360-font-medium c360-text-ink">{companyName}</p>

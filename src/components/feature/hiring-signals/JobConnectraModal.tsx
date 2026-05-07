@@ -164,9 +164,18 @@ export function JobConnectraModal({
             {state.company ? (
               <MediaObject
                 media={
-                  <div className="c360-stat-card__icon">
-                    {hiringSignalInitials(
-                      companyDisp?.name || job.companyName || "C",
+                  <div className="c360-stat-card__icon c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-overflow-hidden c360-rounded-full">
+                    {companyDisp?.profilePic ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+                      <img
+                        src={companyDisp.profilePic}
+                        alt=""
+                        className="c360-h-full c360-w-full c360-object-cover"
+                      />
+                    ) : (
+                      hiringSignalInitials(
+                        companyDisp?.name || job.companyName || "C",
+                      )
                     )}
                   </div>
                 }

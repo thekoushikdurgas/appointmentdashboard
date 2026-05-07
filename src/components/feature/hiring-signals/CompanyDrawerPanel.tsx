@@ -158,8 +158,17 @@ export function CompanyDrawerPanel({
           >
             <header className="c360-hs-drawer__header">
               <div className="c360-flex c360-items-start c360-gap-3">
-                <div className="c360-hs-drawer__avatar" aria-hidden>
-                  {hiringSignalInitials(companyName)}
+                <div className="c360-hs-drawer__avatar c360-overflow-hidden c360-rounded-full" aria-hidden>
+                  {co.profilePic ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+                    <img
+                      src={co.profilePic}
+                      alt=""
+                      className="c360-h-full c360-w-full c360-object-cover"
+                    />
+                  ) : (
+                    hiringSignalInitials(companyName)
+                  )}
                 </div>
                 <div className="c360-min-w-0">
                   <h2

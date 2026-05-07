@@ -236,6 +236,8 @@ export function pickCompanyDisplay(row: unknown): {
   industry: string;
   employees: string;
   linkedinUrl: string;
+  /** Logo URL — Connectra ``profile_pic`` or scraper ``logo``. */
+  profilePic: string;
 } {
   const o = asRecord(row);
   if (!o) {
@@ -245,6 +247,7 @@ export function pickCompanyDisplay(row: unknown): {
       industry: "",
       employees: "",
       linkedinUrl: "",
+      profilePic: "",
     };
   }
   return {
@@ -259,6 +262,9 @@ export function pickCompanyDisplay(row: unknown): {
       o.employees_count ?? o.employeesCount ?? o.company_employees_count ?? "",
     ),
     linkedinUrl: String(o.linkedin_url ?? o.linkedinUrl ?? ""),
+    profilePic: String(
+      o.profile_pic ?? o.profilePic ?? o.logo ?? o.company_logo ?? "",
+    ),
   };
 }
 
