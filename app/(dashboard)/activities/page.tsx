@@ -682,7 +682,6 @@ export default function ActivitiesPage() {
                 title="Billing cycle"
                 subtitle="Usage periods follow gateway rules (often monthly)"
                 padding="md"
-               
               >
                 <div className="c360-billing-info-row">
                   <div>

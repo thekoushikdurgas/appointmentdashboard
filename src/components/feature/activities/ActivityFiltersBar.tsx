@@ -79,9 +79,7 @@ export function ActivityFiltersBar({
 
   return (
     <div
-      className={cn(
-        "c360-card c360-activity-filters-bar c360-p-4 c360-mb-4",
-      )}
+      className={cn("c360-card c360-activity-filters-bar c360-p-4 c360-mb-4")}
       role="region"
       aria-label="Activity filters"
     >

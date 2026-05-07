@@ -292,9 +292,9 @@ export function RunScrapeModal({
                 id="hs-reschedule-hint"
                 className="c360-text-2xs c360-text-muted"
               >
-                After the run completes, scraper.server can queue the same search
-                again via Celery (not a second tracked run in job.server). Leave
-                empty or 0 for a single run.
+                After the run completes, scraper.server can queue the same
+                search again via Celery (not a second tracked run in
+                job.server). Leave empty or 0 for a single run.
               </span>
             </label>
           </>

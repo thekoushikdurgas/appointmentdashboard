@@ -1007,8 +1007,12 @@
 /* Activities page uses DataPageLayout peek rail (same as contacts/companies); height + peel via .c360-data-layout__filters--peek-rail */
 
 /* Activities filter shell inside peek rail scroll region + mobile drawer — transparent inner card; scroll on parent */
-.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-contacts-filters.c360-activities-filters,
-.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-contacts-filters.c360-activities-filters {
+.c360-dashboard-layout--activities
+  .c360-data-layout__filters-body-scroll
+  .c360-contacts-filters.c360-activities-filters,
+.c360-dashboard-layout--activities
+  .c360-data-layout__drawer-body
+  .c360-contacts-filters.c360-activities-filters {
   flex: 1 1 auto;
   min-height: 0;
   margin-bottom: 0;
@@ -1019,12 +1023,24 @@
   overflow-y: visible;
 }
 
-.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--select,
-.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--status,
-.c360-dashboard-layout--activities .c360-data-layout__filters-body-scroll .c360-activity-filter-field--date,
-.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--select,
-.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--status,
-.c360-dashboard-layout--activities .c360-data-layout__drawer-body .c360-activity-filter-field--date {
+.c360-dashboard-layout--activities
+  .c360-data-layout__filters-body-scroll
+  .c360-activity-filter-field--select,
+.c360-dashboard-layout--activities
+  .c360-data-layout__filters-body-scroll
+  .c360-activity-filter-field--status,
+.c360-dashboard-layout--activities
+  .c360-data-layout__filters-body-scroll
+  .c360-activity-filter-field--date,
+.c360-dashboard-layout--activities
+  .c360-data-layout__drawer-body
+  .c360-activity-filter-field--select,
+.c360-dashboard-layout--activities
+  .c360-data-layout__drawer-body
+  .c360-activity-filter-field--status,
+.c360-dashboard-layout--activities
+  .c360-data-layout__drawer-body
+  .c360-activity-filter-field--date {
   flex: none;
   width: 100%;
   min-width: 0;
@@ -1057,13 +1073,13 @@
 /* Activities only: stats strip — flex, centered, no bottom margin (matches browser preview) */
 .c360-page.c360-dashboard-layout.c360-dashboard-layout--activities
   .c360-dashboard-layout__stats {
-    box-sizing: content-box;
-    justify-content: center;
-    align-items: stretch;
-    gap: var(--c360-spacing-4);
-    flex-wrap: nowrap;
-    margin-bottom: 0;
-    display: flex;
+  box-sizing: content-box;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--c360-spacing-4);
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+  display: flex;
 }
 
 .c360-dashboard-layout--activities .c360-toolbar {
@@ -1089,7 +1105,9 @@
 }
 
 /* Activities toolbar stats — flat tiles, flush grid (browser preview) */
-.c360-dashboard-layout--activities .c360-dashboard-layout__stats .c360-stat-card:not(.c360-stat-card--data-card) {
+.c360-dashboard-layout--activities
+  .c360-dashboard-layout__stats
+  .c360-stat-card:not(.c360-stat-card--data-card) {
   /* background: unset; */
   border-radius: 0;
   flex-direction: row;

@@ -64,8 +64,7 @@ export function ActivitiesFilterSidebar({
   }, [serviceActive, actionActive, statusActive, dateActive]);
 
   const chips = useMemo(() => {
-    const out: Array<{ key: string; label: string; onRemove: () => void }> =
-      [];
+    const out: Array<{ key: string; label: string; onRemove: () => void }> = [];
     if (serviceActive) {
       out.push({
         key: "service",
@@ -88,9 +87,7 @@ export function ActivitiesFilterSidebar({
       });
     }
     if (dateActive) {
-      const start = values.startDate
-        ? formatDateChip(values.startDate)
-        : "…";
+      const start = values.startDate ? formatDateChip(values.startDate) : "…";
       const end = values.endDate ? formatDateChip(values.endDate) : "…";
       out.push({
         key: "dates",
@@ -238,9 +235,7 @@ export function ActivitiesFilterSidebar({
           count={dateActive ? 1 : 0}
           defaultOpen={dateActive}
           onClear={
-            dateActive
-              ? () => patch({ startDate: "", endDate: "" })
-              : undefined
+            dateActive ? () => patch({ startDate: "", endDate: "" }) : undefined
           }
         >
           <div className="c360-activity-filter-field--date">

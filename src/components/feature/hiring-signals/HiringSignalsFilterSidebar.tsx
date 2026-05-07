@@ -1096,7 +1096,8 @@ export function HiringSignalsFilterSidebar({
           }}
         >
           <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            Match jobs whose inferred country overlaps any selected ISO code (OR).
+            Match jobs whose inferred country overlaps any selected ISO code
+            (OR).
           </p>
           <div className="c360-max-h-48 c360-overflow-y-auto c360-rounded-md c360-border c360-border-ink-8 c360-p-2">
             <div className="c360-grid c360-grid-cols-1 c360-gap-1 sm:c360-grid-cols-2">

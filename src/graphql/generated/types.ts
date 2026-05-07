@@ -3301,7 +3301,6 @@ export type SchedulerJob = {
 };
 
 export type ScrapeJobType = {
-  runId?: Maybe<Scalars["String"]["output"]>;
   completedAt?: Maybe<Scalars["DateTime"]["output"]>;
   createdAt: Scalars["DateTime"]["output"];
   error?: Maybe<Scalars["String"]["output"]>;
@@ -3309,6 +3308,7 @@ export type ScrapeJobType = {
   itemCount?: Maybe<Scalars["Int"]["output"]>;
   jobServerResponse?: Maybe<Scalars["JSON"]["output"]>;
   requestBody: Scalars["JSON"]["output"];
+  runId?: Maybe<Scalars["String"]["output"]>;
   status: Scalars["String"]["output"];
   updatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   userId: Scalars["String"]["output"];
