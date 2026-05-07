@@ -1835,6 +1835,7 @@ export type HealthQuery = {
 
 export type HireSignalMutation = {
   addHireSignalHiddenCompany: Scalars["JSON"]["output"];
+  cancelHireSignalRun: Scalars["JSON"]["output"];
   exportSelectedJobs: SchedulerJob;
   recordHireSignalJobApplied: Scalars["Boolean"]["output"];
   removeHireSignalHiddenCompany: Scalars["Boolean"]["output"];
@@ -1846,6 +1847,10 @@ export type HireSignalMutation = {
 export type HireSignalMutationAddHireSignalHiddenCompanyArgs = {
   companyLinkedinUrl?: InputMaybe<Scalars["String"]["input"]>;
   companyName: Scalars["String"]["input"];
+};
+
+export type HireSignalMutationCancelHireSignalRunArgs = {
+  runId: Scalars["String"]["input"];
 };
 
 export type HireSignalMutationExportSelectedJobsArgs = {

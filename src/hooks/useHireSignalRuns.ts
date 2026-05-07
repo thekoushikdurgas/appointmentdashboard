@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
+  cancelHireSignalRun,
   fetchHireSignalRuns,
   fetchListScrapeJobs,
   fetchScrapeJobJobs,
@@ -37,6 +38,7 @@ export function useHireSignalRuns(
   const [satelliteRunsTotal, setSatelliteRunsTotal] = useState(0);
   const [scrapeJobsPayload, setScrapeJobsPayload] = useState<unknown>(null);
   const [runActionId, setRunActionId] = useState<string | null>(null);
+  const [cancelRunId, setCancelRunId] = useState<string | null>(null);
   const [scrapeDownloadId, setScrapeDownloadId] = useState<string | null>(null);
 
   const loadRuns = useCallback(async () => {
@@ -75,13 +77,32 @@ export function useHireSignalRuns(
       setRunActionId(rid);
       try {
         await refreshHireSignalRun(rid);
-        toast.success("Run status refreshed from Apify");
+        toast.success("Run status refreshed");
         void loadRuns();
       } catch (e) {
         const m = e instanceof Error ? e.message : "Refresh failed";
         toast.error("Refresh run", { description: m });
       } finally {
         setRunActionId(null);
+      }
+    },
+    [loadRuns],
+  );
+
+  const onCancelRun = useCallback(
+    async (runId: string) => {
+      const rid = runId.trim();
+      if (!rid) return;
+      setCancelRunId(rid);
+      try {
+        await cancelHireSignalRun(rid);
+        toast.success("Run cancelled");
+        void loadRuns();
+      } catch (e) {
+        const m = e instanceof Error ? e.message : "Cancel failed";
+        toast.error("Cancel run", { description: m });
+      } finally {
+        setCancelRunId(null);
       }
     },
     [loadRuns],
@@ -123,12 +144,14 @@ export function useHireSignalRuns(
   return {
     runsLoading,
     runActionId,
+    cancelRunId,
     scrapeDownloadId,
     satelliteRunsRows,
     satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,
+    onCancelRun,
     onDownloadCsv,
   };
 }

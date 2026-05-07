@@ -69,6 +69,17 @@ function runStatusBadgeColor(status: string): BadgeColor {
   return "gray";
 }
 
+/** True when the run may still be aborted (not in a known terminal state). */
+function hireSignalRunCanCancel(status: string): boolean {
+  const s = status.trim().toUpperCase();
+  if (!s || s === "—") return false;
+  if (s.includes("SUCCESS") || s === "SUCCEEDED" || s === "DONE") return false;
+  if (s.includes("FAIL") || s.includes("ABORT") || s.includes("CANCEL"))
+    return false;
+  if (s.includes("TIME") && s.includes("OUT")) return false;
+  return true;
+}
+
 function satelliteRunId(row: Record<string, unknown>): string {
   return String(row.runId ?? row.run_id ?? row.id ?? "");
 }
@@ -131,12 +142,14 @@ function HiringSignalsPageBody({
   const {
     runsLoading,
     runActionId,
+    cancelRunId,
     scrapeDownloadId,
     satelliteRunsRows,
     satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,
+    onCancelRun,
     onDownloadCsv,
   } = useHireSignalRuns(mainTab, {
     satellitePage,
@@ -371,6 +384,8 @@ function HiringSignalsPageBody({
         align: "right",
         render: (row) => {
           const rid = satelliteRunId(row);
+          const st = String(row.status ?? "");
+          const canCancel = hireSignalRunCanCancel(st);
           return (
             <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
               {rid ? (
@@ -381,6 +396,17 @@ function HiringSignalsPageBody({
                   onClick={() => drillSignalsByRun(rid)}
                 >
                   Signals
+                </Button>
+              ) : null}
+              {rid && canCancel ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={cancelRunId === rid}
+                  onClick={() => void onCancelRun(rid)}
+                >
+                  {cancelRunId === rid ? "Cancelling…" : "Cancel"}
                 </Button>
               ) : null}
               {rid ? (
@@ -399,7 +425,7 @@ function HiringSignalsPageBody({
         },
       },
     ],
-    [drillSignalsByRun, onRefreshRun, runActionId],
+    [drillSignalsByRun, onRefreshRun, onCancelRun, runActionId, cancelRunId],
   );
 
   const trackedColumns: TableColumn<Record<string, unknown>>[] = useMemo(
@@ -456,6 +482,8 @@ function HiringSignalsPageBody({
         render: (row) => {
           const sid = String(row.id ?? "");
           const runIdVal = String(row.runId ?? "");
+          const st = String(row.status ?? "");
+          const canCancel = hireSignalRunCanCancel(st) && !!runIdVal;
           return (
             <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
               {runIdVal ? (
@@ -466,6 +494,17 @@ function HiringSignalsPageBody({
                   onClick={() => drillSignalsByRun(runIdVal)}
                 >
                   Signals
+                </Button>
+              ) : null}
+              {canCancel ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={cancelRunId === runIdVal}
+                  onClick={() => void onCancelRun(runIdVal)}
+                >
+                  {cancelRunId === runIdVal ? "Cancelling…" : "Cancel"}
                 </Button>
               ) : null}
               {sid ? (
@@ -484,7 +523,13 @@ function HiringSignalsPageBody({
         },
       },
     ],
-    [drillSignalsByRun, onDownloadCsv, scrapeDownloadId],
+    [
+      drillSignalsByRun,
+      onDownloadCsv,
+      scrapeDownloadId,
+      onCancelRun,
+      cancelRunId,
+    ],
   );
 
   const signalsToolbar = (

@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { RadioGroup, Radio } from "@/components/ui/Radio";
 import { triggerHireSignalScrapeAndTrack } from "@/services/graphql/hiringSignalService";
+import {
+  parseGraphQLError,
+  type GraphQLErrorResponse,
+} from "@/lib/graphqlClient";
 import { toast } from "sonner";
 
 const DEFAULT_URL =
   "https://www.linkedin.com/jobs/search/?keywords=golang&geoId=105080838&position=1&pageNum=0";
 
-/** Matches job.server `maxRescheduleAfterHours` (hours). */
+/** Matches job.server reschedule_after_hours max (168 hours). */
 const MAX_RESCHEDULE_AFTER_HOURS = 168;
 
 type ScrapeMode = "keywords" | "urls";
@@ -37,7 +41,7 @@ export function RunScrapeModal({
   const [splitByLocation, setSplitByLocation] = useState(false);
   const [trigger, setTrigger] = useState("manual");
   /** Empty string = omit from payload; scraper repeats after N hours when set (> 0). */
-  const [rescheduleAfterHours, setRescheduleAfterHours] = useState("");
+  const [repeatAfterHours, setRepeatAfterHours] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -55,7 +59,7 @@ export function RunScrapeModal({
     setScrapeCompany(false);
     setSplitByLocation(false);
     setTrigger("manual");
-    setRescheduleAfterHours("");
+    setRepeatAfterHours("");
     setValidationError(null);
   }, []);
 
@@ -80,21 +84,21 @@ export function RunScrapeModal({
         setValidationError("Enter a valid LinkedIn geoId (e.g. 105080838).");
         return;
       }
-      const rs = rescheduleAfterHours.trim();
-      if (rs !== "") {
-        const n = Math.floor(Number(rs));
-        if (!Number.isFinite(n) || n < 0) {
-          setValidationError(
-            "Repeat after hours must be a whole number between 0 and 168.",
-          );
-          return;
-        }
-        if (n > MAX_RESCHEDULE_AFTER_HOURS) {
-          setValidationError(
-            `Repeat after hours must be at most ${MAX_RESCHEDULE_AFTER_HOURS}.`,
-          );
-          return;
-        }
+    }
+    const rsCommon = repeatAfterHours.trim();
+    if (rsCommon !== "") {
+      const n = Math.floor(Number(rsCommon));
+      if (!Number.isFinite(n) || n < 0) {
+        setValidationError(
+          "Repeat after hours must be a whole number between 0 and 168.",
+        );
+        return;
+      }
+      if (n > MAX_RESCHEDULE_AFTER_HOURS) {
+        setValidationError(
+          `Repeat after hours must be at most ${MAX_RESCHEDULE_AFTER_HOURS}.`,
+        );
+        return;
       }
     }
     setValidationError(null);
@@ -109,11 +113,11 @@ export function RunScrapeModal({
         body.geoId = geoId;
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.enableEnrichment = enableEnrichment;
-        const rs = rescheduleAfterHours.trim();
+        const rs = repeatAfterHours.trim();
         if (rs !== "") {
           const n = Math.floor(Number(rs));
           if (n > 0) {
-            body.rescheduleAfterHours = n;
+            body["reschedule_after_hours"] = n;
           }
         }
       } else {
@@ -125,6 +129,13 @@ export function RunScrapeModal({
         body.maxJobs = Number.isFinite(count) ? count : 100;
         body.scrapeCompany = scrapeCompany;
         body.splitByLocation = splitByLocation;
+        const rs = repeatAfterHours.trim();
+        if (rs !== "") {
+          const n = Math.floor(Number(rs));
+          if (n > 0) {
+            body["reschedule_after_hours"] = n;
+          }
+        }
       }
       const res = await triggerHireSignalScrapeAndTrack(body);
       const row = res.hireSignal?.triggerScrapeAndTrack;
@@ -141,8 +152,17 @@ export function RunScrapeModal({
         });
       }
     } catch (e) {
-      const m = e instanceof Error ? e.message : "Request failed";
-      toast.error("Scrape", { description: m });
+      let m = e instanceof Error ? e.message : "Request failed";
+      if (e && typeof e === "object" && "response" in e) {
+        const resp = (e as { response?: { errors?: GraphQLErrorResponse[] } })
+          .response;
+        const errors = resp?.errors;
+        if (Array.isArray(errors) && errors.length > 0) {
+          const pe = parseGraphQLError(errors);
+          m = pe.detail || pe.message;
+        }
+      }
+      toast.error("Scrape failed", { description: m });
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +176,7 @@ export function RunScrapeModal({
     scrapeCompany,
     splitByLocation,
     trigger,
-    rescheduleAfterHours,
+    repeatAfterHours,
     onClose,
     onSuccess,
     reset,
@@ -283,8 +303,8 @@ export function RunScrapeModal({
                 max={MAX_RESCHEDULE_AFTER_HOURS}
                 step={1}
                 className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-1.5 c360-text-sm"
-                value={rescheduleAfterHours}
-                onChange={(e) => setRescheduleAfterHours(e.target.value)}
+                value={repeatAfterHours}
+                onChange={(e) => setRepeatAfterHours(e.target.value)}
                 placeholder="No repeat"
                 aria-describedby="hs-reschedule-hint"
               />
@@ -292,9 +312,12 @@ export function RunScrapeModal({
                 id="hs-reschedule-hint"
                 className="c360-text-2xs c360-text-muted"
               >
-                After the run completes, scraper.server can queue the same
-                search again via Celery (not a second tracked run in
-                job.server). Leave empty or 0 for a single run.
+                Same field as{" "}
+                <code className="c360-break-all">POST …/scrape/start</code> (
+                <code>reschedule_after_hours</code>). Requires job.server to use
+                scraper.server (<code>SCRAPER_SERVER_URL</code>), not Apify-only
+                mode. After completion, scraper can re-queue the search via
+                Celery. Leave empty or 0 for one shot.
               </span>
             </label>
           </>

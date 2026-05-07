@@ -180,6 +180,14 @@ const HIRE_SIGNAL_TRIGGER_TRACK = gql`
   }
 `;
 
+const HIRE_SIGNAL_RUN_CANCEL = gql`
+  mutation HireSignalCancelRun($runId: String!) {
+    hireSignal {
+      cancelHireSignalRun(runId: $runId)
+    }
+  }
+`;
+
 const HIRE_SIGNAL_RUNS = gql`
   query HireSignalRuns($limit: Int, $offset: Int) {
     hireSignal {
@@ -534,7 +542,7 @@ export async function fetchCompanyHiringSignalJobs(
 export async function triggerHireSignalScrape(
   body?: Record<string, unknown> | null,
 ) {
-  return graphqlQuery<{
+  return graphqlMutation<{
     hireSignal: { triggerScrape: HireSignalApiJson };
   }>(HIRE_SIGNAL_TRIGGER, { body: body ?? null }, HS_GQL);
 }
@@ -553,7 +561,7 @@ export type HireSignalScrapeJobRow = {
 export async function triggerHireSignalScrapeAndTrack(
   body?: Record<string, unknown> | null,
 ) {
-  return graphqlQuery<{
+  return graphqlMutation<{
     hireSignal: { triggerScrapeAndTrack: HireSignalScrapeJobRow };
   }>(HIRE_SIGNAL_TRIGGER_TRACK, { body: body ?? null }, HS_GQL);
 }
@@ -574,6 +582,13 @@ export async function refreshHireSignalRun(runId: string) {
   return graphqlQuery<{
     hireSignal: { refreshHireSignalRun: HireSignalApiJson };
   }>(HIRE_SIGNAL_RUN_REFRESH, { runId }, HS_GQL);
+}
+
+export async function cancelHireSignalRun(runId: string) {
+  const rid = runId.trim();
+  return graphqlMutation<{
+    hireSignal: { cancelHireSignalRun: HireSignalApiJson };
+  }>(HIRE_SIGNAL_RUN_CANCEL, { runId: rid }, HS_GQL);
 }
 
 export async function fetchListScrapeJobs(limit = 50, offset = 0) {
