@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +12,14 @@ import {
   Mail,
   MoreHorizontal,
 } from "lucide-react";
+import {
+  DataGrid,
+  type GridColDef,
+  type GridColumnVisibilityModel,
+  type GridRenderCellParams,
+  type GridRowSelectionModel,
+  type GridSortModel,
+} from "@mui/x-data-grid";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -22,6 +30,8 @@ import { contactDetailRoute } from "@/lib/routes";
 import { cn, getAvatarUrl } from "@/lib/utils";
 import { mapConnectraError } from "@/lib/linkedinValidation";
 import type { Contact } from "@/services/graphql/contactsService";
+import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
+import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 
 export const CONTACTS_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -63,6 +73,19 @@ export const CONTACTS_DT_COLUMN_LABELS: Record<
   company: "Company",
   email: "Email",
   action: "Action",
+};
+
+/** Maps sidebar / storage column id → MUI `field` on the grid. */
+const COL_ID_TO_FIELD: Record<ContactsDataTableColumnId, string> = {
+  ref: "ref",
+  added: "createdAt",
+  name: "name",
+  title: "title",
+  region: "region",
+  status: "emailStatus",
+  company: "company",
+  email: "email",
+  action: "action",
 };
 
 function hashContactRef(id: string): string {
@@ -111,26 +134,70 @@ function emailStatusLabel(status?: string): string {
   return status;
 }
 
-function SortCaret({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
+function gridSortModelFromSortBy(sortBy: string): GridSortModel {
+  if (sortBy === "oldest" || sortBy === "newest") {
+    return [
+      {
+        field: "createdAt",
+        sort: sortBy === "oldest" ? "asc" : "desc",
+      },
+    ];
+  }
+  if (sortBy === "name_asc" || sortBy === "name_desc") {
+    return [
+      {
+        field: "name",
+        sort: sortBy === "name_asc" ? "asc" : "desc",
+      },
+    ];
+  }
+  return [{ field: "createdAt", sort: "desc" }];
+}
+
+function ContactsNoRowsOverlay({
+  error,
+  errorMsg,
+  onRetry,
+  loading,
+}: {
+  error: string | null;
+  errorMsg: string | null;
+  onRetry?: () => void;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4 c360-gap-2">
+        <Loader2 size={20} className="c360-spin" />
+        <span className="c360-text-sm c360-text-ink-muted">
+          Loading contacts…
+        </span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="c360-flex c360-h-full c360-min-h-[120px] c360-flex-col c360-items-center c360-justify-center c360-px-4 c360-text-center">
+        <p className="c360-m-0 c360-text-sm c360-text-danger">{errorMsg}</p>
+        {onRetry ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="c360-mt-2"
+            onClick={onRetry}
+          >
+            Retry
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
   return (
-    <span className="c360-contacts-dt__sort-carets" aria-hidden>
-      <span
-        className={cn(
-          "c360-contacts-dt__sort-caret",
-          active && dir === "asc" && "c360-contacts-dt__sort-caret--on",
-        )}
-      >
-        ▲
-      </span>
-      <span
-        className={cn(
-          "c360-contacts-dt__sort-caret",
-          active && dir === "desc" && "c360-contacts-dt__sort-caret--on",
-        )}
-      >
-        ▼
-      </span>
-    </span>
+    <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4">
+      <p className="c360-m-0 c360-text-sm c360-text-ink-muted">
+        No contacts found
+      </p>
+    </div>
   );
 }
 
@@ -148,14 +215,16 @@ export interface ContactsDataTableProps {
   sortBy: string;
   onSortChange: (sort: string) => void;
   selected: string[];
-  onToggleSelect: (id: string) => void;
-  onToggleSelectAllPage: () => void;
+  /** Replaces the full selection set (MUI `keepNonExistentRowsSelected` + server paging). */
+  onSelectionChange: (ids: string[]) => void;
   expandedRow: string | null;
   onToggleExpand: (id: string) => void;
   onRetry?: () => void;
   /** Which data columns to show (checkbox + expand always on). */
   visibleColumns?: ContactsDataTableColumnId[];
   onToggleColumn?: (columnId: ContactsDataTableColumnId) => void;
+  /** When the DataGrid column menu changes visibility, sync the ordered list (e.g. localStorage). */
+  onVisibleColumnsResolved?: (columns: ContactsDataTableColumnId[]) => void;
   /** When false, hide the toolbar search field (e.g. search lives in the left filter sidebar). */
   showToolbarSearch?: boolean;
   /** When false, hide the Columns popover (e.g. column picker lives in the left filter sidebar). */
@@ -182,13 +251,13 @@ export function ContactsDataTable({
   sortBy,
   onSortChange,
   selected,
-  onToggleSelect,
-  onToggleSelectAllPage,
+  onSelectionChange,
   expandedRow,
   onToggleExpand,
   onRetry,
   visibleColumns: visibleColumnsProp,
   onToggleColumn,
+  onVisibleColumnsResolved,
   showToolbarSearch = true,
   showColumnPicker = true,
   showPageSizeControl = true,
@@ -196,43 +265,345 @@ export function ContactsDataTable({
   density = "comfortable",
 }: ContactsDataTableProps) {
   const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
+  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
+
   const hasCol = useCallback(
     (id: ContactsDataTableColumnId) => visibleColumns.includes(id),
     [visibleColumns],
   );
 
-  const colSpan = useMemo(() => {
-    let n = 2;
-    for (const id of CONTACTS_DT_COLUMN_IDS) {
-      if (hasCol(id)) n += 1;
-    }
-    return n;
-  }, [hasCol]);
-
-  const allPageSelected =
-    contacts.length > 0 && contacts.every((c) => selected.includes(c.id));
-  const somePageSelected =
-    contacts.some((c) => selected.includes(c.id)) && !allPageSelected;
-
-  const dateSortDir: "asc" | "desc" = sortBy === "oldest" ? "asc" : "desc";
-  const nameSortDir: "asc" | "desc" = sortBy === "name_desc" ? "desc" : "asc";
-
-  const toggleDateSort = useCallback(() => {
-    onSortChange(sortBy === "oldest" ? "newest" : "oldest");
-  }, [sortBy, onSortChange]);
-
-  const toggleNameSort = useCallback(() => {
-    onSortChange(sortBy === "name_asc" ? "name_desc" : "name_asc");
-  }, [sortBy, onSortChange]);
-
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const safePage = Math.min(Math.max(1, page), pageCount);
-  const showingFrom = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const showingTo = total === 0 ? 0 : Math.min(safePage * pageSize, total);
-
   const errorMsg = useMemo(
     () => (error ? mapConnectraError(error) : null),
     [error],
+  );
+
+  const columnVisibilityModel = useMemo(() => {
+    const m: GridColumnVisibilityModel = {};
+    m.__expand = true;
+    for (const id of CONTACTS_DT_COLUMN_IDS) {
+      m[COL_ID_TO_FIELD[id]] = vis.has(id);
+    }
+    return m;
+  }, [vis]);
+
+  const sortModel = useMemo(() => gridSortModelFromSortBy(sortBy), [sortBy]);
+
+  const rowSelectionModel = useMemo<GridRowSelectionModel>(
+    () => ({
+      type: "include",
+      ids: new Set(selected),
+    }),
+    [selected],
+  );
+
+  const handleSortModelChange = useCallback(
+    (model: GridSortModel) => {
+      const first = model[0];
+      if (!first?.sort) {
+        onSortChange("newest");
+        return;
+      }
+      if (first.field === "createdAt") {
+        onSortChange(first.sort === "asc" ? "oldest" : "newest");
+      } else if (first.field === "name") {
+        onSortChange(first.sort === "asc" ? "name_asc" : "name_desc");
+      }
+    },
+    [onSortChange],
+  );
+
+  const handleColumnVisibilityModelChange = useCallback(
+    (model: GridColumnVisibilityModel) => {
+      const next = CONTACTS_DT_COLUMN_IDS.filter(
+        (id) => model[COL_ID_TO_FIELD[id]] !== false,
+      );
+      if (next.length === 0) return;
+      onVisibleColumnsResolved?.(next);
+    },
+    [onVisibleColumnsResolved],
+  );
+
+  const handleRowSelectionModelChange = useCallback(
+    (model: GridRowSelectionModel) => {
+      onSelectionChange(Array.from(model.ids, (id) => String(id)));
+    },
+    [onSelectionChange],
+  );
+
+  const expandedContact = useMemo(
+    () => contacts.find((c) => c.id === expandedRow) ?? null,
+    [contacts, expandedRow],
+  );
+
+  const columns = useMemo<GridColDef<Contact>[]>(
+    () => [
+      {
+        field: "__expand",
+        headerName: "",
+        width: 44,
+        minWidth: 44,
+        maxWidth: 44,
+        sortable: false,
+        filterable: false,
+        disableReorder: true,
+        disableColumnMenu: true,
+        renderCell: (params: GridRenderCellParams<Contact>) => {
+          const open = expandedRow === params.row.id;
+          return (
+            <button
+              type="button"
+              className="c360-contacts-dt__expand"
+              aria-expanded={open}
+              aria-label={open ? "Collapse details" : "Expand details"}
+              onClick={() => onToggleExpand(params.row.id)}
+            >
+              {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+          );
+        },
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "ref",
+        headerName: CONTACTS_DT_COLUMN_LABELS.ref,
+        flex: 0,
+        width: 110,
+        minWidth: 96,
+        sortable: false,
+        filterable: false,
+        valueGetter: (_v, row) => hashContactRef(row.id),
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <strong className="c360-contacts-dt__job-ref">
+            {hashContactRef(params.row.id)}
+          </strong>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "createdAt",
+        headerName: CONTACTS_DT_COLUMN_LABELS.added,
+        flex: 0,
+        width: 152,
+        minWidth: 132,
+        sortable: true,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span className="c360-contacts-dt__muted">
+            {formatCheckInDate(params.row.createdAt)}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "name",
+        headerName: CONTACTS_DT_COLUMN_LABELS.name,
+        flex: 1.25,
+        minWidth: 200,
+        sortable: true,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams<Contact>) => {
+          const row = params.row;
+          if (density === "compact") {
+            return (
+              <button
+                type="button"
+                className="c360-contacts-dt__name-btn c360-flex c360-min-w-0 c360-items-center c360-gap-2 c360-text-left"
+                onClick={() => onToggleExpand(row.id)}
+              >
+                <Image
+                  src={getAvatarUrl(row.name, 32)}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="c360-contact-avatar c360-shrink-0"
+                />
+                <span className="c360-contacts-dt__task-link c360-min-w-0 c360-truncate">
+                  {row.name}
+                </span>
+              </button>
+            );
+          }
+          return (
+            <button
+              type="button"
+              className="c360-contacts-dt__name-btn"
+              onClick={() => onToggleExpand(row.id)}
+            >
+              <Image
+                src={getAvatarUrl(row.name, 32)}
+                alt=""
+                width={32}
+                height={32}
+                className="c360-contact-avatar"
+              />
+              <span className="c360-contacts-dt__task-link c360-text-left">
+                {row.name}
+              </span>
+            </button>
+          );
+        },
+        cellClassName:
+          density === "compact"
+            ? "c360-ct-grid-cell--center"
+            : "c360-ct-grid-cell--top",
+      },
+      {
+        field: "title",
+        headerName: CONTACTS_DT_COLUMN_LABELS.title,
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        valueGetter: (_v, row) => row.title ?? "",
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span className="c360-contacts-dt__muted c360-min-w-0 c360-truncate">
+            {params.row.title || "—"}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "region",
+        headerName: CONTACTS_DT_COLUMN_LABELS.region,
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        valueGetter: (_v, row) => row.location || row.country || "",
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span
+            className="c360-contacts-dt__muted c360-contacts-dt__truncate c360-min-w-0"
+            title={
+              params.row.location || params.row.country || ""
+                ? String(params.row.location || params.row.country)
+                : undefined
+            }
+          >
+            {params.row.location || params.row.country || "—"}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "emailStatus",
+        headerName: CONTACTS_DT_COLUMN_LABELS.status,
+        flex: 0,
+        width: 120,
+        minWidth: 104,
+        sortable: false,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams<Contact>) => {
+          const tone = emailStatusTone(params.row.emailStatus);
+          return (
+            <span
+              className={cn(
+                "c360-contacts-dt__pill",
+                `c360-contacts-dt__pill--${tone}`,
+              )}
+            >
+              <span className="c360-contacts-dt__pill-dot" aria-hidden />
+              {emailStatusLabel(params.row.emailStatus)}
+            </span>
+          );
+        },
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "company",
+        headerName: CONTACTS_DT_COLUMN_LABELS.company,
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span
+            className="c360-contacts-dt__muted c360-contacts-dt__truncate c360-min-w-0"
+            title={params.row.company || undefined}
+          >
+            {params.row.company || "—"}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "email",
+        headerName: CONTACTS_DT_COLUMN_LABELS.email,
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span
+            className="c360-contacts-dt__email c360-text-xs c360-min-w-0 c360-truncate"
+            title={params.row.email || undefined}
+          >
+            {params.row.email || "—"}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
+        field: "action",
+        headerName: CONTACTS_DT_COLUMN_LABELS.action,
+        flex: 0,
+        width: 72,
+        minWidth: 64,
+        sortable: false,
+        filterable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params: GridRenderCellParams<Contact>) => {
+          const row = params.row;
+          const expanded = expandedRow === row.id;
+          return (
+            <div className="c360-flex c360-w-full c360-items-center c360-justify-end">
+              <Popover
+                align="end"
+                width={200}
+                trigger={
+                  <button
+                    type="button"
+                    className="c360-contacts-dt__action-btn"
+                    aria-label={`Actions for ${row.name}`}
+                  >
+                    <MoreHorizontal size={20} />
+                  </button>
+                }
+                content={
+                  <div className="c360-contacts-dt__menu">
+                    <Link
+                      href={contactDetailRoute(row.id)}
+                      className="c360-contacts-dt__menu-link"
+                    >
+                      <ExternalLink size={14} aria-hidden />
+                      View profile
+                    </Link>
+                    <button
+                      type="button"
+                      className="c360-contacts-dt__menu-item"
+                      onClick={() => onToggleExpand(row.id)}
+                    >
+                      {expanded ? "Hide details" : "View details"}
+                    </button>
+                    {row.email ? (
+                      <a
+                        href={`mailto:${row.email}`}
+                        className="c360-contacts-dt__menu-link"
+                      >
+                        <Mail size={14} aria-hidden />
+                        Compose email
+                      </a>
+                    ) : null}
+                  </div>
+                }
+              />
+            </div>
+          );
+        },
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+    ],
+    [density, expandedRow, onToggleExpand],
   );
 
   const columnsMenu =
@@ -280,6 +651,13 @@ export function ContactsDataTable({
     showToolbarSearch ||
     (showColumnPicker && onToggleColumn != null);
 
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const showingFrom = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const showingTo = total === 0 ? 0 : Math.min(safePage * pageSize, total);
+
+  const showLoadingOverlay = Boolean(loading && contacts.length === 0);
+
   return (
     <div
       className={cn(
@@ -323,265 +701,90 @@ export function ContactsDataTable({
         </div>
       ) : null}
 
-      <div className="c360-contacts-dt__scroll">
-        <table className="c360-contacts-dt__table">
-          <thead>
-            <tr>
-              <th className="c360-contacts-dt__th--checkbox">
-                <Checkbox
-                  size="sm"
-                  checked={allPageSelected}
-                  indeterminate={somePageSelected}
-                  onChange={() => onToggleSelectAllPage()}
-                  aria-label="Select all on this page"
-                />
-              </th>
-              <th className="c360-contacts-dt__th--narrow" aria-hidden />
-              {hasCol("ref") ? <th>Contact ref</th> : null}
-              {hasCol("added") ? (
-                <th>
-                  <button
-                    type="button"
-                    className="c360-contacts-dt__th-btn"
-                    onClick={toggleDateSort}
-                  >
-                    Added
-                    <SortCaret
-                      active={sortBy === "newest" || sortBy === "oldest"}
-                      dir={dateSortDir}
-                    />
-                  </button>
-                </th>
-              ) : null}
-              {hasCol("name") ? (
-                <th>
-                  <button
-                    type="button"
-                    className="c360-contacts-dt__th-btn"
-                    onClick={toggleNameSort}
-                  >
-                    Name
-                    <SortCaret
-                      active={sortBy === "name_asc" || sortBy === "name_desc"}
-                      dir={nameSortDir}
-                    />
-                  </button>
-                </th>
-              ) : null}
-              {hasCol("title") ? <th>Title</th> : null}
-              {hasCol("region") ? <th>Region</th> : null}
-              {hasCol("status") ? <th>Status</th> : null}
-              {hasCol("company") ? <th>Company</th> : null}
-              {hasCol("email") ? <th>Email</th> : null}
-              {hasCol("action") ? (
-                <th className="c360-contacts-dt__th--action">Action</th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {loading && contacts.length === 0 ? (
-              <tr>
-                <td colSpan={colSpan} className="c360-contacts-dt__loading">
-                  <Loader2 size={20} className="c360-spin" />
-                  <span>Loading contacts…</span>
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td
-                  colSpan={colSpan}
-                  className="c360-contacts-dt__empty c360-text-danger"
-                >
-                  {errorMsg}
-                  {onRetry ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="c360-ml-2"
-                      disabled={loading}
-                      onClick={onRetry}
-                    >
-                      Retry
-                    </Button>
-                  ) : null}
-                </td>
-              </tr>
-            ) : contacts.length === 0 ? (
-              <tr>
-                <td colSpan={colSpan} className="c360-contacts-dt__empty">
-                  No contacts found
-                </td>
-              </tr>
-            ) : (
-              contacts.map((contact, rowIndex) => {
-                const expanded = expandedRow === contact.id;
-                const tone = emailStatusTone(contact.emailStatus);
-                return (
-                  <Fragment key={contact.id}>
-                    <tr
-                      className={cn(
-                        "c360-contacts-dt__row",
-                        rowIndex % 2 === 1 && "c360-contacts-dt__row--alt",
-                        expanded && "c360-contacts-dt__row--expanded",
-                      )}
-                    >
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          size="sm"
-                          checked={selected.includes(contact.id)}
-                          onChange={() => onToggleSelect(contact.id)}
-                          aria-label={`Select ${contact.name}`}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="c360-contacts-dt__expand"
-                          aria-expanded={expanded ? "true" : "false"}
-                          aria-label={
-                            expanded ? "Collapse details" : "Expand details"
-                          }
-                          onClick={() => onToggleExpand(contact.id)}
-                        >
-                          {expanded ? (
-                            <ChevronDown size={16} />
-                          ) : (
-                            <ChevronRight size={16} />
-                          )}
-                        </button>
-                      </td>
-                      {hasCol("ref") ? (
-                        <td>
-                          <strong className="c360-contacts-dt__job-ref">
-                            {hashContactRef(contact.id)}
-                          </strong>
-                        </td>
-                      ) : null}
-                      {hasCol("added") ? (
-                        <td className="c360-contacts-dt__muted">
-                          {formatCheckInDate(contact.createdAt)}
-                        </td>
-                      ) : null}
-                      {hasCol("name") ? (
-                        <td>
-                          <button
-                            type="button"
-                            className="c360-contacts-dt__name-btn"
-                            onClick={() => onToggleExpand(contact.id)}
-                          >
-                            <Image
-                              src={getAvatarUrl(contact.name, 32)}
-                              alt=""
-                              width={32}
-                              height={32}
-                              className="c360-contact-avatar"
-                            />
-                            <span className="c360-contacts-dt__task-link c360-text-left">
-                              {contact.name}
-                            </span>
-                          </button>
-                        </td>
-                      ) : null}
-                      {hasCol("title") ? (
-                        <td className="c360-contacts-dt__muted">
-                          {contact.title || "—"}
-                        </td>
-                      ) : null}
-                      {hasCol("region") ? (
-                        <td
-                          className="c360-contacts-dt__muted c360-contacts-dt__truncate"
-                          title={contact.location || contact.country || ""}
-                        >
-                          {contact.location || contact.country || "—"}
-                        </td>
-                      ) : null}
-                      {hasCol("status") ? (
-                        <td>
-                          <span
-                            className={cn(
-                              "c360-contacts-dt__pill",
-                              `c360-contacts-dt__pill--${tone}`,
-                            )}
-                          >
-                            <span
-                              className="c360-contacts-dt__pill-dot"
-                              aria-hidden
-                            />
-                            {emailStatusLabel(contact.emailStatus)}
-                          </span>
-                        </td>
-                      ) : null}
-                      {hasCol("company") ? (
-                        <td
-                          className="c360-contacts-dt__muted c360-contacts-dt__truncate"
-                          title={contact.company || ""}
-                        >
-                          {contact.company || "—"}
-                        </td>
-                      ) : null}
-                      {hasCol("email") ? (
-                        <td
-                          className="c360-contacts-dt__email c360-text-xs"
-                          title={contact.email || ""}
-                        >
-                          {contact.email || "—"}
-                        </td>
-                      ) : null}
-                      {hasCol("action") ? (
-                        <td className="c360-contacts-dt__action-cell">
-                          <Popover
-                            align="end"
-                            width={200}
-                            trigger={
-                              <button
-                                type="button"
-                                className="c360-contacts-dt__action-btn"
-                                aria-label={`Actions for ${contact.name}`}
-                              >
-                                <MoreHorizontal size={20} />
-                              </button>
-                            }
-                            content={
-                              <div className="c360-contacts-dt__menu">
-                                <Link
-                                  href={contactDetailRoute(contact.id)}
-                                  className="c360-contacts-dt__menu-link"
-                                >
-                                  <ExternalLink size={14} aria-hidden />
-                                  View profile
-                                </Link>
-                                <button
-                                  type="button"
-                                  className="c360-contacts-dt__menu-item"
-                                  onClick={() => onToggleExpand(contact.id)}
-                                >
-                                  {expanded ? "Hide details" : "View details"}
-                                </button>
-                                {contact.email ? (
-                                  <a
-                                    href={`mailto:${contact.email}`}
-                                    className="c360-contacts-dt__menu-link"
-                                  >
-                                    <Mail size={14} aria-hidden />
-                                    Compose email
-                                  </a>
-                                ) : null}
-                              </div>
-                            }
-                          />
-                        </td>
-                      ) : null}
-                    </tr>
-                    {expanded ? (
-                      <ContactDetailPanel contact={contact} colSpan={colSpan} />
-                    ) : null}
-                  </Fragment>
-                );
-              })
+      <C360DataTableShell>
+        <C360MuiThemeProvider>
+          <div
+            className={cn(
+              "c360-contacts-data-grid c360-min-h-[320px] c360-w-full",
+              density === "compact" && "c360-contacts-data-grid--compact",
             )}
-          </tbody>
-        </table>
-      </div>
+          >
+            <DataGrid
+              rows={contacts}
+              columns={columns}
+              getRowId={(row) => row.id}
+              checkboxSelection
+              disableRowSelectionOnClick
+              keepNonExistentRowsSelected
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={handleRowSelectionModelChange}
+              sortingMode="server"
+              sortModel={sortModel}
+              onSortModelChange={handleSortModelChange}
+              columnVisibilityModel={columnVisibilityModel}
+              onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+              disableColumnFilter
+              hideFooter
+              loading={showLoadingOverlay}
+              getRowHeight={() => "auto"}
+              getEstimatedRowHeight={() => (density === "compact" ? 48 : 72)}
+              columnHeaderHeight={44}
+              density={density === "compact" ? "compact" : "comfortable"}
+              showColumnVerticalBorder
+              slots={{
+                noRowsOverlay: () => (
+                  <ContactsNoRowsOverlay
+                    error={error}
+                    errorMsg={errorMsg}
+                    onRetry={onRetry}
+                    loading={loading}
+                  />
+                ),
+              }}
+              sx={(theme) => ({
+                border: "none",
+                borderRadius: 0,
+                fontFamily: "inherit",
+                "& .MuiDataGrid-columnHeaders": {
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.06)"
+                      : "rgba(148, 163, 184, 0.14)",
+                },
+                "& .MuiDataGrid-cell": {
+                  display: "flex",
+                  alignItems: "center",
+                },
+                "& .MuiDataGrid-cell.c360-ct-grid-cell--top": {
+                  paddingTop: 0,
+                  paddingBottom: 0,
+                  paddingLeft: 0,
+                  paddingRight: 0,
+                },
+                "& .MuiDataGrid-cell.c360-ct-grid-cell--center": {
+                  alignItems: "center",
+                },
+                "& .MuiDataGrid-row": {
+                  maxHeight: "none !important",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: 600,
+                  fontSize: "0.8125rem",
+                },
+                "& .MuiDataGrid-footerContainer": {
+                  borderTop: "none",
+                },
+              })}
+              autoHeight
+            />
+          </div>
+        </C360MuiThemeProvider>
+      </C360DataTableShell>
+
+      {expandedContact ? (
+        <ContactDetailPanel contact={expandedContact} layout="block" />
+      ) : null}
 
       {showPaginationFooter ? (
         <div className="c360-contacts-dt__footer">

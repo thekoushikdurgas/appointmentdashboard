@@ -10,6 +10,10 @@ export const CONTACTS_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const STORAGE_PREFIX = "c360:contacts:list:v1:";
 const SORT_PREF_KEY = "c360:contacts:sortBy:v1";
+const PAGE_SIZE_PREF_KEY = "c360:contacts:pageSize:v1";
+const DEFAULT_CONTACTS_PAGE_SIZE = 25;
+const MIN_CONTACTS_PAGE = 10;
+const MAX_CONTACTS_PAGE = 100;
 
 export type ContactsListCachedPayload = {
   items: Contact[];
@@ -139,6 +143,28 @@ export function writeContactsSortPreference(sortBy: string): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(SORT_PREF_KEY, sortBy);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readContactsPageSizePreference(): number {
+  if (typeof window === "undefined") return DEFAULT_CONTACTS_PAGE_SIZE;
+  try {
+    const raw = localStorage.getItem(PAGE_SIZE_PREF_KEY);
+    if (!raw) return DEFAULT_CONTACTS_PAGE_SIZE;
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n)) return DEFAULT_CONTACTS_PAGE_SIZE;
+    return Math.min(MAX_CONTACTS_PAGE, Math.max(MIN_CONTACTS_PAGE, n));
+  } catch {
+    return DEFAULT_CONTACTS_PAGE_SIZE;
+  }
+}
+
+export function writeContactsPageSizePreference(n: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PAGE_SIZE_PREF_KEY, String(n));
   } catch {
     /* ignore */
   }

@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import {
+  coerceJobListSortFields,
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
   hireSignalJobsListFromJson,
@@ -71,18 +78,56 @@ function titleFromJobDescription(plain: string, htmlFallback: string): string {
   return "";
 }
 
-/** RFC3339 strings from API; omit Go zero times (`0001-01-01…`). */
-function strIso(v: unknown): string {
-  if (v == null) return "";
+/**
+ * Parse job timestamps from job.server / Mongo / scraper: ISO strings, unix seconds or ms,
+ * numeric strings, Mongo-extended `{$date}`. Drops Go zero times and invalid years.
+ */
+function parseFlexibleDate(v: unknown): string {
+  if (v == null || v === "") return "";
+  if (typeof v === "number" && Number.isFinite(v)) {
+    const ms = v > 1e12 ? v : v * 1000;
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getUTCFullYear();
+    if (y < 1990 || y > 2100) return "";
+    return d.toISOString();
+  }
+  if (
+    typeof v === "object" &&
+    v !== null &&
+    "$date" in (v as Record<string, unknown>)
+  ) {
+    return parseFlexibleDate((v as { $date: unknown }).$date);
+  }
   const s = String(v).trim();
-  if (!s) return "";
-  if (s.startsWith("0001-01-01")) return "";
+  if (!s || s.startsWith("0001-01-01")) return "";
+  if (/^\d{10,13}$/.test(s)) {
+    const n = Number(s);
+    const ms = n > 1e12 ? n : n * 1000;
+    const d = new Date(ms);
+    if (!Number.isNaN(d.getTime())) {
+      const y = d.getUTCFullYear();
+      if (y >= 1990 && y <= 2100) return d.toISOString();
+    }
+  }
   const ms = Date.parse(s);
   if (!Number.isNaN(ms)) {
     const y = new Date(ms).getUTCFullYear();
-    if (y < 1970) return "";
+    if (y < 1970 || y > 2100) return "";
+    return new Date(ms).toISOString();
   }
-  return s;
+  return "";
+}
+
+/** Approximate document time from Mongo ObjectId hex when posting dates are absent. */
+function isoFromMongoObjectIdHex(id: unknown): string {
+  const s = String(id ?? "").trim();
+  if (!/^[a-fA-F0-9]{24}$/.test(s)) return "";
+  const sec = Number.parseInt(s.slice(0, 8), 16);
+  if (!Number.isFinite(sec)) return "";
+  const d = new Date(sec * 1000);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString();
 }
 
 function sevenDaysAgoYmd(): string {
@@ -127,6 +172,8 @@ export interface LinkedInJobRow {
   lastSeen: string;
   /** From job.server `workplaceTypes` — used when `remoteAllowed` is absent. */
   workplaceTypes?: string[];
+  /** When ingest embeds a logo URL (Apify raw / optional denorm). */
+  companyLogoUrl?: string;
 }
 
 function parseJobListPayload(raw: unknown): {
@@ -173,15 +220,24 @@ function mapJobRow(item: unknown): LinkedInJobRow {
   );
 
   const postedAt = firstNonEmpty(
-    strIso(o.postedAt),
-    strIso(o.posted_at),
-    strIso(raw.time_posted),
-    strIso(raw.postedAt),
-    strIso(raw.posted_at),
-    strIso(o.ingestedAt),
-    strIso(o.ingested_at),
-    strIso(o.updatedAt),
-    strIso(o.updated_at),
+    parseFlexibleDate(o.postedAt),
+    parseFlexibleDate(o.posted_at),
+    parseFlexibleDate(raw.posted_at_timestamp),
+    parseFlexibleDate(raw.time_posted),
+    parseFlexibleDate(raw.postedAt),
+    parseFlexibleDate(raw.posted_at),
+    isoFromMongoObjectIdHex(o.id ?? o._id),
+    parseFlexibleDate(o.ingestedAt),
+    parseFlexibleDate(o.ingested_at),
+    parseFlexibleDate(o.updatedAt),
+    parseFlexibleDate(o.updated_at),
+  );
+
+  const companyLogoUrl = firstNonEmpty(
+    o.companyLogoUrl,
+    o.company_logo,
+    raw.company_logo,
+    raw.profile_pic,
   );
 
   const jobUrl = firstNonEmpty(
@@ -233,6 +289,7 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     location,
     lastSeen: String(o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? ""),
     workplaceTypes,
+    companyLogoUrl: companyLogoUrl || undefined,
   };
 }
 
@@ -258,36 +315,44 @@ export function useHiringSignals(
 ) {
   const signalTimePreset = options?.signalTimePreset ?? "all";
 
-  const [filters, setFilters] = useState<JobListFilters>({
-    titles: initial.titles,
-    companies: initial.companies,
-    locations: initial.locations,
-    employmentType: initial.employmentType,
-    employmentTypes: initial.employmentTypes,
-    seniority: initial.seniority,
-    functionCategory: initial.functionCategory,
-    postedAfter: initial.postedAfter,
-    postedBefore: initial.postedBefore,
-    runId: initial.runId,
-    workplaceTypes: initial.workplaceTypes,
-    industries: initial.industries,
-    excludedIndustries: initial.excludedIndustries,
-    excludedTitles: initial.excludedTitles,
-    excludedCompanies: initial.excludedCompanies,
-    excludedLocations: initial.excludedLocations,
-    salaryMin: initial.salaryMin,
-    experienceBuckets: initial.experienceBuckets,
-    roleTracks: initial.roleTracks,
-    educationLevelMins: initial.educationLevelMins,
-    clearanceMode: initial.clearanceMode,
-    h1bOnly: initial.h1bOnly,
-    skillsAll: initial.skillsAll,
-    hideApplied: initial.hideApplied ?? false,
-    countries: initial.countries,
-    applyMethod: initial.applyMethod,
-    listSort: initial.listSort,
-    limit: initial.limit ?? 25,
-    offset: initial.offset ?? 0,
+  const [filters, setFilters] = useState<JobListFilters>(() => {
+    const sortFields = coerceJobListSortFields(
+      initial as Partial<JobListFilters> & {
+        listSort?: "recent" | "oldest";
+      },
+    );
+    return {
+      titles: initial.titles,
+      companies: initial.companies,
+      locations: initial.locations,
+      employmentType: initial.employmentType,
+      employmentTypes: initial.employmentTypes,
+      seniority: initial.seniority,
+      functionCategory: initial.functionCategory,
+      postedAfter: initial.postedAfter,
+      postedBefore: initial.postedBefore,
+      runId: initial.runId,
+      workplaceTypes: initial.workplaceTypes,
+      industries: initial.industries,
+      excludedIndustries: initial.excludedIndustries,
+      excludedTitles: initial.excludedTitles,
+      excludedCompanies: initial.excludedCompanies,
+      excludedLocations: initial.excludedLocations,
+      salaryMin: initial.salaryMin,
+      experienceBuckets: initial.experienceBuckets,
+      roleTracks: initial.roleTracks,
+      educationLevelMins: initial.educationLevelMins,
+      clearanceMode: initial.clearanceMode,
+      h1bOnly: initial.h1bOnly,
+      skillsAll: initial.skillsAll,
+      hideApplied: initial.hideApplied ?? false,
+      countries: initial.countries,
+      applyMethod: initial.applyMethod,
+      sortKey: sortFields.sortKey,
+      sortOrder: sortFields.sortOrder,
+      limit: initial.limit ?? 25,
+      offset: initial.offset ?? 0,
+    };
   });
 
   const [jobs, setJobs] = useState<LinkedInJobRow[]>([]);
@@ -301,7 +366,11 @@ export function useHiringSignals(
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /** Ignore out-of-order responses when filters/sort change faster than the network. */
+  const hireSignalFetchGen = useRef(0);
+
   const refetch = useCallback(async () => {
+    const gen = ++hireSignalFetchGen.current;
     setLoading(true);
     setError(null);
     try {
@@ -313,17 +382,51 @@ export function useHiringSignals(
         fetchHiringSignalJobs({ ...filters, postedAfter }),
         fetchHiringSignalStats(),
       ]);
+      if (gen !== hireSignalFetchGen.current) {
+        return;
+      }
       const j = parseJobListPayload(jobsRes.hireSignal?.jobs);
+      // #region agent log
+      if (filters.sortKey === "title") {
+        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "fcf0fb",
+          },
+          body: JSON.stringify({
+            sessionId: "fcf0fb",
+            location: "useHiringSignals.ts:refetch:titleOrder",
+            message: "Row title order sample after hire-signal fetch",
+            data: {
+              sortKey: filters.sortKey,
+              sortOrder: filters.sortOrder,
+              rowCount: j.data.length,
+              titleInitials: j.data
+                .slice(0, 12)
+                .map((r) => (r.title || "").trim().slice(0, 1).toLowerCase()),
+            },
+            hypothesisId: "H-client-order",
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+      }
+      // #endregion
       setJobs(j.data);
       setTotal(j.total);
       setStats(parseStatsPayload(statsRes.hireSignal?.stats));
     } catch (e) {
+      if (gen !== hireSignalFetchGen.current) {
+        return;
+      }
       const msg = e instanceof Error ? e.message : "Failed to load jobs";
       setError(msg);
       toast.error("Hiring signals", { description: msg });
     } finally {
-      setLoading(false);
-      setStatsLoading(false);
+      if (gen === hireSignalFetchGen.current) {
+        setLoading(false);
+        setStatsLoading(false);
+      }
     }
   }, [filters, signalTimePreset]);
 

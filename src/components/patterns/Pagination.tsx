@@ -15,6 +15,8 @@ interface PaginationProps {
   total?: number;
   pageSize?: number;
   className?: string;
+  /** Forwarded to underlying UI pagination (single-page affordances). */
+  showWhenSinglePage?: boolean;
 }
 
 export function Pagination({
@@ -24,6 +26,7 @@ export function Pagination({
   total,
   pageSize = 10,
   className,
+  showWhenSinglePage,
 }: PaginationProps) {
   const resolvedTotal =
     total !== undefined ? total : (totalPages ?? 1) * pageSize;
@@ -35,6 +38,7 @@ export function Pagination({
       pageSize={pageSize}
       onPageChange={onPageChange}
       className={cn(className)}
+      showWhenSinglePage={showWhenSinglePage}
     />
   );
 }

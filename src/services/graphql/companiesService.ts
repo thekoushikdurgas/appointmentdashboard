@@ -40,9 +40,15 @@ export interface Company {
   domain?: string;
   website?: string;
   industry?: string;
+  /** All industries from API (for badges). */
+  industries?: string[];
   employeeCount?: number;
   description?: string;
+  city?: string;
+  state?: string;
   country?: string;
+  /** City, state, country joined for display. */
+  location?: string;
   linkedinUrl?: string;
   contactCount?: number;
   createdAt: string;
@@ -66,14 +72,19 @@ interface CompanyRow {
 
 function mapCompany(r: CompanyRow): Company {
   const ind = r.industries?.[0];
+  const loc = [r.city, r.state, r.country].filter(Boolean).join(", ");
   return {
     id: r.uuid,
     name: r.name ?? "",
     domain: r.normalizedDomain ?? undefined,
     website: r.website ?? undefined,
     industry: ind,
+    industries: r.industries ?? undefined,
     employeeCount: r.employeesCount ?? undefined,
+    city: r.city ?? undefined,
+    state: r.state ?? undefined,
     country: r.country ?? undefined,
+    location: loc || undefined,
     linkedinUrl: r.linkedinUrl ?? undefined,
     createdAt: r.createdAt ?? "",
     updatedAt: r.updatedAt ?? "",

@@ -10,6 +10,8 @@ import {
   pruneExpiredContactsListCaches,
   readContactsListCache,
   writeContactsListCache,
+  readContactsPageSizePreference,
+  writeContactsPageSizePreference,
 } from "@/lib/contactsListCache";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -45,7 +47,11 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSizeState] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize, setPageSizeState] = useState(() =>
+    typeof window === "undefined"
+      ? DEFAULT_PAGE_SIZE
+      : readContactsPageSizePreference(),
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vqlQuery, setVqlQuery] = useState<Partial<VqlQueryInput>>(
@@ -61,6 +67,7 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
       Math.max(10, Math.trunc(n) || DEFAULT_PAGE_SIZE),
     );
     setPageSizeState(next);
+    writeContactsPageSizePreference(next);
     setPage(1);
   }, []);
 

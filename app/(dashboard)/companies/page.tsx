@@ -10,16 +10,16 @@ import {
   Download,
   Upload,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
-import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Alert } from "@/components/ui/Alert";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
-import { Pagination } from "@/components/patterns/Pagination";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -28,7 +28,16 @@ import { companiesService } from "@/services/graphql/companiesService";
 import { useRole } from "@/context/RoleContext";
 import { CompanyExportModal } from "@/components/feature/companies/CompanyExportModal";
 import { CompanyImportModal } from "@/components/feature/companies/CompanyImportModal";
+import { CompanyCreateModal } from "@/components/feature/companies/CompanyCreateModal";
 import { CompaniesFilterSidebar } from "@/components/feature/companies/CompaniesFilterSidebar";
+import { CompaniesDataTable } from "@/components/feature/companies/CompaniesDataTable";
+import {
+  COMPANIES_DT_COLUMN_IDS,
+  COMPANIES_DT_DEFAULT_COLUMNS,
+  COMPANIES_DT_PAGE_SIZE_OPTIONS,
+  type CompaniesDataTableColumnId,
+} from "@/components/feature/companies/companiesTableModel";
+import { CompanyPagination } from "@/components/feature/companies/CompanyPagination";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
 import {
@@ -43,7 +52,6 @@ import {
   type DraftQuery,
 } from "@/lib/vqlDraft";
 import type {
-  CreateCompanyInput,
   VqlConditionInput,
   VqlFilterInput,
   VqlQueryInput,
@@ -53,12 +61,56 @@ import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
 type ViewMode = "list" | "card";
 
+const SORT_LABELS: Record<string, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  name_asc: "Name A→Z",
+  name_desc: "Name Z→A",
+};
+
+const VISIBLE_COLUMNS_STORAGE_KEY = "c360:companies:visibleColumns:v1";
+
+function loadVisibleColumns(): CompaniesDataTableColumnId[] {
+  if (typeof window === "undefined") return [...COMPANIES_DT_DEFAULT_COLUMNS];
+  try {
+    const raw = localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
+    if (!raw) return [...COMPANIES_DT_DEFAULT_COLUMNS];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [...COMPANIES_DT_DEFAULT_COLUMNS];
+    const ordered = COMPANIES_DT_COLUMN_IDS.filter((id) => parsed.includes(id));
+    return ordered.length > 0 ? ordered : [...COMPANIES_DT_DEFAULT_COLUMNS];
+  } catch {
+    return [...COMPANIES_DT_DEFAULT_COLUMNS];
+  }
+}
+
+/** Migrate legacy saved searches where each facet was a single string. */
+function normalizeCompanyFacetValues(
+  raw: Record<string, unknown>,
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (Array.isArray(v)) {
+      out[k] = v.map((x) => String(x).trim()).filter(Boolean);
+    } else if (v != null && String(v).trim() !== "") {
+      out[k] = [String(v).trim()];
+    } else {
+      out[k] = [];
+    }
+  }
+  return out;
+}
+
 export default function CompaniesPage() {
   const {
     companies,
     total,
     page,
     setPage,
+    pageSize,
+    setPageSize,
+    sortBy,
+    setSortBy,
     search,
     setSearch,
     loading,
@@ -66,29 +118,64 @@ export default function CompaniesPage() {
     exportVql,
     refresh,
     applyVqlQuery,
-    pageSize,
   } = useCompanies();
   const isDesktop = useIsDesktop();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
+    "comfortable",
+  );
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [facetValues, setFacetValues] = useState<Record<string, string>>({});
+  const [facetValues, setFacetValues] = useState<Record<string, string[]>>({});
   const [vqlOpen, setVqlOpen] = useState(false);
   const [advancedCompanyDraft, setAdvancedCompanyDraft] =
     useState<DraftQuery | null>(null);
-  const { sections: filterSections, loadFilterData } = useCompanyFilters();
+  const {
+    sections: filterSections,
+    loadFilterData,
+    loadMoreFilterData,
+    setFilterSearch,
+    refetchFiltersMetadata,
+  } = useCompanyFilters();
   const { isSuperAdmin } = useRole();
-  const totalPages = Math.ceil(total / pageSize);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [filtersRefreshing, setFiltersRefreshing] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<
+    CompaniesDataTableColumnId[]
+  >(() => [...COMPANIES_DT_DEFAULT_COLUMNS]);
+
+  useEffect(() => {
+    setVisibleColumns(loadVisibleColumns());
+  }, []);
+
+  useEffect(() => {
+    if (isDesktop) setMobileFiltersOpen(false);
+  }, [isDesktop]);
+
+  const handleFacetChange = useCallback((key: string, values: string[]) => {
+    setFacetValues((prev) => ({ ...prev, [key]: values }));
+  }, []);
 
   const facetFilter = useMemo((): VqlFilterInput | undefined => {
     const conditions: VqlConditionInput[] = [];
-    for (const [key, val] of Object.entries(facetValues)) {
-      if (val != null && String(val).trim() !== "") {
+    for (const [key, vals] of Object.entries(facetValues)) {
+      const trimmed = vals.map((v) => String(v).trim()).filter(Boolean);
+      if (trimmed.length === 0) continue;
+      if (trimmed.length === 1) {
         conditions.push({
           field: key,
           operator: "eq",
-          value: String(val).trim() as unknown as VqlConditionInput["value"],
+          value: trimmed[0] as unknown as VqlConditionInput["value"],
+        });
+      } else {
+        conditions.push({
+          field: key,
+          operator: "in",
+          value: trimmed as unknown as VqlConditionInput["value"],
         });
       }
     }
@@ -121,7 +208,6 @@ export default function CompaniesPage() {
     });
   }, [facetFilter, advancedCompanyDraft, applyVqlQuery]);
 
-  /** Same shape as passed to `applyVqlQuery` — used for saved-search payload. */
   const currentCompanyVqlQuery = useMemo((): Partial<VqlQueryInput> => {
     const parts: VqlFilterInput[] = [];
     if (facetFilter) parts.push(facetFilter);
@@ -148,15 +234,6 @@ export default function CompaniesPage() {
     ? countDraftConditions(advancedCompanyDraft.rootGroup)
     : 0;
 
-  const toolbarActiveCount = useMemo(() => {
-    let n = Object.values(facetValues).filter(
-      (v) => v != null && String(v).trim() !== "",
-    ).length;
-    if (search.trim()) n += 1;
-    if (advancedVqlRuleCount > 0) n += 1;
-    return n;
-  }, [facetValues, search, advancedVqlRuleCount]);
-
   const hasAdvancedBuilderState = useMemo(() => {
     if (!advancedCompanyDraft) return false;
     return (
@@ -174,6 +251,77 @@ export default function CompaniesPage() {
     setAdvancedCompanyDraft(null);
   }, []);
 
+  const hiddenColumnCount = COMPANIES_DT_COLUMN_IDS.filter(
+    (id) => !visibleColumns.includes(id),
+  ).length;
+
+  const sortChipLabel =
+    sortBy !== "newest" ? `Sort: ${SORT_LABELS[sortBy] ?? sortBy}` : null;
+
+  const toolbarActiveCount = useMemo(() => {
+    let n = Object.values(facetValues).filter((arr) => arr?.length > 0).length;
+    if (search.trim()) n += 1;
+    if (advancedVqlRuleCount > 0) n += 1;
+    if (sortBy !== "newest") n += 1;
+    if (hiddenColumnCount > 0) n += 1;
+    return n;
+  }, [facetValues, search, advancedVqlRuleCount, sortBy, hiddenColumnCount]);
+
+  const toggleColumn = useCallback((id: CompaniesDataTableColumnId) => {
+    setVisibleColumns((prev) => {
+      let next: CompaniesDataTableColumnId[];
+      if (prev.includes(id)) {
+        next = prev.filter((c) => c !== id);
+        if (next.length === 0) return prev;
+      } else {
+        next = [...prev, id];
+      }
+      const ordered = COMPANIES_DT_COLUMN_IDS.filter((col) =>
+        next.includes(col),
+      );
+      try {
+        localStorage.setItem(
+          VISIBLE_COLUMNS_STORAGE_KEY,
+          JSON.stringify(ordered),
+        );
+      } catch {
+        /* ignore */
+      }
+      return ordered;
+    });
+  }, []);
+
+  const resetVisibleColumns = useCallback(() => {
+    const next = [...COMPANIES_DT_DEFAULT_COLUMNS];
+    setVisibleColumns(next);
+    try {
+      localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleVisibleColumnsResolved = useCallback(
+    (next: CompaniesDataTableColumnId[]) => {
+      setVisibleColumns(next);
+      try {
+        localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
+
+  const handleRefreshFilters = useCallback(async () => {
+    setFiltersRefreshing(true);
+    try {
+      await refetchFiltersMetadata();
+    } finally {
+      setFiltersRefreshing(false);
+    }
+  }, [refetchFiltersMetadata]);
+
   const getCompanySavedPayload = useCallback((): CompanySavedSearchPayload => {
     return {
       version: SAVED_SEARCH_VERSION_SIDEBAR,
@@ -183,26 +331,46 @@ export default function CompaniesPage() {
       advancedCompanyDraft: advancedCompanyDraft
         ? structuredClone(advancedCompanyDraft)
         : null,
+      sortBy,
+      pageSize,
     };
-  }, [currentCompanyVqlQuery, search, facetValues, advancedCompanyDraft]);
+  }, [
+    currentCompanyVqlQuery,
+    search,
+    facetValues,
+    advancedCompanyDraft,
+    sortBy,
+    pageSize,
+  ]);
 
   const handleApplyCompanySaved = useCallback(
     (p: CompanySavedSearchPayload) => {
       if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
         setSearch(p.search);
-        setFacetValues({ ...p.facetValues });
+        setFacetValues(
+          normalizeCompanyFacetValues(p.facetValues as Record<string, unknown>),
+        );
         setAdvancedCompanyDraft(
           p.advancedCompanyDraft
             ? structuredClone(p.advancedCompanyDraft)
             : null,
         );
+        if (p.sortBy) setSortBy(p.sortBy);
+        if (p.pageSize) setPageSize(p.pageSize);
         applyVqlQuery(p.vqlQuery);
       } else if (p.version === SAVED_SEARCH_VERSION) {
         setSearch(p.search);
         applyVqlQuery(p.vqlQuery);
       }
     },
-    [applyVqlQuery, setSearch, setFacetValues, setAdvancedCompanyDraft],
+    [
+      applyVqlQuery,
+      setSearch,
+      setFacetValues,
+      setAdvancedCompanyDraft,
+      setSortBy,
+      setPageSize,
+    ],
   );
 
   const companySavedSearchesMenu = useMemo(
@@ -227,17 +395,32 @@ export default function CompaniesPage() {
         <CompaniesFilterSidebar
           search={search}
           onSearchChange={setSearch}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
           filterSections={filterSections}
           facetValues={facetValues}
-          onFacetChange={(key, val) =>
-            setFacetValues((prev) => ({ ...prev, [key]: val }))
-          }
+          onFacetChange={handleFacetChange}
           onSectionExpand={loadFilterData}
+          onLoadMoreFacet={loadMoreFilterData}
+          setFacetSearch={setFilterSearch}
           advancedVqlRuleCount={advancedVqlRuleCount}
           onClearVql={clearCompanyVql}
           onOpenAdvanced={() => setVqlOpen(true)}
+          visibleColumns={visibleColumns}
+          onToggleColumn={toggleColumn}
+          sortChipLabel={sortChipLabel}
+          hiddenColumnCount={hiddenColumnCount}
+          onResetVisibleColumns={resetVisibleColumns}
+          onRefreshFilters={handleRefreshFilters}
+          filtersRefreshing={filtersRefreshing}
+          drawerTitleId="c360-companies-filter-drawer-title"
+          onCloseDrawer={
+            isDesktop ? undefined : () => setMobileFiltersOpen(false)
+          }
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          tableDensity={tableDensity}
+          onTableDensityChange={setTableDensity}
         />
       </>
     ),
@@ -246,80 +429,51 @@ export default function CompaniesPage() {
       companySavedSearchesMenu,
       search,
       setSearch,
+      sortBy,
+      setSortBy,
       filterSections,
       facetValues,
+      handleFacetChange,
       loadFilterData,
+      loadMoreFilterData,
+      setFilterSearch,
       advancedVqlRuleCount,
       clearCompanyVql,
+      visibleColumns,
+      toggleColumn,
+      sortChipLabel,
+      hiddenColumnCount,
+      resetVisibleColumns,
+      handleRefreshFilters,
+      filtersRefreshing,
       viewMode,
-      setViewMode,
+      tableDensity,
     ],
   );
-
-  type CreateCompanyForm = {
-    name: string;
-    employeesCount: string;
-    industriesCsv: string;
-    address: string;
-    textSearch: string;
-  };
-
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateCompanyForm>({
-    name: "",
-    employeesCount: "",
-    industriesCsv: "",
-    address: "",
-    textSearch: "",
-  });
-
-  const toCreateInput = (): CreateCompanyInput => {
-    const industries = createForm.industriesCsv
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return {
-      name: createForm.name.trim() || undefined,
-      employeesCount: createForm.employeesCount.trim()
-        ? Number(createForm.employeesCount)
-        : undefined,
-      industries: industries.length ? industries : undefined,
-      address: createForm.address.trim() || undefined,
-      textSearch: createForm.textSearch.trim() || undefined,
-    };
-  };
-
-  const handleCreateCompany = async () => {
-    if (!createForm.name.trim()) return;
-    setCreating(true);
-    try {
-      await companiesService.create(toCreateInput());
-      toast.success("Company created successfully!");
-      setCreateOpen(false);
-      setCreateForm({
-        name: "",
-        employeesCount: "",
-        industriesCsv: "",
-        address: "",
-        textSearch: "",
-      });
-      refresh?.();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create company");
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
+      totalCount={total}
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
         show: !isDesktop,
       }}
+      actionPrefix={
+        <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
+          <span className="c360-contacts-dt__toolbar-label">Show</span>
+          <Select
+            options={[...COMPANIES_DT_PAGE_SIZE_OPTIONS]}
+            value={String(pageSize)}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            fullWidth={false}
+            className="c360-contacts-dt__page-size"
+            inputSize="sm"
+            aria-label="Rows per page"
+          />
+        </div>
+      }
       actions={[
         {
           label: hasAdvancedBuilderState ? "Edit filters" : "Advanced filter",
@@ -372,9 +526,9 @@ export default function CompaniesPage() {
       filtersPeekRail
       filtersPeekScope="companies"
       filtersPinExtra={companySavedSearchesMenu}
-      pagination={
-        totalPages > 1 ? (
-          <Pagination
+      metadata={
+        !loading && total > 0 ? (
+          <CompanyPagination
             page={page}
             total={total}
             pageSize={pageSize}
@@ -436,7 +590,25 @@ export default function CompaniesPage() {
           );
         })()}
 
-      {loading ? (
+      {selected.length > 0 && (
+        <div className="c360-floating-bar c360-floating-bar--kit">
+          <span>
+            <strong>{selected.length}</strong> selected
+          </span>
+          <div className="c360-badge-row">
+            <Button
+              variant="danger"
+              size="sm"
+              leftIcon={<Trash2 size={14} />}
+              onClick={() => setDeleteOpen(true)}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {loading && companies.length === 0 ? (
         <div className="c360-text-center c360-p-12">
           <span className="c360-spinner" />
         </div>
@@ -445,7 +617,6 @@ export default function CompaniesPage() {
           <div className="c360-empty-state">No companies found</div>
         </Card>
       ) : viewMode === "card" ? (
-        /* Card grid view */
         <>
           <div className="c360-widget-grid">
             {companies.map((company) => (
@@ -511,147 +682,75 @@ export default function CompaniesPage() {
           </div>
         </>
       ) : (
-        /* Table list view */
         <Card padding="none">
-          <div className="c360-table-wrapper">
-            <table className="c360-table">
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Industry</th>
-                  <th>Size</th>
-                  <th>Domain</th>
-                  <th>Contacts</th>
-                  <th>Added</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companies.map((company) => (
-                  <tr key={company.id}>
-                    <td>
-                      <div className="c360-flex c360-items-center c360-gap-3">
-                        <div className="c360-company-icon-box c360-company-icon-box--sm">
-                          <Building2 size={16} className="c360-text-primary" />
-                        </div>
-                        <div>
-                          <Link
-                            href={`/companies/${company.id}`}
-                            className="c360-font-medium c360-text-body"
-                          >
-                            {company.name}
-                          </Link>
-                          {company.website && (
-                            <div className="c360-text-xs c360-text-muted">
-                              {company.website}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge color="blue">{company.industry || "—"}</Badge>
-                    </td>
-                    <td className="c360-text-muted">
-                      {company.employeeCount
-                        ? formatCompact(company.employeeCount)
-                        : "—"}
-                    </td>
-                    <td className="c360-text-muted">{company.domain || "—"}</td>
-                    <td>
-                      <div className="c360-flex c360-items-center c360-gap-1">
-                        <Users size={14} className="c360-text-muted" />
-                        <span className="c360-text-muted">
-                          {company.contactCount || 0}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="c360-text-muted">
-                      {formatDate(company.createdAt)}
-                    </td>
-                    <td>
-                      <Link href={`/companies/${company.id}`}>
-                        <Button variant="ghost" size="sm" title="View">
-                          <ExternalLink size={14} />
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="c360-p-0">
+            <CompaniesDataTable
+              rows={companies}
+              total={total}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              loading={loading}
+              error={error}
+              search={search}
+              onSearchChange={setSearch}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              selected={selected}
+              onSelectionChange={setSelected}
+              onRetry={() => void refresh()}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
+              onVisibleColumnsResolved={handleVisibleColumnsResolved}
+              showToolbarSearch={false}
+              showColumnPicker={false}
+              showPageSizeControl={false}
+              showPaginationFooter={false}
+              density={tableDensity}
+            />
           </div>
         </Card>
       )}
+
       <CompanyImportModal
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
         onImported={() => void refresh?.()}
       />
 
-      {/* Create Company Modal */}
-      <Modal
+      <CompanyCreateModal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="Add New Company"
-        size="md"
-      >
-        <div className="c360-section-stack">
-          <p className="c360-text-muted c360-text-sm c360-m-0">
-            Fields match gateway{" "}
-            <code className="c360-text-xs">CreateCompanyInput</code> (no
-            separate website/domain/country on the schema — use text search for
-            hints).
-          </p>
-          <Input
-            label="Company name *"
-            value={createForm.name}
-            onChange={(e) =>
-              setCreateForm((f) => ({ ...f, name: e.target.value }))
+        onCreated={() => void refresh?.()}
+      />
+
+      <ConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        processing={bulkDeleting}
+        onConfirm={async () => {
+          setBulkDeleting(true);
+          try {
+            for (const id of selected) {
+              await companiesService.delete(id);
             }
-          />
-          <Input
-            label="Employee count"
-            type="number"
-            value={createForm.employeesCount}
-            onChange={(e) =>
-              setCreateForm((f) => ({ ...f, employeesCount: e.target.value }))
-            }
-            placeholder="e.g. 50"
-          />
-          <Input
-            label="Industries"
-            value={createForm.industriesCsv}
-            onChange={(e) =>
-              setCreateForm((f) => ({ ...f, industriesCsv: e.target.value }))
-            }
-            placeholder="Technology, Finance (comma-separated)"
-          />
-          <Input
-            label="Address"
-            value={createForm.address}
-            onChange={(e) =>
-              setCreateForm((f) => ({ ...f, address: e.target.value }))
-            }
-          />
-          <Input
-            label="Text search / domain / location hints"
-            value={createForm.textSearch}
-            onChange={(e) =>
-              setCreateForm((f) => ({ ...f, textSearch: e.target.value }))
-            }
-            placeholder="e.g. example.com or San Francisco"
-          />
-          <div className="c360-modal-actions">
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button loading={creating} onClick={handleCreateCompany}>
-              Create Company
-            </Button>
-          </div>
-        </div>
-      </Modal>
+            toast.success(`Deleted ${selected.length} compan(y/ies).`);
+            setDeleteOpen(false);
+            setSelected([]);
+            await refresh();
+          } catch (e) {
+            toast.error(
+              e instanceof Error ? e.message : "Failed to delete companies",
+            );
+          } finally {
+            setBulkDeleting(false);
+          }
+        }}
+        title={`Delete ${selected.length} companies?`}
+        message="This action cannot be undone. All selected companies will be permanently deleted."
+        confirmLabel="Delete"
+      />
     </DataPageLayout>
   );
 }

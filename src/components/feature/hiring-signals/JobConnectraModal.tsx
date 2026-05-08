@@ -19,6 +19,7 @@ import {
   pickCompanyDisplay,
   pickContactDisplay,
   connectraContactStableKey,
+  proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 type ConnectraState =
@@ -92,10 +93,11 @@ export function JobConnectraModal({
         const company = a.data?.company;
         const contacts = b.data?.contacts;
         const poster = b.data?.job_poster_contact;
+        const contactList = Array.isArray(contacts) ? contacts : [];
         setState({
           kind: "ok",
           company: company ?? null,
-          contacts: Array.isArray(contacts) ? contacts : [],
+          contacts: contactList,
           poster: poster ?? null,
         });
       } catch (e) {
@@ -118,6 +120,16 @@ export function JobConnectraModal({
       ? pickContactDisplay(state.poster)
       : null;
 
+  const subtitleCanonical =
+    companyDisp?.name?.trim() || job.companyName?.trim() || "";
+  const rowNameNorm = job.companyName?.trim().toLowerCase() ?? "";
+  const connectraNameNorm = companyDisp?.name?.trim().toLowerCase() ?? "";
+  const companyNameMismatch =
+    state.kind === "ok" &&
+    Boolean(job.companyName?.trim()) &&
+    Boolean(companyDisp?.name?.trim()) &&
+    rowNameNorm !== connectraNameNorm;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -125,10 +137,19 @@ export function JobConnectraModal({
       title="Connectra for this role"
       size="lg"
     >
-      <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-        LinkedIn job <span className="c360-font-mono">{job.linkedinJobId}</span>
-        {job.companyName ? ` · ${job.companyName}` : null}
-      </p>
+      <div className="c360-mb-2 c360-space-y-1">
+        <p className="c360-text-2xs c360-text-ink-muted">
+          LinkedIn job{" "}
+          <span className="c360-font-mono">{job.linkedinJobId}</span>
+          {subtitleCanonical ? ` · ${subtitleCanonical}` : null}
+        </p>
+        {companyNameMismatch ? (
+          <p className="c360-text-2xs c360-text-ink-muted">
+            Hiring table showed “{job.companyName}”; Connectra company name is
+            canonical above.
+          </p>
+        ) : null}
+      </div>
 
       {state.kind === "loading" || state.kind === "idle" ? (
         <div className="c360-space-y-3 c360-py-4" aria-busy>
@@ -168,7 +189,7 @@ export function JobConnectraModal({
                     {companyDisp?.profilePic ? (
                       // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
                       <img
-                        src={companyDisp.profilePic}
+                        src={proxiedCompanyLogoSrc(companyDisp.profilePic)}
                         alt=""
                         className="c360-h-full c360-w-full c360-object-cover"
                       />
@@ -275,7 +296,10 @@ export function JobConnectraModal({
             </h3>
             {state.contacts.length === 0 ? (
               <p className="c360-text-2xs c360-text-ink-muted">
-                No contact rows returned.
+                No contacts indexed in Connectra for this job&apos;s{" "}
+                <span className="c360-font-mono">company_uuid</span>. Export and
+                indexing jobs may still be pending, or this company has no
+                contact documents yet.
               </p>
             ) : (
               <ul

@@ -19,6 +19,7 @@ import {
   Undo,
   Redo,
 } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 
 interface TiptapEditorProps {
   content?: string;
@@ -199,8 +200,8 @@ export function TiptapEditor({
           </div>
         ))}
         {/* Heading select */}
-        <select
-          className="c360-tiptap__heading-select"
+        <Select
+          defaultValue="0"
           onChange={(e) => {
             const v = Number(e.target.value);
             if (v === 0) editor.chain().focus().setParagraph().run();
@@ -211,12 +212,15 @@ export function TiptapEditor({
                 .toggleHeading({ level: v as 1 | 2 | 3 })
                 .run();
           }}
-        >
-          <option value={0}>Paragraph</option>
-          <option value={1}>Heading 1</option>
-          <option value={2}>Heading 2</option>
-          <option value={3}>Heading 3</option>
-        </select>
+          options={[
+            { value: "0", label: "Paragraph" },
+            { value: "1", label: "Heading 1" },
+            { value: "2", label: "Heading 2" },
+            { value: "3", label: "Heading 3" },
+          ]}
+          fullWidth={false}
+          triggerClassName="c360-tiptap__heading-select"
+        />
       </div>
 
       {/* Editor area */}

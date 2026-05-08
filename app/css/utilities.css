@@ -745,6 +745,11 @@
 .c360-overflow-auto {
   overflow: auto;
 }
+
+/* Used by hiring-signals remote logos (was referenced in TSX but missing) */
+.c360-object-cover {
+  object-fit: cover;
+}
 .c360-relative {
   position: relative;
 }

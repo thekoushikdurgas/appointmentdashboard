@@ -5,12 +5,18 @@ import { ChevronDown } from "lucide-react";
 import { Popover } from "@/components/ui/Popover";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { cn } from "@/lib/utils";
-import type { ContactFilterData } from "@/graphql/generated/types";
+import { useDataFiltersPeek } from "@/context/DataFiltersPeekContext";
+/** Shared shape for contact / company filter facet rows. */
+export type FilterComboboxOption = {
+  value: string;
+  displayValue: string;
+  count?: number | null;
+};
 
 export interface FilterComboboxProps {
   /** Accessible label for the combobox. */
   label: string;
-  options: ContactFilterData[];
+  options: FilterComboboxOption[];
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
   loading: boolean;
@@ -41,11 +47,33 @@ export function FilterCombobox({
   disabled = false,
   className,
 }: FilterComboboxProps) {
+  const peek = useDataFiltersPeek();
+  const peekRef = useRef(peek);
+  peekRef.current = peek;
   const [panelOpen, setPanelOpen] = useState(false);
+  const panelOpenRef = useRef(false);
   const [focusIndex, setFocusIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const wasPanelOpen = useRef(false);
+
+  panelOpenRef.current = panelOpen;
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setPanelOpen(open);
+      peek?.notifyFilterOverlayOpen(open);
+    },
+    [peek],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (panelOpenRef.current) {
+        peekRef.current?.notifyFilterOverlayOpen(false);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (panelOpen && !wasPanelOpen.current) {
@@ -124,16 +152,15 @@ export function FilterCombobox({
         width={320}
         align="start"
         placement="bottom"
-        onOpenChange={setPanelOpen}
+        onOpenChange={handleOpenChange}
         panelClassName="c360-filter-combobox__panel"
         trigger={
           <button
             type="button"
             disabled={disabled}
             className={cn(
-              "c360-input",
-              "c360-input--sm",
-              "c360-select",
+              "c360-select__trigger",
+              "c360-select__trigger--sm",
               "c360-filter-combobox__trigger",
               "c360-flex",
               "c360-items-center",

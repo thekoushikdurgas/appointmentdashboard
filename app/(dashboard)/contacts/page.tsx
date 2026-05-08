@@ -265,15 +265,17 @@ export default function ContactsPage() {
     }
   }, []);
 
-  const toggleSelect = (id: string) =>
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-
-  const toggleAll = () =>
-    setSelected(
-      selected.length === contacts.length ? [] : contacts.map((c) => c.id),
-    );
+  const handleVisibleColumnsResolved = useCallback(
+    (next: ContactsDataTableColumnId[]) => {
+      setVisibleColumns(next);
+      try {
+        localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
 
   const toggleRow = (id: string) =>
     setExpandedRow((prev) => (prev === id ? null : id));
@@ -607,8 +609,6 @@ export default function ContactsPage() {
     />
   );
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
   return (
     <DataPageLayout
       filters={filtersSidebar}
@@ -620,8 +620,8 @@ export default function ContactsPage() {
       filtersPeekRail
       filtersPeekScope="contacts"
       filtersPinExtra={contactSavedSearchesMenu}
-      pagination={
-        totalPages > 1 ? (
+      metadata={
+        !loading && total > 0 ? (
           <ContactPagination
             page={page}
             total={total}
@@ -787,8 +787,8 @@ export default function ContactsPage() {
             sortBy={sortBy}
             onSortChange={setSortBy}
             selected={selected}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAllPage={toggleAll}
+            onSelectionChange={setSelected}
+            onVisibleColumnsResolved={handleVisibleColumnsResolved}
             expandedRow={expandedRow}
             onToggleExpand={toggleRow}
             onRetry={() => void refresh()}

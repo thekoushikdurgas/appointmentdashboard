@@ -36,6 +36,9 @@
   padding: 0;
   border-bottom: 1px solid var(--c360-border);
 }
+.c360-contact-detail-expand-cell--block {
+  width: 100%;
+}
 .c360-contact-detail-grid {
   padding: var(--c360-spacing-4) var(--c360-spacing-6);
   background: var(--c360-bg);
@@ -144,6 +147,10 @@
   border: 1px solid var(--c360-border);
   border-radius: var(--c360-radius-md);
   background: var(--c360-bg-elevated, #fff);
+}
+/* MUI DataGrid — contacts list (same min-width idea as legacy `.c360-contacts-dt__table`) */
+.c360-contacts-data-grid .MuiDataGrid-root {
+  min-width: 1080px;
 }
 .c360-contacts-dt__table {
   width: 100%;
@@ -684,6 +691,78 @@
   width: fit-content;
 }
 
+/* Companies list: range + pagination in `DataPageLayout` metadata (directly under toolbar) */
+.c360-company-pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  background: var(--c360-kit-toolbar-bg, var(--c360-bg-elevated));
+  border: 1px solid var(--c360-kit-toolbar-border, var(--c360-border));
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-kit-shadow-soft, 0 0 40px rgba(82, 63, 105, 0.08));
+}
+.c360-company-pagination-bar__range {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__metadata {
+  width: 100%;
+}
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__metadata
+  .c360-company-pagination-bar {
+  border-radius: 0;
+  border-top: none;
+  box-shadow: none;
+}
+
+/* Contacts list: range + pagination in `DataPageLayout` metadata (directly under toolbar) */
+.c360-contact-pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  background: var(--c360-kit-toolbar-bg, var(--c360-bg-elevated));
+  border: 1px solid var(--c360-kit-toolbar-border, var(--c360-border));
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-kit-shadow-soft, 0 0 40px rgba(82, 63, 105, 0.08));
+}
+.c360-contact-pagination-bar__range {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__metadata {
+  width: 100%;
+}
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__content
+  > .c360-data-layout__metadata
+  .c360-contact-pagination-bar {
+  border-radius: 0;
+  border-top: none;
+  box-shadow: none;
+}
+
 /* Root: same rhythm as main sidebar (`c360-sidebar__nav` / mydesigns sidebar — flat list, muted + hover surface) */
 .c360-contacts-filters {
   display: flex;
@@ -928,4 +1007,9 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+/* Companies list — MUI DataGrid (same shell + scroll behavior as hiring signals) */
+.c360-companies-data-grid .MuiDataGrid-root {
+  min-width: 960px;
 }

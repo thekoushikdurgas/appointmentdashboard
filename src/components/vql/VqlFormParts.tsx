@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import {
   getFieldMeta,
@@ -33,24 +34,23 @@ export function VqlFieldSelect({
     company_denorm: "Company (filter)",
     company: "Company",
   };
+  const optionGroups = (Object.keys(groups) as string[]).map((gk) => ({
+    label: labels[gk] ?? gk,
+    options: groups[gk].map((f) => ({
+      value: f.key,
+      label: f.label,
+    })),
+  }));
   return (
-    <select
-      className={cn("c360-input c360-select c360-vql-field-select", className)}
+    <Select
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      leadingOptions={[{ value: "", label: "Field…" }]}
+      optionGroups={optionGroups}
       aria-label="Field"
-    >
-      <option value="">Field…</option>
-      {(Object.keys(groups) as string[]).map((gk) => (
-        <optgroup key={gk} label={labels[gk] ?? gk}>
-          {groups[gk].map((f) => (
-            <option key={f.key} value={f.key}>
-              {f.label}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
+      fullWidth={false}
+      className={cn("c360-vql-field-select", className)}
+    />
   );
 }
 
@@ -96,21 +96,14 @@ export function VqlOperatorSelect({
         ? RANGE_OPS
         : KW_OPS;
   return (
-    <select
-      className={cn(
-        "c360-input c360-select c360-vql-operator-select",
-        className,
-      )}
+    <Select
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      options={opts.map((o) => ({ value: o.v, label: o.l }))}
       aria-label="Operator"
-    >
-      {opts.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
+      fullWidth={false}
+      className={cn("c360-vql-operator-select", className)}
+    />
   );
 }
 
@@ -292,15 +285,17 @@ export function VqlGroupEditor({
     >
       <div className="c360-flex c360-items-center c360-gap-2 c360-mb-2">
         <span className="c360-text-sm c360-text-muted">Match</span>
-        <select
-          className="c360-input c360-select c360-w-auto"
+        <Select
           value={group.logic}
           onChange={(e) => setLogic(e.target.value === "or" ? "or" : "and")}
+          options={[
+            { value: "and", label: "ALL (AND)" },
+            { value: "or", label: "ANY (OR)" },
+          ]}
           aria-label="Group logic"
-        >
-          <option value="and">ALL (AND)</option>
-          <option value="or">ANY (OR)</option>
-        </select>
+          fullWidth={false}
+          triggerClassName="c360-w-auto"
+        />
         {group.logic === "or" ? (
           <span className="c360-text-xs c360-text-muted">
             Multiple OR branches merge as AND on the API until server supports

@@ -247,11 +247,6 @@ const DATE_POSTED_PRESET_LABELS: Record<
   "30d": "Past month",
 };
 
-const SORT_OPTIONS = [
-  { value: "recent", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-];
-
 const VIEW_MODE_OPTIONS = [
   { value: "comfortable", label: "Comfortable" },
   { value: "compact", label: "Compact" },
@@ -597,13 +592,12 @@ export function HiringSignalsFilterSidebar({
 
   const experienceLevelCount = seniorityCount + expBucketCount;
 
-  const sortActiveCount = draft.listSort === "oldest" ? 1 : 0;
-
   const onDatePostedPresetChange = (raw: string) => {
     const v = raw as DatePostedPreset;
     if (v === "any") {
       onDraftField("datePostedPreset", "any");
       onDraftField("postedAfter", "");
+      onDraftField("postedBefore", "");
       return;
     }
     if (v === "custom") {
@@ -613,6 +607,7 @@ export function HiringSignalsFilterSidebar({
     if (v === "24h" || v === "7d" || v === "30d") {
       onDraftField("datePostedPreset", v);
       onDraftField("postedAfter", postedAfterISOFromPreset(v));
+      onDraftField("postedBefore", "");
     }
   };
 
@@ -686,22 +681,6 @@ export function HiringSignalsFilterSidebar({
             />
           </ContactsCollapsibleFilterSection>
         ) : null}
-
-        <ContactsCollapsibleFilterSection
-          title="Sort"
-          count={sortActiveCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("listSort", "recent")}
-        >
-          <Select
-            id="hsf-sort"
-            value={draft.listSort === "oldest" ? "oldest" : "recent"}
-            onChange={(e) => onDraftField("listSort", e.target.value)}
-            options={SORT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
           title="Date posted"

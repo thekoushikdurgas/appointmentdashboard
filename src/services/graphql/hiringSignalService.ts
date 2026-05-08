@@ -392,6 +392,32 @@ export type HireSignalExportDownloadUrlResponse = {
   expiresIn: number;
 } | null;
 
+/** job.server `sort_field` / `sort_order` (Mongo BSON names). */
+export type JobListSortKey =
+  | "posted_at"
+  | "title"
+  | "company_name"
+  | "location"
+  | "employment_type";
+
+export type JobListSortOrder = "asc" | "desc";
+
+const DEFAULT_JOB_SORT_KEY: JobListSortKey = "posted_at";
+const DEFAULT_JOB_SORT_ORDER: JobListSortOrder = "desc";
+
+/** Merge persisted filters with legacy `listSort` (saved searches). */
+export function coerceJobListSortFields(
+  f: Partial<JobListFilters> & { listSort?: "recent" | "oldest" },
+): { sortKey: JobListSortKey; sortOrder: JobListSortOrder } {
+  if (!f.sortKey && f.listSort === "oldest") {
+    return { sortKey: "posted_at", sortOrder: "asc" };
+  }
+  return {
+    sortKey: f.sortKey ?? DEFAULT_JOB_SORT_KEY,
+    sortOrder: f.sortOrder ?? DEFAULT_JOB_SORT_ORDER,
+  };
+}
+
 export interface JobListFilters {
   /** Substring tokens, OR within field (matches job.server + gateway). */
   titles?: string[];
@@ -426,10 +452,9 @@ export interface JobListFilters {
   countries?: string[];
   /** Substring match on apply_method (e.g. SimpleOnsiteApply). */
   applyMethod?: string;
-  /**
-   * Mirrors draft sort — sent as `extendedJobFilters.postedAtOrder` → job.server `posted_at` order.
-   */
-  listSort?: "recent" | "oldest";
+  /** Column sort — extendedJobFilters.sortField / sortOrder → job.server query params. */
+  sortKey?: JobListSortKey;
+  sortOrder?: JobListSortOrder;
   limit: number;
   offset: number;
 }
@@ -476,8 +501,15 @@ function buildExtendedJobFilters(
   if (filters.skillsAll?.length) x.skillsAll = filters.skillsAll;
   if (filters.countries?.length) x.countries = filters.countries;
   if (filters.applyMethod?.trim()) x.applyMethod = filters.applyMethod.trim();
-  if (filters.listSort === "oldest") {
-    x.postedAtOrder = "asc";
+  const { sortKey, sortOrder } = coerceJobListSortFields(
+    filters as JobListFilters & { listSort?: "recent" | "oldest" },
+  );
+  if (
+    sortKey !== DEFAULT_JOB_SORT_KEY ||
+    sortOrder !== DEFAULT_JOB_SORT_ORDER
+  ) {
+    x.sortField = sortKey;
+    x.sortOrder = sortOrder === "asc" ? "asc" : "desc";
   }
   return Object.keys(x).length > 0 ? x : null;
 }

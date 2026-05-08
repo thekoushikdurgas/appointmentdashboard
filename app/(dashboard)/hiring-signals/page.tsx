@@ -20,7 +20,13 @@ import {
 import { RunScrapeModal } from "@/components/feature/hiring-signals/RunScrapeModal";
 import { RunsTab } from "@/components/feature/hiring-signals/RunsTab";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
-import { HiringSignalsDataTable } from "@/components/feature/hiring-signals/HiringSignalsDataTable";
+import {
+  HiringSignalsDataTable,
+  HiringSignalsToolbarTableExtras,
+  HS_DT_COLUMN_IDS,
+  HS_DT_DEFAULT_COLUMNS,
+  type HiringSignalsDataTableColumnId,
+} from "@/components/feature/hiring-signals/HiringSignalsDataTable";
 import {
   HiringSignalsExportModal,
   type HiringSignalsExportIntent,
@@ -34,10 +40,12 @@ import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
 import { parseOperationError } from "@/lib/errorParser";
 import {
+  coerceJobListSortFields,
   exportSelectedHireSignalJobs,
   fetchHireSignalExportStatus,
   fetchLinkedinJobIdsAllMatching,
   fetchLinkedinJobIdsFirstN,
+  type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "sonner";
@@ -48,6 +56,22 @@ import {
   HIRE_SIGNAL_SAVED_SEARCH_VERSION,
   type HireSignalSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
+
+const HS_VISIBLE_COLUMNS_STORAGE_KEY = "c360:hiringSignals:visibleColumns:v1";
+
+function loadHireSignalVisibleColumns(): HiringSignalsDataTableColumnId[] {
+  if (typeof window === "undefined") return [...HS_DT_DEFAULT_COLUMNS];
+  try {
+    const raw = localStorage.getItem(HS_VISIBLE_COLUMNS_STORAGE_KEY);
+    if (!raw) return [...HS_DT_DEFAULT_COLUMNS];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [...HS_DT_DEFAULT_COLUMNS];
+    const ordered = HS_DT_COLUMN_IDS.filter((id) => parsed.includes(id));
+    return ordered.length > 0 ? ordered : [...HS_DT_DEFAULT_COLUMNS];
+  } catch {
+    return [...HS_DT_DEFAULT_COLUMNS];
+  }
+}
 
 type HiringPageHiring = ReturnType<typeof useHiringSignals>;
 
@@ -71,6 +95,7 @@ function HiringSignalsPageBody({
     filters,
     setFilters,
     setPage,
+    setPageSize,
     refetch,
     currentPage,
   } = hiring;
@@ -90,6 +115,9 @@ function HiringSignalsPageBody({
   const [connectraRow, setConnectraRow] = useState<LinkedInJobRow | null>(null);
   const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [visibleColumns, setVisibleColumns] = useState<
+    HiringSignalsDataTableColumnId[]
+  >(() => [...HS_DT_DEFAULT_COLUMNS]);
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [runsReloadTick, setRunsReloadTick] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -123,6 +151,21 @@ function HiringSignalsPageBody({
     setFilters((f) => ({ ...f, runId: undefined, offset: 0 }));
   }, [setFilters]);
 
+  const handleGridColumnVisibilityResolved = useCallback(
+    (cols: HiringSignalsDataTableColumnId[]) => {
+      setVisibleColumns(cols);
+      try {
+        localStorage.setItem(
+          HS_VISIBLE_COLUMNS_STORAGE_KEY,
+          JSON.stringify(cols),
+        );
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
+
   const getHireSignalSavedPayload =
     useCallback((): HireSignalSavedSearchPayload => {
       return {
@@ -135,7 +178,14 @@ function HiringSignalsPageBody({
   const handleApplyHireSignalSaved = useCallback(
     (p: HireSignalSavedSearchPayload) => {
       setSignalTimePreset(p.signalTimePreset);
-      setFilters({ ...p.listFilters, offset: 0 });
+      const lf = p.listFilters as JobListFilters & {
+        listSort?: "recent" | "oldest";
+      };
+      setFilters({
+        ...lf,
+        ...coerceJobListSortFields(lf),
+        offset: 0,
+      });
     },
     [setFilters, setSignalTimePreset],
   );
@@ -258,58 +308,121 @@ function HiringSignalsPageBody({
     if (tab === "runs" && showRunsTab) setMainTab("runs");
   }, [searchParams, showRunsTab]);
 
-  const signalsToolbar = (
-    <DataToolbar
-      cssPrefix="c360-toolbar"
-      tabs={[
-        {
-          value: "all",
-          label: "All signals",
-          count: total,
-          showCountOnlyWhenActive: true,
-        },
-        {
-          value: "new",
-          label: "New (7 days)",
-          count: total,
-          showCountOnlyWhenActive: true,
-        },
-      ]}
-      activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
-      onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
-      totalCount={total}
-      filterConfig={{
-        activeCount: activeDraftCount,
-        onOpen: () => setMobileFiltersOpen(true),
-        show: !isDesktop,
-      }}
-      actions={[
-        {
-          label: "Export XLSX",
-          onClick: () => setExportModalOpen(true),
-          icon: Download,
-          variant: "secondary",
-          disabled: loading || total === 0,
-        },
-        {
-          label: "Refresh",
-          onClick: () => void refetch(),
-          icon: RefreshCw,
-          variant: "secondary",
-          disabled: loading,
-        },
-        ...(isSuperAdmin
-          ? [
-              {
-                label: "Run scrape",
-                onClick: () => setScrapeModalOpen(true),
-                icon: Play,
-                variant: "primary" as const,
-              },
-            ]
-          : []),
-      ]}
-    />
+  useEffect(() => {
+    setVisibleColumns(loadHireSignalVisibleColumns());
+  }, []);
+
+  const handleHireSignalToggleColumn = useCallback(
+    (id: HiringSignalsDataTableColumnId, visible: boolean) => {
+      setVisibleColumns((prev) => {
+        const nextSet = new Set(prev);
+        if (visible) nextSet.add(id);
+        else nextSet.delete(id);
+        const next = HS_DT_COLUMN_IDS.filter((col) => nextSet.has(col));
+        if (next.length === 0) return prev;
+        try {
+          localStorage.setItem(
+            HS_VISIBLE_COLUMNS_STORAGE_KEY,
+            JSON.stringify(next),
+          );
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const signalsToolbar = useMemo(
+    () => (
+      <DataToolbar
+        cssPrefix="c360-toolbar"
+        tabs={[
+          {
+            value: "all",
+            label: "All signals",
+            count: total,
+            showCountOnlyWhenActive: true,
+          },
+          {
+            value: "new",
+            label: "New (7 days)",
+            count: total,
+            showCountOnlyWhenActive: true,
+          },
+        ]}
+        activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
+        onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
+        totalCount={total}
+        meta={
+          total > filters.limit ? (
+            <Pagination
+              className="c360-hiring-signals-toolbar-pagination"
+              page={currentPage + 1}
+              pageSize={filters.limit}
+              total={total}
+              onPageChange={(p) => setPage(p - 1)}
+            />
+          ) : null
+        }
+        filterConfig={{
+          activeCount: activeDraftCount,
+          onOpen: () => setMobileFiltersOpen(true),
+          show: !isDesktop,
+        }}
+        actionPrefix={
+          <HiringSignalsToolbarTableExtras
+            pageSize={filters.limit}
+            onPageSizeChange={setPageSize}
+            visibleColumns={visibleColumns}
+            onToggleColumn={handleHireSignalToggleColumn}
+          />
+        }
+        actions={[
+          {
+            label: "Export XLSX",
+            onClick: () => setExportModalOpen(true),
+            icon: Download,
+            variant: "secondary",
+            disabled: loading || total === 0,
+          },
+          {
+            label: "Refresh",
+            onClick: () => void refetch(),
+            icon: RefreshCw,
+            variant: "secondary",
+            disabled: loading,
+          },
+          ...(isSuperAdmin
+            ? [
+                {
+                  label: "Run scrape",
+                  onClick: () => setScrapeModalOpen(true),
+                  icon: Play,
+                  variant: "primary" as const,
+                },
+              ]
+            : []),
+        ]}
+      />
+    ),
+    [
+      activeDraftCount,
+      currentPage,
+      filters.limit,
+      handleHireSignalToggleColumn,
+      isDesktop,
+      isSuperAdmin,
+      loading,
+      refetch,
+      setPage,
+      setPageSize,
+      setSignalTimePreset,
+      signalTimePreset,
+      total,
+      visibleColumns,
+    ],
   );
 
   return (
@@ -383,17 +496,6 @@ function HiringSignalsPageBody({
                 />
               </>
             }
-            pagination={
-              total > filters.limit ? (
-                <Pagination
-                  className="c360-mt-4 c360-justify-end"
-                  page={currentPage + 1}
-                  pageSize={filters.limit}
-                  total={total}
-                  onPageChange={(p) => setPage(p - 1)}
-                />
-              ) : null
-            }
           >
             {exportBanner ? (
               <Alert
@@ -441,6 +543,11 @@ function HiringSignalsPageBody({
               selectedKeys={selectedKeys}
               onSelectionChange={setSelectedKeys}
               density={tableDensity}
+              visibleColumns={visibleColumns}
+              listFilters={effectiveJobListFilters}
+              setListFilters={setFilters}
+              totalRowCount={total}
+              onColumnVisibilityResolved={handleGridColumnVisibilityResolved}
             />
           </DataPageLayout>
         </TabsContent>

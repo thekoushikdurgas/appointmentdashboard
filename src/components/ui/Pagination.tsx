@@ -10,6 +10,11 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
   siblingCount?: number;
   className?: string;
+  /**
+   * When there is only one page of results, still render prev/next (disabled) and
+   * page `1`. Defaults to `false` so list footers can omit controls when everything fits one page.
+   */
+  showWhenSinglePage?: boolean;
 }
 
 function range(start: number, end: number): number[] {
@@ -47,15 +52,48 @@ export function Pagination({
   onPageChange,
   siblingCount = 1,
   className,
+  showWhenSinglePage = false,
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1 && !showWhenSinglePage) return null;
+
+  if (totalPages <= 1 && showWhenSinglePage) {
+    return (
+      <nav aria-label="Pagination" className={cn("c360-pagination", className)}>
+        <button
+          type="button"
+          className="c360-pagination__btn"
+          disabled
+          aria-label="Previous page"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <button
+          type="button"
+          className={cn("c360-pagination__btn", "c360-pagination__btn--active")}
+          aria-current="page"
+          disabled
+        >
+          1
+        </button>
+        <button
+          type="button"
+          className="c360-pagination__btn"
+          disabled
+          aria-label="Next page"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </nav>
+    );
+  }
 
   const pages = buildPages(page, totalPages, siblingCount);
 
   return (
     <nav aria-label="Pagination" className={cn("c360-pagination", className)}>
       <button
+        type="button"
         className="c360-pagination__btn"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
@@ -71,6 +109,7 @@ export function Pagination({
           </span>
         ) : (
           <button
+            type="button"
             key={p}
             className={cn(
               "c360-pagination__btn",
@@ -85,6 +124,7 @@ export function Pagination({
       )}
 
       <button
+        type="button"
         className="c360-pagination__btn"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}

@@ -56,7 +56,8 @@
   color: var(--c360-text-light);
 }
 
-.c360-tiptap__heading-select {
+select.c360-tiptap__heading-select,
+button.c360-tiptap__heading-select.c360-select__trigger {
   font-size: 11px;
   padding: 2px 4px;
   border: 1px solid var(--c360-border);
@@ -64,6 +65,8 @@
   background: var(--c360-bg-elevated);
   color: var(--c360-text);
   cursor: pointer;
+  min-height: auto;
+  line-height: 1.2;
 }
 
 .c360-tiptap__editor-wrap {

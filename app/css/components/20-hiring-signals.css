@@ -14,6 +14,8 @@
   }
 }
 
+/* Signals table shell: use shared `.c360-data-table-shell` via `C360DataTableShell`. */
+
 /* Hiring signals dashboard — lists / cards (no inline styles) */
 .c360-hs-dashboard-recent-list {
   display: flex;
@@ -226,6 +228,23 @@
   object-fit: cover;
 }
 
+/* Plain <button> for company name — reset UA border/box (avoid “black frame”). */
+.c360-hs-table__company-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.c360-hs-table__company-link:focus-visible {
+  outline: 2px solid var(--c360-focus-ring, rgba(47, 76, 221, 0.45));
+  outline-offset: 2px;
+}
+
 /* ─── Company slide-over drawer ──────────────────────────────────────────── */
 .c360-hs-drawer-backdrop {
   position: fixed;
@@ -279,8 +298,10 @@
 }
 
 .c360-hs-drawer__avatar {
+  position: relative;
   width: 64px;
   height: 64px;
+  flex-shrink: 0;
   border-radius: var(--c360-radius-xl);
   display: flex;
   align-items: center;
@@ -290,6 +311,16 @@
   background: var(--c360-primary-light);
   color: var(--c360-primary);
   border: 1px solid var(--c360-border);
+}
+
+/* Fill circle reliably; avoids core.css `img { height: auto }` + flex min-size quirks */
+.c360-hs-drawer__avatar img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* ─── Chart containers (recharts respects parent size) ───────────────────── */
@@ -518,14 +549,9 @@
   margin-top: 1rem;
 }
 
-/* ─── Signals table skeleton cells ──────────────────────────────────────── */
+/* ─── Signals table skeleton rows (shared bar: `.c360-table__skeleton-bar`) ─ */
 .c360-hs-skeleton-row td {
   vertical-align: middle;
-}
-
-.c360-hs-skeleton-cell {
-  height: 1.25rem;
-  border-radius: var(--c360-radius-sm);
 }
 
 /* Dashboard KPI strip — data-card rhythm (gap, tile width) */
@@ -546,4 +572,91 @@
 
 .c360-hs-stats-grid .c360-stat-card:hover {
   box-shadow: var(--c360-shadow-lg);
+}
+
+/* ─── Hiring Signals — MUI DataGrid cell layout (tokens + alignment) ─────── */
+.c360-hs-grid-title-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.c360-hs-grid-title-stack__row {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  min-width: 0;
+}
+
+.c360-hs-grid-title-stack__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--c360-text-sm);
+  line-height: 1.35;
+}
+
+.c360-hs-grid-title-stack__meta {
+  margin: 0;
+  font-size: var(--c360-text-xs);
+  line-height: 1.4;
+  color: var(--c360-text-muted);
+}
+
+.c360-hs-grid-meta-text {
+  font-size: var(--c360-text-xs);
+  line-height: 1.45;
+  color: var(--c360-text);
+}
+
+.c360-hs-grid-company-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-3);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Row actions: match DataGrid preview (flex row, no wrap, tight spacing) */
+.c360-hs-grid-actions-row {
+  flex-wrap: nowrap;
+  gap: 0;
+  width: 100%;
+}
+
+/* Fixed circle + fallback initials; prevents collapsed flex strip artifacts */
+.c360-hs-grid-company-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  margin-top: 2px;
+  border-radius: 9999px;
+}
+
+.c360-hs-grid-company-avatar__initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: var(--c360-text-xs);
+  font-weight: 700;
+}
+
+/* Comfortable tap targets for row actions */
+.c360-hs-grid-action-btn {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+}
+
+/* Keep trailing columns readable: horizontal scroll inside shell instead of squashing headers */
+.c360-hs-data-grid .MuiDataGrid-root {
+  min-width: 1080px;
 }

@@ -1,9 +1,6 @@
 /** LinkedIn-style quick date window — maps to `postedAfter` (RFC3339 rolling cutoff). */
 export type DatePostedPreset = "any" | "24h" | "7d" | "30d" | "custom";
 
-/** Drives `extendedJobFilters.postedAtOrder` → job.server `posted_at` sort. */
-export type ListSortPreference = "recent" | "oldest";
-
 export type HiringSignalFilterDraft = {
   /** Role keywords / full titles — multi-select, OR within this field when applied. */
   titles: string[];
@@ -51,9 +48,6 @@ export type HiringSignalFilterDraft = {
 
   /** Quick date filter row — drives `postedAfter` unless `custom`. */
   datePostedPreset: DatePostedPreset;
-
-  /** Sort: `recent` = newest `posted_at` first; `oldest` = sent as `extendedJobFilters.postedAtOrder` → job.server. */
-  listSort: ListSortPreference;
 };
 
 export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
@@ -84,7 +78,6 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   countries: [],
   applyMethod: "",
   datePostedPreset: "any",
-  listSort: "recent",
 };
 
 export type HiringSignalDraftField = keyof HiringSignalFilterDraft;

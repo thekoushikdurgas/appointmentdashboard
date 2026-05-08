@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
+import { Select } from "@/components/ui/Select";
 import { aiChatService } from "@/services/graphql/aiChatService";
 import type { ParseFiltersResponse } from "@/services/graphql/aiChatService";
 import type { ModelSelection } from "@/graphql/generated/types";
@@ -363,22 +364,23 @@ export default function AiChatPage() {
               >
                 Model
               </label>
-              <select
+              <Select
                 id="ai-model"
-                className="c360-input c360-select c360-max-w-200 c360-text-sm"
                 value={model ?? ""}
                 onChange={(e) =>
                   setModel((e.target.value || null) as ModelSelection | null)
                 }
+                options={[
+                  { value: "", label: "Default" },
+                  ...MODEL_OPTIONS.map((o) => ({
+                    value: o.value,
+                    label: o.label,
+                  })),
+                ]}
+                fullWidth={false}
+                triggerClassName="c360-max-w-200 c360-text-sm"
                 title="Model override"
-              >
-                <option value="">Default</option>
-                {MODEL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div className="c360-chat-input-box">
               <textarea

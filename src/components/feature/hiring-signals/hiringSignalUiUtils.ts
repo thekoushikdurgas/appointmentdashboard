@@ -3,6 +3,53 @@ import type { ProgressProps } from "@/components/ui/Progress";
 import { asRecord } from "@/services/graphql/hiringSignalService";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 
+/**
+ * Format job `postedAt` / ISO strings from job.server for the hiring-signals UI.
+ * Hardened for `en-IN` locale quirks and empty `toLocaleString` in some runtimes.
+ */
+export function formatHireSignalPostedDate(
+  iso: string,
+  options?: { withTime?: boolean; emptyAsDash?: boolean },
+): string {
+  const withTime = options?.withTime ?? false;
+  const emptyAsDash = options?.emptyAsDash ?? !withTime;
+  const s = iso?.trim() ?? "";
+  if (!s) return emptyAsDash ? "—" : "";
+  if (s.startsWith("0001-01-01")) return emptyAsDash ? "—" : "";
+  try {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return withTime ? s : emptyAsDash ? "—" : s;
+    if (d.getUTCFullYear() < 1970) return emptyAsDash ? "—" : s;
+    let out = "";
+    try {
+      out = withTime
+        ? d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
+        : d.toLocaleString("en-IN", { dateStyle: "medium" });
+    } catch {
+      out = "";
+    }
+    if (!out?.trim()) {
+      out = withTime
+        ? d.toLocaleString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : d.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+    }
+    const t = out.trim() || s.slice(0, 10);
+    return t;
+  } catch {
+    return emptyAsDash ? "—" : s;
+  }
+}
+
 /** Initials for avatar (company or person). */
 export function hiringSignalInitials(name: string, fallback = "?"): string {
   const t = name.trim();
@@ -266,6 +313,24 @@ export function pickCompanyDisplay(row: unknown): {
       o.profile_pic ?? o.profilePic ?? o.logo ?? o.company_logo ?? "",
     ),
   };
+}
+
+/**
+ * Serve LinkedIn CDN logos via same-origin `/api/proxy/linkedin-logo` so images are not
+ * blocked by client privacy extensions (direct media.licdn.com → ERR_BLOCKED_BY_CLIENT).
+ */
+export function proxiedCompanyLogoSrc(url: string): string {
+  const u = url.trim();
+  if (!u) return "";
+  try {
+    const parsed = new URL(u);
+    if (parsed.protocol === "https:" && parsed.hostname === "media.licdn.com") {
+      return `/api/proxy/linkedin-logo?url=${encodeURIComponent(u)}`;
+    }
+  } catch {
+    return u;
+  }
+  return u;
 }
 
 /** RFC4180-style CSV from job.server ``GET /jobs`` envelope ``{ data: [...] }``. */

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import type { DraftSort } from "@/lib/vqlDraft";
 import { sortableFields } from "@/lib/vqlFieldMeta";
@@ -31,29 +32,30 @@ export function VqlSortEditor({
           key={i}
           className="c360-flex c360-flex-wrap c360-gap-2 c360-items-center"
         >
-          <select
-            className="c360-input c360-select"
+          <Select
             value={row.field}
             onChange={(e) => patch(i, { field: e.target.value })}
+            options={fields.map((f) => ({
+              value: f.key,
+              label: f.label,
+            }))}
             aria-label="Sort field"
-          >
-            {fields.map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className="c360-input c360-select c360-w-auto"
+            fullWidth={false}
+            triggerClassName="c360-w-auto"
+          />
+          <Select
             value={row.direction}
             onChange={(e) =>
               patch(i, { direction: e.target.value as "asc" | "desc" })
             }
+            options={[
+              { value: "asc", label: "Ascending" },
+              { value: "desc", label: "Descending" },
+            ]}
             aria-label="Sort direction"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
+            fullWidth={false}
+            triggerClassName="c360-w-auto"
+          />
           <button
             type="button"
             className={cn("c360-icon-btn", "c360-icon-btn--danger")}

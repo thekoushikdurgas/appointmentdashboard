@@ -1,0 +1,16 @@
+/* Contact360 — shared card-like shell for native <table> data grids (scroll region, tokens). */
+
+.c360-data-table-shell {
+  background: var(--c360-bg-elevated);
+  border-radius: 0;
+  box-shadow: var(--c360-shadow-card);
+  border: 1px solid var(--c360-border);
+  padding: 0;
+}
+
+.c360-data-table-shell__scroll {
+  overflow-x: auto;
+  border-radius: var(--c360-radius-md);
+  border: 1px solid var(--c360-border);
+  min-height: 21rem;
+}

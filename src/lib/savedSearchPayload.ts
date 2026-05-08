@@ -40,8 +40,10 @@ export type CompanySavedSearchPayloadV2 = {
   version: typeof SAVED_SEARCH_VERSION_SIDEBAR;
   vqlQuery: Partial<VqlQueryInput>;
   search: string;
-  facetValues: Record<string, string>;
+  facetValues: Record<string, string[]>;
   advancedCompanyDraft: DraftQuery | null;
+  sortBy?: string;
+  pageSize?: number;
 };
 
 export type CompanySavedSearchPayload =

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -77,6 +78,8 @@ export default function DataPageLayout({
   const isDesktop = useIsDesktop();
   const drawerRef = useRef<HTMLDivElement>(null);
   const [filtersPeekPinned, setFiltersPeekPinned] = useState(false);
+  const filterOverlayHoldCountRef = useRef(0);
+  const [filterOverlayHold, setFilterOverlayHold] = useState(false);
 
   const peekDesktop = Boolean(filtersPeekRail && isDesktop);
   const peekWithPin = Boolean(peekDesktop && filtersPeekScope);
@@ -129,6 +132,29 @@ export default function DataPageLayout({
       return next;
     });
   }, [filtersPeekScope]);
+
+  const notifyFilterOverlayOpen = useCallback((open: boolean) => {
+    if (open) {
+      filterOverlayHoldCountRef.current += 1;
+    } else {
+      filterOverlayHoldCountRef.current = Math.max(
+        0,
+        filterOverlayHoldCountRef.current - 1,
+      );
+    }
+    setFilterOverlayHold(filterOverlayHoldCountRef.current > 0);
+  }, []);
+
+  const filtersPeekExpanded = filtersPeekPinned || filterOverlayHold;
+
+  const peekContextValue = useMemo(
+    () => ({
+      pinned: filtersPeekPinned,
+      togglePinned: toggleFiltersPeekPinned,
+      notifyFilterOverlayOpen,
+    }),
+    [filtersPeekPinned, toggleFiltersPeekPinned, notifyFilterOverlayOpen],
+  );
 
   const showFilterPanel = showFilters && filters;
   /** Drawer UX only when parent passes close handler (contacts page). */
@@ -217,19 +243,14 @@ export default function DataPageLayout({
               "c360-data-layout__filters",
               peekDesktop && "c360-data-layout__filters--peek-rail",
               peekDesktop &&
-                filtersPeekPinned &&
+                filtersPeekExpanded &&
                 "c360-data-layout__filters--peek-pinned",
             )}
             aria-label={filtersAriaLabel}
           >
             {peekDesktop ? (
               peekWithPin ? (
-                <DataFiltersPeekProvider
-                  value={{
-                    pinned: filtersPeekPinned,
-                    togglePinned: toggleFiltersPeekPinned,
-                  }}
-                >
+                <DataFiltersPeekProvider value={peekContextValue}>
                   {filtersPeekShell}
                 </DataFiltersPeekProvider>
               ) : (

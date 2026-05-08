@@ -40,7 +40,6 @@ const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
 export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
   let n = 0;
   (Object.keys(d) as HiringSignalDraftField[]).forEach((k) => {
-    if (k === "listSort" && d.listSort === "recent") return;
     if (k === "datePostedPreset" && d.datePostedPreset === "any") return;
     if (
       k === "postedAfter" &&
@@ -137,9 +136,6 @@ export function HireSignalFilterProvider({
         ? clearanceRaw
         : undefined;
 
-    const listSort: "recent" | "oldest" =
-      draft.listSort === "oldest" ? "oldest" : "recent";
-
     setFilters((f) => ({
       ...f,
       titles: titles.length ? titles : undefined,
@@ -180,7 +176,6 @@ export function HireSignalFilterProvider({
         draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
       postedAfter: draft.postedAfter.trim() || undefined,
       postedBefore: draft.postedBefore.trim() || undefined,
-      listSort,
       offset: 0,
     }));
   }, [draft, setFilters]);
@@ -232,7 +227,6 @@ export function HireSignalFilterProvider({
       hideApplied: false,
       countries: undefined,
       applyMethod: undefined,
-      listSort: undefined,
       offset: 0,
     }));
   }, [setFilters]);

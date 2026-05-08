@@ -7,14 +7,26 @@ import {
 } from "@/services/graphql/companiesService";
 import type { VqlQueryInput } from "@/graphql/generated/types";
 import { buildCompanyListVql } from "@/lib/companyListVql";
+import {
+  readCompaniesPageSizePreference,
+  writeCompaniesPageSizePreference,
+} from "@/lib/companiesListPrefs";
 
-const PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 25;
 const EXPORT_VQL_LIMIT = 50_000;
+const MIN_PAGE = 10;
+const MAX_PAGE = 100;
 
 export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(() =>
+    typeof window === "undefined"
+      ? DEFAULT_PAGE_SIZE
+      : readCompaniesPageSizePreference(),
+  );
+  const [sortBy, setSortByState] = useState("newest");
   const [search, setSearchState] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +35,22 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
   );
   const cursorsForPageRef = useRef<Map<number, string[]>>(new Map());
 
+  const setPageSize = useCallback((n: number) => {
+    const next = Math.min(
+      MAX_PAGE,
+      Math.max(MIN_PAGE, Math.trunc(n) || DEFAULT_PAGE_SIZE),
+    );
+    setPageSizeState(next);
+    writeCompaniesPageSizePreference(next);
+    setPage(1);
+  }, []);
+
+  const setSortBy = useCallback((s: string) => {
+    setSortByState(s);
+    setPage(1);
+    cursorsForPageRef.current.clear();
+  }, []);
+
   const fetch = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -30,8 +58,9 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
       const cursor =
         page > 10 ? cursorsForPageRef.current.get(page) : undefined;
       const useCursor = page > 10 && !!cursor?.length;
-      const query = buildCompanyListVql(page, PAGE_SIZE, search, vqlQuery, {
+      const query = buildCompanyListVql(page, pageSize, search, vqlQuery, {
         searchAfter: useCursor ? cursor : null,
+        sortBy,
       });
       const {
         items,
@@ -52,7 +81,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
     } finally {
       setLoading(false);
     }
-  }, [page, search, vqlQuery]);
+  }, [page, pageSize, search, vqlQuery, sortBy]);
 
   useEffect(() => {
     void fetch();
@@ -67,6 +96,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
   const exportVql = useMemo((): VqlQueryInput => {
     const base = buildCompanyListVql(1, EXPORT_VQL_LIMIT, search, vqlQuery, {
       searchAfter: null,
+      sortBy,
     });
     return {
       ...(base as VqlQueryInput),
@@ -74,21 +104,25 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
       offset: 0,
       searchAfter: undefined,
     };
-  }, [search, vqlQuery]);
+  }, [search, vqlQuery, sortBy]);
 
   const setSearch = useCallback((s: string) => {
     setSearchState(s);
     setPage(1);
+    cursorsForPageRef.current.clear();
   }, []);
 
-  const hasMore = page * PAGE_SIZE < total;
+  const hasMore = page * pageSize < total;
 
   return {
     companies,
     total,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     setPage,
+    setPageSize,
+    sortBy,
+    setSortBy,
     search,
     setSearch,
     loading,

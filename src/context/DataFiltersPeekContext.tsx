@@ -12,6 +12,12 @@ export type DataFiltersPeekScope =
 export interface DataFiltersPeekValue {
   pinned: boolean;
   togglePinned: () => void;
+  /**
+   * Portaled filter controls (Radix Select, combobox popovers) sit outside the peek
+   * `<aside>`, so hover/focus-within no longer applies — call `true` when the overlay
+   * opens and `false` when it closes (reference-counted in the layout provider).
+   */
+  notifyFilterOverlayOpen: (open: boolean) => void;
 }
 
 const DataFiltersPeekContext = createContext<DataFiltersPeekValue | null>(null);

@@ -6,6 +6,7 @@ import { cn, formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
+import { Select } from "@/components/ui/Select";
 import type { S3FileInfo } from "@/graphql/generated/types";
 import {
   isAllowedTabularFilename,
@@ -282,20 +283,22 @@ export function FilesDataTable({
       <div className="c360-files-dt__toolbar">
         <div className="c360-files-dt__toolbar-left">
           <span className="c360-text-muted c360-text-sm">Show</span>
-          <select
-            className="c360-files-dt__page-size"
+          <Select
             value={String(pageSize)}
             onChange={(e) => {
               setPageSize(Number(e.target.value));
               setPage(0);
             }}
+            options={[
+              { value: "10", label: "10" },
+              { value: "25", label: "25" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+            ]}
             aria-label="Rows per page"
-          >
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
+            fullWidth={false}
+            triggerClassName="c360-files-dt__page-size"
+          />
           <span className="c360-text-muted c360-text-sm">entries</span>
           {onBulkDelete && selected.size > 0 && (
             <Button

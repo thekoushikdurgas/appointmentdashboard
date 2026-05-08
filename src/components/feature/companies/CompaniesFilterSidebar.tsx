@@ -2,74 +2,126 @@
 
 import { useMemo, useCallback } from "react";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import { ContactFilterSortSelect } from "@/components/feature/contacts/ContactFilterBar";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Select } from "@/components/ui/Select";
+import { FilterCombobox } from "@/components/ui/FilterCombobox";
+import { RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
+import {
+  COMPANIES_DT_COLUMN_IDS,
+  COMPANIES_DT_COLUMN_LABELS,
+  type CompaniesDataTableColumnId,
+} from "@/components/feature/companies/companiesTableModel";
 
 const VIEW_MODE_OPTIONS = [
   { value: "list", label: "List" },
   { value: "card", label: "Card" },
 ];
 
+const TABLE_DENSITY_OPTIONS = [
+  { value: "comfortable", label: "Comfortable rows" },
+  { value: "compact", label: "Compact rows" },
+];
+
 export interface CompaniesFilterSidebarProps {
   search: string;
   onSearchChange: (value: string) => void;
+  sortBy: string;
+  onSortChange: (value: string) => void;
   filterSections: CompanyFilterSection[];
-  facetValues: Record<string, string>;
-  onFacetChange: (key: string, value: string) => void;
+  facetValues: Record<string, string[]>;
+  onFacetChange: (key: string, values: string[]) => void;
   onSectionExpand: (key: string) => void;
+  onLoadMoreFacet: (key: string) => void;
+  setFacetSearch: (key: string, text: string) => void;
   advancedVqlRuleCount: number;
   onClearVql: () => void;
   onOpenAdvanced: () => void;
-  /** Must match `DataPageLayout` `filterDrawerTitleId` (mobile drawer `aria-labelledby`). */
+  visibleColumns: CompaniesDataTableColumnId[];
+  onToggleColumn: (id: CompaniesDataTableColumnId) => void;
+  sortChipLabel?: string | null;
+  hiddenColumnCount: number;
+  onResetVisibleColumns: () => void;
+  onRefreshFilters?: () => void | Promise<void>;
+  filtersRefreshing?: boolean;
   drawerTitleId?: string;
-  /** List / card display mode. */
+  onCloseDrawer?: () => void;
   viewMode?: "list" | "card";
   onViewModeChange?: (mode: "list" | "card") => void;
+  tableDensity?: "comfortable" | "compact";
+  onTableDensityChange?: (density: "comfortable" | "compact") => void;
 }
 
 export function CompaniesFilterSidebar({
   search,
   onSearchChange,
+  sortBy,
+  onSortChange,
   filterSections,
   facetValues,
   onFacetChange,
   onSectionExpand,
+  onLoadMoreFacet,
+  setFacetSearch,
   advancedVqlRuleCount,
   onClearVql,
   onOpenAdvanced,
+  visibleColumns,
+  onToggleColumn,
+  sortChipLabel,
+  hiddenColumnCount,
+  onResetVisibleColumns,
+  onRefreshFilters,
+  filtersRefreshing = false,
   drawerTitleId = "c360-companies-filter-drawer-title",
+  onCloseDrawer,
   viewMode = "list",
   onViewModeChange,
+  tableDensity = "comfortable",
+  onTableDensityChange,
 }: CompaniesFilterSidebarProps) {
   const facetActiveCount = useMemo(
     () =>
       Object.values(facetValues).filter(
-        (v) => v != null && String(v).trim() !== "",
+        (arr) => Array.isArray(arr) && arr.length > 0,
       ).length,
     [facetValues],
   );
+
+  const sortActiveCount = sortBy !== "newest" ? 1 : 0;
+  const columnChipActive = hiddenColumnCount > 0 ? 1 : 0;
 
   const totalActiveCount = useMemo(() => {
     let n = facetActiveCount;
     if (search.trim()) n += 1;
     if (advancedVqlRuleCount > 0) n += 1;
+    if (sortActiveCount > 0) n += 1;
+    n += columnChipActive;
     return n;
-  }, [facetActiveCount, search, advancedVqlRuleCount]);
+  }, [
+    facetActiveCount,
+    search,
+    advancedVqlRuleCount,
+    sortActiveCount,
+    columnChipActive,
+  ]);
 
   const clearFacets = useCallback(() => {
     for (const s of filterSections) {
-      onFacetChange(s.filterKey, "");
+      onFacetChange(s.filterKey, []);
     }
   }, [filterSections, onFacetChange]);
 
   const clearAll = useCallback(() => {
     onSearchChange("");
+    onSortChange("newest");
     clearFacets();
     onClearVql();
-  }, [clearFacets, onSearchChange, onClearVql]);
+  }, [clearFacets, onSearchChange, onSortChange, onClearVql]);
 
   const chips = useMemo(() => {
     const out: Array<{ key: string; label: string; onRemove: () => void }> = [];
@@ -80,14 +132,18 @@ export function CompaniesFilterSidebar({
         onRemove: () => onSearchChange(""),
       });
     }
-    for (const [key, val] of Object.entries(facetValues)) {
-      if (val != null && String(val).trim() !== "") {
+    for (const [key, vals] of Object.entries(facetValues)) {
+      if (vals != null && vals.length > 0) {
         const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
+        const summary =
+          vals.length === 1
+            ? `${label}: ${vals[0]}`
+            : `${label}: ${vals.length} selected`;
         out.push({
           key: `facet-${key}`,
-          label: `${label}: ${val}`,
-          onRemove: () => onFacetChange(key, ""),
+          label: summary,
+          onRemove: () => onFacetChange(key, []),
         });
       }
     }
@@ -101,15 +157,34 @@ export function CompaniesFilterSidebar({
         onRemove: onClearVql,
       });
     }
+    if (sortChipLabel) {
+      out.push({
+        key: "sort-chip",
+        label: sortChipLabel,
+        onRemove: () => onSortChange("newest"),
+      });
+    }
+    if (hiddenColumnCount > 0) {
+      out.push({
+        key: "cols-chip",
+        label: `Columns: ${visibleColumns.length} visible`,
+        onRemove: onResetVisibleColumns,
+      });
+    }
     return out;
   }, [
     search,
     facetValues,
     filterSections,
     advancedVqlRuleCount,
+    sortChipLabel,
+    hiddenColumnCount,
+    visibleColumns.length,
     onSearchChange,
     onFacetChange,
     onClearVql,
+    onSortChange,
+    onResetVisibleColumns,
   ]);
 
   return (
@@ -120,6 +195,11 @@ export function CompaniesFilterSidebar({
             <h2 id={drawerTitleId} className="c360-contacts-filters__title">
               Filters
             </h2>
+            {totalActiveCount > 0 ? (
+              <span className="c360-contacts-filters__head-count" aria-hidden>
+                {totalActiveCount}
+              </span>
+            ) : null}
           </div>
           <p className="c360-contacts-filters__subtitle">
             {totalActiveCount} active
@@ -134,8 +214,35 @@ export function CompaniesFilterSidebar({
               className="c360-contacts-filters__clear-text"
               onClick={clearAll}
             >
-              Clear
+              CLEAR
             </Button>
+          ) : null}
+          {onRefreshFilters ? (
+            <button
+              type="button"
+              className="c360-contacts-filters__icon-btn"
+              title="Refresh filter definitions"
+              aria-label="Refresh filter definitions"
+              disabled={filtersRefreshing}
+              onClick={() => void onRefreshFilters()}
+            >
+              <RefreshCw
+                size={16}
+                className={cn(filtersRefreshing && "c360-spin")}
+                aria-hidden
+              />
+            </button>
+          ) : null}
+          {onCloseDrawer ? (
+            <button
+              type="button"
+              className="c360-contacts-filters__icon-btn"
+              title="Close filters"
+              aria-label="Close filters"
+              onClick={onCloseDrawer}
+            >
+              <X size={18} aria-hidden />
+            </button>
           ) : null}
         </div>
       </div>
@@ -171,12 +278,30 @@ export function CompaniesFilterSidebar({
         </div>
       ) : null}
 
+      <ContactsCollapsibleFilterSection
+        title="Sort"
+        count={sortActiveCount}
+        defaultOpen
+        onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
+      >
+        <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
+      </ContactsCollapsibleFilterSection>
+
       {onViewModeChange ? (
         <ContactsCollapsibleFilterSection
           title="View"
-          count={viewMode === "card" ? 1 : 0}
+          count={
+            viewMode === "card"
+              ? 1
+              : viewMode === "list" && tableDensity === "compact"
+                ? 1
+                : 0
+          }
           defaultOpen={false}
-          onClear={() => onViewModeChange("list")}
+          onClear={() => {
+            onViewModeChange("list");
+            onTableDensityChange?.("comfortable");
+          }}
         >
           <Select
             id="companies-view-mode"
@@ -187,54 +312,85 @@ export function CompaniesFilterSidebar({
             options={VIEW_MODE_OPTIONS}
             fullWidth
             inputSize="md"
+            className="c360-mb-2"
           />
+          {viewMode === "list" && onTableDensityChange ? (
+            <>
+              <p className="c360-m-0 c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                Row density (list)
+              </p>
+              <Select
+                id="companies-table-density"
+                value={tableDensity}
+                onChange={(e) =>
+                  onTableDensityChange(
+                    e.target.value as "comfortable" | "compact",
+                  )
+                }
+                options={TABLE_DENSITY_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </>
+          ) : null}
         </ContactsCollapsibleFilterSection>
       ) : null}
 
       {filterSections.map((section) => {
-        const val = facetValues[section.filterKey] ?? "";
-        const has = val.trim() !== "";
+        const vals = facetValues[section.filterKey] ?? [];
+        const has = vals.length > 0;
         return (
           <ContactsCollapsibleFilterSection
             key={section.filterKey}
             title={section.displayName}
-            count={has ? 1 : 0}
+            count={has ? vals.length : 0}
             defaultOpen={has}
             onClear={
-              has ? () => onFacetChange(section.filterKey, "") : undefined
+              has ? () => onFacetChange(section.filterKey, []) : undefined
             }
           >
-            <div className={cn("c360-filter-facet")}>
-              <label className="c360-filter-facet__label">
-                {section.displayName}
-              </label>
-              <Select
-                value={val ?? ""}
-                onChange={(e) =>
-                  onFacetChange(section.filterKey, e.target.value)
-                }
-                onFocus={() => {
-                  if (!section.options.length && !section.loading) {
-                    onSectionExpand(section.filterKey);
-                  }
-                }}
-                options={[
-                  { value: "", label: section.loading ? "Loading…" : "Any" },
-                  ...section.options.map((o) => ({
-                    value: o.value,
-                    label:
-                      o.count != null
-                        ? `${o.displayValue} (${o.count})`
-                        : o.displayValue,
-                  })),
-                ]}
-                fullWidth={false}
-                className="c360-contact-filter-select c360-contact-filter-select--narrow"
-              />
-            </div>
+            <FilterCombobox
+              label={section.displayName}
+              options={section.options}
+              selectedValues={vals}
+              onSelectionChange={(next) =>
+                onFacetChange(section.filterKey, next)
+              }
+              loading={section.loading}
+              loadingMore={section.loadingMore}
+              hasMore={section.hasMore}
+              onOpen={() => onSectionExpand(section.filterKey)}
+              onLoadMore={() => onLoadMoreFacet(section.filterKey)}
+              searchText={section.searchText}
+              onSearchChange={(text) => setFacetSearch(section.filterKey, text)}
+            />
           </ContactsCollapsibleFilterSection>
         );
       })}
+
+      <ContactsCollapsibleFilterSection
+        title="Columns"
+        count={hiddenColumnCount}
+        defaultOpen={false}
+      >
+        <div className="c360-contacts-filters__columns-inner">
+          {COMPANIES_DT_COLUMN_IDS.map((id) => (
+            <Checkbox
+              key={id}
+              size="sm"
+              label={COMPANIES_DT_COLUMN_LABELS[id]}
+              checked={visibleColumns.includes(id)}
+              onChange={() => onToggleColumn(id)}
+              disabled={
+                visibleColumns.includes(id) && visibleColumns.length === 1
+              }
+            />
+          ))}
+        </div>
+        <p className="c360-contacts-filters__columns-hint c360-text-xs c360-text-muted">
+          At least one data column stays visible.
+        </p>
+      </ContactsCollapsibleFilterSection>
 
       <div className="c360-contacts-filters__advanced">
         <Button

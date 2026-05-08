@@ -2,20 +2,20 @@
 
 import { Pagination } from "@/components/ui/Pagination";
 
-export interface ContactPaginationProps {
+export interface CompanyPaginationProps {
   page: number;
   total: number;
-  pageSize?: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
 }
 
-/** Range summary + page controls — use with `DataPageLayout` `metadata` (toolbar-adjacent). */
-export function ContactPagination({
+/** Range summary + page controls for the companies list (toolbar-adjacent via `DataPageLayout` `metadata`). */
+export function CompanyPagination({
   page,
   total,
-  pageSize = 25,
+  pageSize,
   onPageChange,
-}: ContactPaginationProps) {
+}: CompanyPaginationProps) {
   if (total <= 0) return null;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -25,11 +25,11 @@ export function ContactPagination({
 
   return (
     <div
-      className="c360-contact-pagination-bar"
+      className="c360-company-pagination-bar"
       role="region"
-      aria-label="Contacts list pagination"
+      aria-label="Companies list pagination"
     >
-      <p className="c360-contact-pagination-bar__range">
+      <p className="c360-company-pagination-bar__range">
         Showing {showingFrom}–{showingTo} of {total}
       </p>
       <Pagination

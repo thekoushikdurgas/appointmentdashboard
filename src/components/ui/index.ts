@@ -41,7 +41,7 @@ export { Table } from "./Table";
 export type { TableProps } from "./Table";
 
 export { Select } from "./Select";
-export type { SelectProps } from "./Select";
+export type { SelectProps, SelectOption, SelectOptionGroup } from "./Select";
 
 export { Accordion } from "./Accordion";
 export type { AccordionItem } from "./Accordion";

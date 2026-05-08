@@ -8,22 +8,9 @@ import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   employmentTypeBadgeColor,
+  formatHireSignalPostedDate,
   sanitizeJobDescriptionHtml,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
-
-function formatPosted(iso: string): string {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString("en-IN", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 export interface JobDescriptionModalProps {
   job: LinkedInJobRow | null;
@@ -75,7 +62,13 @@ export function JobDescriptionModal({
             {job.postedAt ? (
               <>
                 <span aria-hidden>·</span>
-                <span>Posted {formatPosted(job.postedAt)}</span>
+                <span>
+                  Posted{" "}
+                  {formatHireSignalPostedDate(job.postedAt, {
+                    withTime: true,
+                    emptyAsDash: false,
+                  })}
+                </span>
               </>
             ) : null}
           </div>

@@ -31,6 +31,7 @@ import {
   pickCompanyDisplay,
   pickContactDisplay,
   connectraContactStableKey,
+  proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 function rowFromItem(item: unknown): LinkedInJobRow {
@@ -85,6 +86,7 @@ export function CompanyContactsModal({
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<LinkedInJobRow[]>([]);
   const [total, setTotal] = useState(0);
+  const [companyLoading, setCompanyLoading] = useState(false);
   const [cLoading, setCLoading] = useState(false);
   const [cRecord, setCRecord] = useState<unknown | null>(null);
   const [cPeople, setCPeople] = useState<unknown[]>([]);
@@ -92,6 +94,32 @@ export function CompanyContactsModal({
 
   useEffect(() => {
     if (isOpen) setTab("jobs");
+  }, [isOpen, companyUuid]);
+
+  /** Load company record on open so header logo works on "Open roles" tab (was only fetched on Connectra tab). */
+  useEffect(() => {
+    if (!isOpen || !companyUuid.trim()) return;
+    let cancelled = false;
+    setCompanyLoading(true);
+    (async () => {
+      try {
+        const rec = await fetchConnectraCompany(companyUuid);
+        if (cancelled) return;
+        const rr = asRecord(rec.hireSignal?.connectraCompany);
+        if (rr && rr.success === false) {
+          setCRecord(null);
+        } else {
+          setCRecord(rr?.data ?? null);
+        }
+      } catch {
+        if (!cancelled) setCRecord(null);
+      } finally {
+        if (!cancelled) setCompanyLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, companyUuid]);
 
   useEffect(() => {
@@ -133,23 +161,13 @@ export function CompanyContactsModal({
       setCLoading(true);
       setCErr(null);
       try {
-        const [rec, peo] = await Promise.all([
-          fetchConnectraCompany(companyUuid),
-          fetchConnectraContactsForCompany(companyUuid, { limit: 50 }),
-        ]);
+        const peo = await fetchConnectraContactsForCompany(companyUuid, {
+          limit: 50,
+        });
         if (cancelled) return;
-        const rr = asRecord(rec.hireSignal?.connectraCompany);
         const pr = asRecord(peo.hireSignal?.connectraContactsForCompany);
-        if (rr && rr.success === false) {
-          setCErr(String(rr.detail ?? "Connectra company failed"));
-          setCRecord(null);
-        } else {
-          setCRecord(rr?.data ?? null);
-        }
         if (pr && pr.success === false) {
-          setCErr(
-            (prev) => prev || String(pr.detail ?? "Connectra people failed"),
-          );
+          setCErr(String(pr.detail ?? "Connectra people failed"));
           setCPeople([]);
         } else {
           const d = pr?.data;
@@ -163,7 +181,6 @@ export function CompanyContactsModal({
         if (!cancelled) {
           const msg = e instanceof Error ? e.message : "Connectra load failed";
           setCErr(msg);
-          setCRecord(null);
           setCPeople([]);
           toast.error("Connectra", { description: msg });
         }
@@ -214,15 +231,21 @@ export function CompanyContactsModal({
     >
       <div className="c360-mb-3 c360-flex c360-items-start c360-gap-3 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-2/15 c360-p-3">
         <div
-          className="c360-stat-card__icon c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-overflow-hidden c360-rounded-full"
+          className="c360-stat-card__icon c360-relative c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-overflow-hidden c360-rounded-full"
           aria-hidden
         >
-          {co.profilePic ? (
+          {companyLoading ? (
+            <span
+              className="c360-skeleton c360-block c360-rounded-full"
+              style={{ width: 40, height: 40 }}
+              aria-hidden
+            />
+          ) : co.profilePic ? (
             // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
             <img
-              src={co.profilePic}
+              src={proxiedCompanyLogoSrc(co.profilePic)}
               alt=""
-              className="c360-h-full c360-w-full c360-object-cover"
+              className="c360-absolute c360-inset-0 c360-block c360-h-full c360-w-full c360-object-cover"
             />
           ) : (
             hiringSignalInitials(companyName)

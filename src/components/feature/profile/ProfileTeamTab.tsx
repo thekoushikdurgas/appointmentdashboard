@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { type TeamMemberRow as TeamMember } from "@/services/graphql/profileService";
 
 /** Matches `InviteTeamMemberInput` defaults and typical stored roles. */
@@ -89,23 +90,18 @@ export function ProfileTeamTab({
                 />
               </div>
               <div className="c360-field c360-profile-team-role-field">
-                <label className="c360-label" htmlFor="profile-invite-role">
-                  Role
-                </label>
-                <select
+                <Select
                   id="profile-invite-role"
-                  className="c360-input c360-select"
+                  label="Role"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  title="Invite role"
-                  aria-label="Invite role"
-                >
-                  {TEAM_ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                  options={TEAM_ROLES.map((r) => ({
+                    value: r,
+                    label: r,
+                  }))}
+                  fullWidth={false}
+                  triggerClassName="c360-w-auto"
+                />
               </div>
               <div className="c360-flex c360-items-end">
                 <Button
@@ -138,22 +134,21 @@ export function ProfileTeamTab({
                       <Badge color={m.status === "active" ? "green" : "orange"}>
                         {m.status}
                       </Badge>
-                      <select
+                      <Select
                         value={canonicalTeamRole(m.role)}
                         disabled={updatingRoleId === m.id}
                         onChange={(e) => {
                           const newRole = e.target.value;
                           if (newRole !== m.role) onUpdateRole(m.id, newRole);
                         }}
-                        className="c360-select"
+                        options={TEAM_ROLES.map((r) => ({
+                          value: r,
+                          label: r,
+                        }))}
+                        fullWidth={false}
+                        triggerClassName="c360-w-auto"
                         aria-label={`Role for ${m.email}`}
-                      >
-                        {TEAM_ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
