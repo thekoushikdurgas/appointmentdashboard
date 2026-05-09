@@ -19,7 +19,6 @@ export function DashboardAdCarousel({
       autoplay
       autoplayMs={interval}
       variant="dashboard"
-      className="c360-mb-6"
     />
   );
 }

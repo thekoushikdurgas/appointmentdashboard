@@ -38,7 +38,8 @@ function schedulePrefetchNextPage(
   void contactsService
     .list(query)
     .then((r) => {
-      writeContactsListCache(nextKey, r.items, r.total);
+      // Use cohort total from contactCount (passed in), not list `total` (often wrong).
+      writeContactsListCache(nextKey, r.items, total);
     })
     .catch(() => {});
 }
@@ -74,6 +75,7 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
   const loadContacts = useCallback(
     async (opts?: { force?: boolean }) => {
       pruneExpiredContactsListCaches();
+      const seq = ++fetchSeq.current;
       const useListCache = page <= 10;
       const cacheKey = contactsListCacheKey(vqlQuery, page, pageSize);
 
@@ -81,17 +83,26 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
         const cached = readContactsListCache(cacheKey);
         if (cached) {
           setContacts(cached.items);
-          setTotal(cached.total);
           setError(null);
           setLoading(false);
-          schedulePrefetchNextPage(vqlQuery, page, pageSize, cached.total);
+          try {
+            const cohortTotal = await contactsService.count(
+              vqlQuery as VqlQueryInput,
+            );
+            if (seq !== fetchSeq.current) return;
+            setTotal(cohortTotal);
+            schedulePrefetchNextPage(vqlQuery, page, pageSize, cohortTotal);
+          } catch (err) {
+            if (seq !== fetchSeq.current) return;
+            setTotal(cached.total);
+            schedulePrefetchNextPage(vqlQuery, page, pageSize, cached.total);
+          }
           return;
         }
       } else if (opts?.force) {
         clearAllContactsListCaches();
       }
 
-      const seq = ++fetchSeq.current;
       setLoading(true);
       setError(null);
       try {
@@ -105,20 +116,25 @@ export function useContacts(initialQuery?: Partial<VqlQueryInput>) {
           offset,
           ...(useCursor && cursor ? { searchAfter: cursor } : {}),
         };
-        const {
-          items,
-          total: t,
-          nextSearchAfter,
-        } = await contactsService.list(query);
+        const listP = contactsService.list(query);
+        const countP = contactsService
+          .count(vqlQuery as VqlQueryInput)
+          .catch(() => null as number | null);
+        const [listResult, countResult] = await Promise.all([listP, countP]);
         if (seq !== fetchSeq.current) return;
+        const { items, total: listTotal, nextSearchAfter } = listResult;
+        const cohortTotal =
+          typeof countResult === "number" && countResult >= 0
+            ? countResult
+            : listTotal;
         setContacts(items);
-        setTotal(t);
+        setTotal(cohortTotal);
         if (nextSearchAfter?.length) {
           cursorsForPageRef.current.set(page + 1, nextSearchAfter);
         }
         if (useListCache) {
-          writeContactsListCache(cacheKey, items, t);
-          schedulePrefetchNextPage(vqlQuery, page, pageSize, t);
+          writeContactsListCache(cacheKey, items, cohortTotal);
+          schedulePrefetchNextPage(vqlQuery, page, pageSize, cohortTotal);
         }
       } catch (err) {
         if (seq !== fetchSeq.current) return;

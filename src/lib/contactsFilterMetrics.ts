@@ -12,19 +12,20 @@ export function countFacetActive(
 
 export function getContactsToolbarActiveCount(params: {
   activeTab: string;
-  statusFilter: string;
   facetValues: Record<string, string[]>;
+  companyFacetValues?: Record<string, string[]>;
   search: string;
   advancedVqlRuleCount: number;
   sortBy: string;
   hiddenColumnCount: number;
 }): number {
-  const facetActive = countFacetActive(params.facetValues);
+  const facetActive =
+    countFacetActive(params.facetValues) +
+    countFacetActive(params.companyFacetValues ?? {});
   let listScope = 0;
   if (params.activeTab === "net_new" || params.activeTab === "do_not_contact") {
     listScope += 1;
   }
-  if (params.statusFilter !== "All") listScope += 1;
   listScope += facetActive;
 
   let n = listScope;

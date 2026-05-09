@@ -1,95 +1,107 @@
 "use client";
 
-import Image from "next/image";
-import { Mail } from "lucide-react";
+import { useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { formatDate, getAvatarUrl } from "@/lib/utils";
+import {
+  ContactsDataTable,
+  type ContactsDataTableColumnId,
+} from "@/components/feature/contacts/ContactsDataTable";
+import { Pagination } from "@/components/patterns/Pagination";
+import type { Contact } from "@/services/graphql/contactsService";
 
-interface CompanyContact {
-  id: string;
-  name: string;
-  title?: string | null;
-  email?: string | null;
-  emailStatus?: string | null;
-  createdAt: string;
-}
+const EMBEDDED_VISIBLE_COLUMNS: ContactsDataTableColumnId[] = [
+  "name",
+  "title",
+  "company",
+  "region",
+  "status",
+  "email",
+  "added",
+  "action",
+];
 
 interface CompanyContactsTableProps {
   companyName: string;
   contactCount?: number | null;
-  contacts: CompanyContact[];
+  contacts: Contact[];
+  loading: boolean;
+  error?: string | null;
+  page: number;
+  total: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
 }
 
 export function CompanyContactsTable({
   companyName,
   contactCount,
   contacts,
+  loading,
+  error = null,
+  page,
+  total,
+  pageSize,
+  onPageChange,
 }: CompanyContactsTableProps) {
+  const noop = useCallback(() => {}, []);
+  const noopId = useCallback((_id: string) => {}, []);
+  const noopSort = useCallback((_s: string) => {}, []);
+  const noopIds = useCallback((_ids: string[]) => {}, []);
+  const noopSize = useCallback((_n: number) => {}, []);
+
+  const rowsWithCompany = useMemo(
+    () => contacts.map((c) => ({ ...c, company: companyName })),
+    [contacts, companyName],
+  );
+
   return (
-    <Card
-      title="Contacts"
-      subtitle={`People at ${companyName}`}
-      actions={<Badge color="gray">{contactCount ?? 0}</Badge>}
-    >
-      <div className="c360-table-wrapper">
-        <table className="c360-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Title</th>
-              <th>Email</th>
-              <th>Added</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="c360-table__empty">
-                  No contacts yet
-                </td>
-              </tr>
-            ) : (
-              contacts.map((contact) => (
-                <tr key={contact.id}>
-                  <td>
-                    <div className="c360-table-cell--avatar">
-                      <Image
-                        src={getAvatarUrl(contact.name, 28)}
-                        alt=""
-                        width={28}
-                        height={28}
-                        className="c360-avatar c360-avatar--sm"
-                      />
-                      <span className="c360-fw-medium">{contact.name}</span>
-                    </div>
-                  </td>
-                  <td className="c360-text-muted">{contact.title}</td>
-                  <td>
-                    {contact.email ? (
-                      <Badge
-                        color={
-                          contact.emailStatus === "VALID" ? "green" : "orange"
-                        }
-                      >
-                        {contact.email}
-                      </Badge>
-                    ) : (
-                      <Button variant="ghost" size="sm">
-                        <Mail size={12} /> Find
-                      </Button>
-                    )}
-                  </td>
-                  <td className="c360-text-muted">
-                    {formatDate(contact.createdAt)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+    <>
+      <Card
+        title="Contacts"
+        subtitle={`People at ${companyName}`}
+        actions={<Badge color="gray">{contactCount ?? 0}</Badge>}
+        padding="none"
+      >
+        <div className="c360-p-0">
+          <ContactsDataTable
+            className="c360-company-contacts-dt"
+            contacts={rowsWithCompany}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            onPageSizeChange={noopSize}
+            loading={loading}
+            error={error}
+            search=""
+            onSearchChange={noop}
+            sortBy="newest"
+            onSortChange={noopSort}
+            selected={[]}
+            onSelectionChange={noopIds}
+            expandedRow={null}
+            onToggleExpand={noopId}
+            visibleColumns={EMBEDDED_VISIBLE_COLUMNS}
+            showToolbarSearch={false}
+            showColumnPicker={false}
+            showPageSizeControl={false}
+            showPaginationFooter={false}
+            embedded
+          />
+        </div>
+      </Card>
+
+      {total > pageSize ? (
+        <div className="c360-flex c360-justify-end c360-mt-3">
+          <Pagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+          />
+        </div>
+      ) : null}
+    </>
   );
 }

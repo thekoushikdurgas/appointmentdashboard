@@ -134,6 +134,36 @@
   gap: 0;
 }
 
+/* Company detail — same floating pill chrome as activities; inline in page (not bottom-docked) */
+.c360-tabs--floating.c360-tabs--company-detail {
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+
+.c360-tabs--floating.c360-tabs--company-detail .c360-tabs__list--floating-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+  box-shadow: none;
+}
+
+.c360-tabs--floating.c360-tabs--company-detail .c360-tabs__tab {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+/* Company detail tab panels — kit `.c360-card__body { width: 50% }` clips Contacts table */
+.c360-tabs--floating.c360-tabs--company-detail
+  .c360-tabs__panel
+  .c360-section-stack
+  > .c360-card
+  > .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
 /* Activities — drop vertical rhythm padding reserved for bottom dock (browser preview) */
 .c360-tabs--floating.c360-tabs--activities.c360-tabs--floating-bottom {
   padding-bottom: 0;

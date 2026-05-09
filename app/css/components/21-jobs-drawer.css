@@ -30,9 +30,14 @@
   padding: var(--c360-spacing-4) var(--c360-spacing-5);
   border-bottom: 1px solid var(--c360-border);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--c360-spacing-3);
+}
+
+.c360-jobs-drawer__header-toolbar-host {
+  flex: 1;
+  min-width: 0;
 }
 
 .c360-jobs-drawer__body {
@@ -46,4 +51,79 @@
   .c360-jobs-drawer {
     width: 100vw;
   }
+}
+
+/* Jobs card header: workspace toolbar (optional) + table filter/page-size + pagination */
+.c360-jobs-workspace .c360-card__header {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-jobs-workspace .c360-card__header:has(> :only-child) > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.c360-jobs-card__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-3);
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.c360-jobs-card__header-table-toolbar-host {
+  flex: 1;
+  min-width: 0;
+}
+
+.c360-jobs-card__header-table-toolbar-host .c360-jobs-dt__toolbar {
+  margin: 0;
+}
+
+.c360-jobs-card__header-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  min-width: 0;
+}
+
+.c360-jobs-workspace .c360-card > .c360-card__body--none {
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-jobs-workspace .c360-card__body--none > .c360-p-4 {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Pagination portaled into Jobs Card header */
+.c360-jobs-card__header-pagination {
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: min(100%, 28rem);
+}
+
+.c360-jobs-card__header-pagination .c360-jobs-dt__footer--portal {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--c360-spacing-2);
+  padding: 0;
+}
+
+.c360-jobs-card__header-pagination .c360-jobs-dt__footer-text {
+  text-align: right;
+  line-height: 1.35;
+}
+
+.c360-jobs-card__header-pagination .c360-jobs-dt__pager {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }

@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  type RefObject,
+} from "react";
+import { createPortal } from "react-dom";
 import { RefreshCw, Plus, Download, FileKey } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -33,11 +40,14 @@ export interface JobsWorkspaceProps {
   /** When set on mount, pre-selects the job family filter (e.g. hire_signal). */
   initialJobFamily?: string;
   className?: string;
+  /** When set, family filter + export actions render into this element (e.g. drawer header). */
+  toolbarPortalRef?: RefObject<HTMLDivElement | null>;
 }
 
 export function JobsWorkspace({
   initialJobFamily = "",
   className,
+  toolbarPortalRef,
 }: JobsWorkspaceProps) {
   const { user } = useAuth();
   const { openReviewDrawer } = useReviewDrawer();
@@ -47,7 +57,6 @@ export function JobsWorkspace({
   const {
     jobs,
     loading,
-    isRefreshing,
     error,
     refresh,
     retry,
@@ -73,6 +82,17 @@ export function JobsWorkspace({
   const [patternDomainCol, setPatternDomainCol] = useState("domain");
   const [c360OutputPrefix, setC360OutputPrefix] = useState("exports/");
   const [c360VqlJson, setC360VqlJson] = useState("{}");
+  const jobsPaginationPortalRef = useRef<HTMLDivElement>(null);
+  const jobsDataTableToolbarPortalRef = useRef<HTMLDivElement>(null);
+  const [toolbarHostEl, setToolbarHostEl] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!toolbarPortalRef) {
+      setToolbarHostEl(null);
+      return;
+    }
+    setToolbarHostEl(toolbarPortalRef.current);
+  }, [toolbarPortalRef]);
 
   useEffect(() => {
     if (!exportOpen || !storageId) return;
@@ -203,46 +223,49 @@ export function JobsWorkspace({
     }
   };
 
+  const jobsToolbar = (
+    <div className="c360-jobs-card__header-toolbar">
+      <Select
+        options={JOB_FAMILY_OPTIONS}
+        value={familyFilter}
+        onChange={(e) => setFamilyFilter(e.target.value)}
+        fullWidth={false}
+        className="c360-jobs-family-select"
+      />
+      <Button
+        size="sm"
+        leftIcon={<Plus size={16} />}
+        onClick={() => setExportOpen(true)}
+      >
+        New Export
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        leftIcon={<FileKey size={16} />}
+        onClick={() => setS3JobOpen(true)}
+      >
+        From S3 file
+      </Button>
+      <Button
+        variant="secondary"
+        leftIcon={
+          <RefreshCw size={16} className={cn(loading && "c360-spin")} />
+        }
+        size="sm"
+        onClick={() => refresh()}
+        disabled={loading}
+      >
+        Refresh
+      </Button>
+    </div>
+  );
+
   return (
     <div className={cn("c360-jobs-workspace", className)}>
-      <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-3 c360-mb-4">
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-          <Select
-            options={JOB_FAMILY_OPTIONS}
-            value={familyFilter}
-            onChange={(e) => setFamilyFilter(e.target.value)}
-            fullWidth={false}
-            className="c360-jobs-family-select"
-          />
-          <Button
-            size="sm"
-            leftIcon={<Plus size={16} />}
-            onClick={() => setExportOpen(true)}
-          >
-            New Export
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            leftIcon={<FileKey size={16} />}
-            onClick={() => setS3JobOpen(true)}
-          >
-            From S3 file
-          </Button>
-          <Button
-            variant="secondary"
-            leftIcon={
-              <RefreshCw size={16} className={cn(loading && "c360-spin")} />
-            }
-            size="sm"
-            onClick={() => refresh()}
-            disabled={loading}
-          >
-            Refresh
-          </Button>
-        </div>
-      </div>
-
+      {toolbarPortalRef && toolbarHostEl
+        ? createPortal(jobsToolbar, toolbarHostEl)
+        : null}
       {error &&
         (() => {
           const opErr = parseOperationError(error, "jobs");
@@ -272,19 +295,20 @@ export function JobsWorkspace({
         })()}
 
       <Card
-        title="Jobs"
-        subtitle={
-          isRefreshing
-            ? "Refreshing…"
-            : loading
-              ? "Loading…"
-              : `${jobs.length} job${jobs.length !== 1 ? "s" : ""}${
-                  familyFilter
-                    ? ` · filter: ${JOB_FAMILY_OPTIONS.find((o) => o.value === familyFilter)?.label ?? familyFilter}`
-                    : ""
-                }`
-        }
         padding="none"
+        actions={
+          <div className="c360-jobs-card__header-actions">
+            {!toolbarPortalRef ? jobsToolbar : null}
+            <div
+              ref={jobsDataTableToolbarPortalRef}
+              className="c360-jobs-card__header-table-toolbar-host"
+            />
+            <div
+              ref={jobsPaginationPortalRef}
+              className="c360-jobs-card__header-pagination"
+            />
+          </div>
+        }
       >
         <div className="c360-p-4 c360-min-w-0 c360-overflow-x-auto">
           <JobsDataTable
@@ -324,6 +348,8 @@ export function JobsWorkspace({
                 onDownload={openSchedulerExportDownload}
               />
             )}
+            paginationPortalRef={jobsPaginationPortalRef}
+            tableToolbarPortalRef={jobsDataTableToolbarPortalRef}
           />
         </div>
       </Card>

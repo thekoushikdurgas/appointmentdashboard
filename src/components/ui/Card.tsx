@@ -25,27 +25,30 @@ function Card({
   children,
   ...props
 }: CardProps) {
-  const hasHeader = title || actions;
+  const hasHeader = Boolean(title || subtitle || actions);
+  const hasTitleBlock = Boolean(title || subtitle);
 
   return (
     <div className={cn("c360-card", className)} {...props}>
       {hasHeader && (
         <div className="c360-card__header">
-          <div>
-            {title &&
-              (typeof title === "string" ? (
-                <h3 className="c360-card__title">{title}</h3>
-              ) : (
-                title
-              ))}
-            {subtitle &&
-              (typeof subtitle === "string" ? (
-                <p className="c360-card__subtitle">{subtitle}</p>
-              ) : (
-                subtitle
-              ))}
-          </div>
-          {actions && <div>{actions}</div>}
+          {hasTitleBlock ? (
+            <div>
+              {title &&
+                (typeof title === "string" ? (
+                  <h3 className="c360-card__title">{title}</h3>
+                ) : (
+                  title
+                ))}
+              {subtitle &&
+                (typeof subtitle === "string" ? (
+                  <p className="c360-card__subtitle">{subtitle}</p>
+                ) : (
+                  subtitle
+                ))}
+            </div>
+          ) : null}
+          {actions ? <div>{actions}</div> : null}
         </div>
       )}
       {children !== undefined && (

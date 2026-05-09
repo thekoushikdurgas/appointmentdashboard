@@ -319,17 +319,21 @@
   grid-auto-rows: minmax(min-content, auto);
   gap: var(--c360-spacing-2);
   align-content: start;
+  width: 100%;
+  min-width: 0;
 }
 .c360-card--activity-feed-tab
   .c360-card__body--md
   > .c360-section-stack.c360-section-stack--sm {
   display: contents;
+  width: 100%;
 }
 
 /* Activities page — calendar card (activitycalender.md: month grid + footer slots) */
-.c360-card--activity-calendar-tab {
+.c360-card.c360-card--activity-calendar-tab {
   flex-direction: row;
   width: 100%;
+  border-radius: 0;
   /* min-width: 0; */
   /* max-width: 400px; */
   display: flex;
@@ -343,6 +347,38 @@
   gap: 0;
   padding: var(--c360-spacing-4);
   background: var(--c360-bg-elevated);
+}
+
+/* Activities tabs: Cards in a section stack (e.g. Analytics) — kit `.c360-card__body { width: 50% }` clips charts */
+.c360-tabs--activities
+  .c360-tabs__panel
+  .c360-section-stack
+  > .c360-card
+  > .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Activities panel: flatten card border-radius */
+.c360-tabs--activities .c360-tabs__panel > .c360-card {
+  border-radius: 0;
+}
+
+/* Activities panel: section-stack — collapse gap, align from start */
+.c360-tabs--activities .c360-tabs__panel .c360-section-stack {
+  gap: 0;
+  justify-content: flex-start;
+}
+
+/* Activities panel: toolbar/filter bar row inside section-stack — no wrap, centered */
+.c360-tabs--activities .c360-section-stack > .c360-mb-4.c360-items-center {
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+/* Activities panel: sub-tabs (e.g. usage drill-down filter tabs) — stretch tabs full-width */
+.c360-tabs--activities .c360-tabs--filter .c360-tabs__tab {
+  width: 100%;
 }
 
 .c360-activity-calendar-tab__calendar-wrap {
@@ -761,6 +797,29 @@
   gap: 6px;
   min-height: 28px;
 }
+
+/* Jobs DataGrid — centered column layout for every row (progress / status / job id / actions) */
+.c360-jobs-data-grid .c360-jobs-dt__progress-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.c360-jobs-data-grid .c360-jobs-dt__status-wrap {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.c360-jobs-data-grid .c360-jobs-dt__mono {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .c360-jobs-dt__pill {
   display: inline-flex;
   align-items: center;

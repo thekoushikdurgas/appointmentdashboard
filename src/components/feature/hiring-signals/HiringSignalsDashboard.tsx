@@ -91,14 +91,15 @@ export function HiringSignalsDashboard({
   );
 
   return (
-    <div className={cn("c360-flex c360-flex-col c360-gap-6", className)}>
+    <div className={cn("c360-flex c360-flex-col c360-gap-6 c360-hs-dashboard-wrapper", className)}>
       {latestRun && Object.keys(latestRun).length > 0 ? (
         <Card
+          className="c360-hs-dashboard-latest-run-card"
           title="Latest scrape run"
           subtitle="Most recent scrape session (scraper.server)"
         >
-          <div className="c360-flex c360-flex-col c360-gap-3 c360-hs-latest-run-inner">
-            <div className="c360-min-w-0 c360-space-y-2">
+          <div className="c360-flex c360-flex-row c360-gap-3 c360-hs-latest-run-inner">
+            <div className="c360-hs-latest-run-main">
               <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
                 <Badge color={runStatusBadgeColor(latestStatus)} size="sm">
                   {latestStatus || "—"}
@@ -142,8 +143,12 @@ export function HiringSignalsDashboard({
 
       <HiringSignalCharts jobs={jobs} />
 
-      <div className="c360-2col-grid">
-        <Card title="Recent activity" subtitle="Latest postings (visible list)">
+      <div className="c360-2col-grid c360-hs-dashboard-2col">
+        <Card
+          className="c360-dashboard-recent-activity-card"
+          title="Recent activity"
+          subtitle="Latest postings (visible list)"
+        >
           {loading && jobs.length === 0 ? (
             <p className="c360-text-sm c360-text-muted">Loading…</p>
           ) : recent.length === 0 ? (
@@ -181,6 +186,7 @@ export function HiringSignalsDashboard({
         <Card
           title="Top companies"
           subtitle="By open roles on this list (click to open panel)"
+          className="c360-hs-dashboard-top-companies-card"
         >
           {topCompanies.length === 0 ? (
             <p className="c360-text-sm c360-text-muted">

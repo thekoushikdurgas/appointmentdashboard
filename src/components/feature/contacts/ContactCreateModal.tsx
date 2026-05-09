@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { contactsService } from "@/services/graphql/contactsService";
-import type { CreateContactInput } from "@/graphql/generated/types";
+import {
+  contactsService,
+  type Contact,
+} from "@/services/graphql/contactsService";
+import type {
+  CreateContactInput,
+  UpdateContactInput,
+} from "@/graphql/generated/types";
 import { toast } from "sonner";
 
 const EMPTY_FORM: CreateContactInput = {
@@ -19,27 +25,60 @@ const EMPTY_FORM: CreateContactInput = {
 interface ContactCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Called after a successful create or update */
   onCreated: () => void;
+  /** When set, the modal updates this contact instead of creating */
+  editContact?: Contact | null;
 }
 
 export function ContactCreateModal({
   isOpen,
   onClose,
   onCreated,
+  editContact = null,
 }: ContactCreateModalProps) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<CreateContactInput>(EMPTY_FORM);
 
-  const handleCreate = async () => {
+  const isEdit = Boolean(editContact);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (editContact) {
+      setForm({
+        firstName: editContact.firstName ?? "",
+        lastName: editContact.lastName ?? "",
+        email: editContact.email ?? "",
+        title: editContact.title ?? "",
+        mobilePhone: editContact.phone ?? "",
+      });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+  }, [isOpen, editContact]);
+
+  const handleSubmit = async () => {
     setCreating(true);
     try {
-      await contactsService.create(form);
-      toast.success("Contact created successfully!");
+      if (editContact) {
+        const input: UpdateContactInput = {
+          firstName: form.firstName || undefined,
+          lastName: form.lastName || undefined,
+          email: form.email || undefined,
+          title: form.title || undefined,
+          mobilePhone: form.mobilePhone || undefined,
+        };
+        await contactsService.update(editContact.id, input);
+        toast.success("Contact updated successfully!");
+      } else {
+        await contactsService.create(form);
+        toast.success("Contact created successfully!");
+      }
       setForm(EMPTY_FORM);
       onCreated();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create contact");
+      toast.error(e instanceof Error ? e.message : "Failed to save contact");
     } finally {
       setCreating(false);
     }
@@ -51,7 +90,12 @@ export function ContactCreateModal({
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Contact" size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEdit ? "Edit contact" : "Add New Contact"}
+      size="md"
+    >
       <div className="c360-section-stack">
         <div className="c360-form-grid">
           <Input
@@ -91,8 +135,8 @@ export function ContactCreateModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button loading={creating} onClick={handleCreate}>
-            Create Contact
+          <Button loading={creating} onClick={() => void handleSubmit()}>
+            {isEdit ? "Save changes" : "Create Contact"}
           </Button>
         </div>
       </div>

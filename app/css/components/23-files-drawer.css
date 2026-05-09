@@ -46,6 +46,11 @@
   min-width: 0;
 }
 
+/* Override kit `.c360-card__body { width: 50% }` so file table fills drawer */
+.c360-files-workspace .c360-card > .c360-card__body {
+  width: 100%;
+}
+
 @media (max-width: 1023px) {
   .c360-files-drawer {
     width: 100vw;

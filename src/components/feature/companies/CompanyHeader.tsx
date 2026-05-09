@@ -9,6 +9,9 @@ import {
   Linkedin,
   Mail,
   ExternalLink,
+  Phone,
+  Hash,
+  RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +20,7 @@ import { formatCompact } from "@/lib/utils";
 
 interface CompanyHeaderProps {
   name: string;
+  companyUuid?: string | null;
   description?: string | null;
   industry?: string | null;
   country?: string | null;
@@ -24,13 +28,20 @@ interface CompanyHeaderProps {
   employeeCount?: number | null;
   website?: string | null;
   linkedinUrl?: string | null;
+  linkedinSalesUrl?: string | null;
+  address?: string | null;
+  phoneNumber?: string | null;
   contactCount?: number | null;
   findingEmails: boolean;
   onFindAllEmails: () => void;
+  /** Reload company metadata from the server */
+  onReload?: () => void;
+  reloading?: boolean;
 }
 
 export function CompanyHeader({
   name,
+  companyUuid,
   description,
   industry,
   country,
@@ -38,11 +49,19 @@ export function CompanyHeader({
   employeeCount,
   website,
   linkedinUrl,
+  linkedinSalesUrl,
+  address,
+  phoneNumber,
   contactCount,
   findingEmails,
   onFindAllEmails,
+  onReload,
+  reloading,
 }: CompanyHeaderProps) {
   const details = [
+    companyUuid
+      ? { icon: <Hash size={16} />, label: "UUID", value: companyUuid }
+      : null,
     { icon: <Globe size={16} />, label: "Domain", value: domain },
     {
       icon: <Users size={16} />,
@@ -51,12 +70,18 @@ export function CompanyHeader({
     },
     { icon: <Globe size={16} />, label: "Website", value: website },
     { icon: <MapPin size={16} />, label: "Country", value: country },
+    address?.trim()
+      ? { icon: <MapPin size={16} />, label: "Address", value: address }
+      : null,
+    phoneNumber?.trim()
+      ? { icon: <Phone size={16} />, label: "Phone", value: phoneNumber }
+      : null,
     {
       icon: <TrendingUp size={16} />,
       label: "Contacts",
       value: String(contactCount ?? 0),
     },
-  ].filter((i) => i.value);
+  ].filter((i): i is NonNullable<typeof i> => Boolean(i?.value));
 
   return (
     <Card>
@@ -94,9 +119,31 @@ export function CompanyHeader({
             <Linkedin size={14} /> LinkedIn Profile
           </a>
         )}
+        {linkedinSalesUrl && (
+          <a
+            href={linkedinSalesUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="c360-company-header__linkedin"
+          >
+            <Linkedin size={14} /> Sales Navigator
+          </a>
+        )}
       </div>
 
       <div className="c360-section-stack c360-section-stack--sm c360-mt-4">
+        {onReload ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<RefreshCw size={14} />}
+            loading={reloading}
+            onClick={onReload}
+            className="c360-w-full"
+          >
+            Refresh
+          </Button>
+        ) : null}
         <Button
           size="sm"
           leftIcon={<Mail size={14} />}

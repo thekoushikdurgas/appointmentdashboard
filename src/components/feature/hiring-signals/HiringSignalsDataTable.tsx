@@ -363,9 +363,27 @@ export function HiringSignalsDataTable({
 
   const handleRowSelectionModelChange = useCallback(
     (model: GridRowSelectionModel) => {
+      // MUI X may use `exclude` + empty ids for "select all" when exclude-model optimization is on.
+      // Parent state is a flat Set of row keys — translate both models (see toggleAllRows in useGridRowSelection).
+      if (model.type === "exclude") {
+        if (model.ids.size === 0) {
+          onSelectionChange(new Set(rows.map((r) => hiringSignalRowKey(r))));
+          return;
+        }
+        const excluded = new Set(Array.from(model.ids, (id) => String(id)));
+        const next = new Set<string>();
+        for (const row of rows) {
+          const k = hiringSignalRowKey(row);
+          if (!excluded.has(k)) {
+            next.add(k);
+          }
+        }
+        onSelectionChange(next);
+        return;
+      }
       onSelectionChange(new Set(Array.from(model.ids, (id) => String(id))));
     },
-    [onSelectionChange],
+    [onSelectionChange, rows],
   );
 
   const columns = useMemo<GridColDef<LinkedInJobRow>[]>(() => {
@@ -645,6 +663,8 @@ export function HiringSignalsDataTable({
               columns={columns}
               getRowId={(row) => hiringSignalRowKey(row)}
               checkboxSelection
+              /** Forces include-model select-all; otherwise MUI uses exclude+empty ids and controlled parents that only forward `ids` see an empty selection. */
+              disableRowSelectionExcludeModel
               disableRowSelectionOnClick
               keepNonExistentRowsSelected
               rowSelectionModel={rowSelectionModel}

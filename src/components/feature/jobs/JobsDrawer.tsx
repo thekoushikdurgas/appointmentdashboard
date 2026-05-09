@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -11,6 +11,7 @@ import { JobsWorkspace } from "@/components/feature/jobs/JobsWorkspace";
 export function JobsDrawer() {
   const { isOpen, closeJobsDrawer, openRequest } = useJobsDrawer();
   const [mounted, setMounted] = useState(false);
+  const jobsDrawerToolbarPortalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -49,17 +50,13 @@ export function JobsDrawer() {
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
           >
             <header className="c360-jobs-drawer__header">
-              <div className="c360-min-w-0">
-                <h2
-                  id="c360-jobs-drawer-title"
-                  className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
-                >
-                  Jobs
-                </h2>
-                <p className="c360-m-0 c360-mt-1 c360-text-2xs c360-text-ink-muted">
-                  Monitor exports and background processing
-                </p>
-              </div>
+              <h2 id="c360-jobs-drawer-title" className="c360-sr-only">
+                Jobs
+              </h2>
+              <div
+                ref={jobsDrawerToolbarPortalRef}
+                className="c360-jobs-drawer__header-toolbar-host"
+              />
               <Button
                 type="button"
                 variant="ghost"
@@ -75,6 +72,7 @@ export function JobsDrawer() {
               <JobsWorkspace
                 key={openRequest.seq}
                 initialJobFamily={openRequest.jobFamily ?? ""}
+                toolbarPortalRef={jobsDrawerToolbarPortalRef}
               />
             </div>
           </motion.aside>

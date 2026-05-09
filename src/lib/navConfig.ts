@@ -30,6 +30,8 @@ export interface SidebarSectionConfig {
   label: string | null;
   /** When true, entire section omitted unless user is super-admin. */
   requiresSuperAdmin?: boolean;
+  /** When true, entire section omitted unless user is admin or super-admin. */
+  requiresAdmin?: boolean;
   items: NavNode[];
 }
 
@@ -55,10 +57,21 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
         label: "Hiring signals",
         icon: "Zap",
       },
+      {
+        href: ROUTES.DEMANDS_AND_TRENDS,
+        label: "Demands & Trends",
+        icon: "TrendingUp",
+      },
+      {
+        href: ROUTES.MARKET_INSIGHTS,
+        label: "Market Insights",
+        icon: "BarChart2",
+      },
     ],
   },
   {
     label: "Tools",
+    requiresAdmin: true,
     items: [
       { href: ROUTES.EMAIL, label: "Email", icon: "Mail" },
       { href: ROUTES.PHONE, label: "Phone", icon: "Phone" },
@@ -67,6 +80,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
   },
   {
     label: "Campaigns",
+    requiresAdmin: true,
     items: [
       { href: ROUTES.CAMPAIGNS, label: "All campaigns", icon: "Megaphone" },
       { href: ROUTES.CAMPAIGNS_NEW, label: "New campaign", icon: "Plus" },
@@ -84,6 +98,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
   },
   {
     label: "AI",
+    requiresAdmin: true,
     items: [
       {
         href: ROUTES.AI_CHAT,

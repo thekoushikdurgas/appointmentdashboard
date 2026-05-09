@@ -9,6 +9,8 @@ export const ROUTES = {
   EMAIL: "/email",
   PHONE: "/phone",
   HIRING_SIGNALS: "/hiring-signals",
+  DEMANDS_AND_TRENDS: "/demands-and-trends",
+  MARKET_INSIGHTS: "/market-insights",
   LINKEDIN: "/linkedin",
   ACTIVITIES: "/activities",
   AI_CHAT: "/ai-chat",

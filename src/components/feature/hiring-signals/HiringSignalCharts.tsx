@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/shared/DonutChart";
+import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import { CHART_COLORS, RECHARTS_DEFAULTS } from "@/lib/chartTheme";
 
@@ -90,10 +91,9 @@ export function HiringSignalCharts({
   const donut = useMemo(() => buildEmploymentTypeBreakdown(jobs), [jobs]);
 
   return (
-    <div
-      className={className ? `c360-2col-grid ${className}` : "c360-2col-grid"}
-    >
+    <div className={cn("c360-2col-grid", "c360-hs-dashboard-2col", className)}>
       <Card
+        className="c360-hs-dashboard-postings-week-card"
         title="Postings by week"
         subtitle="From visible job list (current fetch)"
       >
@@ -131,7 +131,11 @@ export function HiringSignalCharts({
           )}
         </div>
       </Card>
-      <Card title="Employment type" subtitle="Distribution on visible job list">
+      <Card
+        className="c360-hs-dashboard-employment-type-card"
+        title="Employment type"
+        subtitle="Distribution on visible job list"
+      >
         <div className="c360-hs-chart c360-hs-chart--pie">
           {donut.length === 0 ? (
             <p className="c360-text-sm c360-text-muted">No employment types.</p>

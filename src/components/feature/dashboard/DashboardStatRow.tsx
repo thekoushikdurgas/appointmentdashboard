@@ -36,7 +36,7 @@ export function DashboardStatRow({ stats, loading }: DashboardStatRowProps) {
   if (loading) {
     return (
       <div
-        className="c360-dashboard-layout__stats c360-dashboard-layout__stats--home c360-mb-6 c360-flex c360-justify-center"
+        className="c360-dashboard-layout__stats c360-dashboard-layout__stats--home c360-flex c360-justify-center"
         aria-busy="true"
         aria-label="Loading account overview"
       >
@@ -47,7 +47,7 @@ export function DashboardStatRow({ stats, loading }: DashboardStatRowProps) {
 
   return (
     <div
-      className="c360-dashboard-layout__stats c360-dashboard-layout__stats--home c360-mb-6"
+      className="c360-dashboard-layout__stats c360-dashboard-layout__stats--home"
       role="list"
       aria-label="Account overview"
     >

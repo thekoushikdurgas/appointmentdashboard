@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ContactDetailPanel } from "./ContactDetailPanel";
 import { cn, formatDate, getAvatarUrl } from "@/lib/utils";
+import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 import { contactDetailRoute } from "@/lib/routes";
 import type { Contact } from "@/services/graphql/contactsService";
 
@@ -57,7 +58,13 @@ export function ContactRow({
         <td className="c360-text-muted">{contact.company || "—"}</td>
         <td>
           {contact.email ? (
-            <Badge color={contact.emailStatus === "VALID" ? "green" : "orange"}>
+            <Badge
+              color={
+                isContactEmailVerifiedStatus(contact.emailStatus)
+                  ? "green"
+                  : "orange"
+              }
+            >
               {contact.email}
             </Badge>
           ) : (

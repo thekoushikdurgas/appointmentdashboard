@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,6 +12,11 @@ import {
   Tag,
   Calendar,
   Edit2,
+  Globe,
+  Briefcase,
+  CircleDot,
+  Layers,
+  Facebook,
 } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Card } from "@/components/ui/Card";
@@ -22,7 +27,9 @@ import {
   contactsService,
   type Contact,
 } from "@/services/graphql/contactsService";
+import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateModal";
 import { ROUTES } from "@/lib/routes";
+import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 
 interface PageProps {
   params: Promise<{ uuid: string }>;
@@ -57,33 +64,40 @@ function InfoRow({
   );
 }
 
+function isContactNotFoundMessage(message: string | null): boolean {
+  if (!message) return false;
+  const m = message.toLowerCase();
+  return (
+    message.includes("ERR_CONTACT_NOT_FOUND") ||
+    m.includes("contact not found") ||
+    m.includes("not found")
+  );
+}
+
 export default function ContactDetailPage({ params }: PageProps) {
   const { uuid } = use(params);
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchContact = useCallback(async () => {
     setLoading(true);
     setError(null);
-    contactsService
-      .get(uuid)
-      .then((c) => {
-        if (!cancelled) setContact(c);
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load contact");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const c = await contactsService.get(uuid);
+      setContact(c);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load contact");
+      setContact(null);
+    } finally {
+      setLoading(false);
+    }
   }, [uuid]);
+
+  useEffect(() => {
+    void fetchContact();
+  }, [fetchContact]);
 
   const backLink = (
     <Link href={ROUTES.CONTACTS} className="c360-back-link c360-mb-4">
@@ -104,12 +118,20 @@ export default function ContactDetailPage({ params }: PageProps) {
   }
 
   if (error || !contact) {
+    const notFound = isContactNotFoundMessage(error);
     return (
       <DashboardPageLayout>
         {backLink}
         <Card>
-          <div className="c360-empty-state">
-            {error ?? "Contact not found."}
+          <div className="c360-empty-state c360-section-stack">
+            <p>
+              {notFound
+                ? "This contact no longer exists or was removed."
+                : (error ?? "Contact not found.")}
+            </p>
+            {!notFound && error ? (
+              <Button onClick={() => void fetchContact()}>Retry</Button>
+            ) : null}
           </div>
         </Card>
       </DashboardPageLayout>
@@ -141,14 +163,31 @@ export default function ContactDetailPage({ params }: PageProps) {
               {contact.company && (
                 <div className="c360-contact-info-row c360-mt-1">
                   <Building2 size={14} />
-                  <span>{contact.company}</span>
+                  {contact.companyId ? (
+                    <Link
+                      href={`/companies/${contact.companyId}`}
+                      className="c360-link"
+                    >
+                      {contact.company}
+                    </Link>
+                  ) : (
+                    <span>{contact.company}</span>
+                  )}
                 </div>
               )}
             </div>
-            <div className="c360-contact-detail-actions">
+            <div className="c360-contact-detail-actions c360-flex c360-gap-2 c360-items-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<Edit2 size={14} />}
+                onClick={() => setEditOpen(true)}
+              >
+                Edit
+              </Button>
               <Badge
                 color={
-                  contact.emailStatus === "VALID"
+                  isContactEmailVerifiedStatus(contact.emailStatus)
                     ? "green"
                     : contact.emailStatus
                       ? "orange"
@@ -174,9 +213,35 @@ export default function ContactDetailPage({ params }: PageProps) {
               />
               <InfoRow
                 icon={<Phone size={14} />}
-                label="Phone"
+                label="Mobile"
                 value={contact.phone}
                 href={contact.phone ? `tel:${contact.phone}` : undefined}
+              />
+              <InfoRow
+                icon={<Phone size={14} />}
+                label="Work direct"
+                value={contact.workDirectPhone}
+                href={
+                  contact.workDirectPhone
+                    ? `tel:${contact.workDirectPhone}`
+                    : undefined
+                }
+              />
+              <InfoRow
+                icon={<Phone size={14} />}
+                label="Home"
+                value={contact.homePhone}
+                href={
+                  contact.homePhone ? `tel:${contact.homePhone}` : undefined
+                }
+              />
+              <InfoRow
+                icon={<Phone size={14} />}
+                label="Other phone"
+                value={contact.otherPhone}
+                href={
+                  contact.otherPhone ? `tel:${contact.otherPhone}` : undefined
+                }
               />
               <InfoRow
                 icon={<MapPin size={14} />}
@@ -189,10 +254,49 @@ export default function ContactDetailPage({ params }: PageProps) {
                 value={contact.linkedinUrl ? "View Profile" : undefined}
                 href={contact.linkedinUrl}
               />
+              <InfoRow
+                icon={<Linkedin size={14} />}
+                label="LinkedIn Sales"
+                value={
+                  contact.linkedinSalesUrl ? "Open Sales Navigator" : undefined
+                }
+                href={contact.linkedinSalesUrl}
+              />
+              <InfoRow
+                icon={<Globe size={14} />}
+                label="Website"
+                value={contact.website}
+                href={
+                  contact.website?.startsWith("http")
+                    ? contact.website
+                    : contact.website
+                      ? `https://${contact.website}`
+                      : undefined
+                }
+              />
+              <InfoRow
+                icon={<Facebook size={14} />}
+                label="Facebook"
+                value={contact.facebookUrl ? "Profile" : undefined}
+                href={contact.facebookUrl}
+              />
+              <InfoRow
+                icon={<Globe size={14} />}
+                label="Twitter / X"
+                value={contact.twitterUrl ? "Profile" : undefined}
+                href={contact.twitterUrl}
+              />
               {!contact.email &&
                 !contact.phone &&
+                !contact.workDirectPhone &&
+                !contact.homePhone &&
+                !contact.otherPhone &&
                 !contact.location &&
-                !contact.linkedinUrl && (
+                !contact.linkedinUrl &&
+                !contact.linkedinSalesUrl &&
+                !contact.website &&
+                !contact.facebookUrl &&
+                !contact.twitterUrl && (
                   <p className="c360-page-subtitle">
                     No contact details available.
                   </p>
@@ -207,15 +311,28 @@ export default function ContactDetailPage({ params }: PageProps) {
                 <span className="c360-section-label">UUID</span>
                 <code className="c360-code-inline">{contact.id}</code>
               </div>
-              {contact.companyId && (
+              {contact.seniority && (
                 <div className="c360-detail-row">
-                  <span className="c360-section-label">Company ID</span>
-                  <Link
-                    href={`/companies/${contact.companyId}`}
-                    className="c360-link"
-                  >
-                    {contact.companyId}
-                  </Link>
+                  <span className="c360-section-label">
+                    <Briefcase size={12} /> Seniority
+                  </span>
+                  <span>{contact.seniority}</span>
+                </div>
+              )}
+              {contact.stage && (
+                <div className="c360-detail-row">
+                  <span className="c360-section-label">
+                    <CircleDot size={12} /> Stage
+                  </span>
+                  <span>{contact.stage}</span>
+                </div>
+              )}
+              {contact.departments && contact.departments.length > 0 && (
+                <div className="c360-detail-row">
+                  <span className="c360-section-label">
+                    <Layers size={12} /> Departments
+                  </span>
+                  <span>{contact.departments.join(", ")}</span>
                 </div>
               )}
               <div className="c360-detail-row">
@@ -284,6 +401,13 @@ export default function ContactDetailPage({ params }: PageProps) {
           </Card>
         </div>
       </div>
+
+      <ContactCreateModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        onCreated={() => void fetchContact()}
+        editContact={contact}
+      />
     </DashboardPageLayout>
   );
 }

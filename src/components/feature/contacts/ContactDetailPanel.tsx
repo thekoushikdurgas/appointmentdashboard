@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Contact } from "@/services/graphql/contactsService";
 import { emailService } from "@/services/graphql/emailService";
+import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 
 interface ContactDetailPanelProps {
   contact: Contact;
@@ -132,7 +133,7 @@ export function ContactDetailPanel({
         <div className="c360-section-label">Email Status</div>
         <Badge
           color={
-            contact.emailStatus === "VALID"
+            isContactEmailVerifiedStatus(contact.emailStatus)
               ? "green"
               : contact.emailStatus
                 ? "orange"

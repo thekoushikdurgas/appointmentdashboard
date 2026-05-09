@@ -95,6 +95,7 @@ export function useCompanyFilterOptions() {
           loading: false,
           loadingMore: false,
           searchText: "",
+          canLoadMore: false,
         },
       }));
     }

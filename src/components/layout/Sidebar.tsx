@@ -20,6 +20,8 @@ import {
   Brain,
   Wrench,
   Zap,
+  TrendingUp,
+  BarChart2,
   PanelLeft,
   PanelRight,
   Settings,
@@ -54,6 +56,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Brain,
   Tool: Wrench,
   Zap,
+  TrendingUp,
+  BarChart2,
 };
 
 interface SidebarProps {
@@ -81,16 +85,18 @@ export default function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { isSuperAdmin } = useRole();
+  const { isSuperAdmin, isAdmin } = useRole();
   const prefersReducedMotion = useReducedMotion();
   const finePointer = useStateFinePointer();
   const railCollapsed = collapsed && !peekOpen;
 
   const visibleSections = useMemo((): SidebarSectionConfig[] => {
-    return SIDEBAR_SECTIONS.filter(
-      (s) => !s.requiresSuperAdmin || isSuperAdmin,
-    );
-  }, [isSuperAdmin]);
+    return SIDEBAR_SECTIONS.filter((s) => {
+      if (s.requiresSuperAdmin && !isSuperAdmin) return false;
+      if (s.requiresAdmin && !isAdmin) return false;
+      return true;
+    });
+  }, [isAdmin, isSuperAdmin]);
 
   const iconFor = (key: string) => ICON_MAP[key];
 

@@ -7,6 +7,10 @@
   box-sizing: border-box;
 }
 
+.c360-dashboard-email-activity-card.c360-card {
+  box-shadow: none;
+}
+
 .c360-dashboard-email-chart {
   display: flex;
   flex-direction: column;

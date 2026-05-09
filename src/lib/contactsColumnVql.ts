@@ -5,14 +5,13 @@ export const CONTACT_COLUMN_TO_VQL_FIELDS: Record<
   ContactsDataTableColumnId,
   string[]
 > = {
-  ref: ["uuid"],
-  added: ["created_at"],
   name: ["first_name", "last_name"],
   title: ["title"],
   region: ["city", "state", "country"],
   status: ["email_status"],
   company: [],
   email: ["email"],
+  added: ["created_at"],
   action: [],
 };
 
@@ -25,7 +24,7 @@ export function visibleColumnsNeedCompanyPopulate(
 export function selectColumnsFromVisibleColumns(
   cols: ContactsDataTableColumnId[],
 ): string[] {
-  const set = new Set<string>();
+  const set = new Set<string>(["uuid"]);
   for (const c of cols) {
     for (const f of CONTACT_COLUMN_TO_VQL_FIELDS[c] ?? []) set.add(f);
   }

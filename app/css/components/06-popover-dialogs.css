@@ -3,9 +3,10 @@
    POPOVER & TOOLTIP (portals — static chrome in CSS, position via inline)
 ══════════════════════════════════════════════════════════════════════════════ */
 .c360-popover__panel {
-  position: absolute;
-  z-index: var(--c360-z-popover);
-  /* width: var(--c360-popover-width, 280px); */
+  position: fixed;
+  /* Portaled to document.body — must clear modal drawers (--c360-z-modal) */
+  z-index: var(--c360-z-portal-dropdown);
+  width: var(--c360-popover-width, 280px);
   background: var(--c360-bg-elevated);
   border: 1px solid var(--c360-border);
   border-radius: var(--c360-radius-lg);
@@ -40,6 +41,33 @@
   display: inline-flex;
   align-items: center;
   cursor: pointer;
+}
+
+/* Inline popover: panel lives in layout under the trigger (no body portal). */
+.c360-popover-root--inline {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-popover-root--inline .c360-popover__trigger {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-popover__panel.c360-popover__panel--inline {
+  position: relative;
+  z-index: var(--c360-z-portal-dropdown);
+  top: auto;
+  left: auto;
+  width: 100%;
+  max-width: 100%;
+  margin-top: var(--c360-spacing-2);
+  transform: none;
+  box-sizing: border-box;
 }
 
 .c360-tooltip__panel {
@@ -290,7 +318,51 @@
 
 /* Filter facet combobox (contacts sidebar — infinite scroll + multi-select) */
 .c360-filter-combobox__panel {
-  overflow: visible;
+  /* Must clip so long facet lists scroll inside the panel (not past the viewport). */
+  overflow: hidden;
+}
+
+/* Inline facet panel: flush under trigger, no floating-card chrome */
+.c360-filter-combobox__panel.c360-popover__panel--inline {
+  box-shadow: none;
+  margin-top: 0;
+}
+
+.c360-filter-combobox__panel-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: var(--c360-spacing-2);
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: min(72vh, 28rem);
+  min-height: 0;
+  /* Establish scrollport for flex child; visible lets children paint past max-height in some engines. */
+  overflow: hidden;
+}
+
+.c360-filter-combobox__panel-inner > .c360-input {
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-filter-combobox__list {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  padding: var(--c360-spacing-1);
 }
 
 .c360-filter-combobox__trigger {
@@ -309,4 +381,21 @@
 .c360-filter-combobox__option--focus {
   outline: 2px solid var(--c360-border);
   outline-offset: -2px;
+}
+
+/* Row is flex: checkbox fixed width, label must shrink so .c360-truncate ellipsis applies. */
+.c360-filter-combobox__option {
+  /* min-width: 0; */
+  /* max-width: 100%; */
+  width: 220px;
+  box-sizing: border-box;
+}
+
+.c360-filter-combobox__option .c360-truncate {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.c360-filter-combobox__option .c360-checkbox {
+  flex-shrink: 0;
 }

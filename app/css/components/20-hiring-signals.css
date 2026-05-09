@@ -6,12 +6,67 @@
     align-items: flex-end;
     justify-content: space-between;
   }
+}
 
-  .c360-hs-latest-run-inner {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
+.c360-hs-latest-run-inner {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* HiringSignalsDashboard root wrapper — collapse gap between all child sections */
+.c360-hs-dashboard-wrapper.c360-gap-6 {
+  gap: 0;
+}
+
+/* Dashboard 2-col chart grids — flush gap between chart cards */
+.c360-hs-dashboard-2col.c360-2col-grid {
+  gap: 0;
+}
+
+.c360-hs-dashboard-postings-week-card.c360-card {
+  border-radius: 0;
+}
+
+.c360-hs-dashboard-latest-run-card.c360-card {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.c360-hs-dashboard-employment-type-card.c360-card {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Latest scrape run card (dashboard layout): full-width body (overrides kit `.c360-card__body { width: 50% }`) */
+.c360-hs-dashboard-latest-run-card .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Status / started / progress column — flex + gap (replaces stack utilities on inner column) */
+.c360-hs-dashboard-latest-run-card .c360-hs-latest-run-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Weekly postings chart — full-width body (kit `.c360-card__body { width: 50% }` → ~half column) */
+.c360-hs-dashboard-postings-week-card .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Employment type (donut) chart — same kit override + chart shell width */
+.c360-hs-dashboard-employment-type-card .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Signals table shell: use shared `.c360-data-table-shell` via `C360DataTableShell`. */
@@ -24,6 +79,17 @@
 
 .c360-hs-dashboard-recent-item {
   padding: 10px;
+}
+
+/* Top companies card — flush with grid, full-width body */
+.c360-hs-dashboard-top-companies-card.c360-card {
+  box-shadow: none;
+}
+.c360-hs-dashboard-top-companies-card .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  height: fit-content;
+  box-sizing: border-box;
 }
 
 .c360-hs-dashboard-companies-list {
@@ -330,8 +396,143 @@
   min-height: 200px;
 }
 
-.c360-hs-chart--pie {
+.c360-hs-chart.c360-hs-chart--pie {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 280px;
+}
+
+/* Recharts measures parent; kit-narrow body yields ~393px — stretch to card width */
+.c360-hs-chart--pie .recharts-responsive-container,
+.c360-hs-chart--pie .recharts-wrapper {
+  max-width: 100% !important;
+}
+
+.c360-hs-chart--pie .recharts-responsive-container {
+  height: 100% !important;
+}
+
+.c360-hs-chart--pie .recharts-wrapper {
+  max-height: none !important;
+}
+
+/* Donut fills explicit wrapper from DonutChart (ResponsiveContainer height 100%) */
+.c360-donut-chart {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Demands & Trends: kit `.c360-card__body { width: 50% }` clips tables/charts */
+.c360-demands-trends-page .c360-card > .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Demands: vertical rhythm — section stack gap off (browser preview) */
+.c360-demands-trends-page .c360-section-stack {
+  gap: 0;
+}
+
+/*
+ * Rows that use `c360-2col-grid lg:c360-grid-cols-3`: stack as column, no gap.
+ * Class name contains `:` — escape for CSS selectors.
+ */
+.c360-demands-trends-page .c360-2col-grid.lg\:c360-grid-cols-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Two-up rows (locations+daily, titles+skills): flex column, no gap (browser preview) */
+.c360-demands-trends-page .c360-2col-grid:not(.lg\:c360-grid-cols-3) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Flat cards on Demands & Trends — no shadow, square corners */
+.c360-demands-trends-page .c360-card {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Line / bar charts in demands: Recharts wrapper max-width follows card */
+.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-responsive-container,
+.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-wrapper {
+  max-width: 100% !important;
+}
+
+.c360-demands-trends-page .c360-hs-chart.c360-hs-chart--pie {
+  height: 220px;
+  min-height: 220px;
+}
+
+/* Demands & Trends — main column: kit `layout.css` uses gap on `.c360-data-layout__content` */
+.c360-demands-trends-page .c360-data-layout__content {
+  gap: 0;
+}
+
+/* Market Insights — data column, floating tabs chrome, flat cards, stacked grids */
+.c360-market-insights-page .c360-data-layout__content {
+  gap: 0;
+}
+
+.c360-market-insights-page .c360-tabs__list--floating-wrap {
+  width: 100%;
+  box-shadow: none;
+}
+
+.c360-market-insights-page .c360-tabs.c360-tabs--floating {
+  gap: 0;
+}
+
+.c360-market-insights-page .c360-tabs__panel .c360-section-stack {
+  gap: 0;
+}
+
+/* Skills tab: first row is a 2-col grid (unique among insight tabs) */
+.c360-market-insights-page
+  .c360-section-stack:has(> .c360-2col-grid:first-child) {
+  justify-content: flex-start;
+}
+
+.c360-market-insights-page .c360-card {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.c360-market-insights-page .c360-card > .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-market-insights-page .c360-2col-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Hiring KPI strip (dashboard, demands, etc.) — flex wrap vs grid */
+.c360-hiring-kpi-strip > .c360-stat-card {
+  flex: 1 1 140px;
+  min-width: min(140px, 100%);
+}
+
+@media (min-width: 768px) {
+  .c360-hiring-kpi-strip > .c360-stat-card {
+    flex: 1 1 calc(50% - var(--c360-spacing-4) / 2);
+  }
+}
+
+@media (min-width: 1280px) {
+  .c360-hiring-kpi-strip > .c360-stat-card {
+    flex: 1 1 calc(20% - var(--c360-spacing-4) * 4 / 5);
+    max-width: calc(20% - var(--c360-spacing-4) * 4 / 5);
+  }
 }
 
 .c360-hs-line-clamp-2,
@@ -565,6 +766,8 @@
 
 .c360-hs-stats-grid .c360-stat-card {
   flex-direction: column;
+  padding: 10px;
+  border-radius: 5px;
   transition:
     box-shadow var(--c360-transition-fast),
     border-color var(--c360-transition-fast);

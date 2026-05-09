@@ -23,16 +23,25 @@
 .c360-circular-testimonials--dashboard {
   max-width: none;
   margin-inline: 0;
+  margin-bottom: 0;
   padding: var(--c360-spacing-6) var(--c360-spacing-6);
-  border-radius: var(--c360-radius-2xl);
+  border-radius: 0;
   border: 1px solid var(--c360-border);
-  background: var(--c360-bg-elevated);
-  box-shadow: var(--c360-shadow-sm);
+  background: unset;
+  box-shadow: none;
+}
+
+.c360-circular-testimonials--dashboard:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--c360-bg),
+    0 0 0 4px var(--c360-primary);
 }
 
 @media (min-width: 768px) {
   .c360-circular-testimonials--dashboard {
-    padding: 30px 60px;
+    padding-top: 55px;
+    padding-left: 60px;
+    padding-right: 60px;
   }
 }
 
@@ -297,8 +306,8 @@ button.c360-circular-testimonials__cta.c360-circular-testimonials__cta--dashboar
 
 /* ─── Recent Activity (dashboard chart column) — shell + rows aligned with testimonials dashboard ─ */
 .c360-dashboard-recent-activity-card.c360-card {
-  border-radius: var(--c360-radius-2xl);
-  box-shadow: var(--c360-shadow-sm);
+  border-radius: 0;
+  box-shadow: none;
   border: 1px solid var(--c360-border);
   background: var(--c360-bg-elevated);
 }
@@ -327,6 +336,8 @@ button.c360-circular-testimonials__cta.c360-circular-testimonials__cta--dashboar
 }
 
 .c360-dashboard-recent-activity-card .c360-card__body {
+  width: 100%;
+  min-width: 0;
   padding: var(--c360-spacing-5) var(--c360-spacing-6) var(--c360-spacing-6);
 }
 

@@ -44,7 +44,6 @@ export function HiringSignalsHomeOverview() {
       filterMatchTotal={total}
       pageRowCount={jobs.length}
       loading={statsLoading}
-      className="c360-mb-4"
     />
   );
 

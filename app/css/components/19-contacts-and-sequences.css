@@ -691,7 +691,7 @@
   width: fit-content;
 }
 
-/* Companies list: range + pagination in `DataPageLayout` metadata (directly under toolbar) */
+/* Companies list: range + pagination — lives inside toolbar meta slot */
 .c360-company-pagination-bar {
   display: flex;
   flex-wrap: wrap;
@@ -701,33 +701,18 @@
   width: 100%;
   box-sizing: border-box;
   padding: var(--c360-spacing-2) var(--c360-spacing-4);
-  background: var(--c360-kit-toolbar-bg, var(--c360-bg-elevated));
-  border: 1px solid var(--c360-kit-toolbar-border, var(--c360-border));
-  border-radius: var(--c360-radius-lg);
-  box-shadow: var(--c360-kit-shadow-soft, 0 0 40px rgba(82, 63, 105, 0.08));
+  background: unset;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 .c360-company-pagination-bar__range {
   margin: 0;
   font-size: var(--c360-text-sm);
   color: var(--c360-text-muted);
 }
-.c360-page.c360-companies-page
-  > .c360-data-layout
-  > .c360-data-layout__content
-  > .c360-data-layout__metadata {
-  width: 100%;
-}
-.c360-page.c360-companies-page
-  > .c360-data-layout
-  > .c360-data-layout__content
-  > .c360-data-layout__metadata
-  .c360-company-pagination-bar {
-  border-radius: 0;
-  border-top: none;
-  box-shadow: none;
-}
 
-/* Contacts list: range + pagination in `DataPageLayout` metadata (directly under toolbar) */
+/* Contacts list: range + pagination — lives inside toolbar meta slot */
 .c360-contact-pagination-bar {
   display: flex;
   flex-wrap: wrap;
@@ -737,30 +722,15 @@
   width: 100%;
   box-sizing: border-box;
   padding: var(--c360-spacing-2) var(--c360-spacing-4);
-  background: var(--c360-kit-toolbar-bg, var(--c360-bg-elevated));
-  border: 1px solid var(--c360-kit-toolbar-border, var(--c360-border));
+  background: unset;
+  border: none;
   border-radius: var(--c360-radius-lg);
-  box-shadow: var(--c360-kit-shadow-soft, 0 0 40px rgba(82, 63, 105, 0.08));
+  box-shadow: none;
 }
 .c360-contact-pagination-bar__range {
   margin: 0;
   font-size: var(--c360-text-sm);
   color: var(--c360-text-muted);
-}
-.c360-page.c360-contacts-page
-  > .c360-data-layout
-  > .c360-data-layout__content
-  > .c360-data-layout__metadata {
-  width: 100%;
-}
-.c360-page.c360-contacts-page
-  > .c360-data-layout
-  > .c360-data-layout__content
-  > .c360-data-layout__metadata
-  .c360-contact-pagination-bar {
-  border-radius: 0;
-  border-top: none;
-  box-shadow: none;
 }
 
 /* Root: same rhythm as main sidebar (`c360-sidebar__nav` / mydesigns sidebar — flat list, muted + hover surface) */

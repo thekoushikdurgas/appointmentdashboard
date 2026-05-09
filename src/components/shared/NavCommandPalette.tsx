@@ -23,6 +23,7 @@ import {
   REVIEW_DRAWER_NAV_HREF,
   useReviewDrawer,
 } from "@/context/ReviewDrawerContext";
+import { useRole } from "@/context/RoleContext";
 
 interface NavCommandPaletteProps {
   open: boolean;
@@ -39,6 +40,7 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
   const { openNotificationsDrawer } = useNotificationsDrawer();
   const { openFilesDrawer } = useFilesDrawer();
   const { openReviewDrawer } = useReviewDrawer();
+  const { isAdmin } = useRole();
   const navIndex = useMemo((): FlatNavEntry[] => {
     const extra: FlatNavEntry[] = [
       { label: "Jobs", href: JOBS_DRAWER_NAV_HREF, section: "Tools" },
@@ -53,8 +55,16 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
       { label: "Profile", href: ROUTES.PROFILE, section: "Account" },
       { label: "Settings", href: ROUTES.SETTINGS, section: "Account" },
     ];
-    return [...NAV_SEARCH_INDEX, ...extra];
-  }, []);
+    const base = isAdmin
+      ? NAV_SEARCH_INDEX
+      : NAV_SEARCH_INDEX.filter(
+          (e) =>
+            e.section !== "Campaigns" &&
+            e.section !== "AI" &&
+            e.section !== "Tools",
+        );
+    return [...base, ...extra];
+  }, [isAdmin]);
 
   const results = query.trim()
     ? navIndex.filter((r) =>

@@ -2,13 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import Link from "next/link";
-import {
-  Building2,
-  Columns3,
-  ExternalLink,
-  Loader2,
-  Users,
-} from "lucide-react";
+import { Building2, Columns3, ExternalLink, Users } from "lucide-react";
 import {
   DataGrid,
   type GridColDef,
@@ -23,6 +17,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Popover } from "@/components/ui/Popover";
 import { Select } from "@/components/ui/Select";
+import { Skeleton } from "@/components/shared/Skeleton";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
@@ -87,11 +82,12 @@ function CompaniesNoRowsOverlay({
 }) {
   if (loading) {
     return (
-      <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4 c360-gap-2">
-        <Loader2 size={20} className="c360-spin" />
-        <span className="c360-text-sm c360-text-ink-muted">
-          Loading companies…
-        </span>
+      <div className="c360-flex c360-h-full c360-min-h-[320px] c360-w-full c360-flex-col c360-justify-center c360-gap-3 c360-px-4 c360-py-6">
+        <Skeleton height={44} />
+        <Skeleton height={44} />
+        <Skeleton height={44} />
+        <Skeleton height={44} />
+        <Skeleton height={44} />
       </div>
     );
   }

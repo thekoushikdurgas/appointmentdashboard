@@ -26,31 +26,40 @@ export function DonutChart({
   showLegend = true,
 }: DonutChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={innerRadius}
-          outerRadius={outerRadius}
-          paddingAngle={3}
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell
-              key={entry.name}
-              fill={entry.color || CHART_SERIES[index % CHART_SERIES.length]}
+    <div
+      className="c360-donut-chart"
+      style={{
+        width: "100%",
+        minWidth: 0,
+        height: typeof height === "number" ? `${height}px` : "100%",
+      }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            paddingAngle={3}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={entry.name}
+                fill={entry.color || CHART_SERIES[index % CHART_SERIES.length]}
+              />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={RECHARTS_DEFAULTS.tooltipContentStyle} />
+          {showLegend && (
+            <Legend
+              wrapperStyle={{ fontFamily: "Poppins, sans-serif", fontSize: 12 }}
             />
-          ))}
-        </Pie>
-        <Tooltip contentStyle={RECHARTS_DEFAULTS.tooltipContentStyle} />
-        {showLegend && (
-          <Legend
-            wrapperStyle={{ fontFamily: "Poppins, sans-serif", fontSize: 12 }}
-          />
-        )}
-      </PieChart>
-    </ResponsiveContainer>
+          )}
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

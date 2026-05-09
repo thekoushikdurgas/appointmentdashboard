@@ -51,6 +51,16 @@ export interface Contact {
   country?: string | null;
   linkedinUrl?: string;
   phone?: string;
+  seniority?: string;
+  stage?: string;
+  departments?: string[];
+  workDirectPhone?: string;
+  homePhone?: string;
+  otherPhone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  linkedinSalesUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,12 +72,23 @@ export interface ContactRow {
   email: string | null;
   title: string | null;
   companyUuid: string | null;
+  company?: { uuid?: string | null; name?: string | null } | null;
   emailStatus: string | null;
   linkedinUrl: string | null;
   mobilePhone: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
+  seniority?: string | null;
+  stage?: string | null;
+  departments?: string[] | null;
+  workDirectPhone?: string | null;
+  homePhone?: string | null;
+  otherPhone?: string | null;
+  website?: string | null;
+  facebookUrl?: string | null;
+  twitterUrl?: string | null;
+  linkedinSalesUrl?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -77,6 +98,8 @@ function mapContact(r: ContactRow): Contact {
   const ln = r.lastName ?? "";
   const name = [fn, ln].filter(Boolean).join(" ").trim() || r.email || r.uuid;
   const loc = [r.city, r.state, r.country].filter(Boolean).join(", ");
+  const companyName = r.company?.name?.trim() || undefined;
+  const companyIdRaw = r.companyUuid ?? r.company?.uuid ?? null;
   return {
     id: r.uuid,
     name,
@@ -85,11 +108,22 @@ function mapContact(r: ContactRow): Contact {
     email: r.email ?? undefined,
     emailStatus: r.emailStatus ?? undefined,
     title: r.title ?? undefined,
-    companyId: r.companyUuid ?? undefined,
+    company: companyName,
+    companyId: companyIdRaw ?? undefined,
     location: loc || undefined,
     country: r.country,
     linkedinUrl: r.linkedinUrl ?? undefined,
     phone: r.mobilePhone ?? undefined,
+    seniority: r.seniority ?? undefined,
+    stage: r.stage ?? undefined,
+    departments: r.departments?.filter(Boolean) ?? undefined,
+    workDirectPhone: r.workDirectPhone ?? undefined,
+    homePhone: r.homePhone ?? undefined,
+    otherPhone: r.otherPhone ?? undefined,
+    website: r.website ?? undefined,
+    facebookUrl: r.facebookUrl ?? undefined,
+    twitterUrl: r.twitterUrl ?? undefined,
+    linkedinSalesUrl: r.linkedinSalesUrl ?? undefined,
     createdAt: r.createdAt ?? "",
     updatedAt: r.updatedAt ?? "",
   };

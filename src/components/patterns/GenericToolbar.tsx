@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Filter } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCompact, formatNumber } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -100,8 +100,18 @@ export function GenericToolbar({
                   >
                     <span className={`${p}__tab-label`}>{tab.label}</span>
                     {showCount ? (
-                      <span className={`${p}__tab-count`} aria-label="Count">
-                        {tab.count}
+                      <span
+                        className={`${p}__tab-count`}
+                        aria-label={`Count ${formatNumber(tab.count ?? 0)}`}
+                        title={
+                          tab.count !== undefined && tab.count >= 10_000
+                            ? formatNumber(tab.count)
+                            : undefined
+                        }
+                      >
+                        {tab.count !== undefined && tab.count >= 10_000
+                          ? formatCompact(tab.count)
+                          : tab.count}
                       </span>
                     ) : null}
                   </button>

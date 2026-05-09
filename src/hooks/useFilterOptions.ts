@@ -131,6 +131,7 @@ export function useFilterOptions() {
           loading: false,
           loadingMore: false,
           searchText: "",
+          canLoadMore: false,
         },
       }));
     }

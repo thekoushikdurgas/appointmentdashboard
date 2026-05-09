@@ -1,6 +1,12 @@
 /* Dashboard — hiring-signal job locations globe (COBE + legend)
  * Pair with HiringSignalJobsGlobe.tsx; inspired by docs/frontend/ideas/mydesigns/dashboardmap.md */
 
+.c360-dashboard-hiring-globe-card .c360-card__body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .c360-dashboard-hiring-globe-card .c360-card__footer {
   width: 100%;
   max-width: 100%;

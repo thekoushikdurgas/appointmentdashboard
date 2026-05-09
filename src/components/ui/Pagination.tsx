@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCompact } from "@/lib/utils";
 
 export interface PaginationProps {
   total: number;
@@ -117,8 +117,14 @@ export function Pagination({
             )}
             onClick={() => onPageChange(p)}
             aria-current={p === page ? "page" : undefined}
+            aria-label={
+              p >= 10_000 ? `Page ${p.toLocaleString("en-US")}` : undefined
+            }
+            title={
+              p >= 10_000 ? `Page ${p.toLocaleString("en-US")}` : undefined
+            }
           >
-            {p}
+            {p >= 10_000 ? formatCompact(p) : p}
           </button>
         ),
       )}

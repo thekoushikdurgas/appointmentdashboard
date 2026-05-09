@@ -8,6 +8,12 @@ import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
 /** Hiring-signal operations: hooks/modals show toasts; avoid duplicate client toasts. */
 const HS_GQL = { showToastOnError: false as const };
 
+/**
+ * Page size for client-side analytics surfaces (Demands & Trends, Market Insights).
+ * Must stay at or below job.server `List` max page size.
+ */
+export const HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT = 10_000;
+
 // --- response shapes (JSON scalars from gateway) ---
 
 export type HireSignalApiJson = Record<string, unknown> | null | unknown[];
@@ -151,6 +157,14 @@ const HIRE_SIGNAL_STATS = gql`
   query HireSignalStats {
     hireSignal {
       stats
+    }
+  }
+`;
+
+const HIRE_SIGNAL_DASHBOARD_KPIS = gql`
+  query HireSignalDashboardKpis {
+    hireSignal {
+      dashboardKpis
     }
   }
 `;
@@ -592,6 +606,12 @@ export async function fetchHiringSignalStats() {
   return graphqlQuery<{
     hireSignal: { stats: HireSignalApiJson };
   }>(HIRE_SIGNAL_STATS, {}, HS_GQL);
+}
+
+export async function fetchHiringSignalDashboardKpis() {
+  return graphqlQuery<{
+    hireSignal: { dashboardKpis: HireSignalApiJson };
+  }>(HIRE_SIGNAL_DASHBOARD_KPIS, {}, HS_GQL);
 }
 
 export async function fetchCompanyHiringSignalJobs(

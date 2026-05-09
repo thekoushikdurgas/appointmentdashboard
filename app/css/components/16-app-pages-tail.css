@@ -303,8 +303,9 @@
 /* Usage page */
 .c360-usage-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--c360-spacing-6);
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 0;
 }
 .c360-usage-card-header {
   display: flex;
@@ -865,6 +866,37 @@
   color: var(--c360-text-muted);
 }
 
+/* ── Company detail header (`CompanyHeader` in Card, dashboard layout) ── */
+.c360-card:has(.c360-company-header__identity) > .c360-card__body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.c360-company-header__identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.c360-company-header__details {
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-badge-row.c360-company-header__badges {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
 /* ── Live Voice page ── */
 .c360-voice-page {
   max-width: 900px;
@@ -1163,11 +1195,13 @@
 .c360-contact-detail-page {
   display: flex;
   flex-direction: column;
-  gap: var(--c360-spacing-4);
+  gap: 0;
 }
 .c360-contact-detail-header {
   display: flex;
-  align-items: flex-start;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
   gap: var(--c360-spacing-4);
 }
 .c360-contact-detail-meta {
@@ -1179,11 +1213,56 @@
   gap: var(--c360-spacing-2);
   align-items: flex-end;
 }
-.c360-contact-detail-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--c360-spacing-4);
+.c360-contact-detail-page > .c360-card {
+  border-radius: 0;
 }
+
+.c360-contact-detail-grid-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: none;
+  border-color: transparent;
+  border-image: none;
+}
+
+.c360-contact-detail-grid-2 > .c360-card {
+  width: 100%;
+  min-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Back link (contact / company detail under dashboard layout) */
+a.c360-back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-contact-detail-page > .c360-card:first-child .c360-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-contact-detail-header .c360-avatar.c360-avatar--lg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.c360-contact-detail-grid-2 > .c360-card .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
 .c360-contact-info-icon {
   color: var(--c360-text-muted);
   flex-shrink: 0;

@@ -110,6 +110,8 @@ video {
   --c360-z-popover: 60;
   --c360-z-tooltip: 70;
   --c360-z-modal: 100;
+  /* Portaled menus (e.g. Radix Select Content on document.body) must sit above modal drawers */
+  --c360-z-portal-dropdown: 110;
   /* Command palette above page modals */
   --c360-z-cmd-palette-overlay: 150;
   --c360-z-cmd-palette: 151;

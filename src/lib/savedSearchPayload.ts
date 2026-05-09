@@ -23,6 +23,8 @@ export type ContactSavedSearchPayloadV2 = {
   sortBy: string;
   activeTab: string;
   facetValues: Record<string, string[]>;
+  /** Company-index facets applied on contacts (optional for backward compatibility). */
+  companyFacetValues?: Record<string, string[]>;
   advancedListDraft: DraftQuery | null;
 };
 
@@ -92,7 +94,11 @@ export function isContactSavedSearchPayload(
       typeof v.facetValues === "object" &&
       v.facetValues !== null &&
       !Array.isArray(v.facetValues) &&
-      (v.advancedListDraft === null || isDraftQueryLike(v.advancedListDraft))
+      (v.advancedListDraft === null || isDraftQueryLike(v.advancedListDraft)) &&
+      (v.companyFacetValues === undefined ||
+        (typeof v.companyFacetValues === "object" &&
+          v.companyFacetValues !== null &&
+          !Array.isArray(v.companyFacetValues)))
     );
   }
   if (v.version === SAVED_SEARCH_VERSION) {

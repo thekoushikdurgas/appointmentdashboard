@@ -14,6 +14,7 @@ import { parseOperationError } from "@/lib/errorParser";
 import { WorldMap } from "@/components/shared/WorldMap";
 import { useContacts } from "@/hooks/useContacts";
 import { useContactFilters } from "@/hooks/useContactFilters";
+import { useCompanyFilters } from "@/hooks/useCompanyFilters";
 import { useCountryAggregates } from "@/hooks/useCountryAggregates";
 import { useRole } from "@/context/RoleContext";
 import {
@@ -28,6 +29,7 @@ import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateM
 import { ContactExportModal } from "@/components/feature/contacts/ContactExportModal";
 import { ContactImportModal } from "@/components/feature/contacts/ContactImportModal";
 import { contactsService } from "@/services/graphql/contactsService";
+import { emailService } from "@/services/graphql/emailService";
 import {
   readContactsSortPreference,
   writeContactsSortPreference,
@@ -59,13 +61,14 @@ import {
 import type { VqlQueryInput } from "@/graphql/generated/types";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
-
-const STATUS_MAP: Record<string, string> = {
-  Verified: "VALID",
-  Found: "FOUND",
-  Unknown: "UNKNOWN",
-  Risky: "RISKY",
-};
+import {
+  contactVqlFieldForCompanyFacetFilterKey,
+  contactVqlFieldForFacetFilterKey,
+} from "@/lib/contactFacetVql";
+import {
+  LEGACY_EMAIL_STATUS_PILL_TO_TOKEN,
+  normalizeEmailStatusFilterValues,
+} from "@/lib/contactEmailStatus";
 
 const SORT_MAP: Record<string, { field: string; direction: "asc" | "desc" }> = {
   newest: { field: "createdAt", direction: "desc" },
@@ -99,12 +102,31 @@ function sidebarCond(
 function sidebarFacetCond(
   key: string,
   values: string[],
+  displayName?: string,
 ): DraftCondition | null {
   const trimmed = values.map((v) => String(v).trim()).filter(Boolean);
   if (trimmed.length === 0) return null;
-  if (trimmed.length === 1) return sidebarCond(key, "eq", trimmed[0]);
+  const field = contactVqlFieldForFacetFilterKey(key, displayName);
+  const vals =
+    field === "email_status"
+      ? normalizeEmailStatusFilterValues(trimmed)
+      : trimmed;
+  if (vals.length === 1) return sidebarCond(field, "eq", vals[0]);
   const c = emptyDraftCondition();
-  return { ...c, field: key, operator: "in_list", value: trimmed.join(",") };
+  return { ...c, field, operator: "in_list", value: vals.join(",") };
+}
+
+/** Company-service facet → contact index field (see `contactVqlFieldForCompanyFacetFilterKey`). */
+function sidebarCompanyFacetCond(
+  key: string,
+  values: string[],
+): DraftCondition | null {
+  const trimmed = values.map((v) => String(v).trim()).filter(Boolean);
+  if (trimmed.length === 0) return null;
+  const field = contactVqlFieldForCompanyFacetFilterKey(key);
+  if (trimmed.length === 1) return sidebarCond(field, "eq", trimmed[0]);
+  const c = emptyDraftCondition();
+  return { ...c, field, operator: "in_list", value: trimmed.join(",") };
 }
 
 const CONTACT_TABS = [
@@ -157,7 +179,6 @@ export default function ContactsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [mapModalOpen, setMapModalOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("All");
   const [sortBy, setSortBy] = useState<string>(() => {
     if (typeof window === "undefined") return "newest";
     const s = readContactsSortPreference();
@@ -167,11 +188,15 @@ export default function ContactsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkFindingEmails, setBulkFindingEmails] = useState(false);
   const [vqlOpen, setVqlOpen] = useState(false);
   const [advancedListDraft, setAdvancedListDraft] = useState<DraftQuery | null>(
     null,
   );
   const [facetValues, setFacetValues] = useState<Record<string, string[]>>({});
+  const [companyFacetValues, setCompanyFacetValues] = useState<
+    Record<string, string[]>
+  >({});
   const {
     sections: filterSections,
     loadFilterData,
@@ -180,9 +205,38 @@ export default function ContactsPage() {
     refetchFiltersMetadata,
   } = useContactFilters();
 
+  const {
+    sections: companyFilterSectionsRaw,
+    loadFilterData: loadCompanyFilterData,
+    loadMoreFilterData: loadMoreCompanyFilterData,
+    setFilterSearch: setCompanyFacetSearch,
+    refetchFiltersMetadata: refetchCompanyFiltersMetadata,
+  } = useCompanyFilters();
+
+  const contactFacetKeySet = useMemo(
+    () => new Set(filterSections.map((s) => s.filterKey)),
+    [filterSections],
+  );
+
+  /** Company facets that are not already exposed as contact facets (same `filterKey`). */
+  const companyFilterSections = useMemo(
+    () =>
+      companyFilterSectionsRaw.filter(
+        (s) => !contactFacetKeySet.has(s.filterKey),
+      ),
+    [companyFilterSectionsRaw, contactFacetKeySet],
+  );
+
   const handleFacetChange = useCallback((key: string, values: string[]) => {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
   }, []);
+
+  const handleCompanyFacetChange = useCallback(
+    (key: string, values: string[]) => {
+      setCompanyFacetValues((prev) => ({ ...prev, [key]: values }));
+    },
+    [],
+  );
 
   const mergedPreviewQuery = useMemo((): Partial<VqlQueryInput> => {
     const offset = (page - 1) * pageSize;
@@ -193,6 +247,11 @@ export default function ContactsPage() {
       searchAfter: undefined,
     };
   }, [vqlQuery, page, pageSize]);
+
+  const tableErrorMessage = useMemo(() => {
+    if (!error) return null;
+    return parseOperationError(error, "contacts").userMessage;
+  }, [error]);
   const isDesktop = useIsDesktop();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
@@ -292,12 +351,15 @@ export default function ContactsPage() {
     if (search.trim()) {
       sidebar.push(sidebarCond("email", "contains", search.trim()));
     }
-    if (statusFilter !== "All" && STATUS_MAP[statusFilter]) {
-      sidebar.push(sidebarCond("email_status", "eq", STATUS_MAP[statusFilter]));
-    }
     for (const [key, vals] of Object.entries(facetValues)) {
       if (!vals?.length) continue;
-      const cond = sidebarFacetCond(key, vals);
+      const meta = filterSections.find((s) => s.filterKey === key);
+      const cond = sidebarFacetCond(key, vals, meta?.displayName);
+      if (cond) sidebar.push(cond);
+    }
+    for (const [key, vals] of Object.entries(companyFacetValues)) {
+      if (!vals?.length) continue;
+      const cond = sidebarCompanyFacetCond(key, vals);
       if (cond) sidebar.push(cond);
     }
     const rootItems: Array<DraftCondition | DraftGroup> = [...sidebar];
@@ -332,10 +394,11 @@ export default function ContactsPage() {
     applyVqlQuery(draftToVqlQueryInput(merged, "contact"));
   }, [
     search,
-    statusFilter,
     sortBy,
     activeTab,
     facetValues,
+    companyFacetValues,
+    filterSections,
     advancedListDraft,
     visibleColumns,
     applyVqlQuery,
@@ -355,8 +418,8 @@ export default function ContactsPage() {
     () =>
       getContactsToolbarActiveCount({
         activeTab,
-        statusFilter,
         facetValues,
+        companyFacetValues,
         search,
         advancedVqlRuleCount,
         sortBy,
@@ -364,8 +427,8 @@ export default function ContactsPage() {
       }),
     [
       activeTab,
-      statusFilter,
       facetValues,
+      companyFacetValues,
       search,
       advancedVqlRuleCount,
       sortBy,
@@ -376,11 +439,14 @@ export default function ContactsPage() {
   const handleRefreshFilters = useCallback(async () => {
     setFiltersRefreshing(true);
     try {
-      await refetchFiltersMetadata();
+      await Promise.all([
+        refetchFiltersMetadata(),
+        refetchCompanyFiltersMetadata(),
+      ]);
     } finally {
       setFiltersRefreshing(false);
     }
-  }, [refetchFiltersMetadata]);
+  }, [refetchFiltersMetadata, refetchCompanyFiltersMetadata]);
 
   const getContactSavedPayload = useCallback((): ContactSavedSearchPayload => {
     return {
@@ -388,10 +454,11 @@ export default function ContactsPage() {
       vqlQuery: vqlQuery as Partial<VqlQueryInput>,
       pageSize,
       search,
-      statusFilter,
+      statusFilter: "All",
       sortBy,
       activeTab,
       facetValues: { ...facetValues },
+      companyFacetValues: { ...companyFacetValues },
       advancedListDraft: advancedListDraft
         ? structuredClone(advancedListDraft)
         : null,
@@ -400,10 +467,10 @@ export default function ContactsPage() {
     vqlQuery,
     pageSize,
     search,
-    statusFilter,
     sortBy,
     activeTab,
     facetValues,
+    companyFacetValues,
     advancedListDraft,
   ]);
 
@@ -411,10 +478,22 @@ export default function ContactsPage() {
     (p: ContactSavedSearchPayload) => {
       if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
         setSearch(p.search);
-        setStatusFilter(p.statusFilter);
         setSortBy(p.sortBy);
         setActiveTab(p.activeTab);
-        setFacetValues({ ...p.facetValues });
+        const mergedFacets = { ...p.facetValues };
+        const legacySf = p.statusFilter;
+        if (
+          legacySf &&
+          legacySf !== "All" &&
+          LEGACY_EMAIL_STATUS_PILL_TO_TOKEN[legacySf] &&
+          !(mergedFacets.email_status?.length)
+        ) {
+          mergedFacets.email_status = [
+            LEGACY_EMAIL_STATUS_PILL_TO_TOKEN[legacySf],
+          ];
+        }
+        setFacetValues(mergedFacets);
+        setCompanyFacetValues({ ...(p.companyFacetValues ?? {}) });
         setAdvancedListDraft(
           p.advancedListDraft ? structuredClone(p.advancedListDraft) : null,
         );
@@ -429,10 +508,10 @@ export default function ContactsPage() {
       applyVqlQuery,
       setPageSize,
       setSearch,
-      setStatusFilter,
       setSortBy,
       setActiveTab,
       setFacetValues,
+      setCompanyFacetValues,
       setAdvancedListDraft,
     ],
   );
@@ -463,6 +542,39 @@ export default function ContactsPage() {
     );
   }, []);
 
+  const handleBulkFindEmails = useCallback(async () => {
+    const rows = contacts.filter((c) => selected.includes(c.id));
+    if (rows.length === 0) return;
+    setBulkFindingEmails(true);
+    let foundCount = 0;
+    try {
+      for (const c of rows) {
+        const firstName = c.firstName ?? c.name.split(" ")[0] ?? "";
+        const lastName =
+          c.lastName ?? c.name.split(" ").slice(1).join(" ") ?? "";
+        if (!firstName.trim()) continue;
+        try {
+          const result = await emailService.findEmails({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            domain: c.company ?? undefined,
+          });
+          const emails = result.email?.findEmails?.emails ?? [];
+          if (emails.length > 0) foundCount += 1;
+        } catch {
+          /* skip row */
+        }
+      }
+      toast.success(
+        foundCount > 0
+          ? `Found candidate emails for ${foundCount} of ${rows.length} selected contacts`
+          : "No emails found for selected contacts",
+      );
+    } finally {
+      setBulkFindingEmails(false);
+    }
+  }, [contacts, selected]);
+
   const filtersSidebar = useMemo(
     () => (
       <>
@@ -474,8 +586,6 @@ export default function ContactsPage() {
         <ContactsFilterSidebar
           search={search}
           onSearchChange={setSearch}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
           sortBy={sortBy}
           onSortChange={setSortBy}
           filterSections={filterSections}
@@ -484,6 +594,12 @@ export default function ContactsPage() {
           onSectionExpand={loadFilterData}
           onLoadMoreFacet={loadMoreFilterData}
           setFacetSearch={setFilterSearch}
+          companyFilterSections={companyFilterSections}
+          companyFacetValues={companyFacetValues}
+          onCompanyFacetChange={handleCompanyFacetChange}
+          onCompanySectionExpand={loadCompanyFilterData}
+          onLoadMoreCompanyFacet={loadMoreCompanyFilterData}
+          setCompanyFacetSearch={setCompanyFacetSearch}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
           advancedVqlRuleCount={advancedVqlRuleCount}
@@ -513,11 +629,13 @@ export default function ContactsPage() {
       contactSavedSearchesMenu,
       isDesktop,
       search,
-      statusFilter,
       sortBy,
       filterSections,
       facetValues,
+      companyFilterSections,
+      companyFacetValues,
       loadFilterData,
+      loadCompanyFilterData,
       activeTab,
       advancedVqlRuleCount,
       visibleColumns,
@@ -532,8 +650,11 @@ export default function ContactsPage() {
       handleAiSearch,
       aiSearching,
       handleFacetChange,
+      handleCompanyFacetChange,
       loadMoreFilterData,
+      loadMoreCompanyFilterData,
       setFilterSearch,
+      setCompanyFacetSearch,
       tableDensity,
       setTableDensity,
     ],
@@ -550,13 +671,17 @@ export default function ContactsPage() {
   const toolbarEl = (
     <DataToolbar
       cssPrefix="c360-toolbar"
-      tabs={CONTACT_TABS.map((t) => ({
-        value: t.value,
-        label: t.label,
-      }))}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
       totalCount={total}
+      meta={
+        !loading && total > 0 ? (
+          <ContactPagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        ) : undefined
+      }
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -620,16 +745,6 @@ export default function ContactsPage() {
       filtersPeekRail
       filtersPeekScope="contacts"
       filtersPinExtra={contactSavedSearchesMenu}
-      metadata={
-        !loading && total > 0 ? (
-          <ContactPagination
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
-          />
-        ) : undefined
-      }
       className="c360-contacts-page"
     >
       <Modal
@@ -720,7 +835,13 @@ export default function ContactsPage() {
             <strong>{selected.length}</strong> selected
           </span>
           <div className="c360-badge-row">
-            <Button variant="secondary" size="sm" leftIcon={<Mail size={14} />}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Mail size={14} />}
+              loading={bulkFindingEmails}
+              onClick={() => void handleBulkFindEmails()}
+            >
               Find Emails
             </Button>
             <Button
@@ -781,7 +902,7 @@ export default function ContactsPage() {
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
             loading={loading}
-            error={error}
+            error={tableErrorMessage}
             search={search}
             onSearchChange={setSearch}
             sortBy={sortBy}
@@ -810,10 +931,44 @@ export default function ContactsPage() {
         onConfirm={async () => {
           setBulkDeleting(true);
           try {
+            let deleted = 0;
+            let alreadyGone = 0;
+            const failures: string[] = [];
             for (const id of selected) {
-              await contactsService.delete(id);
+              try {
+                await contactsService.delete(id);
+                deleted += 1;
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                if (
+                  msg.includes("ERR_CONTACT_NOT_FOUND") ||
+                  msg.toLowerCase().includes("not found")
+                ) {
+                  alreadyGone += 1;
+                } else {
+                  failures.push(msg);
+                }
+              }
             }
-            toast.success(`Deleted ${selected.length} contact(s).`);
+            if (failures.length > 0) {
+              const preview = failures.slice(0, 5).join("; ");
+              const more =
+                failures.length > 5 ? ` (+${failures.length - 5} more)` : "";
+              toast.warning(
+                `${failures.length} contact(s) failed: ${preview}${more}`,
+              );
+            }
+            if (alreadyGone > 0 && deleted === 0 && failures.length === 0) {
+              toast.info(
+                `${alreadyGone} contact(s) were already deleted or missing.`,
+              );
+            } else if (alreadyGone > 0 && deleted > 0) {
+              toast.success(
+                `Deleted ${deleted} contact(s). ${alreadyGone} were already removed.`,
+              );
+            } else if (deleted > 0) {
+              toast.success(`Deleted ${deleted} contact(s).`);
+            }
             setDeleteOpen(false);
             setSelected([]);
             await refresh();

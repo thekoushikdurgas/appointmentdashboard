@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import {
-  ContactFilterEmailStatus,
-  ContactFilterSortSelect,
-} from "@/components/feature/contacts/ContactFilterBar";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import { ContactFilterSortSelect } from "@/components/feature/contacts/ContactFilterBar";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -13,7 +10,11 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
+import {
+  EMAIL_STATUS_STATIC_FACET_OPTIONS,
+} from "@/lib/contactEmailStatus";
 import type { FilterSection } from "@/hooks/useContactFilters";
+import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 import {
   CONTACTS_DT_COLUMN_IDS,
   CONTACTS_DT_COLUMN_LABELS,
@@ -28,8 +29,6 @@ const VIEW_MODE_OPTIONS = [
 export interface ContactsFilterSidebarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusChange: (value: string) => void;
   sortBy: string;
   onSortChange: (value: string) => void;
   filterSections: FilterSection[];
@@ -41,6 +40,12 @@ export interface ContactsFilterSidebarProps {
   onLoadMoreFacet: (key: string) => void;
   /** Debounced search within facet options. */
   setFacetSearch: (key: string, text: string) => void;
+  companyFilterSections?: CompanyFilterSection[];
+  companyFacetValues?: Record<string, string[]>;
+  onCompanyFacetChange?: (key: string, values: string[]) => void;
+  onCompanySectionExpand?: (key: string) => void;
+  onLoadMoreCompanyFacet?: (key: string) => void;
+  setCompanyFacetSearch?: (key: string, text: string) => void;
   activeTab: string;
   onActiveTabChange: (tab: string) => void;
   /** Rules from the advanced VQL modal only (not sidebar/tab/facet). */
@@ -72,8 +77,6 @@ export interface ContactsFilterSidebarProps {
 export function ContactsFilterSidebar({
   search,
   onSearchChange,
-  statusFilter,
-  onStatusChange,
   sortBy,
   onSortChange,
   filterSections,
@@ -82,6 +85,12 @@ export function ContactsFilterSidebar({
   onSectionExpand,
   onLoadMoreFacet,
   setFacetSearch,
+  companyFilterSections = [],
+  companyFacetValues = {},
+  onCompanyFacetChange,
+  onCompanySectionExpand,
+  onLoadMoreCompanyFacet,
+  setCompanyFacetSearch,
   activeTab,
   onActiveTabChange,
   advancedVqlRuleCount,
@@ -103,22 +112,49 @@ export function ContactsFilterSidebar({
   tableDensity = "comfortable",
   onTableDensityChange,
 }: ContactsFilterSidebarProps) {
+  const facetSectionsWithoutEmailStatus = useMemo(
+    () => filterSections.filter((s) => s.filterKey !== "email_status"),
+    [filterSections],
+  );
+
+  const emailStatusFacetSection = useMemo((): FilterSection => {
+    const fromApi = filterSections.find((s) => s.filterKey === "email_status");
+    if (fromApi) return fromApi;
+    return {
+      filterKey: "email_status",
+      displayName: "Email status",
+      filterType: "keyword",
+      options: EMAIL_STATUS_STATIC_FACET_OPTIONS,
+      loading: false,
+      loadingMore: false,
+      hasMore: false,
+      searchText: "",
+    };
+  }, [filterSections]);
+
+  const companyFacetActiveCount = useMemo(
+    () =>
+      Object.values(companyFacetValues).filter(
+        (arr) => Array.isArray(arr) && arr.length > 0,
+      ).length,
+    [companyFacetValues],
+  );
+
   const facetActiveCount = useMemo(
     () =>
       Object.values(facetValues).filter(
         (arr) => Array.isArray(arr) && arr.length > 0,
-      ).length,
-    [facetValues],
+      ).length + companyFacetActiveCount,
+    [facetValues, companyFacetActiveCount],
   );
 
-  /** Tab + status + facets (excludes search / VQL) — used for chip-driven list scope. */
+  /** Tab + facets (excludes search / VQL) — email status is a facet via ``email_status``. */
   const listScopeCount = useMemo(() => {
     let n = 0;
     if (activeTab === "net_new" || activeTab === "do_not_contact") n += 1;
-    if (statusFilter !== "All") n += 1;
     n += facetActiveCount;
     return n;
-  }, [activeTab, statusFilter, facetActiveCount]);
+  }, [activeTab, facetActiveCount]);
 
   const sortActiveCount = sortBy !== "newest" ? 1 : 0;
 
@@ -143,21 +179,27 @@ export function ContactsFilterSidebar({
     for (const s of filterSections) {
       onFacetChange(s.filterKey, []);
     }
-  }, [filterSections, onFacetChange]);
+    if (!filterSections.some((s) => s.filterKey === "email_status")) {
+      onFacetChange("email_status", []);
+    }
+    if (onCompanyFacetChange) {
+      for (const s of companyFilterSections) {
+        onCompanyFacetChange(s.filterKey, []);
+      }
+    }
+  }, [
+    filterSections,
+    onFacetChange,
+    companyFilterSections,
+    onCompanyFacetChange,
+  ]);
 
   const clearAll = useCallback(() => {
     onSearchChange("");
     onActiveTabChange("total");
-    onStatusChange("All");
     clearFacets();
     onClearVql();
-  }, [
-    clearFacets,
-    onActiveTabChange,
-    onClearVql,
-    onSearchChange,
-    onStatusChange,
-  ]);
+  }, [clearFacets, onActiveTabChange, onClearVql, onSearchChange]);
 
   const chips = useMemo(() => {
     const out: Array<{ key: string; label: string; onRemove: () => void }> = [];
@@ -174,23 +216,18 @@ export function ContactsFilterSidebar({
         label: "Net new (7 days)",
         onRemove: () => onActiveTabChange("total"),
       });
-    } else if (activeTab === "do_not_contact") {
+    } else     if (activeTab === "do_not_contact") {
       out.push({
         key: "tab-dnc",
         label: "Do not contact",
         onRemove: () => onActiveTabChange("total"),
       });
     }
-    if (statusFilter !== "All") {
-      out.push({
-        key: "status",
-        label: `Status: ${statusFilter}`,
-        onRemove: () => onStatusChange("All"),
-      });
-    }
     for (const [key, vals] of Object.entries(facetValues)) {
       if (vals != null && vals.length > 0) {
-        const section = filterSections.find((s) => s.filterKey === key);
+        const section =
+          filterSections.find((s) => s.filterKey === key) ??
+          (key === "email_status" ? emailStatusFacetSection : undefined);
         const label = section?.displayName ?? key;
         const summary =
           vals.length === 1
@@ -200,6 +237,21 @@ export function ContactsFilterSidebar({
           key: `facet-${key}`,
           label: summary,
           onRemove: () => onFacetChange(key, []),
+        });
+      }
+    }
+    for (const [key, vals] of Object.entries(companyFacetValues)) {
+      if (vals != null && vals.length > 0 && onCompanyFacetChange) {
+        const section = companyFilterSections.find((s) => s.filterKey === key);
+        const label = section?.displayName ?? key;
+        const summary =
+          vals.length === 1
+            ? `Company · ${label}: ${vals[0]}`
+            : `Company · ${label}: ${vals.length} selected`;
+        out.push({
+          key: `company-facet-${key}`,
+          label: summary,
+          onRemove: () => onCompanyFacetChange(key, []),
         });
       }
     }
@@ -231,17 +283,19 @@ export function ContactsFilterSidebar({
   }, [
     search,
     activeTab,
-    statusFilter,
     facetValues,
     filterSections,
+    emailStatusFacetSection,
+    companyFacetValues,
+    companyFilterSections,
     advancedVqlRuleCount,
     sortChipLabel,
     hiddenColumnCount,
     visibleColumns.length,
     onSearchChange,
     onActiveTabChange,
-    onStatusChange,
     onFacetChange,
+    onCompanyFacetChange,
     onClearVql,
     onSortChange,
     onResetVisibleColumns,
@@ -375,16 +429,42 @@ export function ContactsFilterSidebar({
 
       <ContactsCollapsibleFilterSection
         title="Email status"
-        count={statusFilter !== "All" ? 1 : 0}
+        count={(facetValues.email_status?.length ?? 0) > 0 ? facetValues.email_status!.length : 0}
         defaultOpen
         onClear={
-          statusFilter !== "All" ? () => onStatusChange("All") : undefined
+          (facetValues.email_status?.length ?? 0) > 0
+            ? () => onFacetChange("email_status", [])
+            : undefined
         }
       >
-        <ContactFilterEmailStatus
-          statusFilter={statusFilter}
-          onStatusChange={onStatusChange}
-          showFilterIcon={false}
+        <FilterCombobox
+          label={emailStatusFacetSection.displayName}
+          options={emailStatusFacetSection.options}
+          selectedValues={facetValues.email_status ?? []}
+          onSelectionChange={(next) => onFacetChange("email_status", next)}
+          loading={emailStatusFacetSection.loading}
+          loadingMore={emailStatusFacetSection.loadingMore}
+          hasMore={
+            filterSections.some((s) => s.filterKey === "email_status")
+              ? emailStatusFacetSection.hasMore
+              : false
+          }
+          onOpen={
+            filterSections.some((s) => s.filterKey === "email_status")
+              ? () => onSectionExpand("email_status")
+              : () => {}
+          }
+          onLoadMore={
+            filterSections.some((s) => s.filterKey === "email_status")
+              ? () => onLoadMoreFacet("email_status")
+              : () => {}
+          }
+          searchText={emailStatusFacetSection.searchText}
+          onSearchChange={
+            filterSections.some((s) => s.filterKey === "email_status")
+              ? (text) => setFacetSearch("email_status", text)
+              : () => {}
+          }
         />
       </ContactsCollapsibleFilterSection>
 
@@ -417,7 +497,7 @@ export function ContactsFilterSidebar({
         </ContactsCollapsibleFilterSection>
       ) : null}
 
-      {filterSections.map((section) => {
+      {facetSectionsWithoutEmailStatus.map((section) => {
         const vals = facetValues[section.filterKey] ?? [];
         const has = vals.length > 0;
         return (
@@ -448,6 +528,48 @@ export function ContactsFilterSidebar({
           </ContactsCollapsibleFilterSection>
         );
       })}
+
+      {companyFilterSections.length > 0 &&
+      onCompanyFacetChange &&
+      onCompanySectionExpand &&
+      onLoadMoreCompanyFacet &&
+      setCompanyFacetSearch
+        ? companyFilterSections.map((section) => {
+            const vals = companyFacetValues[section.filterKey] ?? [];
+            const has = vals.length > 0;
+            return (
+              <ContactsCollapsibleFilterSection
+                key={`company-facet-${section.filterKey}`}
+                title={`Company · ${section.displayName}`}
+                count={has ? vals.length : 0}
+                defaultOpen={has}
+                onClear={
+                  has
+                    ? () => onCompanyFacetChange(section.filterKey, [])
+                    : undefined
+                }
+              >
+                <FilterCombobox
+                  label={section.displayName}
+                  options={section.options}
+                  selectedValues={vals}
+                  onSelectionChange={(next) =>
+                    onCompanyFacetChange(section.filterKey, next)
+                  }
+                  loading={section.loading}
+                  loadingMore={section.loadingMore}
+                  hasMore={section.hasMore}
+                  onOpen={() => onCompanySectionExpand(section.filterKey)}
+                  onLoadMore={() => onLoadMoreCompanyFacet(section.filterKey)}
+                  searchText={section.searchText}
+                  onSearchChange={(text) =>
+                    setCompanyFacetSearch(section.filterKey, text)
+                  }
+                />
+              </ContactsCollapsibleFilterSection>
+            );
+          })
+        : null}
 
       <ContactsCollapsibleFilterSection
         title="Columns"

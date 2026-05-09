@@ -202,7 +202,7 @@ textarea.c360-input {
 }
 
 .c360-select__content {
-  z-index: var(--c360-z-dropdown);
+  z-index: var(--c360-z-portal-dropdown);
   max-height: min(24rem, 70vh);
   overflow: hidden;
   border-radius: var(--c360-radius-md);

@@ -157,6 +157,8 @@
    TABLE
 ══════════════════════════════════════════════════════════════════════════════ */
 .c360-table-wrapper {
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
   border-radius: var(--c360-radius-lg);
   border: 1px solid var(--c360-border);

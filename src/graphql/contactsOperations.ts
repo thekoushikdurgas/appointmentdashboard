@@ -20,6 +20,25 @@ export const CONTACT_LIST_FIELDS = `
   updatedAt
 ` as const;
 
+/** Single-contact fetch: joined company + extra profile fields (lists use CONTACT_LIST_FIELDS only). */
+export const CONTACT_DETAIL_FIELDS = `
+  ${CONTACT_LIST_FIELDS}
+  company {
+    uuid
+    name
+  }
+  seniority
+  stage
+  departments
+  workDirectPhone
+  homePhone
+  otherPhone
+  website
+  facebookUrl
+  twitterUrl
+  linkedinSalesUrl
+` as const;
+
 export const CONTACTS_LIST_QUERY = `
   query ContactsGateway($query: VQLQueryInput) {
     contacts {
@@ -38,7 +57,7 @@ export const CONTACT_ONE_QUERY = `
   query ContactGateway($uuid: ID!) {
     contacts {
       contact(uuid: $uuid) {
-        ${CONTACT_LIST_FIELDS}
+        ${CONTACT_DETAIL_FIELDS}
       }
     }
   }

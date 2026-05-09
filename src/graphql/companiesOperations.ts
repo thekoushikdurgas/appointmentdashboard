@@ -8,12 +8,25 @@ export const COMPANY_LIST_FIELDS = `
   name
   employeesCount
   industries
+  keywords
+  technologies
+  address
   website
   normalizedDomain
   linkedinUrl
+  linkedinSalesUrl
+  facebookUrl
+  twitterUrl
+  phoneNumber
+  companyNameForEmails
   city
   state
   country
+  annualRevenue
+  totalFunding
+  latestFunding
+  latestFundingAmount
+  lastRaisedAt
   createdAt
   updatedAt
 ` as const;
@@ -178,8 +191,20 @@ export const COMPANY_CONTACTS_QUERY = `
           lastName
           email
           title
+          companyUuid
           mobilePhone
+          workDirectPhone
+          homePhone
+          otherPhone
           emailStatus
+          linkedinUrl
+          linkedinSalesUrl
+          website
+          facebookUrl
+          twitterUrl
+          departments
+          seniority
+          stage
           city
           state
           country

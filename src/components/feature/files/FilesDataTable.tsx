@@ -1,17 +1,75 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { MoreHorizontal, FolderOpen, Upload } from "lucide-react";
-import { cn, formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { MoreHorizontal, FolderOpen, Upload, Columns3 } from "lucide-react";
+import {
+  DataGrid,
+  type GridColDef,
+  type GridColumnVisibilityModel,
+  type GridPaginationModel,
+  type GridRenderCellParams,
+  type GridRowSelectionModel,
+  type GridSortModel,
+} from "@mui/x-data-grid";
+import { formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
 import { Select } from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
 import type { S3FileInfo } from "@/graphql/generated/types";
 import {
   isAllowedTabularFilename,
   tabularContentTypeFromFilename,
 } from "@/lib/tabularUpload";
+import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
+import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+
+export const FILES_DT_PAGE_SIZE_OPTIONS = [
+  { value: "10", label: "10" },
+  { value: "25", label: "25" },
+  { value: "50", label: "50" },
+  { value: "100", label: "100" },
+] as const;
+
+export const FILES_DT_COLUMN_IDS = [
+  "fileRef",
+  "uploaded",
+  "name",
+  "folder",
+  "kind",
+  "status",
+  "size",
+  "actions",
+] as const;
+
+export type FilesDataTableColumnId = (typeof FILES_DT_COLUMN_IDS)[number];
+
+export const FILES_DT_DEFAULT_COLUMNS: FilesDataTableColumnId[] = [
+  ...FILES_DT_COLUMN_IDS,
+];
+
+const COL_ID_TO_FIELD: Record<FilesDataTableColumnId, string> = {
+  fileRef: "fileRef",
+  uploaded: "uploaded",
+  name: "name",
+  folder: "folder",
+  kind: "kind",
+  status: "status",
+  size: "size",
+  actions: "actions",
+};
+
+export const FILES_DT_COLUMN_LABELS: Record<FilesDataTableColumnId, string> = {
+  fileRef: "File ID",
+  uploaded: "Uploaded",
+  name: "Name",
+  folder: "Folder",
+  kind: "Type",
+  status: "Status",
+  size: "Size",
+  actions: "Action",
+};
 
 export interface FilesDataTableProps {
   files: S3FileInfo[];
@@ -38,9 +96,6 @@ export interface FilesDataTableProps {
   /** When provided, toolbar shows delete for current selection. */
   onBulkDelete?: (keys: string[]) => void | Promise<void>;
 }
-
-type SortKey = "fileId" | "uploaded" | "name" | "folder" | "kind" | "size";
-type SortDir = "asc" | "desc";
 
 function hashFileId(key: string): string {
   let h = 0;
@@ -90,73 +145,6 @@ function listRowContentType(f: S3FileInfo): string | null {
   return null;
 }
 
-function sortFiles(
-  rows: S3FileInfo[],
-  sortKey: SortKey,
-  sortDir: SortDir,
-): S3FileInfo[] {
-  const mul = sortDir === "asc" ? 1 : -1;
-  const out = [...rows];
-  out.sort((a, b) => {
-    let cmp = 0;
-    switch (sortKey) {
-      case "fileId":
-        cmp = hashFileId(a.key).localeCompare(hashFileId(b.key));
-        break;
-      case "uploaded": {
-        const ta = a.lastModified ? new Date(a.lastModified).getTime() : 0;
-        const tb = b.lastModified ? new Date(b.lastModified).getTime() : 0;
-        cmp = ta - tb;
-        break;
-      }
-      case "name":
-        cmp = a.filename.localeCompare(b.filename, undefined, {
-          sensitivity: "base",
-        });
-        break;
-      case "folder":
-        cmp = folderLabel(a.key).localeCompare(folderLabel(b.key));
-        break;
-      case "kind":
-        cmp = kindLabel(a.filename).localeCompare(kindLabel(b.filename));
-        break;
-      case "size": {
-        const sa = normalizeS3FileSizeBytes(a.size);
-        const sb = normalizeS3FileSizeBytes(b.size);
-        cmp = sa - sb;
-        break;
-      }
-      default:
-        cmp = 0;
-    }
-    return cmp * mul;
-  });
-  return out;
-}
-
-function SortCaret({ active, dir }: { active: boolean; dir: SortDir }) {
-  return (
-    <span className="c360-files-dt__sort-carets" aria-hidden>
-      <span
-        className={cn(
-          "c360-files-dt__sort-caret",
-          active && dir === "asc" && "c360-files-dt__sort-caret--on",
-        )}
-      >
-        ▲
-      </span>
-      <span
-        className={cn(
-          "c360-files-dt__sort-caret",
-          active && dir === "desc" && "c360-files-dt__sort-caret--on",
-        )}
-      >
-        ▼
-      </span>
-    </span>
-  );
-}
-
 /** Renders 5 skeleton placeholder rows during the initial (no-cache) load. */
 function SkeletonRows({ cols }: { cols: number }) {
   return (
@@ -171,6 +159,117 @@ function SkeletonRows({ cols }: { cols: number }) {
         </tr>
       ))}
     </>
+  );
+}
+
+function FilesNoRowsOverlay({
+  filesLength,
+  emptyHint,
+  onUpload,
+  filterEmpty,
+}: {
+  filesLength: number;
+  emptyHint: string;
+  onUpload?: () => void;
+  /** True when file list is non-empty but search filtered out all rows. */
+  filterEmpty: boolean;
+}) {
+  if (filterEmpty) {
+    return (
+      <div className="c360-flex c360-h-full c360-min-h-[120px] c360-flex-col c360-items-center c360-justify-center c360-px-4 c360-text-center">
+        <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink">
+          No files match
+        </p>
+        <p className="c360-m-0 c360-mt-1 c360-text-sm c360-text-ink-muted">
+          {emptyHint}
+        </p>
+      </div>
+    );
+  }
+  if (filesLength === 0) {
+    return (
+      <div className="c360-files-dt__empty c360-py-8">
+        <FolderOpen
+          className="c360-files-dt__empty-icon"
+          size={40}
+          aria-hidden="true"
+        />
+        <p className="c360-files-dt__empty-heading">No files yet</p>
+        <p className="c360-files-dt__empty-hint">{emptyHint}</p>
+        {onUpload && (
+          <Button
+            className="c360-files-dt__empty-cta"
+            leftIcon={<Upload size={16} />}
+            onClick={onUpload}
+          >
+            Upload files
+          </Button>
+        )}
+      </div>
+    );
+  }
+  return null;
+}
+
+export interface FilesToolbarTableExtrasProps {
+  pageSize: number;
+  onPageSizeChange: (n: number) => void;
+  visibleColumns: FilesDataTableColumnId[];
+  onToggleColumn: (id: FilesDataTableColumnId, visible: boolean) => void;
+}
+
+export function FilesToolbarTableExtras({
+  pageSize,
+  onPageSizeChange,
+  visibleColumns,
+  onToggleColumn,
+}: FilesToolbarTableExtrasProps) {
+  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
+
+  return (
+    <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+      <Popover
+        trigger={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="c360-gap-1"
+          >
+            <Columns3 size={14} aria-hidden />
+            Columns
+          </Button>
+        }
+        content={
+          <div className="c360-space-y-2 c360-p-1">
+            <p className="c360-m-0 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Visible columns
+            </p>
+            {FILES_DT_COLUMN_IDS.map((id) => (
+              <Checkbox
+                key={id}
+                size="sm"
+                checked={vis.has(id)}
+                disabled={vis.has(id) && visibleColumns.length <= 1}
+                onChange={(c) => onToggleColumn(id, c)}
+                label={FILES_DT_COLUMN_LABELS[id]}
+              />
+            ))}
+          </div>
+        }
+        width={220}
+      />
+      <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
+      <Select
+        className="c360-w-24"
+        fullWidth={false}
+        value={String(pageSize)}
+        onChange={(e) => onPageSizeChange(Number(e.target.value) || 10)}
+        options={[...FILES_DT_PAGE_SIZE_OPTIONS]}
+        aria-label="Rows per page"
+        triggerClassName="c360-files-dt__page-size"
+      />
+    </div>
   );
 }
 
@@ -192,11 +291,17 @@ export function FilesDataTable({
   onBulkDelete,
 }: FilesDataTableProps) {
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [page, setPage] = useState(0);
-  const [sortKey, setSortKey] = useState<SortKey>("uploaded");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "uploaded", sort: "desc" },
+  ]);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [visibleColumns, setVisibleColumns] = useState<
+    FilesDataTableColumnId[]
+  >(() => [...FILES_DT_DEFAULT_COLUMNS]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -207,107 +312,488 @@ export function FilesDataTable({
     );
   }, [files, search]);
 
-  const sorted = useMemo(
-    () => sortFiles(filtered, sortKey, sortDir),
-    [filtered, sortKey, sortDir],
-  );
-
-  const totalFiltered = sorted.length;
-  const pageCount = Math.max(1, Math.ceil(totalFiltered / pageSize) || 1);
+  useEffect(() => {
+    setPaginationModel((m) => ({ ...m, page: 0 }));
+  }, [search]);
 
   useEffect(() => {
-    setPage((p) => Math.min(p, Math.max(0, pageCount - 1)));
-  }, [pageCount]);
+    const ps = Math.max(1, paginationModel.pageSize);
+    const pc = Math.max(1, Math.ceil(filtered.length / ps));
+    setPaginationModel((m) => {
+      const nextPage = Math.min(m.page, pc - 1);
+      if (nextPage === m.page) return m;
+      return { ...m, page: nextPage };
+    });
+  }, [filtered.length, paginationModel.pageSize]);
 
-  const safePage = Math.min(page, pageCount - 1);
-  const pageStart = safePage * pageSize;
-  const pageRows = sorted.slice(pageStart, pageStart + pageSize);
+  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir("asc");
-    } else {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    }
-  };
-
-  const ariaSort = (key: SortKey): "ascending" | "descending" | "none" => {
-    if (sortKey !== key) return "none";
-    return sortDir === "asc" ? "ascending" : "descending";
-  };
-
-  const allOnPageSelected =
-    pageRows.length > 0 && pageRows.every((f) => selected.has(f.key));
-  const someOnPageSelected = pageRows.some((f) => selected.has(f.key));
-
-  const toggleSelectAllPage = useCallback(
-    (checked: boolean) => {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        for (const f of pageRows) {
-          if (checked) next.add(f.key);
-          else next.delete(f.key);
-        }
-        return next;
+  const handleToggleColumn = useCallback(
+    (id: FilesDataTableColumnId, visible: boolean) => {
+      setVisibleColumns((prev) => {
+        const set = new Set(prev);
+        if (visible) set.add(id);
+        else set.delete(id);
+        if (set.size === 0) return prev;
+        return FILES_DT_COLUMN_IDS.filter((x) => set.has(x));
       });
     },
-    [pageRows],
+    [],
   );
 
-  const toggleRow = useCallback((key: string, checked: boolean) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(key);
-      else next.delete(key);
-      return next;
-    });
-  }, []);
+  const columnVisibilityModel = useMemo(() => {
+    const m: GridColumnVisibilityModel = {};
+    for (const id of FILES_DT_COLUMN_IDS) {
+      m[COL_ID_TO_FIELD[id]] = vis.has(id);
+    }
+    return m;
+  }, [vis]);
+
+  const handleColumnVisibilityModelChange = useCallback(
+    (model: GridColumnVisibilityModel) => {
+      const next = FILES_DT_COLUMN_IDS.filter(
+        (id) => model[COL_ID_TO_FIELD[id]] !== false,
+      );
+      if (next.length === 0) return;
+      setVisibleColumns(next);
+    },
+    [],
+  );
+
+  const rowSelectionModel = useMemo<GridRowSelectionModel>(
+    () => ({
+      type: "include",
+      ids: new Set(selectedKeys),
+    }),
+    [selectedKeys],
+  );
+
+  const handleRowSelectionModelChange = useCallback(
+    (model: GridRowSelectionModel) => {
+      if (model.type === "exclude") {
+        const excluded = new Set(Array.from(model.ids, (id) => String(id)));
+        const next = new Set<string>();
+        for (const row of filtered) {
+          if (!excluded.has(row.key)) next.add(row.key);
+        }
+        setSelectedKeys(next);
+        return;
+      }
+      setSelectedKeys(new Set(Array.from(model.ids, (id) => String(id))));
+    },
+    [filtered],
+  );
 
   const selectedList = useMemo(
-    () => files.filter((f) => selected.has(f.key)),
-    [files, selected],
+    () => files.filter((f) => selectedKeys.has(f.key)),
+    [files, selectedKeys],
   );
 
   const handleBulkDelete = async () => {
     if (!onBulkDelete || selectedList.length === 0) return;
     await onBulkDelete(selectedList.map((f) => f.key));
-    setSelected(new Set());
+    setSelectedKeys(new Set());
   };
 
-  const showingFrom = totalFiltered === 0 ? 0 : pageStart + 1;
-  const showingTo = Math.min(pageStart + pageSize, totalFiltered);
+  const columns = useMemo<GridColDef<S3FileInfo>[]>(() => {
+    return [
+      {
+        field: "fileRef",
+        headerName: FILES_DT_COLUMN_LABELS.fileRef,
+        flex: 0,
+        width: 104,
+        minWidth: 96,
+        sortable: true,
+        filterable: false,
+        valueGetter: (_v, row) => hashFileId(row.key),
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => (
+          <strong className="c360-files-dt__file-id">
+            {hashFileId(params.row.key)}
+          </strong>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "uploaded",
+        headerName: FILES_DT_COLUMN_LABELS.uploaded,
+        flex: 0,
+        width: 152,
+        minWidth: 132,
+        sortable: true,
+        filterable: false,
+        type: "dateTime",
+        valueGetter: (_v, row) =>
+          row.lastModified ? new Date(row.lastModified) : null,
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => (
+          <span className="c360-text-muted c360-text-sm">
+            {formatCheckInDate(params.row.lastModified)}
+          </span>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "name",
+        headerName: FILES_DT_COLUMN_LABELS.name,
+        flex: 1,
+        minWidth: 140,
+        sortable: true,
+        filterable: false,
+        valueGetter: (_v, row) => row.filename,
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => (
+          <span className="c360-files-page__filename">
+            {params.row.filename}
+          </span>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "folder",
+        headerName: FILES_DT_COLUMN_LABELS.folder,
+        flex: 0,
+        width: 120,
+        minWidth: 96,
+        sortable: true,
+        filterable: false,
+        valueGetter: (_v, row) => folderLabel(row.key),
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => (
+          <span className="c360-text-muted c360-text-sm">
+            {folderLabel(params.row.key)}
+          </span>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "kind",
+        headerName: FILES_DT_COLUMN_LABELS.kind,
+        flex: 0,
+        width: 140,
+        minWidth: 112,
+        sortable: true,
+        filterable: false,
+        valueGetter: (_v, row) => kindLabel(row.filename),
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => (
+          <span className="c360-text-muted c360-text-sm">
+            {kindLabel(params.row.filename)}
+          </span>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "status",
+        headerName: FILES_DT_COLUMN_LABELS.status,
+        flex: 0,
+        width: 120,
+        minWidth: 104,
+        sortable: false,
+        filterable: false,
+        renderCell: () => (
+          <span className="c360-files-dt-badge c360-files-dt-badge--success">
+            <span className="c360-files-dt-badge__dot" aria-hidden />
+            Available
+          </span>
+        ),
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "size",
+        headerName: FILES_DT_COLUMN_LABELS.size,
+        flex: 0,
+        width: 140,
+        minWidth: 120,
+        sortable: true,
+        filterable: false,
+        type: "number",
+        valueGetter: (_v, row) => normalizeS3FileSizeBytes(row.size),
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => {
+          const f = params.row;
+          return (
+            <span className="c360-text-muted c360-text-sm">
+              {formatFileSize(normalizeS3FileSizeBytes(f.size))}
+              {listRowContentType(f) && (
+                <span className="c360-files-dt__size-meta">
+                  {" "}
+                  · {listRowContentType(f)}
+                </span>
+              )}
+            </span>
+          );
+        },
+        cellClassName: "c360-files-grid-cell--center",
+      },
+      {
+        field: "actions",
+        headerName: FILES_DT_COLUMN_LABELS.actions,
+        flex: 0,
+        width: 72,
+        minWidth: 64,
+        sortable: false,
+        filterable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params: GridRenderCellParams<S3FileInfo>) => {
+          const f = params.row;
+          return (
+            <div className="c360-flex c360-w-full c360-items-center c360-justify-end">
+              <Popover
+                align="end"
+                width={280}
+                trigger={
+                  <button
+                    type="button"
+                    className="c360-files-dt__action-btn"
+                    aria-label={`Actions for ${f.filename}`}
+                  >
+                    <MoreHorizontal size={20} />
+                  </button>
+                }
+                content={
+                  <div className="c360-files-dt__menu">
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      onClick={() => onOpenDetail(f)}
+                      aria-label={`View details for ${f.filename}`}
+                    >
+                      View details
+                    </button>
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      onClick={() => onOpenPreview(f)}
+                      aria-label={`Preview ${f.filename}`}
+                    >
+                      Preview content
+                    </button>
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      onClick={() => onOpenJobs(f)}
+                      aria-label={`Related jobs for ${f.filename}`}
+                    >
+                      Related jobs
+                    </button>
+                    {onStartJob ? (
+                      <button
+                        type="button"
+                        className="c360-files-dt__menu-item"
+                        onClick={() => onStartJob(f)}
+                        aria-label={`Start job from ${f.filename}`}
+                      >
+                        Start job from file
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      onClick={() => onOpenSchema(f)}
+                      aria-label={`View schema for ${f.filename}`}
+                    >
+                      View schema
+                    </button>
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      onClick={() => onOpenStats(f)}
+                      aria-label={`View stats for ${f.filename}`}
+                    >
+                      View stats
+                    </button>
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item"
+                      disabled={downloadingKey === f.key}
+                      onClick={() => onDownload(f)}
+                      aria-label={`Download ${f.filename}`}
+                    >
+                      {downloadingKey === f.key ? "Downloading…" : "Download"}
+                    </button>
+                    <button
+                      type="button"
+                      className="c360-files-dt__menu-item c360-files-dt__menu-item--danger"
+                      onClick={() => onDeleteRequest(f)}
+                      aria-label={`Delete ${f.filename}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                }
+              />
+            </div>
+          );
+        },
+        cellClassName: "c360-files-grid-cell--center",
+      },
+    ];
+  }, [
+    downloadingKey,
+    onDeleteRequest,
+    onDownload,
+    onOpenDetail,
+    onOpenJobs,
+    onOpenPreview,
+    onOpenSchema,
+    onOpenStats,
+    onStartJob,
+  ]);
+
+  const totalFiltered = filtered.length;
+  const pageCount = Math.max(
+    1,
+    Math.ceil(totalFiltered / Math.max(1, paginationModel.pageSize)),
+  );
+  const safePage = Math.min(paginationModel.page, pageCount - 1);
+  const showingFrom =
+    totalFiltered === 0 ? 0 : safePage * paginationModel.pageSize + 1;
+  const showingTo =
+    totalFiltered === 0
+      ? 0
+      : Math.min((safePage + 1) * paginationModel.pageSize, totalFiltered);
+
+  const showLoadingOverlay = Boolean(
+    loading && files.length === 0 && !isSkeletonLoading,
+  );
+
+  const filterEmpty = files.length > 0 && filtered.length === 0;
+
+  const filesGrid = (
+    <C360DataTableShell>
+      <C360MuiThemeProvider>
+        <div className="c360-files-data-grid c360-min-h-[320px] c360-w-full">
+          <DataGrid
+            rows={filtered}
+            columns={columns}
+            getRowId={(row) => row.key}
+            checkboxSelection
+            disableRowSelectionExcludeModel
+            disableRowSelectionOnClick
+            keepNonExistentRowsSelected
+            rowSelectionModel={rowSelectionModel}
+            onRowSelectionModelChange={handleRowSelectionModelChange}
+            sortingMode="client"
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
+            paginationMode="client"
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 25, 50, 100]}
+            columnVisibilityModel={columnVisibilityModel}
+            onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+            disableColumnFilter
+            hideFooter
+            loading={showLoadingOverlay}
+            getRowHeight={() => "auto"}
+            getEstimatedRowHeight={() => 56}
+            columnHeaderHeight={44}
+            density="comfortable"
+            showColumnVerticalBorder
+            slots={{
+              noRowsOverlay: () => (
+                <FilesNoRowsOverlay
+                  filesLength={files.length}
+                  emptyHint={emptyHint}
+                  onUpload={onUpload}
+                  filterEmpty={filterEmpty}
+                />
+              ),
+            }}
+            sx={(theme) => ({
+              border: "none",
+              borderRadius: 0,
+              fontFamily: "inherit",
+              "& .MuiDataGrid-columnHeaders": {
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.06)"
+                    : "rgba(148, 163, 184, 0.14)",
+              },
+              "& .MuiDataGrid-cell": {
+                display: "flex",
+                alignItems: "center",
+              },
+              "& .MuiDataGrid-cell.c360-files-grid-cell--center": {
+                alignItems: "center",
+              },
+              "& .MuiDataGrid-row": {
+                maxHeight: "none !important",
+              },
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontWeight: 600,
+                fontSize: "0.8125rem",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "none",
+              },
+            })}
+            autoHeight
+          />
+        </div>
+      </C360MuiThemeProvider>
+    </C360DataTableShell>
+  );
+
+  const footer = (
+    <div className="c360-files-dt__footer">
+      <p className="c360-text-muted c360-text-sm">
+        Showing {showingFrom} to {showingTo} of {totalFiltered} entries
+        {files.length !== totalFiltered && (
+          <span> (filtered from {files.length} total)</span>
+        )}
+      </p>
+      <div className="c360-files-dt__pager">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={safePage <= 0}
+          onClick={() =>
+            setPaginationModel((m) => ({
+              ...m,
+              page: Math.max(0, m.page - 1),
+            }))
+          }
+        >
+          Previous
+        </Button>
+        <span className="c360-text-muted c360-text-sm">
+          Page {safePage + 1} of {pageCount}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={safePage >= pageCount - 1}
+          onClick={() =>
+            setPaginationModel((m) => ({
+              ...m,
+              page: Math.min(pageCount - 1, m.page + 1),
+            }))
+          }
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="c360-files-dt">
       <div className="c360-files-dt__toolbar">
         <div className="c360-files-dt__toolbar-left">
-          <span className="c360-text-muted c360-text-sm">Show</span>
-          <Select
-            value={String(pageSize)}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(0);
-            }}
-            options={[
-              { value: "10", label: "10" },
-              { value: "25", label: "25" },
-              { value: "50", label: "50" },
-              { value: "100", label: "100" },
-            ]}
-            aria-label="Rows per page"
-            fullWidth={false}
-            triggerClassName="c360-files-dt__page-size"
+          <FilesToolbarTableExtras
+            pageSize={paginationModel.pageSize}
+            onPageSizeChange={(n) =>
+              setPaginationModel({ page: 0, pageSize: n })
+            }
+            visibleColumns={visibleColumns}
+            onToggleColumn={handleToggleColumn}
           />
-          <span className="c360-text-muted c360-text-sm">entries</span>
-          {onBulkDelete && selected.size > 0 && (
+          {onBulkDelete && selectedKeys.size > 0 && (
             <Button
               variant="secondary"
               size="sm"
               className="c360-ml-3"
               onClick={() => void handleBulkDelete()}
             >
-              Delete selected ({selected.size})
+              Delete selected ({selectedKeys.size})
             </Button>
           )}
         </div>
@@ -318,303 +804,29 @@ export function FilesDataTable({
           >
             Search:
           </label>
-          <input
+          <Input
             id="c360-files-dt-search"
             type="search"
-            className="c360-input c360-input--sm c360-files-dt__search"
             placeholder="Filter by name or key…"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
+            className="c360-files-dt__search"
           />
         </div>
       </div>
 
       <div className="c360-files-dt__table-wrap">
-        <table className="c360-table c360-files-dt__table">
-          <thead>
-            <tr>
-              <th className="c360-files-dt__th--checkbox">
-                <Checkbox
-                  size="sm"
-                  checked={allOnPageSelected}
-                  indeterminate={someOnPageSelected && !allOnPageSelected}
-                  onChange={toggleSelectAllPage}
-                  aria-label="Select all on this page"
-                />
-              </th>
-              <th aria-sort={ariaSort("fileId")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("fileId")}
-                >
-                  File ID
-                  <SortCaret active={sortKey === "fileId"} dir={sortDir} />
-                </button>
-              </th>
-              <th aria-sort={ariaSort("uploaded")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("uploaded")}
-                >
-                  Uploaded
-                  <SortCaret active={sortKey === "uploaded"} dir={sortDir} />
-                </button>
-              </th>
-              <th aria-sort={ariaSort("name")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("name")}
-                >
-                  Name
-                  <SortCaret active={sortKey === "name"} dir={sortDir} />
-                </button>
-              </th>
-              <th aria-sort={ariaSort("folder")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("folder")}
-                >
-                  Folder
-                  <SortCaret active={sortKey === "folder"} dir={sortDir} />
-                </button>
-              </th>
-              <th aria-sort={ariaSort("kind")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("kind")}
-                >
-                  Type
-                  <SortCaret active={sortKey === "kind"} dir={sortDir} />
-                </button>
-              </th>
-              <th>Status</th>
-              <th aria-sort={ariaSort("size")}>
-                <button
-                  type="button"
-                  className="c360-files-dt__th-btn"
-                  onClick={() => toggleSort("size")}
-                >
-                  Size
-                  <SortCaret active={sortKey === "size"} dir={sortDir} />
-                </button>
-              </th>
-              <th className="c360-text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isSkeletonLoading ? (
+        {isSkeletonLoading ? (
+          <table className="c360-table c360-files-dt__table">
+            <tbody>
               <SkeletonRows cols={9} />
-            ) : loading && files.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="c360-table__loading">
-                  <span className="c360-spinner" />
-                </td>
-              </tr>
-            ) : pageRows.length === 0 ? (
-              <tr>
-                <td colSpan={9}>
-                  <div className="c360-files-dt__empty">
-                    <FolderOpen
-                      className="c360-files-dt__empty-icon"
-                      size={40}
-                      aria-hidden="true"
-                    />
-                    <p className="c360-files-dt__empty-heading">
-                      {files.length === 0 ? "No files yet" : "No files match"}
-                    </p>
-                    <p className="c360-files-dt__empty-hint">{emptyHint}</p>
-                    {files.length === 0 && onUpload && (
-                      <Button
-                        className="c360-files-dt__empty-cta"
-                        leftIcon={<Upload size={16} />}
-                        onClick={onUpload}
-                      >
-                        Upload files
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((f) => (
-                <tr key={f.key} className="c360-files-dt__row">
-                  <td
-                    className="c360-files-dt__td--checkbox"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Checkbox
-                      size="sm"
-                      checked={selected.has(f.key)}
-                      onChange={(c) => toggleRow(f.key, c)}
-                      aria-label={`Select ${f.filename}`}
-                    />
-                  </td>
-                  <td>
-                    <strong className="c360-files-dt__file-id">
-                      {hashFileId(f.key)}
-                    </strong>
-                  </td>
-                  <td className="c360-text-muted c360-text-sm">
-                    {formatCheckInDate(f.lastModified)}
-                  </td>
-                  <td>
-                    <span className="c360-files-page__filename">
-                      {f.filename}
-                    </span>
-                  </td>
-                  <td className="c360-text-muted c360-text-sm">
-                    {folderLabel(f.key)}
-                  </td>
-                  <td className="c360-text-muted c360-text-sm">
-                    {kindLabel(f.filename)}
-                  </td>
-                  <td>
-                    <span className="c360-files-dt-badge c360-files-dt-badge--success">
-                      <span className="c360-files-dt-badge__dot" aria-hidden />
-                      Available
-                    </span>
-                  </td>
-                  <td className="c360-text-muted c360-text-sm">
-                    {formatFileSize(normalizeS3FileSizeBytes(f.size))}
-                    {listRowContentType(f) && (
-                      <span className="c360-files-dt__size-meta">
-                        {" "}
-                        · {listRowContentType(f)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="c360-text-right">
-                    <Popover
-                      align="end"
-                      width={280}
-                      trigger={
-                        <button
-                          type="button"
-                          className="c360-files-dt__action-btn"
-                          aria-label={`Actions for ${f.filename}`}
-                        >
-                          <MoreHorizontal size={20} />
-                        </button>
-                      }
-                      content={
-                        <div className="c360-files-dt__menu">
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            onClick={() => onOpenDetail(f)}
-                            aria-label={`View details for ${f.filename}`}
-                          >
-                            View details
-                          </button>
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            onClick={() => onOpenPreview(f)}
-                            aria-label={`Preview ${f.filename}`}
-                          >
-                            Preview content
-                          </button>
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            onClick={() => onOpenJobs(f)}
-                            aria-label={`Related jobs for ${f.filename}`}
-                          >
-                            Related jobs
-                          </button>
-                          {onStartJob ? (
-                            <button
-                              type="button"
-                              className="c360-files-dt__menu-item"
-                              onClick={() => onStartJob(f)}
-                              aria-label={`Start job from ${f.filename}`}
-                            >
-                              Start job from file
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            onClick={() => onOpenSchema(f)}
-                            aria-label={`View schema for ${f.filename}`}
-                          >
-                            View schema
-                          </button>
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            onClick={() => onOpenStats(f)}
-                            aria-label={`View stats for ${f.filename}`}
-                          >
-                            View stats
-                          </button>
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item"
-                            disabled={downloadingKey === f.key}
-                            onClick={() => onDownload(f)}
-                            aria-label={`Download ${f.filename}`}
-                          >
-                            {downloadingKey === f.key
-                              ? "Downloading…"
-                              : "Download"}
-                          </button>
-                          <button
-                            type="button"
-                            className="c360-files-dt__menu-item c360-files-dt__menu-item--danger"
-                            onClick={() => onDeleteRequest(f)}
-                            aria-label={`Delete ${f.filename}`}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      }
-                    />
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        ) : (
+          filesGrid
+        )}
       </div>
-
-      <div className="c360-files-dt__footer">
-        <p className="c360-text-muted c360-text-sm">
-          Showing {showingFrom} to {showingTo} of {totalFiltered} entries
-          {files.length !== totalFiltered && (
-            <span> (filtered from {files.length} total)</span>
-          )}
-        </p>
-        <div className="c360-files-dt__pager">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={safePage <= 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            Previous
-          </Button>
-          <span className="c360-text-muted c360-text-sm">
-            Page {safePage + 1} of {pageCount}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={safePage >= pageCount - 1}
-            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      {footer}
     </div>
   );
 }

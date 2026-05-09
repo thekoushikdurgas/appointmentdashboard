@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDown } from "lucide-react";
 import { Popover } from "@/components/ui/Popover";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -56,6 +62,10 @@ export function FilterCombobox({
   const listRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const wasPanelOpen = useRef(false);
+  const onLoadMoreRef = useRef(onLoadMore);
+  onLoadMoreRef.current = onLoadMore;
+  /** Guard against pathological duplicate pages when auto-filling the scrollport. */
+  const fillMoreBurstRef = useRef(0);
 
   panelOpenRef.current = panelOpen;
 
@@ -83,6 +93,25 @@ export function FilterCombobox({
     }
     wasPanelOpen.current = panelOpen;
   }, [panelOpen, onOpen]);
+
+  useEffect(() => {
+    if (!panelOpen) fillMoreBurstRef.current = 0;
+  }, [panelOpen]);
+
+  /**
+   * Hiring-signal-style infinite scroll loads the next page on scroll. If the first
+   * page has fewer rows than the list viewport height, nothing scrolls and load-more
+   * never runs — chain `onLoadMore` until the list overflows or the server clears `hasMore`.
+   */
+  useLayoutEffect(() => {
+    if (!panelOpen || !hasMore || loading || loadingMore) return;
+    const el = listRef.current;
+    if (!el || options.length === 0) return;
+    if (el.scrollHeight > el.clientHeight + 2) return;
+    if (fillMoreBurstRef.current >= 50) return;
+    fillMoreBurstRef.current += 1;
+    onLoadMoreRef.current();
+  }, [panelOpen, hasMore, loading, loadingMore, options.length]);
 
   const toggleValue = useCallback(
     (value: string) => {
@@ -149,6 +178,7 @@ export function FilterCombobox({
         {label}
       </span>
       <Popover
+        inline
         width={320}
         align="start"
         placement="bottom"
@@ -179,7 +209,7 @@ export function FilterCombobox({
         }
         content={
           <div
-            className="c360-filter-combobox__panel-inner c360-flex c360-flex-col c360-gap-2 c360-p-2"
+            className="c360-filter-combobox__panel-inner"
             onKeyDown={onListKeyDown}
           >
             <input
@@ -196,7 +226,7 @@ export function FilterCombobox({
               role="listbox"
               aria-label={`${label} options`}
               aria-multiselectable="true"
-              className="c360-filter-combobox__list c360-max-h-56 c360-overflow-y-auto c360-border c360-rounded c360-p-1"
+              className="c360-filter-combobox__list"
               onScroll={handleScroll}
             >
               {loading && options.length === 0 ? (
@@ -228,7 +258,7 @@ export function FilterCombobox({
                       "c360-flex",
                       "c360-items-center",
                       "c360-gap-2",
-                      "c360-rounded",
+                      "c360-rounded-md",
                       "c360-px-2",
                       "c360-py-1",
                       "c360-text-sm",
@@ -242,7 +272,10 @@ export function FilterCombobox({
                       onChange={() => toggleValue(val)}
                       size="sm"
                     />
-                    <span className="c360-truncate">{optLabel}</span>
+                    <span className="c360-truncate" title={optLabel}>
+                      {optLabel.slice(0, 20)}
+                      {optLabel.length > 20 && "..."}
+                    </span>
                   </label>
                 );
               })}

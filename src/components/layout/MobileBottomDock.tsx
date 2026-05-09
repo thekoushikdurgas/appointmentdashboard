@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
+import { useRole } from "@/context/RoleContext";
 import { cn } from "@/lib/utils";
 
 function routeActive(href: string, pathname: string): boolean {
@@ -57,6 +59,15 @@ export function MobileBottomDock({
 }: MobileBottomDockProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const { isAdmin } = useRole();
+
+  const dockLinks = useMemo(
+    () =>
+      DOCK_LINKS.filter(
+        (l) => isAdmin || (l.tile !== "campaigns" && l.tile !== "ai"),
+      ),
+    [isAdmin],
+  );
 
   if (!visible) return null;
 
@@ -74,7 +85,7 @@ export function MobileBottomDock({
       transition={navTransition}
     >
       <div className="c360-shell-bottom-nav__dock">
-        {DOCK_LINKS.map(({ href, label, icon: Icon, tile }) => {
+        {dockLinks.map(({ href, label, icon: Icon, tile }) => {
           const active = routeActive(href, pathname);
           return (
             <motion.div

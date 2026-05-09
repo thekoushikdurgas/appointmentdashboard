@@ -24,6 +24,7 @@ import {
   IMPORT_COMPANIES_MUTATION,
   COMPANY_CONTACTS_QUERY,
 } from "@/graphql/companiesOperations";
+import type { Contact } from "@/services/graphql/contactsService";
 
 export type { SchedulerJob as CompaniesExportJobRef };
 export type {
@@ -42,6 +43,9 @@ export interface Company {
   industry?: string;
   /** All industries from API (for badges). */
   industries?: string[];
+  keywords?: string[];
+  technologies?: string[];
+  address?: string;
   employeeCount?: number;
   description?: string;
   city?: string;
@@ -50,6 +54,16 @@ export interface Company {
   /** City, state, country joined for display. */
   location?: string;
   linkedinUrl?: string;
+  linkedinSalesUrl?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  phoneNumber?: string;
+  companyNameForEmails?: string;
+  annualRevenue?: number;
+  totalFunding?: number;
+  latestFunding?: string;
+  latestFundingAmount?: number;
+  lastRaisedAt?: string;
   contactCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -60,12 +74,25 @@ interface CompanyRow {
   name: string | null;
   employeesCount: number | null;
   industries: string[] | null;
+  keywords: string[] | null;
+  technologies: string[] | null;
+  address: string | null;
   website: string | null;
   normalizedDomain: string | null;
   linkedinUrl: string | null;
+  linkedinSalesUrl: string | null;
+  facebookUrl: string | null;
+  twitterUrl: string | null;
+  phoneNumber: string | null;
+  companyNameForEmails: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
+  annualRevenue: number | null;
+  totalFunding: number | null;
+  latestFunding: string | null;
+  latestFundingAmount: number | null;
+  lastRaisedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -80,12 +107,25 @@ function mapCompany(r: CompanyRow): Company {
     website: r.website ?? undefined,
     industry: ind,
     industries: r.industries ?? undefined,
+    keywords: r.keywords?.filter(Boolean) ?? undefined,
+    technologies: r.technologies?.filter(Boolean) ?? undefined,
+    address: r.address?.trim() || undefined,
     employeeCount: r.employeesCount ?? undefined,
     city: r.city ?? undefined,
     state: r.state ?? undefined,
     country: r.country ?? undefined,
     location: loc || undefined,
     linkedinUrl: r.linkedinUrl ?? undefined,
+    linkedinSalesUrl: r.linkedinSalesUrl ?? undefined,
+    facebookUrl: r.facebookUrl ?? undefined,
+    twitterUrl: r.twitterUrl ?? undefined,
+    phoneNumber: r.phoneNumber ?? undefined,
+    companyNameForEmails: r.companyNameForEmails ?? undefined,
+    annualRevenue: r.annualRevenue ?? undefined,
+    totalFunding: r.totalFunding ?? undefined,
+    latestFunding: r.latestFunding ?? undefined,
+    latestFundingAmount: r.latestFundingAmount ?? undefined,
+    lastRaisedAt: r.lastRaisedAt ?? undefined,
     createdAt: r.createdAt ?? "",
     updatedAt: r.updatedAt ?? "",
   };
@@ -105,8 +145,20 @@ export interface CompanyContactRow {
   lastName: string | null;
   email: string | null;
   title: string | null;
+  companyUuid: string | null;
   mobilePhone: string | null;
+  workDirectPhone: string | null;
+  homePhone: string | null;
+  otherPhone: string | null;
   emailStatus: string | null;
+  linkedinUrl: string | null;
+  linkedinSalesUrl: string | null;
+  website: string | null;
+  facebookUrl: string | null;
+  twitterUrl: string | null;
+  departments: string[] | null;
+  seniority: string | null;
+  stage: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -114,17 +166,36 @@ export interface CompanyContactRow {
   updatedAt: string | null;
 }
 
-export function mapCompanyContactRow(r: CompanyContactRow) {
+export function mapCompanyContactRow(r: CompanyContactRow): Contact {
   const fn = r.firstName ?? "";
   const ln = r.lastName ?? "";
   const name = [fn, ln].filter(Boolean).join(" ").trim() || r.email || r.uuid;
+  const loc = [r.city, r.state, r.country].filter(Boolean).join(", ");
   return {
     id: r.uuid,
     name,
-    title: r.title,
+    firstName: r.firstName ?? undefined,
+    lastName: r.lastName ?? undefined,
+    title: r.title ?? undefined,
     email: r.email ?? undefined,
     emailStatus: r.emailStatus ?? undefined,
+    companyId: r.companyUuid ?? undefined,
+    location: loc || undefined,
+    country: r.country,
+    phone: r.mobilePhone ?? undefined,
+    workDirectPhone: r.workDirectPhone ?? undefined,
+    homePhone: r.homePhone ?? undefined,
+    otherPhone: r.otherPhone ?? undefined,
+    departments: r.departments?.filter(Boolean) ?? undefined,
+    seniority: r.seniority ?? undefined,
+    stage: r.stage ?? undefined,
+    website: r.website ?? undefined,
+    facebookUrl: r.facebookUrl ?? undefined,
+    twitterUrl: r.twitterUrl ?? undefined,
+    linkedinUrl: r.linkedinUrl ?? undefined,
+    linkedinSalesUrl: r.linkedinSalesUrl ?? undefined,
     createdAt: r.createdAt ?? "",
+    updatedAt: r.updatedAt ?? "",
   };
 }
 

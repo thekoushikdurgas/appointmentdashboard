@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   coerceJobListSortFields,
@@ -174,6 +168,16 @@ export interface LinkedInJobRow {
   workplaceTypes?: string[];
   /** When ingest embeds a logo URL (Apify raw / optional denorm). */
   companyLogoUrl?: string;
+  /** Analytics / extended fields (job.server JSON). */
+  skillTags?: string[];
+  benefits?: string[];
+  country?: string;
+  salaryMinUsd?: number | null;
+  salaryMaxUsd?: number | null;
+  experienceBucket?: string;
+  educationLevelMin?: string;
+  standardizedTitle?: string;
+  workRemote?: boolean;
 }
 
 function parseJobListPayload(raw: unknown): {
@@ -187,6 +191,15 @@ function parseJobListPayload(raw: unknown): {
     data: envelope.data.map((item) => mapJobRow(item)),
     total: envelope.total,
   };
+}
+
+/** Parse hireSignal jobs / companyJobs JSON envelope into rows (shared by company hook). */
+export function parseLinkedInJobsPayload(raw: unknown): {
+  success: boolean;
+  data: LinkedInJobRow[];
+  total: number;
+} {
+  return parseJobListPayload(raw);
 }
 
 function mapJobRow(item: unknown): LinkedInJobRow {
@@ -257,6 +270,41 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     }
   }
 
+  const wr =
+    o.workRemoteAllowed ?? o.work_remote_allowed ?? o.workRemote ?? false;
+  const workRemote =
+    typeof wr === "boolean"
+      ? wr
+      : String(wr).toLowerCase() === "true" ||
+        remoteAllowed.toLowerCase().includes("remote") ||
+        workplaceTypes.some((t) => t.toLowerCase().includes("remote"));
+
+  const skillRaw = o.skillTags ?? o.skill_tags;
+  const skillTags = Array.isArray(skillRaw)
+    ? skillRaw.map((x) => String(x).trim()).filter(Boolean)
+    : [];
+
+  const benRaw = o.benefits;
+  const benefits = Array.isArray(benRaw)
+    ? benRaw.map((x) => String(x).trim()).filter(Boolean)
+    : [];
+
+  const country = String(o.country ?? "").trim();
+  const smin = o.salaryMinUsd ?? o.salary_min_usd;
+  const smax = o.salaryMaxUsd ?? o.salary_max_usd;
+  const salaryMinUsd =
+    typeof smin === "number" && Number.isFinite(smin)
+      ? smin
+      : smin != null
+        ? Number(smin)
+        : null;
+  const salaryMaxUsd =
+    typeof smax === "number" && Number.isFinite(smax)
+      ? smax
+      : smax != null
+        ? Number(smax)
+        : null;
+
   return {
     id: typeof o.id === "string" ? o.id : String(o._id ?? ""),
     linkedinJobId: String(o.linkedinJobId ?? o.linkedin_job_id ?? ""),
@@ -290,6 +338,25 @@ function mapJobRow(item: unknown): LinkedInJobRow {
     lastSeen: String(o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? ""),
     workplaceTypes,
     companyLogoUrl: companyLogoUrl || undefined,
+    skillTags: skillTags.length ? skillTags : undefined,
+    benefits: benefits.length ? benefits : undefined,
+    country: country || undefined,
+    salaryMinUsd:
+      salaryMinUsd != null && Number.isFinite(salaryMinUsd)
+        ? salaryMinUsd
+        : null,
+    salaryMaxUsd:
+      salaryMaxUsd != null && Number.isFinite(salaryMaxUsd)
+        ? salaryMaxUsd
+        : null,
+    experienceBucket: String(o.experienceBucket ?? o.experience_bucket ?? ""),
+    educationLevelMin: String(
+      o.educationLevelMin ?? o.education_level_min ?? "",
+    ),
+    standardizedTitle: String(
+      o.standardizedTitle ?? o.standardized_title ?? "",
+    ),
+    workRemote,
   };
 }
 
@@ -386,32 +453,6 @@ export function useHiringSignals(
         return;
       }
       const j = parseJobListPayload(jobsRes.hireSignal?.jobs);
-      // #region agent log
-      if (filters.sortKey === "title") {
-        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "fcf0fb",
-          },
-          body: JSON.stringify({
-            sessionId: "fcf0fb",
-            location: "useHiringSignals.ts:refetch:titleOrder",
-            message: "Row title order sample after hire-signal fetch",
-            data: {
-              sortKey: filters.sortKey,
-              sortOrder: filters.sortOrder,
-              rowCount: j.data.length,
-              titleInitials: j.data
-                .slice(0, 12)
-                .map((r) => (r.title || "").trim().slice(0, 1).toLowerCase()),
-            },
-            hypothesisId: "H-client-order",
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-      }
-      // #endregion
       setJobs(j.data);
       setTotal(j.total);
       setStats(parseStatsPayload(statsRes.hireSignal?.stats));

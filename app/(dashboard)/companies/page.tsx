@@ -58,6 +58,7 @@ import type {
 } from "@/graphql/generated/types";
 import { toast } from "sonner";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
+import { Skeleton } from "@/components/shared/Skeleton";
 
 type ViewMode = "list" | "card";
 
@@ -229,6 +230,21 @@ export default function CompaniesPage() {
       : {};
     return { ...extra, filters };
   }, [facetFilter, advancedCompanyDraft]);
+
+  const mergedPreviewQuery = useMemo((): Partial<VqlQueryInput> => {
+    const offset = (page - 1) * pageSize;
+    return {
+      ...currentCompanyVqlQuery,
+      limit: pageSize,
+      offset,
+      searchAfter: undefined,
+    };
+  }, [currentCompanyVqlQuery, page, pageSize]);
+
+  const tableErrorMessage = useMemo(() => {
+    if (!error) return null;
+    return parseOperationError(error, "companies").userMessage;
+  }, [error]);
 
   const advancedVqlRuleCount = advancedCompanyDraft
     ? countDraftConditions(advancedCompanyDraft.rootGroup)
@@ -455,6 +471,16 @@ export default function CompaniesPage() {
     <DataToolbar
       cssPrefix="c360-toolbar"
       totalCount={total}
+      meta={
+        !loading && total > 0 ? (
+          <CompanyPagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        ) : undefined
+      }
       filterConfig={{
         activeCount: toolbarActiveCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -526,16 +552,6 @@ export default function CompaniesPage() {
       filtersPeekRail
       filtersPeekScope="companies"
       filtersPinExtra={companySavedSearchesMenu}
-      metadata={
-        !loading && total > 0 ? (
-          <CompanyPagination
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
-          />
-        ) : undefined
-      }
       className="c360-companies-page"
     >
       <CompanyExportModal
@@ -550,6 +566,7 @@ export default function CompaniesPage() {
         onApply={handleCompanyVqlApply}
         entityType="company"
         initialDraft={advancedCompanyDraft ?? undefined}
+        fullQuery={mergedPreviewQuery}
       />
 
       {error &&
@@ -574,18 +591,23 @@ export default function CompaniesPage() {
               className="c360-mb-4"
             >
               {opErr.userMessage}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="c360-mt-2"
-                disabled={loading}
-                leftIcon={
-                  <RefreshCw size={13} className={cn(loading && "c360-spin")} />
-                }
-                onClick={() => void refresh()}
-              >
-                Retry
-              </Button>
+              {opErr.retryable ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="c360-mt-2"
+                  disabled={loading}
+                  leftIcon={
+                    <RefreshCw
+                      size={13}
+                      className={cn(loading && "c360-spin")}
+                    />
+                  }
+                  onClick={() => void refresh()}
+                >
+                  Retry
+                </Button>
+              ) : null}
             </Alert>
           );
         })()}
@@ -608,79 +630,89 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {loading && companies.length === 0 ? (
-        <div className="c360-text-center c360-p-12">
-          <span className="c360-spinner" />
-        </div>
-      ) : companies.length === 0 ? (
+      {!loading && companies.length === 0 ? (
         <Card>
           <div className="c360-empty-state">No companies found</div>
         </Card>
       ) : viewMode === "card" ? (
-        <>
+        loading && companies.length === 0 ? (
           <div className="c360-widget-grid">
-            {companies.map((company) => (
-              <div
-                key={company.id}
-                className="c360-card c360-flex c360-flex-col"
-              >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="c360-card c360-flex c360-flex-col">
                 <div className="c360-card__body">
-                  <div className="c360-company-card-header">
-                    <div className="c360-company-icon-box">
-                      <Building2 size={20} className="c360-text-primary" />
-                    </div>
-                    <div className="c360-min-w-0">
-                      <Link
-                        href={`/companies/${company.id}`}
-                        className="c360-company-name-link"
-                      >
-                        {company.name}
-                      </Link>
-                      {company.domain && (
-                        <div className="c360-text-xs c360-text-muted c360-truncate">
-                          {company.domain}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="c360-flex-row-wrap c360-gap-2 c360-mb-3">
-                    {company.industry && (
-                      <Badge color="blue">{company.industry}</Badge>
-                    )}
-                    {company.country && (
-                      <Badge color="gray">{company.country}</Badge>
-                    )}
-                  </div>
-
-                  <div className="c360-company-meta">
-                    {company.employeeCount ? (
-                      <div className="c360-company-meta-row">
-                        <Users size={12} />
-                        {formatCompact(company.employeeCount)} employees
-                      </div>
-                    ) : null}
-                    <div className="c360-text-xs c360-text-muted">
-                      {company.contactCount || 0} contacts · Added{" "}
-                      {formatDate(company.createdAt)}
-                    </div>
-                  </div>
-
-                  <Link href={`/companies/${company.id}`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="c360-w-full"
-                      rightIcon={<ExternalLink size={12} />}
-                    >
-                      View Details
-                    </Button>
-                  </Link>
+                  <Skeleton height={22} className="c360-mb-2" />
+                  <Skeleton height={14} className="c360-mb-4 c360-w-2/3" />
+                  <Skeleton height={72} />
                 </div>
               </div>
             ))}
           </div>
-        </>
+        ) : (
+          <>
+            <div className="c360-widget-grid">
+              {companies.map((company) => (
+                <div
+                  key={company.id}
+                  className="c360-card c360-flex c360-flex-col"
+                >
+                  <div className="c360-card__body">
+                    <div className="c360-company-card-header">
+                      <div className="c360-company-icon-box">
+                        <Building2 size={20} className="c360-text-primary" />
+                      </div>
+                      <div className="c360-min-w-0">
+                        <Link
+                          href={`/companies/${company.id}`}
+                          className="c360-company-name-link"
+                        >
+                          {company.name}
+                        </Link>
+                        {company.domain && (
+                          <div className="c360-text-xs c360-text-muted c360-truncate">
+                            {company.domain}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="c360-flex-row-wrap c360-gap-2 c360-mb-3">
+                      {company.industry && (
+                        <Badge color="blue">{company.industry}</Badge>
+                      )}
+                      {company.country && (
+                        <Badge color="gray">{company.country}</Badge>
+                      )}
+                    </div>
+
+                    <div className="c360-company-meta">
+                      {company.employeeCount ? (
+                        <div className="c360-company-meta-row">
+                          <Users size={12} />
+                          {formatCompact(company.employeeCount)} employees
+                        </div>
+                      ) : null}
+                      <div className="c360-text-xs c360-text-muted">
+                        {company.contactCount || 0} contacts · Added{" "}
+                        {formatDate(company.createdAt)}
+                      </div>
+                    </div>
+
+                    <Link href={`/companies/${company.id}`}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="c360-w-full"
+                        rightIcon={<ExternalLink size={12} />}
+                      >
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
       ) : (
         <Card padding="none">
           <div className="c360-p-0">
@@ -692,7 +724,7 @@ export default function CompaniesPage() {
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
               loading={loading}
-              error={error}
+              error={tableErrorMessage}
               search={search}
               onSearchChange={setSearch}
               sortBy={sortBy}
@@ -732,10 +764,44 @@ export default function CompaniesPage() {
         onConfirm={async () => {
           setBulkDeleting(true);
           try {
+            let deleted = 0;
+            let alreadyGone = 0;
+            const failures: string[] = [];
             for (const id of selected) {
-              await companiesService.delete(id);
+              try {
+                await companiesService.delete(id);
+                deleted += 1;
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                if (
+                  msg.includes("ERR_COMPANY_NOT_FOUND") ||
+                  msg.toLowerCase().includes("not found")
+                ) {
+                  alreadyGone += 1;
+                } else {
+                  failures.push(msg);
+                }
+              }
             }
-            toast.success(`Deleted ${selected.length} compan(y/ies).`);
+            if (failures.length > 0) {
+              const preview = failures.slice(0, 5).join("; ");
+              const more =
+                failures.length > 5 ? ` (+${failures.length - 5} more)` : "";
+              toast.warning(
+                `${failures.length} compan(y/ies) failed: ${preview}${more}`,
+              );
+            }
+            if (alreadyGone > 0 && deleted === 0 && failures.length === 0) {
+              toast.info(
+                `${alreadyGone} compan(y/ies) were already deleted or missing.`,
+              );
+            } else if (alreadyGone > 0 && deleted > 0) {
+              toast.success(
+                `Deleted ${deleted} compan(y/ies). ${alreadyGone} were already removed.`,
+              );
+            } else if (deleted > 0) {
+              toast.success(`Deleted ${deleted} compan(y/ies).`);
+            }
             setDeleteOpen(false);
             setSelected([]);
             await refresh();

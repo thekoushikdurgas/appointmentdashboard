@@ -75,3 +75,19 @@ export function buildCompanyListVql(
     filters,
   };
 }
+
+/**
+ * GraphQL `companyCount` input: same merged filters as {@link buildCompanyListVql}
+ * (toolbar search + facets), without pagination or cursor — matches Connectra cohort for totals.
+ */
+export function buildCompanyCountQueryInput(
+  search: string,
+  extra: Partial<VqlQueryInput>,
+  sortBy: string,
+): VqlQueryInput {
+  const merged = buildCompanyListVql(1, 25, search, extra, {
+    sortBy,
+    searchAfter: null,
+  });
+  return { filters: merged.filters };
+}
