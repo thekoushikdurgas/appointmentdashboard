@@ -54,7 +54,10 @@ function BulletList({ value }: { value: unknown }) {
       : [];
   if (!lines.length) return null;
   return (
-    <ul style={{ listStyle: "disc", paddingLeft: "1.25rem" }} className="c360-mt-1">
+    <ul
+      style={{ listStyle: "disc", paddingLeft: "1.25rem" }}
+      className="c360-mt-1"
+    >
       {lines.map((line, i) => (
         <li key={i}>{line}</li>
       ))}

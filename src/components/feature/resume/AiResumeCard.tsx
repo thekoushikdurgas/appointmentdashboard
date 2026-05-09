@@ -41,7 +41,10 @@ export function AiResumeCard({
         </span>
         <span className="c360-font-semibold">{title}</span>
         {resume.is_master && (
-          <span className="c360-badge c360-badge--sm c360-badge--blue c360-ml-2" title="Master résumé">
+          <span
+            className="c360-badge c360-badge--sm c360-badge--blue c360-ml-2"
+            title="Master résumé"
+          >
             <Crown size={12} className="c360-mr-1" />
             Master
           </span>

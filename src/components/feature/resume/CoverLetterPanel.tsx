@@ -48,8 +48,8 @@ export function CoverLetterPanel({
       </div>
       {!canGenerate && (
         <p className="c360-text-xs c360-text-muted">
-          Generate is available after you confirm a tailored résumé for this job (server
-          links cover letter context via the improvements record).
+          Generate is available after you confirm a tailored résumé for this job
+          (server links cover letter context via the improvements record).
         </p>
       )}
       <div>

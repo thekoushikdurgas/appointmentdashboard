@@ -108,7 +108,11 @@ export default function ResumePage() {
       )}
 
       {error && (
-        <Alert variant="danger" className="c360-mb-4" onClose={() => setError(null)}>
+        <Alert
+          variant="danger"
+          className="c360-mb-4"
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
@@ -151,7 +155,11 @@ export default function ResumePage() {
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
-            <Button variant="danger" loading={deleting} onClick={() => void handleDelete()}>
+            <Button
+              variant="danger"
+              loading={deleting}
+              onClick={() => void handleDelete()}
+            >
               Delete
             </Button>
           </>
