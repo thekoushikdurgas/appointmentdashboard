@@ -55,7 +55,13 @@ const nextConfig: NextConfig = {
     } catch {
       /* keep upstream string */
     }
-    return [{ source: "/graphql", destination: `${upstream}/graphql` }];
+    return [
+      { source: "/graphql", destination: `${upstream}/graphql` },
+      {
+        source: "/resume/v1/:path*",
+        destination: `${upstream}/resume/v1/:path*`,
+      },
+    ];
   },
 
   images: {

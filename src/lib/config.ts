@@ -47,6 +47,32 @@ export const GEOLOCATION_TIMEOUT = parseInt(
   10,
 );
 
+/**
+ * Résumé Matcher via contact360.io/api gateway (`/resume/v1`).
+ * - Production default: same host as `API_URL` (Bearer JWT required except health).
+ * - Development default: `""` → browser calls `/resume/v1/...` (see `next.config.ts` rewrite).
+ * Override with `NEXT_PUBLIC_RESUME_AI_URL` to hit scraper.server directly (e.g. local :8000).
+ */
+export function resolveResumeAiBase(): string {
+  const explicit = process.env.NEXT_PUBLIC_RESUME_AI_URL;
+  if (explicit !== undefined) return explicit.trim().replace(/\/$/, "");
+  if (process.env.NODE_ENV === "development") return "";
+  return API_URL;
+}
+
+export const RESUME_AI_URL = resolveResumeAiBase();
+
+/**
+ * Whether Résumé Matcher requests should be enabled in the UI.
+ * Development allows an empty base URL (same-origin `/resume/v1` rewrite).
+ */
+export function isResumeAiConfigured(): boolean {
+  if (process.env.NODE_ENV === "development") return true;
+  const explicit = process.env.NEXT_PUBLIC_RESUME_AI_URL;
+  if (explicit !== undefined) return explicit.trim().length > 0;
+  return Boolean(API_URL?.trim());
+}
+
 export function isDevelopment(): boolean {
   return process.env.NODE_ENV === "development";
 }
