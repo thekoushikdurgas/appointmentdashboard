@@ -43,15 +43,12 @@ export function DiffPreviewModal({
     >
       {list.length === 0 ? (
         <p className="c360-text-muted c360-text-sm">
-          No granular diff metadata returned — you can still confirm if the
-          preview JSON looks correct on the server response.
+          No granular diff metadata returned — you can still confirm if the preview
+          JSON looks correct on the server response.
         </p>
       ) : (
         <div className="c360-overflow-x-auto">
-          <table
-            className="c360-w-full c360-text-sm"
-            style={{ borderCollapse: "collapse" }}
-          >
+          <table className="c360-w-full c360-text-sm" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr>
                 <th>Path</th>

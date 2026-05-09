@@ -43,10 +43,7 @@ export function EnrichmentPanel({ resumeId, disabled }: EnrichmentPanelProps) {
       </div>
       {err && <p className="c360-text-sm c360-text-danger">{err}</p>}
       {result != null && (
-        <pre
-          className="c360-text-xs c360-overflow-auto c360-max-h-80 c360-p-2 c360-rounded"
-          style={{ background: "var(--c360-bg-muted, #f4f4f5)" }}
-        >
+        <pre className="c360-text-xs c360-overflow-auto c360-max-h-80 c360-p-2 c360-rounded" style={{ background: "var(--c360-bg-muted, #f4f4f5)" }}>
           {JSON.stringify(result, null, 2)}
         </pre>
       )}

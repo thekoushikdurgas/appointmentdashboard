@@ -123,9 +123,7 @@ export interface ScoreResponse {
   job_keywords: Record<string, unknown>;
 }
 
-export async function resumeAiList(
-  includeMaster = true,
-): Promise<ResumeSummaryAi[]> {
+export async function resumeAiList(includeMaster = true): Promise<ResumeSummaryAi[]> {
   const res = await fetch(
     `${base()}/resume/v1/resumes/list?include_master=${includeMaster}`,
     { headers: withAuth() },
@@ -135,9 +133,7 @@ export async function resumeAiList(
   return body.data;
 }
 
-export async function resumeAiGet(
-  resumeId: string,
-): Promise<ResumeFetchAiResponse["data"]> {
+export async function resumeAiGet(resumeId: string): Promise<ResumeFetchAiResponse["data"]> {
   const q = new URLSearchParams({ resume_id: resumeId });
   const res = await fetch(`${base()}/resume/v1/resumes?${q}`, {
     headers: withAuth(),
@@ -147,9 +143,7 @@ export async function resumeAiGet(
   return body.data;
 }
 
-export async function resumeAiUpload(
-  file: File,
-): Promise<ResumeUploadAiResponse> {
+export async function resumeAiUpload(file: File): Promise<ResumeUploadAiResponse> {
   const fd = new FormData();
   fd.append("file", file);
   const res = await fetch(`${base()}/resume/v1/resumes/upload`, {
@@ -228,12 +222,9 @@ export async function resumeAiScore(
   jobId: string,
 ): Promise<ScoreResponse> {
   const q = new URLSearchParams({ job_id: jobId });
-  const res = await fetch(
-    `${base()}/resume/v1/resumes/${resumeId}/score?${q}`,
-    {
-      headers: withAuth(),
-    },
-  );
+  const res = await fetch(`${base()}/resume/v1/resumes/${resumeId}/score?${q}`, {
+    headers: withAuth(),
+  });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json() as Promise<ScoreResponse>;
 }
@@ -260,10 +251,10 @@ export async function resumeAiExportPdf(
   const p = new URLSearchParams();
   p.set("template", opts?.template ?? "swiss-single");
   p.set("pageSize", opts?.pageSize ?? "A4");
-  const res = await fetch(`${base()}/resume/v1/resumes/${resumeId}/pdf?${p}`, {
-    method: "POST",
-    headers: withAuth(),
-  });
+  const res = await fetch(
+    `${base()}/resume/v1/resumes/${resumeId}/pdf?${p}`,
+    { method: "POST", headers: withAuth() },
+  );
   if (!res.ok) throw new Error(await parseError(res));
   return res.blob();
 }
@@ -287,16 +278,11 @@ export async function resumeAiHealth(): Promise<unknown> {
 }
 
 /** Enrichment: analyze weak bullets (POST ``/enrichment/analyze/{resume_id}``). */
-export async function resumeAiEnrichmentAnalyze(
-  resumeId: string,
-): Promise<unknown> {
-  const res = await fetch(
-    `${base()}/resume/v1/enrichment/analyze/${resumeId}`,
-    {
-      method: "POST",
-      headers: withAuth(),
-    },
-  );
+export async function resumeAiEnrichmentAnalyze(resumeId: string): Promise<unknown> {
+  const res = await fetch(`${base()}/resume/v1/enrichment/analyze/${resumeId}`, {
+    method: "POST",
+    headers: withAuth(),
+  });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }

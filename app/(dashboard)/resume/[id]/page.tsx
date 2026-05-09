@@ -293,16 +293,13 @@ export default function ResumeDetailPage() {
               savingJob={savingJob}
               previewLoading={previewLoading}
               disabled={
-                !isResumeAiConfigured() ||
-                record.raw_resume.processing_status !== "ready"
+                !isResumeAiConfigured() || record.raw_resume.processing_status !== "ready"
               }
             />
             {record.raw_resume.processing_status !== "ready" && (
               <p className="c360-text-sm c360-text-muted c360-mt-2">
                 Parsing status:{" "}
-                <code className="c360-mono">
-                  {record.raw_resume.processing_status}
-                </code>
+                <code className="c360-mono">{record.raw_resume.processing_status}</code>
               </p>
             )}
           </TabsContent>
@@ -330,10 +327,7 @@ export default function ResumeDetailPage() {
             {processed ? (
               <>
                 <ResumePreview data={processed} />
-                <EnrichmentPanel
-                  resumeId={id}
-                  disabled={!isResumeAiConfigured()}
-                />
+                <EnrichmentPanel resumeId={id} disabled={!isResumeAiConfigured()} />
               </>
             ) : (
               <Card>

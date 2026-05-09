@@ -57,8 +57,7 @@ export function ResumeUploadDropzone({
       <div className="c360-flex c360-flex-col c360-items-center c360-gap-3 c360-text-center">
         <Upload size={28} className="c360-text-muted" />
         <p className="c360-text-sm c360-text-muted">
-          Drop a PDF or DOCX here, or choose a file (max 4MB — enforced
-          server-side).
+          Drop a PDF or DOCX here, or choose a file (max 4MB — enforced server-side).
         </p>
         <Button
           type="button"
