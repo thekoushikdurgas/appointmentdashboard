@@ -10,9 +10,7 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import {
-  EMAIL_STATUS_STATIC_FACET_OPTIONS,
-} from "@/lib/contactEmailStatus";
+import { EMAIL_STATUS_STATIC_FACET_OPTIONS } from "@/lib/contactEmailStatus";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 import {
@@ -216,7 +214,7 @@ export function ContactsFilterSidebar({
         label: "Net new (7 days)",
         onRemove: () => onActiveTabChange("total"),
       });
-    } else     if (activeTab === "do_not_contact") {
+    } else if (activeTab === "do_not_contact") {
       out.push({
         key: "tab-dnc",
         label: "Do not contact",
@@ -429,7 +427,11 @@ export function ContactsFilterSidebar({
 
       <ContactsCollapsibleFilterSection
         title="Email status"
-        count={(facetValues.email_status?.length ?? 0) > 0 ? facetValues.email_status!.length : 0}
+        count={
+          (facetValues.email_status?.length ?? 0) > 0
+            ? facetValues.email_status!.length
+            : 0
+        }
         defaultOpen
         onClear={
           (facetValues.email_status?.length ?? 0) > 0

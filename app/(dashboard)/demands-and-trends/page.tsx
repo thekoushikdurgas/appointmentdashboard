@@ -17,7 +17,7 @@ export default function DemandsAndTrendsPage() {
     { signalTimePreset: "all" },
   );
 
-  if (!(isPro() || isAdmin())) {
+  if (!(isPro() || isAdmin)) {
     return (
       <DashboardPageLayout>
         <Card title="Professional feature">

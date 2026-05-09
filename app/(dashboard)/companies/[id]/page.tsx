@@ -37,7 +37,7 @@ function isCompanyNotFoundMessage(message: string | null): boolean {
 export default function CompanyDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const { isPro, isAdmin } = useRole();
-  const showHiringTab = isPro() || isAdmin();
+  const showHiringTab = isPro() || isAdmin;
   const {
     company,
     loading,

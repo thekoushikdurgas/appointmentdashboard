@@ -460,8 +460,12 @@
 }
 
 /* Line / bar charts in demands: Recharts wrapper max-width follows card */
-.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-responsive-container,
-.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-wrapper {
+.c360-demands-trends-page
+  .c360-hs-chart:not(.c360-hs-chart--pie)
+  .recharts-responsive-container,
+.c360-demands-trends-page
+  .c360-hs-chart:not(.c360-hs-chart--pie)
+  .recharts-wrapper {
   max-width: 100% !important;
 }
 

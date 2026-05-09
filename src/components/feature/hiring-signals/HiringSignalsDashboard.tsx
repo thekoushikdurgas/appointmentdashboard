@@ -91,7 +91,12 @@ export function HiringSignalsDashboard({
   );
 
   return (
-    <div className={cn("c360-flex c360-flex-col c360-gap-6 c360-hs-dashboard-wrapper", className)}>
+    <div
+      className={cn(
+        "c360-flex c360-flex-col c360-gap-6 c360-hs-dashboard-wrapper",
+        className,
+      )}
+    >
       {latestRun && Object.keys(latestRun).length > 0 ? (
         <Card
           className="c360-hs-dashboard-latest-run-card"

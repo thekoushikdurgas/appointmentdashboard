@@ -129,12 +129,6 @@ function sidebarCompanyFacetCond(
   return { ...c, field, operator: "in_list", value: trimmed.join(",") };
 }
 
-const CONTACT_TABS = [
-  { value: "total", label: "Total" },
-  { value: "net_new", label: "Net New" },
-  { value: "do_not_contact", label: "Do Not Contact" },
-] as const;
-
 const VISIBLE_COLUMNS_STORAGE_KEY = "c360:contacts:visibleColumns:v1";
 
 function loadVisibleColumns(): ContactsDataTableColumnId[] {
@@ -486,7 +480,7 @@ export default function ContactsPage() {
           legacySf &&
           legacySf !== "All" &&
           LEGACY_EMAIL_STATUS_PILL_TO_TOKEN[legacySf] &&
-          !(mergedFacets.email_status?.length)
+          !mergedFacets.email_status?.length
         ) {
           mergedFacets.email_status = [
             LEGACY_EMAIL_STATUS_PILL_TO_TOKEN[legacySf],

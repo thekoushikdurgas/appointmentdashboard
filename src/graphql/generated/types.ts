@@ -1898,6 +1898,7 @@ export type HireSignalQuery = {
   companyJobs: Scalars["JSON"]["output"];
   connectraCompany: Scalars["JSON"]["output"];
   connectraContactsForCompany: Scalars["JSON"]["output"];
+  dashboardKpis: Scalars["JSON"]["output"];
   exportDownloadUrl?: Maybe<S3DownloadUrlResponse>;
   exportJobStatus: SchedulerJob;
   getScrapeJob: Scalars["JSON"]["output"];

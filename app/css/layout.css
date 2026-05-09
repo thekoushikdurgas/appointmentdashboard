@@ -1536,7 +1536,9 @@
   border-bottom: 1px solid var(--c360-border);
 }
 
-.c360-data-layout__filters-body-scroll .c360-companies-filters .c360-contacts-filters__head-row {
+.c360-data-layout__filters-body-scroll
+  .c360-companies-filters
+  .c360-contacts-filters__head-row {
   padding-top: 0;
   padding-bottom: 0;
 }
