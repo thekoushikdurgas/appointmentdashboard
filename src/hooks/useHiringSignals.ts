@@ -311,6 +311,37 @@ export function useHiringSignals(
       const res = await fetchHiringSignalJobs(snapshot);
       if (gen !== hireSignalLoadGenRef.current) return;
       const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
+      // #region agent log
+      {
+        const samplePosted = parsed.data[0]?.postedAt ?? "";
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "a299fd",
+            },
+            body: JSON.stringify({
+              sessionId: "a299fd",
+              hypothesisId: "H1",
+              runId: "post-fix-v2",
+              location: "useHiringSignals.ts:runLoad",
+              message: "hireSignal jobs response",
+              data: {
+                postedAfter: snapshot.postedAfter ?? null,
+                offset: snapshot.offset,
+                limit: snapshot.limit,
+                total: parsed.total,
+                rowCount: parsed.data.length,
+                samplePostedAtPrefix: samplePosted.slice(0, 32),
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+      }
+      // #endregion
       setJobs(parsed.data);
       setTotal(parsed.total);
     } catch (e) {

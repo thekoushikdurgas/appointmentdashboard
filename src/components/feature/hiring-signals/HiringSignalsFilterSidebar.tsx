@@ -232,7 +232,7 @@ const DATE_POSTED_PRESET_OPTIONS: {
   label: string;
 }[] = [
   { value: "any", label: "Any time" },
-  { value: "24h", label: "Last 4 days (UTC)" },
+  { value: "24h", label: "Last 4 days (UTC, rolling)" },
   { value: "7d", label: "Last 7 days (UTC)" },
   { value: "30d", label: "Last 30 days (UTC)" },
   { value: "custom", label: "Custom range" },
@@ -242,7 +242,7 @@ const DATE_POSTED_PRESET_LABELS: Record<
   Exclude<DatePostedPreset, "any" | "custom">,
   string
 > = {
-  "24h": "Last 4 days (UTC)",
+  "24h": "Last 4 days (UTC, rolling)",
   "7d": "Last 7 days (UTC)",
   "30d": "Last 30 days (UTC)",
 };

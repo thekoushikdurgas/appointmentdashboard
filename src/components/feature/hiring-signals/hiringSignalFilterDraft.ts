@@ -1,4 +1,4 @@
-/** LinkedIn-style quick date window — maps to `postedAfter` (RFC3339 rolling cutoff). */
+/** LinkedIn-style quick date window — maps to `postedAfter` (RFC3339). Preset `24h` uses a rolling 4×24h bound; `7d`/`30d` use UTC calendar days from midnight today. */
 export type DatePostedPreset = "any" | "24h" | "7d" | "30d" | "custom";
 
 export type HiringSignalFilterDraft = {
@@ -91,18 +91,18 @@ function startOfTodayUTC(): Date {
 
 /**
  * Lower bound for quick "Date posted" presets → job.server `posted_after` (RFC3339).
- * Uses **UTC calendar-day** windows so the table (day-granular "Posted" labels) matches
- * what users expect; a strict rolling 24h window excluded jobs still showing as "yesterday"
- * or a few calendar days ago.
+ * **`24h` (UI "Last 4 days"):** rolling **4×24h** from now so rows with `postedAt` a few UTC
+ * calendar days ago (but still "recent" in the grid) are not excluded by `startOfTodayUTC()−3`.
+ * **`7d` / `30d`:** UTC calendar windows from start of today (inclusive day counts).
  */
 export function postedAfterISOFromPreset(
   preset: Exclude<DatePostedPreset, "any" | "custom">,
 ): string {
-  const d = startOfTodayUTC();
   if (preset === "24h") {
-    d.setUTCDate(d.getUTCDate() - 3);
-    return d.toISOString();
+    const ms = Date.now() - 4 * 24 * 60 * 60 * 1000;
+    return new Date(ms).toISOString();
   }
+  const d = startOfTodayUTC();
   if (preset === "7d") {
     d.setUTCDate(d.getUTCDate() - 6);
     return d.toISOString();
