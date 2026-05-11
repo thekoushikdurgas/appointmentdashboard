@@ -62,7 +62,56 @@ export async function uploadPresignedMultipartParts(
       throw new Error(`Part ${partNumber} upload failed (${putRes.status})`);
     }
 
-    etag = stripEtag(putRes.headers.get("ETag")) || stripEtag(row.etag);
+    const etagFromHeaders =
+      stripEtag(putRes.headers.get("ETag")) ||
+      stripEtag(putRes.headers.get("etag"));
+    // #region agent log
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "a299fd",
+      },
+      body: JSON.stringify({
+        sessionId: "a299fd",
+        hypothesisId: "H1",
+        location: "multipartCsvUpload.ts:afterPut",
+        message: "presigned PUT completed",
+        data: {
+          partNumber,
+          ok: putRes.ok,
+          hasEtagHeader: Boolean(etagFromHeaders),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    etag = etagFromHeaders || stripEtag(row.etag);
+    if (!etag) {
+      const recovered = await uploadService.getUploadedPartEtag(
+        uploadId,
+        partNumber,
+      );
+      etag = stripEtag(recovered.upload.uploadedPartEtag.etag);
+      // #region agent log
+      fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "a299fd",
+        },
+        body: JSON.stringify({
+          sessionId: "a299fd",
+          hypothesisId: "H2",
+          location: "multipartCsvUpload.ts:recoverEtag",
+          message: "used uploadedPartEtag query",
+          data: { partNumber, recoveredLen: etag.length },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+    }
     if (!etag) {
       throw new Error(`Missing ETag for part ${partNumber}`);
     }

@@ -252,7 +252,14 @@ export async function graphqlRequest<T = unknown>(
             parsedError?: ParsedGraphQLError;
           };
           apiError.parsedError = parsed;
-          if (showToastOnError) toast.error(parsed.message);
+          // Suppress toasts for service-unavailable errors (job.server circuit open,
+          // DocsAI down, etc.) to avoid flooding the UI with transient 503s.
+          const isUnavailable =
+            parsed.status === 503 ||
+            parsed.message.toLowerCase().includes("service unavailable") ||
+            parsed.message.toLowerCase().includes("circuit open") ||
+            parsed.message.toLowerCase().includes("request timeout");
+          if (showToastOnError && !isUnavailable) toast.error(parsed.message);
           throw apiError;
         }
 
@@ -299,16 +306,95 @@ function buildInflightKey(
   }
 }
 
+// ---------------------------------------------------------------------------
+// localStorage query cache
+// ---------------------------------------------------------------------------
+// Reduces repeated API calls for stable data.  Callers opt-in by passing
+// cacheTtlMs to graphqlQuery.  Stale cache entries are served instantly while
+// a background refresh is triggered (stale-while-revalidate).
+// ---------------------------------------------------------------------------
+const CACHE_PREFIX = "gql_cache:";
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number; // epoch ms
+}
+
+function cacheGet<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const entry: CacheEntry<T> = JSON.parse(raw);
+    if (Date.now() > entry.expiresAt) {
+      localStorage.removeItem(CACHE_PREFIX + key);
+      return null;
+    }
+    return entry.data;
+  } catch {
+    return null;
+  }
+}
+
+function cacheSet<T>(key: string, data: T, ttlMs: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    const entry: CacheEntry<T> = { data, expiresAt: Date.now() + ttlMs };
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
+  } catch {
+    // quota exceeded or SSR — ignore
+  }
+}
+
+/** Mark an error as a "service unavailable" so callers can return empty data. */
+export function isServiceUnavailableError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return (
+    msg.includes("service unavailable") ||
+    msg.includes("circuit open") ||
+    msg.includes("request timeout") ||
+    msg.includes("connecttimeout") ||
+    msg.includes("503")
+  );
+}
+
+export interface GraphQLQueryOptions extends GraphQLRequestOptions {
+  /** If > 0, serve from / populate localStorage cache with this TTL in ms. */
+  cacheTtlMs?: number;
+}
+
 export async function graphqlQuery<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
-  options?: GraphQLRequestOptions,
+  options?: GraphQLQueryOptions,
 ): Promise<T> {
   const key = buildInflightKey(query, variables);
+
+  // --- localStorage fast-path ---
+  const ttl = options?.cacheTtlMs ?? 0;
+  if (ttl > 0) {
+    const cached = cacheGet<T>(key);
+    if (cached !== null) {
+      // Stale-while-revalidate: serve cached immediately and refresh in background.
+      const existing = inflightQueries.get(key);
+      if (!existing) {
+        const bg = graphqlRequest<T>(query, variables, options)
+          .then((fresh) => { cacheSet(key, fresh, ttl); return fresh; })
+          .catch(() => cached) // network error — keep stale
+          .finally(() => inflightQueries.delete(key));
+        inflightQueries.set(key, bg);
+      }
+      return cached;
+    }
+  }
+
+  // --- in-flight dedup ---
   const existing = inflightQueries.get(key);
   if (existing) return existing as Promise<T>;
 
-  const promise = graphqlRequest<T>(query, variables, options);
+  const promise = graphqlRequest<T>(query, variables, options)
+    .then((data) => { if (ttl > 0) cacheSet(key, data, ttl); return data; });
   inflightQueries.set(key, promise);
   promise.finally(() => inflightQueries.delete(key));
   return promise;

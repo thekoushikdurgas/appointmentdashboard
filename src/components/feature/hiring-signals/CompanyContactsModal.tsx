@@ -50,14 +50,15 @@ function rowFromItem(item: unknown): LinkedInJobRow {
       o.linkedinJobId ?? o.linkedin_job_id ?? base.linkedinJobId,
     ),
     runId: String(o.runId ?? o.run_id ?? base.runId),
-    apifyItemId: String(
-      o.apifyItemId ?? o.apify_item_id ?? base.apifyItemId,
-    ),
+    apifyItemId: String(o.apifyItemId ?? o.apify_item_id ?? base.apifyItemId),
     companyUuid: String(o.companyUuid ?? o.company_uuid ?? base.companyUuid),
     companyName: String(o.companyName ?? o.company_name ?? base.companyName),
     title: String(o.title ?? base.title),
     descriptionHtml: String(
-      o.descriptionHTML ?? o.descriptionHtml ?? o.description ?? base.descriptionHtml,
+      o.descriptionHTML ??
+        o.descriptionHtml ??
+        o.description ??
+        base.descriptionHtml,
     ),
     postedAt: String(o.postedAt ?? o.posted_at ?? base.postedAt),
     jobUrl: String(o.jobUrl ?? o.job_url ?? base.jobUrl),
@@ -68,9 +69,7 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     employmentType: String(
       o.employmentType ?? o.employment_type ?? base.employmentType,
     ),
-    seniority: String(
-      o.seniorityLevel ?? o.seniority ?? base.seniority,
-    ),
+    seniority: String(o.seniorityLevel ?? o.seniority ?? base.seniority),
     functionCategory: String(
       o.functionCategoryV2 ??
         o.function_category_v2 ??
@@ -79,10 +78,7 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     ),
     industries: String(o.industries ?? base.industries),
     location: String(
-      o.formattedLocationFull ??
-        o.location_str ??
-        o.location ??
-        base.location,
+      o.formattedLocationFull ?? o.location_str ?? o.location ?? base.location,
     ),
     lastSeen: lastSeen || undefined,
   };

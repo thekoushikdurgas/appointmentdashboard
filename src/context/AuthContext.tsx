@@ -133,12 +133,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (!forceRefetch) {
-        const cached = readTTLCache<GatewayUser>(ME_CACHE_KEY);
-        if (cached) {
-          setUser(mapGatewayUserToAuthUser(cached));
+      // FIX (Hypothesis A+B): Stale-while-revalidate.
+      // Serve any cached entry (even if slightly stale) IMMEDIATELY so loading
+      // resolves in <5ms, then fire a background network refresh to keep data fresh.
+      const stale = readTTLCache<GatewayUser>(ME_CACHE_KEY);
+      if (stale) {
+        setUser(mapGatewayUserToAuthUser(stale));
+        if (!forceRefetch) {
           return;
         }
+        // forceRefetch=true: user already set from stale, refresh silently in background
       }
 
       const data = await graphqlQuery<MeResponse>(
@@ -146,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         {},
         { showToastOnError: false },
       );
+
       const me = data.auth?.me;
       if (me) {
         writeTTLCache(ME_CACHE_KEY, me, ME_CACHE_TTL_MS);
@@ -155,12 +160,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch {
-      setUser(null);
+      // On error: do NOT clear the user — stale user state is better than logged out.
+      // Only clear if there is genuinely no token at all.
+      if (!isAuthenticated()) setUser(null);
     }
   }, []);
 
   useEffect(() => {
-    refreshUser(false).finally(() => setLoading(false));
+    // FIX (Hypothesis A): If we have a valid token and any cached user, unblock
+    // loading IMMEDIATELY (synchronously before the async refresh), so DashboardLayout
+    // never shows a spinner on cold load with a valid session.
+    if (isAuthenticated()) {
+      const instant = readTTLCache<GatewayUser>(ME_CACHE_KEY);
+      if (instant) {
+        setUser(mapGatewayUserToAuthUser(instant));
+        setLoading(false);
+        // Still run a background refresh to keep data fresh — but loading is already false
+        refreshUser(true).catch(() => undefined);
+        return;
+      }
+    }
+
+    refreshUser(false).finally(() => {
+      setLoading(false);
+    });
   }, [refreshUser]);
 
   const login = useCallback(
@@ -178,15 +201,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      clearTTLCache(ME_CACHE_KEY);
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      setUser({
-        id: result.user.id,
+      // FIX (Hypothesis C): Write a seed GatewayUser to the TTL cache immediately
+      // from the login payload. This means: (1) no cold-start 1465ms AUTH_ME_QUERY
+      // on next page reload, (2) refreshUser(true) below finds stale data and serves
+      // the user from cache instantly before firing its background network call.
+      const seedGatewayUser: import("@/types/graphql-gateway").GatewayUser = {
+        uuid: result.user.id,
         email: result.user.email,
-        full_name: result.user.fullName,
-        role: result.user.role,
-        user_type: result.user.userType,
-      });
+        name: result.user.fullName ?? null,
+        isActive: true,
+        lastSignInAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        bucket: null,
+        profile: null,
+      };
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      writeTTLCache(ME_CACHE_KEY, seedGatewayUser, ME_CACHE_TTL_MS);
+      setUser(mapGatewayUserToAuthUser(seedGatewayUser));
+      // Background refresh to get full profile (credits, plan, etc.) — non-blocking
       refreshUser(true).catch(() => undefined);
       router.push(ROUTES.DASHBOARD);
     },
@@ -201,15 +234,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         code,
       );
       setTwoFactorChallenge(null);
-      clearTTLCache(ME_CACHE_KEY);
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      setUser({
-        id: result.user.id,
+      const seed2FA: import("@/types/graphql-gateway").GatewayUser = {
+        uuid: result.user.id,
         email: result.user.email,
-        full_name: result.user.fullName,
-        role: result.user.role,
-        user_type: result.user.userType,
-      });
+        name: result.user.fullName ?? null,
+        isActive: true,
+        lastSignInAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        bucket: null,
+        profile: null,
+      };
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      writeTTLCache(ME_CACHE_KEY, seed2FA, ME_CACHE_TTL_MS);
+      setUser(mapGatewayUserToAuthUser(seed2FA));
       refreshUser(true).catch(() => undefined);
       router.push(ROUTES.DASHBOARD);
     },
@@ -232,15 +270,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             null,
         },
       );
-      clearTTLCache(ME_CACHE_KEY);
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      setUser({
-        id: result.user.id,
+      const seedReg: import("@/types/graphql-gateway").GatewayUser = {
+        uuid: result.user.id,
         email: result.user.email,
-        full_name: result.user.fullName,
-        role: result.user.role,
-        user_type: result.user.userType,
-      });
+        name: result.user.fullName ?? null,
+        isActive: true,
+        lastSignInAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        bucket: null,
+        profile: null,
+      };
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      writeTTLCache(ME_CACHE_KEY, seedReg, ME_CACHE_TTL_MS);
+      setUser(mapGatewayUserToAuthUser(seedReg));
       refreshUser(true).catch(() => undefined);
       router.push(ROUTES.DASHBOARD);
     },

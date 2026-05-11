@@ -577,7 +577,7 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
       offset: filters.offset,
       ...hireSignalJobListFilterVars(filters),
     },
-    HS_GQL,
+    { ...HS_GQL, cacheTtlMs: 60_000 }, // 60 s SWR — jobs list is stable
   );
 }
 
@@ -597,7 +597,7 @@ export async function fetchHireSignalJobFilterOptions(
       optionOffset: options?.offset ?? 0,
       ...hireSignalJobListFilterVars(filters),
     },
-    HS_GQL,
+    { ...HS_GQL, cacheTtlMs: 120_000 },
   );
   return parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
 }
@@ -605,13 +605,13 @@ export async function fetchHireSignalJobFilterOptions(
 export async function fetchHiringSignalStats() {
   return graphqlQuery<{
     hireSignal: { stats: HireSignalApiJson };
-  }>(HIRE_SIGNAL_STATS, {}, HS_GQL);
+  }>(HIRE_SIGNAL_STATS, {}, { ...HS_GQL, cacheTtlMs: 120_000 }); // 2 min
 }
 
 export async function fetchHiringSignalDashboardKpis() {
   return graphqlQuery<{
     hireSignal: { dashboardKpis: HireSignalApiJson };
-  }>(HIRE_SIGNAL_DASHBOARD_KPIS, {}, HS_GQL);
+  }>(HIRE_SIGNAL_DASHBOARD_KPIS, {}, { ...HS_GQL, cacheTtlMs: 120_000 }); // 2 min
 }
 
 export async function fetchCompanyHiringSignalJobs(

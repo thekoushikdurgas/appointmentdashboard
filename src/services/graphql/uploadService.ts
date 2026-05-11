@@ -6,6 +6,7 @@ import {
   UPLOAD_ABORT,
   UPLOAD_STATUS,
   UPLOAD_PRESIGNED_URL,
+  UPLOAD_PART_ETAG,
 } from "@/graphql/uploadOperations";
 import type {
   InitiateUploadResponse,
@@ -80,4 +81,11 @@ export const uploadService = {
         };
       };
     }>(UPLOAD_PRESIGNED_URL, { uploadId, partNumber }),
+
+  getUploadedPartEtag: (uploadId: string, partNumber: number) =>
+    graphqlQuery<{
+      upload: {
+        uploadedPartEtag: { etag: string; partNumber: number };
+      };
+    }>(UPLOAD_PART_ETAG, { uploadId, partNumber }),
 };

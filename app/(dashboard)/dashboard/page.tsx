@@ -51,7 +51,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    // FIX (Hypothesis E): Defer data fetching by one tick so React can paint the
+    // dashboard shell (skeleton/empty widgets) BEFORE any network I/O begins.
+    // This removes the perception of a blank page while queries are in-flight.
+    const timer = setTimeout(async () => {
       try {
         const [acts, metrics] = await Promise.allSettled([
           activitiesService.list({ limit: 50, offset: 0 }),
@@ -81,9 +84,10 @@ export default function DashboardPage() {
       } catch {
         // keep empty arrays
       }
-    })();
+    }, 0);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, []);
 

@@ -52,16 +52,20 @@ type ActivityStatsData = {
 
 export const activitiesService = {
   list: (filter?: ActivitiesListFilter) =>
-    graphqlQuery<ActivitiesListData>(ACTIVITIES_LIST_QUERY, {
-      filters: buildListFilters(filter),
-    }),
+    graphqlQuery<ActivitiesListData>(
+      ACTIVITIES_LIST_QUERY,
+      { filters: buildListFilters(filter) },
+      { cacheTtlMs: 60_000 }, // 60 s — activities list is stable enough for SWR
+    ),
 
   getStats: (filters?: { startDate?: string; endDate?: string }) => {
     const f: { startDate?: string; endDate?: string } = {};
     if (filters?.startDate) f.startDate = filters.startDate;
     if (filters?.endDate) f.endDate = filters.endDate;
-    return graphqlQuery<ActivityStatsData>(ACTIVITY_STATS_QUERY, {
-      filters: Object.keys(f).length ? f : {},
-    });
+    return graphqlQuery<ActivityStatsData>(
+      ACTIVITY_STATS_QUERY,
+      { filters: Object.keys(f).length ? f : {} },
+      { cacheTtlMs: 120_000 }, // 2 min — stats rarely change
+    );
   },
 };

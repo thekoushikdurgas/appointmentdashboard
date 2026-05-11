@@ -66,3 +66,12 @@ export const UPLOAD_PRESIGNED_URL = `query GetPresignedUrl($uploadId: String!, $
     }
   }
 }`;
+
+export const UPLOAD_PART_ETAG = `query UploadedPartEtag($uploadId: String!, $partNumber: Int!) {
+  upload {
+    uploadedPartEtag(uploadId: $uploadId, partNumber: $partNumber) {
+      etag
+      partNumber
+    }
+  }
+}`;
