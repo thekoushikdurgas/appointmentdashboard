@@ -319,12 +319,17 @@ export function pickCompanyDisplay(row: unknown): {
  * Serve LinkedIn CDN logos via same-origin `/api/proxy/linkedin-logo` so images are not
  * blocked by client privacy extensions (direct media.licdn.com → ERR_BLOCKED_BY_CLIENT).
  */
+function isLinkedInCdnHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return h === "media.licdn.com" || h.endsWith(".licdn.com");
+}
+
 export function proxiedCompanyLogoSrc(url: string): string {
   const u = url.trim();
   if (!u) return "";
   try {
     const parsed = new URL(u);
-    if (parsed.protocol === "https:" && parsed.hostname === "media.licdn.com") {
+    if (parsed.protocol === "https:" && isLinkedInCdnHost(parsed.hostname)) {
       return `/api/proxy/linkedin-logo?url=${encodeURIComponent(u)}`;
     }
   } catch {

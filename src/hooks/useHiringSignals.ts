@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -80,6 +81,59 @@ function pickBool(v: unknown): boolean | undefined {
   return undefined;
 }
 
+/** Logo URL often lives on Apify-shaped `raw_payload` when Mongo omits `company_logo_url`. */
+function extractCompanyLogoFromRawPayload(raw: Record<string, unknown> | null): string {
+  if (!raw) return "";
+  const nested =
+    asRecord(raw.company) ?? asRecord(raw.organization) ?? asRecord(raw.employer);
+  const candidates: unknown[] = [
+    raw.companyLogo,
+    raw.company_logo,
+    raw.logo,
+    nested?.companyLogo,
+    nested?.logo,
+    nested?.company_logo,
+    nested?.image,
+  ];
+  for (const c of candidates) {
+    const s = pickStr(c).trim();
+    if (s) return s;
+  }
+  return "";
+}
+
+/** Prefer real posted time; fall back to ingest/update when job.server omits `postedAt`. */
+function resolvePostedAtIso(o: Record<string, unknown>): string {
+  const top = pickStr(
+    o.posted_at ??
+      o.postedAt ??
+      o.created_at ??
+      o.createdAt ??
+      o.listed_at ??
+      o.listedAt ??
+      o.date_posted ??
+      o.datePosted ??
+      "",
+  ).trim();
+  if (top) return top;
+  const raw = asRecord(o.raw_payload ?? o.rawPayload);
+  if (raw) {
+    const fromRaw = pickStr(
+      raw.posted_at ??
+        raw.postedAt ??
+        raw.created_at ??
+        raw.createdAt ??
+        raw.listedAt ??
+        raw.listed_at ??
+        "",
+    ).trim();
+    if (fromRaw) return fromRaw;
+  }
+  return pickStr(
+    o.ingested_at ?? o.ingestedAt ?? o.updated_at ?? o.updatedAt ?? "",
+  ).trim();
+}
+
 /** Normalize a single JSON object from `hireSignal.jobs` / `companyJobs` payloads. */
 export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   const o = asRecord(raw) ?? {};
@@ -96,6 +150,12 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   );
   const jobStateRaw = pickStr(o.job_state ?? o.jobState);
   const lastSeenRaw = pickStr(o.last_seen_at ?? o.lastSeenAt ?? o.lastSeen);
+  const rawPayload = asRecord(o.raw_payload ?? o.rawPayload);
+  const companyLogoUrl =
+    pickStr(
+      o.company_logo_url ?? o.companyLogoUrl ?? o.company_logo,
+    ).trim() || extractCompanyLogoFromRawPayload(rawPayload);
+  const postedAt = resolvePostedAtIso(o);
   return {
     id: id || linkedinJobId,
     linkedinJobId: linkedinJobId || id,
@@ -104,12 +164,10 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     title: pickStr(o.title),
     companyName: pickStr(o.company_name ?? o.companyName),
     companyUuid: pickStr(o.company_uuid ?? o.companyUuid),
-    companyLogoUrl: pickStr(
-      o.company_logo_url ?? o.companyLogoUrl ?? o.company_logo,
-    ),
+    companyLogoUrl,
     location: pickStr(o.location ?? o.formatted_location),
     country: pickStr(o.country ?? o.country_code),
-    postedAt: pickStr(o.posted_at ?? o.postedAt ?? o.created_at ?? ""),
+    postedAt,
     employmentType: pickStr(
       o.employment_type ?? o.employmentType ?? o.job_type,
     ),
@@ -229,6 +287,11 @@ export function useHiringSignals(
     jobsWithCompany: number;
   }>({ totalJobs: 0, jobsWithCompany: 0 });
 
+  /** Ignore stale `fetchHiringSignalJobs` results when filters/preset change faster than the network. */
+  const hireSignalLoadGenRef = useRef(0);
+  /** Latest merged list filters — for `refetch()` only; scheduled loads pass `listFilters` from the effect. */
+  const listFiltersRef = useRef<JobListFilters | null>(null);
+
   const listFilters = useMemo(
     () => ({
       ...filters,
@@ -237,22 +300,30 @@ export function useHiringSignals(
     [filters, signalTimePreset],
   );
 
-  const load = useCallback(async () => {
+  listFiltersRef.current = listFilters;
+
+  const runLoad = useCallback(async (filtersToFetch: JobListFilters) => {
+    const gen = ++hireSignalLoadGenRef.current;
+    const snapshot: JobListFilters = { ...filtersToFetch };
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchHiringSignalJobs(listFilters);
+      const res = await fetchHiringSignalJobs(snapshot);
+      if (gen !== hireSignalLoadGenRef.current) return;
       const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
       setJobs(parsed.data);
       setTotal(parsed.total);
     } catch (e) {
+      if (gen !== hireSignalLoadGenRef.current) return;
       setError(e instanceof Error ? e.message : "Failed to load jobs");
       setJobs([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (gen === hireSignalLoadGenRef.current) {
+        setLoading(false);
+      }
     }
-  }, [listFilters]);
+  }, []);
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -267,22 +338,27 @@ export function useHiringSignals(
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void runLoad(listFilters);
+  }, [listFilters, runLoad]);
 
   useEffect(() => {
     void loadStats();
   }, [loadStats]);
 
   const setPage = useCallback((zeroBasedPage: number) => {
-    setFilters((f) => ({
-      ...f,
-      offset: Math.max(0, zeroBasedPage) * f.limit,
-    }));
+    setFilters((f) => {
+      const lim = Math.max(1, Math.floor(Number(f.limit) || 50));
+      const page = Math.max(0, Math.floor(Number(zeroBasedPage) || 0));
+      return {
+        ...f,
+        limit: lim,
+        offset: page * lim,
+      };
+    });
   }, []);
 
   const setPageSize = useCallback((n: number) => {
-    const size = Math.max(1, Math.floor(n));
+    const size = Math.max(1, Math.floor(Number(n) || 50));
     setFilters((f) => ({ ...f, limit: size, offset: 0 }));
   }, []);
 
@@ -290,8 +366,10 @@ export function useHiringSignals(
     filters.limit > 0 ? Math.floor(filters.offset / filters.limit) : 0;
 
   const refetch = useCallback(async () => {
-    await Promise.all([load(), loadStats()]);
-  }, [load, loadStats]);
+    const f = listFiltersRef.current;
+    if (!f) return;
+    await Promise.all([runLoad(f), loadStats()]);
+  }, [runLoad, loadStats]);
 
   return {
     jobs,

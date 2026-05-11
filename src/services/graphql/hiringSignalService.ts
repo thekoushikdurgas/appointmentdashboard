@@ -568,16 +568,20 @@ export function parseJobFilterOptionsPayload(
 }
 
 export async function fetchHiringSignalJobs(filters: JobListFilters) {
+  const limit = Math.max(1, Math.floor(Number(filters.limit) || 50));
+  const offset = Math.max(0, Math.floor(Number(filters.offset) || 0));
   return graphqlQuery<{
     hireSignal: { jobs: HireSignalApiJson };
   }>(
     HIRE_SIGNAL_JOBS,
     {
-      limit: filters.limit,
-      offset: filters.offset,
+      limit,
+      offset,
       ...hireSignalJobListFilterVars(filters),
     },
-    { ...HS_GQL, cacheTtlMs: 60_000 }, // 60 s SWR — jobs list is stable
+    // No localStorage TTL: paging must always reflect the requested offset; SWR cache
+    // made "next page" look stuck when combined with loading only on empty rows.
+    { ...HS_GQL, cacheTtlMs: 0 },
   );
 }
 

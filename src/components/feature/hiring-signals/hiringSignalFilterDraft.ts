@@ -82,18 +82,33 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
 
 export type HiringSignalDraftField = keyof HiringSignalFilterDraft;
 
-/** Rolling window start instant as ISO string for job.server `posted_after`. */
+/** Start of today in UTC (midnight). */
+function startOfTodayUTC(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Lower bound for quick "Date posted" presets → job.server `posted_after` (RFC3339).
+ * Uses **UTC calendar-day** windows so the table (day-granular "Posted" labels) matches
+ * what users expect; a strict rolling 24h window excluded jobs still showing as "yesterday"
+ * or a few calendar days ago.
+ */
 export function postedAfterISOFromPreset(
   preset: Exclude<DatePostedPreset, "any" | "custom">,
 ): string {
-  const now = Date.now();
-  const ms =
-    preset === "24h"
-      ? 24 * 60 * 60 * 1000
-      : preset === "7d"
-        ? 7 * 24 * 60 * 60 * 1000
-        : 30 * 24 * 60 * 60 * 1000;
-  return new Date(now - ms).toISOString();
+  const d = startOfTodayUTC();
+  if (preset === "24h") {
+    d.setUTCDate(d.getUTCDate() - 3);
+    return d.toISOString();
+  }
+  if (preset === "7d") {
+    d.setUTCDate(d.getUTCDate() - 6);
+    return d.toISOString();
+  }
+  d.setUTCDate(d.getUTCDate() - 29);
+  return d.toISOString();
 }
 
 /** Map draft `postedAfter` / `postedBefore` (RFC3339 or YYYY-MM-DD) to `<input type="date" />` value. */

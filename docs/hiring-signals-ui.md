@@ -32,7 +32,7 @@ The former **Hiring signals → Overview** block (stats bar, charts, latest sate
 
 After **Apply filters**, each dimension should **narrow** the result set (monotonic `total`) when adding constraints, except sort (order only).
 
-1. **Date preset:** Apply Past week → note `total`; switch to Past 24 hours → `total` should be ≤ previous (same other filters).
+1. **Date preset:** Apply **Last 7 days (UTC)** → note `total`; switch to **Last 4 days (UTC)** → `total` should be ≤ previous (same other filters).
 2. **Seniority / function:** Pick one preset; spot-check a few rows’ `seniorityLevel` / function fields in the table or network JSON.
 3. **Company / location / title / industry:** Add a token from a known job; that job should still appear.
 4. **Employment / workplace / LinkedIn Apply:** Match values visible on job rows / `raw_payload` from ingest.

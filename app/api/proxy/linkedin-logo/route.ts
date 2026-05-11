@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_HOSTS = new Set(["media.licdn.com"]);
+function isLinkedInCdnHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return h === "media.licdn.com" || h.endsWith(".licdn.com");
+}
 
 /**
  * Fetches LinkedIn CDN logos server-side so the browser loads same-origin URLs.
- * Avoids ERR_BLOCKED_BY_CLIENT (ad blockers) on direct media.licdn.com requests.
+ * Avoids ERR_BLOCKED_BY_CLIENT (ad blockers) on direct *.licdn.com requests.
  */
 export async function GET(req: NextRequest) {
   const raw = req.nextUrl.searchParams.get("url");
@@ -19,7 +22,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "invalid url" }, { status: 400 });
   }
 
-  if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname)) {
+  if (target.protocol !== "https:" || !isLinkedInCdnHost(target.hostname)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

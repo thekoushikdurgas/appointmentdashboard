@@ -232,9 +232,9 @@ const DATE_POSTED_PRESET_OPTIONS: {
   label: string;
 }[] = [
   { value: "any", label: "Any time" },
-  { value: "24h", label: "Past 24 hours" },
-  { value: "7d", label: "Past week" },
-  { value: "30d", label: "Past month" },
+  { value: "24h", label: "Last 4 days (UTC)" },
+  { value: "7d", label: "Last 7 days (UTC)" },
+  { value: "30d", label: "Last 30 days (UTC)" },
   { value: "custom", label: "Custom range" },
 ];
 
@@ -242,9 +242,9 @@ const DATE_POSTED_PRESET_LABELS: Record<
   Exclude<DatePostedPreset, "any" | "custom">,
   string
 > = {
-  "24h": "Past 24 hours",
-  "7d": "Past week",
-  "30d": "Past month",
+  "24h": "Last 4 days (UTC)",
+  "7d": "Last 7 days (UTC)",
+  "30d": "Last 30 days (UTC)",
 };
 
 const VIEW_MODE_OPTIONS = [

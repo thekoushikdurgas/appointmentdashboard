@@ -294,9 +294,10 @@ export function HiringSignalsDataTable({
     return m;
   }, [vis]);
 
+  /** Deps must not be whole `listFilters` — offset-only updates would rebuild this array, MUI can fire `onSortModelChange`, and our handler resets `offset` to 0 (snap back to page 1). */
   const sortModel = useMemo(
     () => gridSortModelFromListFilters(listFilters),
-    [listFilters],
+    [listFilters.sortKey, listFilters.sortOrder],
   );
 
   const limit = listFilters.limit ?? 25;
@@ -310,10 +311,12 @@ export function HiringSignalsDataTable({
 
   const handlePaginationModelChange = useCallback(
     (model: GridPaginationModel) => {
+      const pageSize = Math.max(1, Math.floor(Number(model.pageSize) || 25));
+      const page = Math.max(0, Math.floor(Number(model.page) || 0));
       setListFilters((f) => ({
         ...f,
-        offset: model.page * model.pageSize,
-        limit: model.pageSize,
+        offset: page * pageSize,
+        limit: pageSize,
       }));
     },
     [setListFilters],
@@ -646,7 +649,8 @@ export function HiringSignalsDataTable({
     onOpenDescription,
   ]);
 
-  const showLoadingOverlay = Boolean(loading && rows.length === 0);
+  /** Show overlay on any refetch so server pagination never looks "stuck" on the previous page. */
+  const showLoadingOverlay = Boolean(loading);
 
   return (
     <div className={cn("c360-w-full c360-min-w-0", className)}>
