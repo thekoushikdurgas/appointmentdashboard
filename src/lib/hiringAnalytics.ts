@@ -303,7 +303,9 @@ export function buildRemoteCount(jobs: LinkedInJobRow[]): number {
     const r = (j.remoteAllowed || "").toLowerCase();
     if (r.includes("remote")) n += 1;
     else if (
-      (j.workplaceTypes ?? []).some((t) => t.toLowerCase().includes("remote"))
+      (j.workplaceTypes ?? []).some((t: string) =>
+        t.toLowerCase().includes("remote"),
+      )
     )
       n += 1;
   }

@@ -229,7 +229,7 @@ export function ContactImportModal({
         setUploadBytes({ done, total });
       });
       setLastUploadedKey(info.key);
-      const bucket = bucketName?.trim() || "appointment360uploads";
+      const bucket = bucketName?.trim() || "contactjobs";
       const job = await contactsService.importContacts({
         s3Bucket: bucket,
         s3Key: info.key.trim(),

@@ -34,7 +34,7 @@ function resolveGraphqlUrl(): string {
 export const GRAPHQL_URL = resolveGraphqlUrl();
 
 export const JOBS_S3_BUCKET =
-  process.env.NEXT_PUBLIC_JOBS_S3_BUCKET || "appointment360uploads";
+  process.env.NEXT_PUBLIC_JOBS_S3_BUCKET || "contactjobs";
 
 export const EXPORTS_FEATURE_ENABLED =
   process.env.NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED === "true";

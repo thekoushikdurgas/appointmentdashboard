@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Building2,
   Globe,
   Users,
   MapPin,
@@ -16,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
 import { formatCompact } from "@/lib/utils";
 
 interface CompanyHeaderProps {
@@ -87,7 +87,15 @@ export function CompanyHeader({
     <Card>
       <div className="c360-company-header__identity">
         <div className="c360-company-header__logo">
-          <Building2 size={36} className="c360-text-primary" />
+          <CompanyLogoThumb
+            key={companyUuid ?? name}
+            company={{
+              name,
+              website: website ?? undefined,
+              domain: domain ?? undefined,
+            }}
+            size="lg"
+          />
         </div>
         <div>
           <h2 className="c360-company-header__name">{name}</h2>

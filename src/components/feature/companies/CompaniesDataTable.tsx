@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import Link from "next/link";
-import { Building2, Columns3, ExternalLink, Users } from "lucide-react";
+import { Columns3, ExternalLink, Users } from "lucide-react";
 import {
   DataGrid,
   type GridColDef,
@@ -23,6 +23,7 @@ import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import type { Company } from "@/services/graphql/companiesService";
+import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
 
 import {
   COMPANIES_DT_COLUMN_IDS,
@@ -248,19 +249,20 @@ export function CompaniesDataTable({
           const row = params.row;
           if (density === "compact") {
             return (
-              <Link
-                href={`/companies/${row.id}`}
-                className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
-              >
-                {row.name || "—"}
-              </Link>
+              <div className="c360-flex c360-min-w-0 c360-max-w-full c360-items-center c360-gap-2">
+                <CompanyLogoThumb key={row.id} company={row} iconSize={14} />
+                <Link
+                  href={`/companies/${row.id}`}
+                  className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
+                >
+                  {row.name || "—"}
+                </Link>
+              </div>
             );
           }
           return (
             <div className="c360-flex c360-min-w-0 c360-items-center c360-gap-3">
-              <div className="c360-company-icon-box c360-company-icon-box--sm c360-shrink-0">
-                <Building2 size={16} className="c360-text-primary" />
-              </div>
+              <CompanyLogoThumb key={row.id} company={row} />
               <div className="c360-min-w-0 c360-flex-1">
                 <Link
                   href={`/companies/${row.id}`}

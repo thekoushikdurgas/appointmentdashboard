@@ -25,7 +25,10 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import {
+  normalizeLinkedInJobRow,
+  type LinkedInJobRow,
+} from "@/hooks/useHiringSignals";
 import {
   hiringSignalInitials,
   pickCompanyDisplay,
@@ -36,33 +39,52 @@ import {
 
 function rowFromItem(item: unknown): LinkedInJobRow {
   const o = asRecord(item) ?? {};
+  const base = normalizeLinkedInJobRow(item);
+  const jobState = String(o.jobState ?? o.job_state ?? "").trim();
+  const lastSeen = String(
+    o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? "",
+  ).trim();
   return {
-    linkedinJobId: String(o.linkedinJobId ?? o.linkedin_job_id ?? ""),
-    runId: String(o.runId ?? o.run_id ?? ""),
-    apifyItemId: String(o.apifyItemId ?? o.apify_item_id ?? ""),
-    companyUuid: String(o.companyUuid ?? o.company_uuid ?? ""),
-    companyName: String(o.companyName ?? o.company_name ?? ""),
-    title: String(o.title ?? ""),
-    descriptionHtml: String(
-      o.descriptionHTML ?? o.descriptionHtml ?? o.description ?? "",
+    ...base,
+    linkedinJobId: String(
+      o.linkedinJobId ?? o.linkedin_job_id ?? base.linkedinJobId,
     ),
-    postedAt: String(o.postedAt ?? o.posted_at ?? ""),
-    jobUrl: String(o.jobUrl ?? o.job_url ?? ""),
-    jobState: String(o.jobState ?? o.job_state ?? ""),
-    remoteAllowed: String(o.remoteAllowed ?? o.remote_allowed ?? ""),
-    employmentType: String(o.employmentType ?? o.employment_type ?? ""),
-    seniority: String(o.seniorityLevel ?? o.seniority ?? ""),
+    runId: String(o.runId ?? o.run_id ?? base.runId),
+    apifyItemId: String(
+      o.apifyItemId ?? o.apify_item_id ?? base.apifyItemId,
+    ),
+    companyUuid: String(o.companyUuid ?? o.company_uuid ?? base.companyUuid),
+    companyName: String(o.companyName ?? o.company_name ?? base.companyName),
+    title: String(o.title ?? base.title),
+    descriptionHtml: String(
+      o.descriptionHTML ?? o.descriptionHtml ?? o.description ?? base.descriptionHtml,
+    ),
+    postedAt: String(o.postedAt ?? o.posted_at ?? base.postedAt),
+    jobUrl: String(o.jobUrl ?? o.job_url ?? base.jobUrl),
+    jobState: jobState || undefined,
+    remoteAllowed: String(
+      o.remoteAllowed ?? o.remote_allowed ?? base.remoteAllowed,
+    ),
+    employmentType: String(
+      o.employmentType ?? o.employment_type ?? base.employmentType,
+    ),
+    seniority: String(
+      o.seniorityLevel ?? o.seniority ?? base.seniority,
+    ),
     functionCategory: String(
       o.functionCategoryV2 ??
         o.function_category_v2 ??
         o.functionCategory ??
-        "",
+        base.functionCategory,
     ),
-    industries: String(o.industries ?? ""),
+    industries: String(o.industries ?? base.industries),
     location: String(
-      o.formattedLocationFull ?? o.location_str ?? o.location ?? "",
+      o.formattedLocationFull ??
+        o.location_str ??
+        o.location ??
+        base.location,
     ),
-    lastSeen: String(o.lastSeenAt ?? o.last_seen_at ?? o.lastSeen ?? ""),
+    lastSeen: lastSeen || undefined,
   };
 }
 

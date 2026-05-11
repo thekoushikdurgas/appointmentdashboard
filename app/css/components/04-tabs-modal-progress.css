@@ -164,6 +164,41 @@
   min-width: 0;
 }
 
+/* Company detail: header card (direct child of dashboard layout) — flat corners */
+.c360-dashboard-layout > .c360-card {
+  border-radius: 0;
+}
+
+/* Company detail: section-stack inside tab panel — collapse gap */
+.c360-tabs--company-detail .c360-tabs__panel .c360-section-stack {
+  gap: 0;
+}
+
+/* Company detail: top-level cards in section-stack — remove shadow */
+.c360-tabs--company-detail .c360-tabs__panel .c360-section-stack > .c360-card {
+  box-shadow: none;
+}
+
+/* Company detail: 2-col chart grid — stack vertically, flush gap */
+.c360-tabs--company-detail
+  .c360-tabs__panel
+  .c360-section-stack
+  .c360-2col-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Company detail: card bodies inside stacked 2-col grid — full width */
+.c360-tabs--company-detail
+  .c360-tabs__panel
+  .c360-section-stack
+  .c360-2col-grid
+  .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
 /* Activities — drop vertical rhythm padding reserved for bottom dock (browser preview) */
 .c360-tabs--floating.c360-tabs--activities.c360-tabs--floating-bottom {
   padding-bottom: 0;

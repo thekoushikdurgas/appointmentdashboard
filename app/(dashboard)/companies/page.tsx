@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Plus,
-  Building2,
   ExternalLink,
   Users,
   Download,
@@ -31,6 +30,7 @@ import { CompanyImportModal } from "@/components/feature/companies/CompanyImport
 import { CompanyCreateModal } from "@/components/feature/companies/CompanyCreateModal";
 import { CompaniesFilterSidebar } from "@/components/feature/companies/CompaniesFilterSidebar";
 import { CompaniesDataTable } from "@/components/feature/companies/CompaniesDataTable";
+import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
 import {
   COMPANIES_DT_COLUMN_IDS,
   COMPANIES_DT_DEFAULT_COLUMNS,
@@ -657,9 +657,11 @@ export default function CompaniesPage() {
                 >
                   <div className="c360-card__body">
                     <div className="c360-company-card-header">
-                      <div className="c360-company-icon-box">
-                        <Building2 size={20} className="c360-text-primary" />
-                      </div>
+                      <CompanyLogoThumb
+                        key={company.id}
+                        company={company}
+                        size="md"
+                      />
                       <div className="c360-min-w-0">
                         <Link
                           href={`/companies/${company.id}`}

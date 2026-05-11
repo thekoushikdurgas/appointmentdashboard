@@ -27,7 +27,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_GRAPHQL_URL`             | Full GraphQL endpoint | `${API_URL}/graphql` in prod; dev uses `/graphql` rewrite |
 | `GRAPHQL_UPSTREAM_URL`                | Dev proxy target only | `https://api.contact360.io`                               |
 | `NEXT_PUBLIC_APP_URL`                 | Canonical app URL     | `https://app.contact360.io` (optional)                    |
-| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `appointment360uploads`                                   |
+| `NEXT_PUBLIC_JOBS_S3_BUCKET`          | S3 bucket for jobs    | `contactjobs`                                             |
 | `NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED` | Enable export feature | `false`                                                   |
 
 ## Commands
