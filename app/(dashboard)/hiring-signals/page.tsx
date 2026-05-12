@@ -37,7 +37,11 @@ import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnec
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
-import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
+import {
+  deriveDisplayProgressPercent,
+  isSuccessfulTerminalJobStatus,
+} from "@/lib/jobs/jobsUtils";
+import { parseStatusPayload } from "@/lib/jobs/statusPayload";
 import { parseOperationError } from "@/lib/errorParser";
 import {
   coerceJobListSortFields,
@@ -45,9 +49,12 @@ import {
   fetchHireSignalExportStatus,
   fetchLinkedinJobIdsAllMatching,
   fetchLinkedinJobIdsFirstN,
+  HS_EXPORT_MAX_IDS_NON_STAFF,
+  HS_EXPORT_MAX_IDS_STAFF,
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
 import { Alert } from "@/components/ui/Alert";
+import { Progress } from "@/components/ui/Progress";
 import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { useRole } from "@/context/RoleContext";
@@ -129,6 +136,8 @@ function HiringSignalsPageBody({
   const [exportBanner, setExportBanner] = useState<{
     jobId: string;
     status: string;
+    /** 0–100 from job.server ``progress_percent`` + ``deriveDisplayProgressPercent`` */
+    progress: number;
   } | null>(null);
 
   const previewJobsForDrawer = useMemo(() => {
@@ -209,6 +218,14 @@ function HiringSignalsPageBody({
     [filters, signalTimePreset],
   );
 
+  const hireSignalExportIdCap = useMemo(
+    () =>
+      isAdmin || isSuperAdmin
+        ? HS_EXPORT_MAX_IDS_STAFF
+        : HS_EXPORT_MAX_IDS_NON_STAFF,
+    [isAdmin, isSuperAdmin],
+  );
+
   const queueHireSignalXlsxExport = useCallback(
     async (linkedinJobIds: string[]) => {
       const res = await exportSelectedHireSignalJobs(linkedinJobIds);
@@ -217,7 +234,29 @@ function HiringSignalsPageBody({
         toast.error("Export was queued but no job id was returned.");
         return;
       }
-      setExportBanner({ jobId: row.jobId, status: row.status || "OPEN" });
+      const st0 = (row.status || "OPEN").trim();
+      const parsed0 = parseStatusPayload(row.statusPayload);
+      const rawPct0 =
+        row.statusPayload &&
+        typeof row.statusPayload === "object" &&
+        typeof (row.statusPayload as Record<string, unknown>)
+          .progress_percent === "number"
+          ? ((row.statusPayload as Record<string, unknown>)
+              .progress_percent as number)
+          : null;
+      const prog0 =
+        rawPct0 != null && rawPct0 > 0
+          ? Math.min(100, Math.max(0, Math.round(rawPct0)))
+          : deriveDisplayProgressPercent(st0.toUpperCase(), {
+              progress: parsed0.progress,
+              total: parsed0.total,
+              processed: parsed0.processed,
+            });
+      setExportBanner({
+        jobId: row.jobId,
+        status: st0,
+        progress: prog0,
+      });
       toast.success("XLSX export queued", {
         description:
           "Track progress on Jobs (filter: Hiring Signals) — download when complete.",
@@ -235,21 +274,38 @@ function HiringSignalsPageBody({
       setExportBusy(true);
       try {
         let linkedinJobIds: string[] = [];
+        const cap = hireSignalExportIdCap;
         if (intent.scope === "selected") {
-          linkedinJobIds = intent.linkedinJobIds;
+          const raw = intent.linkedinJobIds;
+          linkedinJobIds = raw.slice(0, cap);
+          if (raw.length > cap) {
+            toast.message("Export limited", {
+              description: `Including ${cap.toLocaleString()} of ${raw.length.toLocaleString()} selected jobs (account limit).`,
+            });
+          }
         } else if (intent.scope === "first_n") {
+          const n = Math.min(Math.max(1, Math.floor(intent.n)), cap);
+          if (intent.n > cap) {
+            toast.message("Export limited", {
+              description: `N is capped at ${cap.toLocaleString()} for your account.`,
+            });
+          }
           linkedinJobIds = await fetchLinkedinJobIdsFirstN(
             effectiveJobListFilters,
-            intent.n,
+            n,
           );
         } else {
           const r = await fetchLinkedinJobIdsAllMatching(
             effectiveJobListFilters,
+            cap,
           );
           linkedinJobIds = r.ids;
           if (r.truncated) {
             toast.message("Large export", {
-              description: `Including ${linkedinJobIds.length.toLocaleString()} of ${r.totalMatching.toLocaleString()} matching rows (server limit). Narrow filters if you need a smaller file.`,
+              description:
+                isAdmin || isSuperAdmin
+                  ? `Including ${linkedinJobIds.length.toLocaleString()} of ${r.totalMatching.toLocaleString()} matching rows.`
+                  : `Including ${linkedinJobIds.length.toLocaleString()} of ${r.totalMatching.toLocaleString()} matching rows (account cap ${cap.toLocaleString()}). Narrow filters or export in batches.`,
             });
           }
         }
@@ -265,7 +321,13 @@ function HiringSignalsPageBody({
         setExportBusy(false);
       }
     },
-    [effectiveJobListFilters, queueHireSignalXlsxExport],
+    [
+      effectiveJobListFilters,
+      hireSignalExportIdCap,
+      isAdmin,
+      isSuperAdmin,
+      queueHireSignalXlsxExport,
+    ],
   );
 
   useEffect(() => {
@@ -280,11 +342,29 @@ function HiringSignalsPageBody({
       void (async () => {
         try {
           const data = await fetchHireSignalExportStatus(exportBanner.jobId);
-          const next = data.hireSignal?.exportJobStatus?.status;
-          if (!cancelled && next) {
+          const row = data.hireSignal?.exportJobStatus;
+          if (!cancelled && row?.status) {
+            const st = row.status.trim();
+            const parsed = parseStatusPayload(row.statusPayload);
+            const rawPct =
+              row.statusPayload &&
+              typeof row.statusPayload === "object" &&
+              typeof (row.statusPayload as Record<string, unknown>)
+                .progress_percent === "number"
+                ? ((row.statusPayload as Record<string, unknown>)
+                    .progress_percent as number)
+                : null;
+            const prog =
+              rawPct != null && rawPct > 0
+                ? Math.min(100, Math.max(0, Math.round(rawPct)))
+                : deriveDisplayProgressPercent(st.toUpperCase(), {
+                    progress: parsed.progress,
+                    total: parsed.total,
+                    processed: parsed.processed,
+                  });
             setExportBanner((b) =>
               b && b.jobId === exportBanner.jobId
-                ? { jobId: b.jobId, status: next }
+                ? { jobId: b.jobId, status: st, progress: prog }
                 : b,
             );
           }
@@ -356,15 +436,22 @@ function HiringSignalsPageBody({
         onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
         totalCount={total}
         meta={
-          total > filters.limit ? (
-            <Pagination
-              className="c360-hiring-signals-toolbar-pagination"
-              page={currentPage + 1}
-              pageSize={filters.limit}
-              total={total}
-              onPageChange={(p) => setPage(p - 1)}
-            />
-          ) : null
+          <>
+            {filters.runId?.trim() ? (
+              <span className="c360-mr-3 c360-text-2xs c360-text-muted">
+                {total.toLocaleString()} jobs match this run
+              </span>
+            ) : null}
+            {total > filters.limit ? (
+              <Pagination
+                className="c360-hiring-signals-toolbar-pagination"
+                page={currentPage + 1}
+                pageSize={filters.limit}
+                total={total}
+                onPageChange={(p) => setPage(p - 1)}
+              />
+            ) : null}
+          </>
         }
         filterConfig={{
           activeCount: activeDraftCount,
@@ -411,6 +498,7 @@ function HiringSignalsPageBody({
       activeDraftCount,
       currentPage,
       filters.limit,
+      filters.runId,
       handleHireSignalToggleColumn,
       isDesktop,
       isSuperAdmin,
@@ -490,6 +578,7 @@ function HiringSignalsPageBody({
                   appliedListFilters={filters}
                   signalTimePreset={signalTimePreset}
                   appliedRunId={filters.runId}
+                  runScopedJobTotal={filters.runId?.trim() ? total : undefined}
                   onClearRunId={clearRunFilter}
                   tableDensity={tableDensity}
                   onTableDensityChange={setTableDensity}
@@ -510,27 +599,48 @@ function HiringSignalsPageBody({
                 className="c360-mb-3"
                 onClose={() => setExportBanner(null)}
               >
-                <p className="c360-m-0 c360-text-sm">
-                  Job{" "}
-                  <span className="c360-font-mono c360-text-2xs">
-                    {exportBanner.jobId.length > 20
-                      ? `${exportBanner.jobId.slice(0, 10)}…${exportBanner.jobId.slice(-6)}`
-                      : exportBanner.jobId}
-                  </span>{" "}
-                  — status{" "}
-                  <strong className="c360-font-medium">
-                    {exportBanner.status}
-                  </strong>
-                  .{" "}
-                  <button
-                    type="button"
-                    className="c360-inline c360-border-0 c360-bg-transparent c360-p-0 c360-text-primary c360-underline"
-                    onClick={() => openJobsDrawer({ jobFamily: "hire_signal" })}
-                  >
-                    Open Jobs
-                  </button>{" "}
-                  to download when complete.
-                </p>
+                <div className="c360-flex c360-flex-col c360-gap-2">
+                  <p className="c360-m-0 c360-text-sm">
+                    Job{" "}
+                    <span className="c360-font-mono c360-text-2xs">
+                      {exportBanner.jobId.length > 20
+                        ? `${exportBanner.jobId.slice(0, 10)}…${exportBanner.jobId.slice(-6)}`
+                        : exportBanner.jobId}
+                    </span>{" "}
+                    — status{" "}
+                    <strong className="c360-font-medium">
+                      {exportBanner.status}
+                    </strong>
+                    .{" "}
+                    <button
+                      type="button"
+                      className="c360-inline c360-border-0 c360-bg-transparent c360-p-0 c360-text-primary c360-underline"
+                      onClick={() =>
+                        openJobsDrawer({ jobFamily: "hire_signal" })
+                      }
+                    >
+                      Open Jobs
+                    </button>{" "}
+                    to download when complete.
+                  </p>
+                  {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
+                  exportBanner.status.toUpperCase() !== "FAILED" ? (
+                    <Progress
+                      value={exportBanner.progress}
+                      max={100}
+                      size="sm"
+                      color="primary"
+                      label="Export progress"
+                      showValue
+                      indeterminate={
+                        exportBanner.progress <= 0 &&
+                        !["FAILED", "CANCELLED", "CANCELED"].includes(
+                          exportBanner.status.toUpperCase(),
+                        )
+                      }
+                    />
+                  ) : null}
+                </div>
               </Alert>
             ) : null}
             <HiringSignalsDataTable
@@ -584,6 +694,8 @@ function HiringSignalsPageBody({
         totalMatching={total}
         selectedKeys={selectedKeys}
         defaultFirstN={filters.limit}
+        maxExportJobIds={hireSignalExportIdCap}
+        staffExport={isAdmin || isSuperAdmin}
         busy={exportBusy}
         onConfirm={(intent) => void handleExportIntent(intent)}
       />

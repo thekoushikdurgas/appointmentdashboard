@@ -11,12 +11,16 @@ import {
 } from "react";
 import {
   asRecord,
+  fetchHiringSignalDashboardKpis,
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
   hireSignalJobsListFromJson,
   type HireSignalApiJson,
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
+
+/** Upper bound when merging all pages of a filter match in the browser (memory). */
+const HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP = 100_000;
 
 /** One hiring-signal job row (job.server / Mongo JSON, camelCase + legacy snake_case). */
 export type LinkedInJobRow = {
@@ -82,10 +86,14 @@ function pickBool(v: unknown): boolean | undefined {
 }
 
 /** Logo URL often lives on Apify-shaped `raw_payload` when Mongo omits `company_logo_url`. */
-function extractCompanyLogoFromRawPayload(raw: Record<string, unknown> | null): string {
+function extractCompanyLogoFromRawPayload(
+  raw: Record<string, unknown> | null,
+): string {
   if (!raw) return "";
   const nested =
-    asRecord(raw.company) ?? asRecord(raw.organization) ?? asRecord(raw.employer);
+    asRecord(raw.company) ??
+    asRecord(raw.organization) ??
+    asRecord(raw.employer);
   const candidates: unknown[] = [
     raw.companyLogo,
     raw.company_logo,
@@ -134,6 +142,30 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
   ).trim();
 }
 
+/**
+ * Primary title chain aligned with job.server `effectiveHireSignalTitleSortKeyExpr` (before
+ * description fallback) so list sort order matches the Title column.
+ */
+function resolveJobTitleSortPrimary(
+  o: Record<string, unknown>,
+  rawPayload: Record<string, unknown> | null,
+): string {
+  const candidates: unknown[] = [
+    o.title,
+    o.standardized_title ?? o.standardizedTitle,
+    o.poster_title ?? o.posterTitle,
+    rawPayload?.job_title,
+    rawPayload?.jobTitle,
+    rawPayload?.title,
+    rawPayload?.name,
+  ];
+  for (const c of candidates) {
+    const s = pickStr(c).trim();
+    if (s) return s;
+  }
+  return "";
+}
+
 /** Normalize a single JSON object from `hireSignal.jobs` / `companyJobs` payloads. */
 export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   const o = asRecord(raw) ?? {};
@@ -152,16 +184,17 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   const lastSeenRaw = pickStr(o.last_seen_at ?? o.lastSeenAt ?? o.lastSeen);
   const rawPayload = asRecord(o.raw_payload ?? o.rawPayload);
   const companyLogoUrl =
-    pickStr(
-      o.company_logo_url ?? o.companyLogoUrl ?? o.company_logo,
-    ).trim() || extractCompanyLogoFromRawPayload(rawPayload);
+    pickStr(o.company_logo_url ?? o.companyLogoUrl ?? o.company_logo).trim() ||
+    extractCompanyLogoFromRawPayload(rawPayload);
   const postedAt = resolvePostedAtIso(o);
+  const title =
+    resolveJobTitleSortPrimary(o, rawPayload) || pickStr(o.title).trim();
   return {
     id: id || linkedinJobId,
     linkedinJobId: linkedinJobId || id,
     runId,
     apifyItemId: pickStr(o.apify_item_id ?? o.apifyItemId),
-    title: pickStr(o.title),
+    title,
     companyName: pickStr(o.company_name ?? o.companyName),
     companyUuid: pickStr(o.company_uuid ?? o.companyUuid),
     companyLogoUrl,
@@ -243,8 +276,78 @@ function parseStatsPayload(raw: unknown): {
   return { totalJobs, jobsWithCompany };
 }
 
+function parseDashboardKpisPayload(raw: unknown): {
+  jobsWithSalary: number;
+  medianSalaryMinUsd?: number;
+  remoteCount: number;
+  distinctCountries: number;
+  distinctCompanies: number;
+} {
+  const r = asRecord(raw);
+  if (!r) {
+    return {
+      jobsWithSalary: 0,
+      remoteCount: 0,
+      distinctCountries: 0,
+      distinctCompanies: 0,
+    };
+  }
+  const jws = r.jobs_with_salary ?? r.jobsWithSalary;
+  const jobsWithSalary =
+    typeof jws === "number" && Number.isFinite(jws)
+      ? Math.max(0, Math.floor(jws))
+      : 0;
+  const medRaw = r.median_salary_min_usd ?? r.medianSalaryMinUsd;
+  let medianSalaryMinUsd: number | undefined;
+  if (typeof medRaw === "number" && Number.isFinite(medRaw)) {
+    medianSalaryMinUsd = Math.floor(medRaw);
+  }
+  const rc = r.remote_count ?? r.remoteCount;
+  const remoteCount =
+    typeof rc === "number" && Number.isFinite(rc)
+      ? Math.max(0, Math.floor(rc))
+      : 0;
+  const dc = r.distinct_countries ?? r.distinctCountries;
+  const distinctCountries =
+    typeof dc === "number" && Number.isFinite(dc)
+      ? Math.max(0, Math.floor(dc))
+      : 0;
+  const dco = r.distinct_companies ?? r.distinctCompanies;
+  const distinctCompanies =
+    typeof dco === "number" && Number.isFinite(dco)
+      ? Math.max(0, Math.floor(dco))
+      : 0;
+  return {
+    jobsWithSalary,
+    medianSalaryMinUsd,
+    remoteCount,
+    distinctCountries,
+    distinctCompanies,
+  };
+}
+
+/** Mongo-wide aggregates from job.server (stats + dashboard KPIs). */
+export type HiringSignalIndexStats = {
+  totalJobs: number;
+  jobsWithCompany: number;
+  globalJobsWithSalary: number;
+  globalMedianSalaryMinUsd?: number;
+  globalRemoteCount: number;
+  globalDistinctCountries: number;
+  globalDistinctCompanies: number;
+};
+
 export type UseHiringSignalsOptions = {
   signalTimePreset: "all" | "new_7d";
+  /**
+   * When true, follow-up pages are fetched until the filtered `total` is loaded
+   * (capped) so analytics charts see the full match set, not only the first page.
+   */
+  fetchFullMatchPages?: boolean;
+  /**
+   * When false, skips job list + stats network calls (e.g. dashboard for non–hiring-signal roles).
+   */
+  enabled?: boolean;
 };
 
 export type UseHiringSignalsResult = {
@@ -259,7 +362,12 @@ export type UseHiringSignalsResult = {
   setPageSize: (n: number) => void;
   refetch: () => Promise<void>;
   currentPage: number;
-  stats: { totalJobs: number; jobsWithCompany: number };
+  stats: HiringSignalIndexStats;
+  /**
+   * When `fetchFullMatchPages` is on and the server reports more matches than loaded
+   * (hard cap), this is the cap row count; otherwise null.
+   */
+  analyticsMatchCappedAt: number | null;
 };
 
 /**
@@ -269,7 +377,12 @@ export function useHiringSignals(
   initial: Partial<JobListFilters> = {},
   options: UseHiringSignalsOptions,
 ): UseHiringSignalsResult {
-  const { signalTimePreset } = options;
+  const {
+    signalTimePreset,
+    fetchFullMatchPages = false,
+    enabled: enabledOption = true,
+  } = options;
+  const enabled = enabledOption !== false;
 
   const [filters, setFilters] = useState<JobListFilters>(() => ({
     ...initial,
@@ -279,13 +392,21 @@ export function useHiringSignals(
 
   const [jobs, setJobs] = useState<LinkedInJobRow[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [analyticsMatchCappedAt, setAnalyticsMatchCappedAt] = useState<
+    number | null
+  >(null);
+  const [loading, setLoading] = useState(() => enabled);
+  const [statsLoading, setStatsLoading] = useState(() => enabled);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<{
-    totalJobs: number;
-    jobsWithCompany: number;
-  }>({ totalJobs: 0, jobsWithCompany: 0 });
+  const [stats, setStats] = useState<HiringSignalIndexStats>({
+    totalJobs: 0,
+    jobsWithCompany: 0,
+    globalJobsWithSalary: 0,
+    globalMedianSalaryMinUsd: undefined,
+    globalRemoteCount: 0,
+    globalDistinctCountries: 0,
+    globalDistinctCompanies: 0,
+  });
 
   /** Ignore stale `fetchHiringSignalJobs` results when filters/preset change faster than the network. */
   const hireSignalLoadGenRef = useRef(0);
@@ -302,79 +423,139 @@ export function useHiringSignals(
 
   listFiltersRef.current = listFilters;
 
-  const runLoad = useCallback(async (filtersToFetch: JobListFilters) => {
-    const gen = ++hireSignalLoadGenRef.current;
-    const snapshot: JobListFilters = { ...filtersToFetch };
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetchHiringSignalJobs(snapshot);
-      if (gen !== hireSignalLoadGenRef.current) return;
-      const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
-      // #region agent log
-      {
-        const samplePosted = parsed.data[0]?.postedAt ?? "";
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "a299fd",
-            },
-            body: JSON.stringify({
-              sessionId: "a299fd",
-              hypothesisId: "H1",
-              runId: "post-fix-v2",
-              location: "useHiringSignals.ts:runLoad",
-              message: "hireSignal jobs response",
-              data: {
-                postedAfter: snapshot.postedAfter ?? null,
-                offset: snapshot.offset,
-                limit: snapshot.limit,
-                total: parsed.total,
-                rowCount: parsed.data.length,
-                samplePostedAtPrefix: samplePosted.slice(0, 32),
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
+  const runLoad = useCallback(
+    async (filtersToFetch: JobListFilters) => {
+      const gen = ++hireSignalLoadGenRef.current;
+      const snapshot: JobListFilters = { ...filtersToFetch };
+      setLoading(true);
+      setError(null);
+      setAnalyticsMatchCappedAt(null);
+      try {
+        const res = await fetchHiringSignalJobs(snapshot);
+        if (gen !== hireSignalLoadGenRef.current) {
+          return;
+        }
+        const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
+        if (!parsed.success) {
+          setError(
+            parsed.data.length > 0
+              ? "Job list response was incomplete."
+              : "Job list temporarily unavailable. Try Refresh or narrow filters.",
+          );
+          if (parsed.data.length > 0) {
+            setJobs(parsed.data);
+            setTotal(parsed.total);
+          }
+          return;
+        }
+        let merged = parsed.data;
+        const listTotal = parsed.total;
+        if (
+          fetchFullMatchPages &&
+          listTotal > merged.length &&
+          gen === hireSignalLoadGenRef.current
+        ) {
+          const chunk = Math.min(
+            2000,
+            Math.max(100, Math.floor(Number(snapshot.limit)) || 1000),
+          );
+          let off = merged.length;
+          while (
+            off < listTotal &&
+            merged.length < HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP &&
+            gen === hireSignalLoadGenRef.current
+          ) {
+            const pageSnapshot: JobListFilters = {
+              ...snapshot,
+              offset: off,
+              limit: chunk,
+            };
+            const pageRes = await fetchHiringSignalJobs(pageSnapshot);
+            if (gen !== hireSignalLoadGenRef.current) break;
+            const pageParsed = parseLinkedInJobsPayload(
+              pageRes.hireSignal?.jobs,
+            );
+            if (!pageParsed.success || pageParsed.data.length === 0) break;
+            merged = merged.concat(pageParsed.data);
+            off += pageParsed.data.length;
+          }
+        }
+        const hitCap =
+          fetchFullMatchPages &&
+          listTotal > merged.length &&
+          merged.length >= HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP;
+        setAnalyticsMatchCappedAt(
+          hitCap ? HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP : null,
+        );
+        setJobs(merged);
+        setTotal(listTotal);
+      } catch (e) {
+        if (gen !== hireSignalLoadGenRef.current) return;
+        setError(e instanceof Error ? e.message : "Failed to load jobs");
+        setJobs([]);
+        setTotal(0);
+        setAnalyticsMatchCappedAt(null);
+      } finally {
+        if (gen === hireSignalLoadGenRef.current) {
+          setLoading(false);
+        }
       }
-      // #endregion
-      setJobs(parsed.data);
-      setTotal(parsed.total);
-    } catch (e) {
-      if (gen !== hireSignalLoadGenRef.current) return;
-      setError(e instanceof Error ? e.message : "Failed to load jobs");
-      setJobs([]);
-      setTotal(0);
-    } finally {
-      if (gen === hireSignalLoadGenRef.current) {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [fetchFullMatchPages],
+  );
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const res = await fetchHiringSignalStats();
-      setStats(parseStatsPayload(res.hireSignal?.stats));
+      const [st, kp] = await Promise.all([
+        fetchHiringSignalStats(),
+        fetchHiringSignalDashboardKpis(),
+      ]);
+      const s = parseStatsPayload(st.hireSignal?.stats);
+      const d = parseDashboardKpisPayload(kp.hireSignal?.dashboardKpis);
+      setStats({
+        totalJobs: s.totalJobs,
+        jobsWithCompany: s.jobsWithCompany,
+        globalJobsWithSalary: d.jobsWithSalary,
+        globalMedianSalaryMinUsd: d.medianSalaryMinUsd,
+        globalRemoteCount: d.remoteCount,
+        globalDistinctCountries: d.distinctCountries,
+        globalDistinctCompanies: d.distinctCompanies,
+      });
     } catch {
-      setStats({ totalJobs: 0, jobsWithCompany: 0 });
+      setStats({
+        totalJobs: 0,
+        jobsWithCompany: 0,
+        globalJobsWithSalary: 0,
+        globalMedianSalaryMinUsd: undefined,
+        globalRemoteCount: 0,
+        globalDistinctCountries: 0,
+        globalDistinctCompanies: 0,
+      });
     } finally {
       setStatsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setJobs([]);
+      setTotal(0);
+      setAnalyticsMatchCappedAt(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     void runLoad(listFilters);
-  }, [listFilters, runLoad]);
+  }, [enabled, listFilters, runLoad]);
 
   useEffect(() => {
+    if (!enabled) {
+      setStatsLoading(false);
+      return;
+    }
     void loadStats();
-  }, [loadStats]);
+  }, [enabled, loadStats]);
 
   const setPage = useCallback((zeroBasedPage: number) => {
     setFilters((f) => {
@@ -397,10 +578,11 @@ export function useHiringSignals(
     filters.limit > 0 ? Math.floor(filters.offset / filters.limit) : 0;
 
   const refetch = useCallback(async () => {
+    if (!enabled) return;
     const f = listFiltersRef.current;
     if (!f) return;
     await Promise.all([runLoad(f), loadStats()]);
-  }, [runLoad, loadStats]);
+  }, [enabled, runLoad, loadStats]);
 
   return {
     jobs,
@@ -415,5 +597,6 @@ export function useHiringSignals(
     refetch,
     currentPage,
     stats,
+    analyticsMatchCappedAt,
   };
 }

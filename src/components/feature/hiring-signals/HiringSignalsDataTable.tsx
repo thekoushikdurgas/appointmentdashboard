@@ -297,6 +297,7 @@ export function HiringSignalsDataTable({
   /** Deps must not be whole `listFilters` — offset-only updates would rebuild this array, MUI can fire `onSortModelChange`, and our handler resets `offset` to 0 (snap back to page 1). */
   const sortModel = useMemo(
     () => gridSortModelFromListFilters(listFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see block comment above (sort fields only)
     [listFilters.sortKey, listFilters.sortOrder],
   );
 

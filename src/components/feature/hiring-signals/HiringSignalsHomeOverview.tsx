@@ -6,22 +6,27 @@ import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/Hiri
 import { HiringSignalJobsGlobe } from "@/components/feature/hiring-signals/HiringSignalJobsGlobe";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
-import { useHiringSignals } from "@/hooks/useHiringSignals";
 import { useHireSignalRuns } from "@/hooks/useHireSignalRuns";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import type {
+  LinkedInJobRow,
+  UseHiringSignalsResult,
+} from "@/hooks/useHiringSignals";
 
 const RUNS_TAB_PAGE_SIZE = 10;
 
 /**
  * Hiring signals charts + latest-run card for the main dashboard (same content as the former
- * Hiring signals → Overview tab).
+ * Hiring signals → Overview tab). Receives `hiring` from the parent so the dashboard can share
+ * one `useHiringSignals` instance with the Job activity chart.
  */
-export function HiringSignalsHomeOverview() {
+export function HiringSignalsHomeOverview({
+  hiring,
+}: {
+  hiring: UseHiringSignalsResult;
+}) {
   const router = useRouter();
-  const { jobs, total, stats, loading, statsLoading } = useHiringSignals(
-    {},
-    { signalTimePreset: "all" },
-  );
+  const { jobs, total, stats, loading, statsLoading, analyticsMatchCappedAt } =
+    hiring;
 
   const { satelliteRunsRows, runsLoading } = useHireSignalRuns("overview", {
     satellitePage: 1,
@@ -53,7 +58,13 @@ export function HiringSignalsHomeOverview() {
         jobs={jobs}
         loading={loading}
         statsBar={statsBar}
-        belowStatsSlot={<HiringSignalJobsGlobe jobs={jobs} loading={loading} />}
+        belowStatsSlot={
+          <HiringSignalJobsGlobe
+            jobs={jobs}
+            loading={loading}
+            fetchCappedAt={analyticsMatchCappedAt}
+          />
+        }
         onOpenCompanyDrawer={(row) => setDrawerRow(row)}
         latestRun={latestSatelliteRun}
         runsLoading={runsLoading}

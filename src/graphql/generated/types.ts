@@ -3737,6 +3737,7 @@ export type UploadPaymentReceiptPhotoInput = {
 export type UploadQuery = {
   presignedUrl: PresignedUrlResponse;
   uploadStatus: UploadStatusResponse;
+  uploadedPartEtag: UploadedPartEtagResponse;
 };
 
 export type UploadQueryPresignedUrlArgs = {
@@ -3745,6 +3746,11 @@ export type UploadQueryPresignedUrlArgs = {
 };
 
 export type UploadQueryUploadStatusArgs = {
+  uploadId: Scalars["String"]["input"];
+};
+
+export type UploadQueryUploadedPartEtagArgs = {
+  partNumber: Scalars["Int"]["input"];
   uploadId: Scalars["String"]["input"];
 };
 
@@ -3757,6 +3763,11 @@ export type UploadStatusResponse = {
   uploadId: Scalars["String"]["output"];
   uploadedBytes: Scalars["BigInt"]["output"];
   uploadedParts: Array<Scalars["Int"]["output"]>;
+};
+
+export type UploadedPartEtagResponse = {
+  etag: Scalars["String"]["output"];
+  partNumber: Scalars["Int"]["output"];
 };
 
 export type UsageMutation = {

@@ -83,15 +83,40 @@ export interface HiringSignalChartsProps {
   className?: string;
 }
 
+export function HiringSignalEmploymentTypeCard({
+  jobs,
+  className,
+}: {
+  jobs: LinkedInJobRow[];
+  className?: string;
+}) {
+  const donut = useMemo(() => buildEmploymentTypeBreakdown(jobs), [jobs]);
+
+  return (
+    <Card
+      className={cn("c360-hs-dashboard-employment-type-card", className)}
+      title="Employment type"
+      subtitle="Distribution on visible job list"
+    >
+      <div className="c360-hs-chart c360-hs-chart--pie">
+        {donut.length === 0 ? (
+          <p className="c360-text-sm c360-text-muted">No employment types.</p>
+        ) : (
+          <DonutChart data={donut} height={260} showLegend />
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function HiringSignalCharts({
   jobs,
   className,
 }: HiringSignalChartsProps) {
   const weekly = useMemo(() => buildWeeklyPostingsSeries(jobs), [jobs]);
-  const donut = useMemo(() => buildEmploymentTypeBreakdown(jobs), [jobs]);
 
   return (
-    <div className={cn("c360-2col-grid", "c360-hs-dashboard-2col", className)}>
+    <div className={cn(className)}>
       <Card
         className="c360-hs-dashboard-postings-week-card"
         title="Postings by week"
@@ -128,19 +153,6 @@ export function HiringSignalCharts({
                 />
               </AreaChart>
             </ResponsiveContainer>
-          )}
-        </div>
-      </Card>
-      <Card
-        className="c360-hs-dashboard-employment-type-card"
-        title="Employment type"
-        subtitle="Distribution on visible job list"
-      >
-        <div className="c360-hs-chart c360-hs-chart--pie">
-          {donut.length === 0 ? (
-            <p className="c360-text-sm c360-text-muted">No employment types.</p>
-          ) : (
-            <DonutChart data={donut} height={260} showLegend />
           )}
         </div>
       </Card>

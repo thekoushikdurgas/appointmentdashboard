@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Building2, History } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { History } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge, type BadgeColor } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -29,10 +29,11 @@ function runStatusBadgeColor(status: string): BadgeColor {
 export interface HiringSignalsDashboardProps {
   jobs: LinkedInJobRow[];
   loading: boolean;
-  statsBar: React.ReactNode;
-  /** Inserted after the stats bar (e.g. jobs globe). */
-  belowStatsSlot?: React.ReactNode;
-  onOpenCompanyDrawer: (row: LinkedInJobRow) => void;
+  statsBar: ReactNode;
+  /** Rendered directly under the stats bar (e.g. dashboard job globe). */
+  belowStatsSlot?: ReactNode;
+  /** When set, recent-job rows can open the company drawer. */
+  onOpenCompanyDrawer?: (row: LinkedInJobRow) => void;
   /** First row from satellite runs payload (recent scrape run). */
   latestRun?: Record<string, unknown>;
   runsLoading?: boolean;
@@ -59,24 +60,6 @@ export function HiringSignalsDashboard({
       return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
     });
     return copy.slice(0, 10);
-  }, [jobs]);
-
-  const topCompanies = useMemo(() => {
-    const map = new Map<
-      string,
-      { name: string; uuid: string; count: number; sample: LinkedInJobRow }
-    >();
-    for (const j of jobs) {
-      const uuid = j.companyUuid?.trim();
-      if (!uuid) continue;
-      const cur = map.get(uuid);
-      if (!cur) {
-        map.set(uuid, { name: j.companyName, uuid, count: 1, sample: j });
-      } else {
-        cur.count += 1;
-      }
-    }
-    return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
   }, [jobs]);
 
   const latestStatus = latestRun
@@ -148,87 +131,72 @@ export function HiringSignalsDashboard({
 
       <HiringSignalCharts jobs={jobs} />
 
-      <div className="c360-2col-grid c360-hs-dashboard-2col">
-        <Card
-          className="c360-dashboard-recent-activity-card"
-          title="Recent activity"
-          subtitle="Latest postings (visible list)"
-        >
-          {loading && jobs.length === 0 ? (
-            <p className="c360-text-sm c360-text-muted">Loading…</p>
-          ) : recent.length === 0 ? (
-            <p className="c360-text-sm c360-text-muted">No rows to show.</p>
-          ) : (
-            <ul
-              className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0 c360-hs-dashboard-recent-list"
-              role="list"
-            >
-              {recent.map((j) => (
-                <li
-                  key={j.id || `${j.linkedinJobId}-${j.apifyItemId}`}
-                  className="c360-flex c360-items-start c360-justify-between c360-gap-2 c360-rounded c360-border c360-border-ink-8 c360-hs-dashboard-recent-item"
-                >
-                  <div className="c360-min-w-0">
-                    <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink c360-hs-line-clamp-2">
-                      {j.title}
-                    </p>
-                    <p className="c360-mt-0-5 c360-text-2xs c360-text-muted">
-                      {j.companyName || "—"}
-                      {j.location ? ` · ${j.location}` : ""}
-                    </p>
-                  </div>
-                  <span className="c360-shrink-0 c360-text-2xs c360-text-muted">
-                    {j.postedAt
-                      ? formatRelativeTime(new Date(j.postedAt))
-                      : "—"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card
-          title="Top companies"
-          subtitle="By open roles on this list (click to open panel)"
-          className="c360-hs-dashboard-top-companies-card"
-        >
-          {topCompanies.length === 0 ? (
-            <p className="c360-text-sm c360-text-muted">
-              No company_uuid on visible rows — link jobs to Connectra first.
-            </p>
-          ) : (
-            <ul
-              className="c360-m-0 c360-list-none c360-p-0 c360-hs-dashboard-companies-list"
-              role="list"
-            >
-              {topCompanies.map((c) => (
-                <li key={c.uuid} className="c360-hs-dashboard-company-li">
+      <Card
+        className="c360-dashboard-recent-activity-card"
+        title="Recent activity"
+        subtitle="Latest postings (visible list)"
+      >
+        {loading && jobs.length === 0 ? (
+          <p className="c360-text-sm c360-text-muted">Loading…</p>
+        ) : recent.length === 0 ? (
+          <p className="c360-text-sm c360-text-muted">No rows to show.</p>
+        ) : (
+          <ul
+            className="c360-m-0 c360-list-none c360-space-y-2 c360-p-0 c360-hs-dashboard-recent-list"
+            role="list"
+          >
+            {recent.map((j) => (
+              <li
+                key={j.id || `${j.linkedinJobId}-${j.apifyItemId}`}
+                className="c360-rounded c360-border c360-border-ink-8 c360-hs-dashboard-recent-item c360-overflow-hidden"
+              >
+                {onOpenCompanyDrawer ? (
                   <button
                     type="button"
-                    className="c360-flex c360-w-full c360-items-center c360-justify-between c360-gap-2 c360-border c360-border-ink-8 c360-bg-ink-1/30 c360-text-left c360-hs-hover-primary-border c360-hs-dashboard-company-btn"
-                    onClick={() => onOpenCompanyDrawer(c.sample)}
+                    className={cn(
+                      "c360-flex c360-w-full c360-items-start c360-justify-between c360-gap-2 c360-border-0 c360-bg-transparent c360-p-2 c360-text-left",
+                      "hover:c360-bg-ink-4 focus-visible:c360-outline focus-visible:c360-outline-2 focus-visible:c360-outline-offset-[-2px]",
+                    )}
+                    onClick={() => onOpenCompanyDrawer(j)}
                   >
-                    <span className="c360-flex c360-min-w-0 c360-items-center c360-gap-2">
-                      <Building2
-                        size={18}
-                        className="c360-shrink-0 c360-text-primary"
-                        aria-hidden
-                      />
-                      <span className="c360-truncate c360-font-medium c360-text-ink">
-                        {c.name || c.uuid}
-                      </span>
+                    <div className="c360-min-w-0">
+                      <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink c360-hs-line-clamp-2">
+                        {j.title}
+                      </p>
+                      <p className="c360-mt-0-5 c360-text-2xs c360-text-muted">
+                        {j.companyName || "—"}
+                        {j.location ? ` · ${j.location}` : ""}
+                      </p>
+                    </div>
+                    <span className="c360-shrink-0 c360-text-2xs c360-text-muted">
+                      {j.postedAt
+                        ? formatRelativeTime(new Date(j.postedAt))
+                        : "—"}
                     </span>
-                    <Badge color="info" size="sm">
-                      {c.count}
-                    </Badge>
                   </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+                ) : (
+                  <div className="c360-flex c360-items-start c360-justify-between c360-gap-2 c360-p-2">
+                    <div className="c360-min-w-0">
+                      <p className="c360-m-0 c360-text-sm c360-font-medium c360-text-ink c360-hs-line-clamp-2">
+                        {j.title}
+                      </p>
+                      <p className="c360-mt-0-5 c360-text-2xs c360-text-muted">
+                        {j.companyName || "—"}
+                        {j.location ? ` · ${j.location}` : ""}
+                      </p>
+                    </div>
+                    <span className="c360-shrink-0 c360-text-2xs c360-text-muted">
+                      {j.postedAt
+                        ? formatRelativeTime(new Date(j.postedAt))
+                        : "—"}
+                    </span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
 }

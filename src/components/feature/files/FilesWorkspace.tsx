@@ -1,13 +1,20 @@
 "use client";
 
-import { Upload, RefreshCw, FileText, HardDrive, Layers } from "lucide-react";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { RefreshCw, FileText, HardDrive, Layers } from "lucide-react";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  type RefObject,
+} from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Accordion } from "@/components/ui/Accordion";
 import type { AccordionItem } from "@/components/ui/Accordion";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { cn } from "@/lib/utils";
 import { useS3Files } from "@/hooks/useS3Files";
 import { S3FileUploadModal } from "@/components/feature/files/S3FileUploadModal";
@@ -20,10 +27,11 @@ import { StartJobFromS3Modal } from "@/components/feature/jobs/StartJobFromS3Mod
 import { toast } from "sonner";
 import type { S3FileInfo } from "@/graphql/generated/types";
 import { s3Service } from "@/services/graphql/s3Service";
-import { FilesDataTable } from "@/components/feature/files/FilesDataTable";
+import {
+  FilesDataTable,
+  type FilesFolderScope,
+} from "@/components/feature/files/FilesDataTable";
 import { getStorageErrorMessage } from "@/lib/storageErrors";
-
-type FolderScope = "all" | "upload" | "exports";
 
 /** Format bytes as a human-readable string (B / KB / MB / GB). */
 function formatFileSize(bytes: number): string {
@@ -52,9 +60,14 @@ function summariseFileTypes(files: S3FileInfo[]): string {
   return parts.length > 0 ? parts.join(" · ") : "—";
 }
 
+export interface FilesWorkspaceProps {
+  /** When set, the stat summary row is rendered into this host (e.g. drawer header). */
+  statStripPortalRef?: RefObject<HTMLDivElement | null>;
+}
+
 /** Full files UI (S3 list, uploads, modals) — mounted in the global Files drawer. */
-export function FilesWorkspace() {
-  const [folderScope, setFolderScope] = useState<FolderScope>("all");
+export function FilesWorkspace({ statStripPortalRef }: FilesWorkspaceProps) {
+  const [folderScope, setFolderScope] = useState<FilesFolderScope>("all");
   const listPrefix = useMemo(() => {
     if (folderScope === "upload") return "upload/";
     if (folderScope === "exports") return "exports/";
@@ -65,11 +78,9 @@ export function FilesWorkspace() {
     files,
     total,
     loading,
-    isRefreshing,
     isSkeletonLoading,
     uploading,
     error,
-    lastRefreshed,
     deleteFile,
     getDownloadUrl,
     refresh,
@@ -223,6 +234,17 @@ export function FilesWorkspace() {
   );
   const fileTypesSummary = useMemo(() => summariseFileTypes(files), [files]);
 
+  const [statStripHostEl, setStatStripHostEl] = useState<HTMLElement | null>(
+    null,
+  );
+  useLayoutEffect(() => {
+    if (!statStripPortalRef) {
+      setStatStripHostEl(null);
+      return;
+    }
+    setStatStripHostEl(statStripPortalRef.current);
+  }, [statStripPortalRef]);
+
   // Manifest accordion items derived from bucketMeta keys
   const manifestAccordionItems = useMemo<AccordionItem[]>(() => {
     if (!bucketMeta || Object.keys(bucketMeta).length === 0) return [];
@@ -246,95 +268,53 @@ export function FilesWorkspace() {
     }));
   }, [bucketMeta]);
 
-  const cardSubtitle = useMemo(() => {
-    if (isRefreshing) return "Refreshing…";
-    if (loading) return "Loading…";
-    const count = `${total} file${total !== 1 ? "s" : ""}`;
-    if (lastRefreshed) {
-      return `${count} · last refreshed ${lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-    }
-    return count;
-  }, [isRefreshing, loading, total, lastRefreshed]);
+  const statStrip = (
+    <div className="c360-files-stat-strip">
+      <div className="c360-files-stat-card">
+        <div className="c360-files-stat-card__icon">
+          <FileText size={20} />
+        </div>
+        <div className="c360-files-stat-card__body">
+          <span className="c360-files-stat-card__value">
+            {loading && files.length === 0 ? "—" : total}
+          </span>
+          <span className="c360-files-stat-card__label">Total files</span>
+        </div>
+      </div>
+      <div className="c360-files-stat-card">
+        <div className="c360-files-stat-card__icon">
+          <HardDrive size={20} />
+        </div>
+        <div className="c360-files-stat-card__body">
+          <span className="c360-files-stat-card__value">
+            {loading && files.length === 0 ? "—" : formatFileSize(totalBytes)}
+          </span>
+          <span className="c360-files-stat-card__label">Total size</span>
+        </div>
+      </div>
+      <div className="c360-files-stat-card">
+        <div className="c360-files-stat-card__icon">
+          <Layers size={20} />
+        </div>
+        <div className="c360-files-stat-card__body">
+          <span className="c360-files-stat-card__value c360-files-stat-card__value--sm">
+            {loading && files.length === 0 ? "—" : fileTypesSummary}
+          </span>
+          <span className="c360-files-stat-card__label">File types</span>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="c360-files-workspace">
-      {/* ── Toolbar (drawer shell provides main "Files" title) ───────── */}
-      <div className="c360-page-header c360-justify-end">
-        <div className="c360-badge-row">
-          <Button
-            variant="secondary"
-            size="sm"
-            leftIcon={
-              <RefreshCw size={14} className={cn(loading && "c360-spin")} />
-            }
-            onClick={handleRefreshAll}
-            disabled={loading || bucketMetaLoading}
-          >
-            Refresh
-          </Button>
-          <Button
-            leftIcon={<Upload size={16} />}
-            onClick={() => setUploadOpen(true)}
-          >
-            Upload files
-          </Button>
-        </div>
-      </div>
-
-      {/* ── Folder tabs ─────────────────────────────────────────────── */}
-      <div className="c360-files-page__folder-tabs">
-        <Tabs
-          value={folderScope}
-          onValueChange={(v) => setFolderScope(v as FolderScope)}
-          variant="filter"
-        >
-          <TabsList>
-            <TabsTrigger value="all">All files</TabsTrigger>
-            <TabsTrigger value="upload">upload/</TabsTrigger>
-            <TabsTrigger value="exports">exports/</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* ── Stat strip ──────────────────────────────────────────────── */}
-      <div className="c360-files-stat-strip">
-        <div className="c360-files-stat-card">
-          <div className="c360-files-stat-card__icon">
-            <FileText size={20} />
-          </div>
-          <div className="c360-files-stat-card__body">
-            <span className="c360-files-stat-card__value">
-              {loading && files.length === 0 ? "—" : total}
-            </span>
-            <span className="c360-files-stat-card__label">Total files</span>
-          </div>
-        </div>
-        <div className="c360-files-stat-card">
-          <div className="c360-files-stat-card__icon">
-            <HardDrive size={20} />
-          </div>
-          <div className="c360-files-stat-card__body">
-            <span className="c360-files-stat-card__value">
-              {loading && files.length === 0 ? "—" : formatFileSize(totalBytes)}
-            </span>
-            <span className="c360-files-stat-card__label">Total size</span>
-          </div>
-        </div>
-        <div className="c360-files-stat-card">
-          <div className="c360-files-stat-card__icon">
-            <Layers size={20} />
-          </div>
-          <div className="c360-files-stat-card__body">
-            <span className="c360-files-stat-card__value c360-files-stat-card__value--sm">
-              {loading && files.length === 0 ? "—" : fileTypesSummary}
-            </span>
-            <span className="c360-files-stat-card__label">File types</span>
-          </div>
-        </div>
-      </div>
-
+      {statStripPortalRef && statStripHostEl
+        ? createPortal(statStrip, statStripHostEl)
+        : !statStripPortalRef
+          ? statStrip
+          : null}
       {/* ── File table ──────────────────────────────────────────────── */}
-      <Card title="Your files" subtitle={cardSubtitle}>
+      <Card>
         {error ? (
           <div className="c360-text-danger c360-flex c360-flex-wrap c360-items-center c360-gap-2">
             <span>{error}</span>
@@ -362,6 +342,10 @@ export function FilesWorkspace() {
             }
             downloadingKey={downloadingKey}
             onUpload={() => setUploadOpen(true)}
+            onRefreshAll={handleRefreshAll}
+            refreshAllDisabled={loading || bucketMetaLoading}
+            folderScope={folderScope}
+            onFolderScopeChange={setFolderScope}
             onOpenDetail={openDetail}
             onOpenSchema={openSchema}
             onOpenStats={openStats}
@@ -379,17 +363,7 @@ export function FilesWorkspace() {
       </Card>
 
       {/* ── Storage manifest accordion (bottom) ─────────────────────── */}
-      <Card
-        title="Storage manifest"
-        subtitle={
-          bucketMetaLoading
-            ? "Loading…"
-            : bucketMetaError
-              ? "Could not load manifest"
-              : "Aggregated file metadata written by the metadata worker (metadata.json)"
-        }
-        className="c360-mt-4"
-      >
+      <Card className="c360-mt-4">
         {bucketMetaError ? (
           <p className="c360-text-danger c360-text-sm">{bucketMetaError}</p>
         ) : bucketMetaLoading && bucketMeta === null ? (

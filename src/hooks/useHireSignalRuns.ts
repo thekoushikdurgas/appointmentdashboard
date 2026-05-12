@@ -16,6 +16,7 @@ import {
 import {
   downloadTextFile,
   linkedinJobsPayloadToCsv,
+  satelliteStatusFromRow,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 /**
@@ -115,14 +116,18 @@ export function useHireSignalRuns(
   }, [scrapeJobsPayload]);
 
   useEffect(() => {
-    const hasActive = trackedScrapeRows.some((row) => {
-      const st = String(row.status ?? "").toLowerCase();
-      return st === "pending" || st === "running";
+    const satActive = satelliteRunsRows.some((row) => {
+      const st = satelliteStatusFromRow(row);
+      return st === "pending" || st === "running" || st === "paused";
     });
-    if (!hasActive) return;
+    const trackActive = trackedScrapeRows.some((row) => {
+      const st = String(row.status ?? "").toLowerCase();
+      return st === "pending" || st === "running" || st === "paused";
+    });
+    if (!satActive && !trackActive) return;
     const id = setInterval(() => void loadRuns(), 15_000);
     return () => clearInterval(id);
-  }, [trackedScrapeRows, loadRuns]);
+  }, [satelliteRunsRows, trackedScrapeRows, loadRuns]);
 
   const onRefreshRun = useCallback(
     async (runId: string) => {

@@ -17,7 +17,7 @@ export interface FilterOptionsState {
   loadingMore: boolean;
   /** Current search string for this facet. */
   searchText: string;
-  /** Whether another page can be requested (see `setCanLoadMoreFromResponse`). */
+  /** Whether another page can be requested (see `canLoadMoreAfterPage`). */
   canLoadMore: boolean;
 }
 
@@ -33,7 +33,25 @@ function emptyState(): FilterOptionsState {
   };
 }
 
-/** Derive whether more pages exist from a single page response. */
+/**
+ * Whether another facet page should be fetchable after merging this response.
+ * Uses list growth (post-dedupe) and a short final page so we do not rely on a
+ * possibly wrong `total` from the gateway, and we stop when a "full" page repeats
+ * without adding distinct values.
+ */
+export function canLoadMoreAfterPage(
+  prevMergedCount: number,
+  mergedCount: number,
+  pageItemsLength: number,
+  pageSize: number = FILTER_OPTIONS_PAGE_SIZE,
+): boolean {
+  if (pageItemsLength === 0) return false;
+  if (mergedCount <= prevMergedCount) return false;
+  if (pageItemsLength < pageSize) return false;
+  return true;
+}
+
+/** @deprecated Prefer `canLoadMoreAfterPage` (merge-aware). Kept for tests / callers. */
 export function setCanLoadMoreFromResponse(
   mergedLength: number,
   resTotal: number,
@@ -103,9 +121,9 @@ export function useFilterOptions() {
         limit: FILTER_OPTIONS_PAGE_SIZE,
       });
       const items = dedupeFilterOptionsByValue(res.items);
-      const canLoadMore = setCanLoadMoreFromResponse(
+      const canLoadMore = canLoadMoreAfterPage(
+        0,
         items.length,
-        res.total,
         res.items.length,
       );
       setByKey((prev) => ({
@@ -160,9 +178,9 @@ export function useFilterOptions() {
       setByKey((prev) => {
         const cur = prev[filterKey] ?? emptyState();
         const merged = dedupeFilterOptionsByValue([...cur.items, ...res.items]);
-        const canLoadMore = setCanLoadMoreFromResponse(
+        const canLoadMore = canLoadMoreAfterPage(
+          cur.items.length,
           merged.length,
-          Math.max(cur.total, res.total),
           res.items.length,
         );
         return {
@@ -214,9 +232,9 @@ export function useFilterOptions() {
             searchText: text.trim() || undefined,
           });
           const items = dedupeFilterOptionsByValue(res.items);
-          const canLoadMore = setCanLoadMoreFromResponse(
+          const canLoadMore = canLoadMoreAfterPage(
+            0,
             items.length,
-            res.total,
             res.items.length,
           );
           setByKey((prev) => ({

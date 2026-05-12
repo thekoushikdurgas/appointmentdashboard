@@ -322,13 +322,18 @@ function inferRegionFromLocation(locationRaw: string): RegionDef | null {
 }
 
 export function aggregateHiringJobMarkers(
-  jobs: Pick<LinkedInJobRow, "location">[],
+  jobs: Pick<LinkedInJobRow, "location" | "country">[],
 ): HiringJobGlobeAggregate {
   const counts = new Map<string, { def: RegionDef; n: number }>();
 
   let skippedCount = 0;
   for (const job of jobs) {
-    const region = inferRegionFromLocation(job.location ?? "");
+    const loc = (job.location ?? "").trim();
+    const ctry = (job.country ?? "").trim();
+    let region = inferRegionFromLocation(loc);
+    if (!region && ctry) {
+      region = inferRegionFromLocation(ctry);
+    }
     if (!region) {
       skippedCount += 1;
       continue;

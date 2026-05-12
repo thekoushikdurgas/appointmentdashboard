@@ -17,6 +17,7 @@ import {
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { useRole } from "@/context/RoleContext";
 
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
@@ -58,6 +59,33 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
   return n;
 }
 
+/** Draft fields allowed for non-admin users (title / company / location only). */
+function countBasicHireSignalDraftFields(d: HiringSignalFilterDraft): number {
+  let n = 0;
+  for (const key of [
+    "titles",
+    "companies",
+    "locations",
+    "excludedTitles",
+    "excludedCompanies",
+    "excludedLocations",
+  ] as const) {
+    const v = d[key];
+    if (normalizeHiringSignalTokenList(v).length > 0) n += 1;
+  }
+  return n;
+}
+
+/** Toolbar / debounce: full facet draft vs title–company–location only. */
+export function effectiveHireSignalDraftFieldCount(
+  d: HiringSignalFilterDraft,
+  allowFullFilters: boolean,
+): number {
+  return allowFullFilters
+    ? countFilledDraftFields(d)
+    : countBasicHireSignalDraftFields(d);
+}
+
 export interface HireSignalFilterContextValue {
   draft: HiringSignalFilterDraft;
   setDraft: React.Dispatch<React.SetStateAction<HiringSignalFilterDraft>>;
@@ -86,6 +114,7 @@ export function HireSignalFilterProvider({
   children: ReactNode;
   setFilters: React.Dispatch<React.SetStateAction<JobListFilters>>;
 }) {
+  const { isAdmin } = useRole();
   const [draft, setDraft] = useState<HiringSignalFilterDraft>(
     EMPTY_HIRING_SIGNAL_DRAFT,
   );
@@ -94,6 +123,50 @@ export function HireSignalFilterProvider({
     const titles = normalizeHiringSignalTokenList(draft.titles);
     const companies = normalizeHiringSignalTokenList(draft.companies);
     const locations = normalizeHiringSignalTokenList(draft.locations);
+    const excludedTitles = normalizeHiringSignalTokenList(draft.excludedTitles);
+    const excludedCompanies = normalizeHiringSignalTokenList(
+      draft.excludedCompanies,
+    );
+    const excludedLocations = normalizeHiringSignalTokenList(
+      draft.excludedLocations,
+    );
+
+    if (!isAdmin) {
+      setFilters((f) => ({
+        ...f,
+        titles: titles.length ? titles : undefined,
+        companies: companies.length ? companies : undefined,
+        locations: locations.length ? locations : undefined,
+        excludedTitles: excludedTitles.length ? excludedTitles : undefined,
+        excludedCompanies: excludedCompanies.length
+          ? excludedCompanies
+          : undefined,
+        excludedLocations: excludedLocations.length
+          ? excludedLocations
+          : undefined,
+        employmentType: undefined,
+        employmentTypes: undefined,
+        workplaceTypes: undefined,
+        industries: undefined,
+        excludedIndustries: undefined,
+        seniority: undefined,
+        functionCategory: undefined,
+        postedAfter: undefined,
+        postedBefore: undefined,
+        salaryMin: undefined,
+        experienceBuckets: undefined,
+        roleTracks: undefined,
+        educationLevelMins: undefined,
+        skillsAll: undefined,
+        clearanceMode: undefined,
+        h1bOnly: undefined,
+        countries: undefined,
+        applyMethod: undefined,
+        offset: 0,
+      }));
+      return;
+    }
+
     const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
     const empLegacy = draft.employmentType.trim();
     const employmentTypes =
@@ -112,11 +185,13 @@ export function HireSignalFilterProvider({
     const excludedIndustries = normalizeHiringSignalTokenList(
       draft.excludedIndustries,
     );
-    const excludedTitles = normalizeHiringSignalTokenList(draft.excludedTitles);
-    const excludedCompanies = normalizeHiringSignalTokenList(
+    const excludedTitlesFull = normalizeHiringSignalTokenList(
+      draft.excludedTitles,
+    );
+    const excludedCompaniesFull = normalizeHiringSignalTokenList(
       draft.excludedCompanies,
     );
-    const excludedLocations = normalizeHiringSignalTokenList(
+    const excludedLocationsFull = normalizeHiringSignalTokenList(
       draft.excludedLocations,
     );
     const experienceBuckets = normalizeHiringSignalTokenList(
@@ -148,12 +223,14 @@ export function HireSignalFilterProvider({
       excludedIndustries: excludedIndustries.length
         ? excludedIndustries
         : undefined,
-      excludedTitles: excludedTitles.length ? excludedTitles : undefined,
-      excludedCompanies: excludedCompanies.length
-        ? excludedCompanies
+      excludedTitles: excludedTitlesFull.length
+        ? excludedTitlesFull
         : undefined,
-      excludedLocations: excludedLocations.length
-        ? excludedLocations
+      excludedCompanies: excludedCompaniesFull.length
+        ? excludedCompaniesFull
+        : undefined,
+      excludedLocations: excludedLocationsFull.length
+        ? excludedLocationsFull
         : undefined,
       salaryMin,
       experienceBuckets: experienceBuckets.length
@@ -178,24 +255,41 @@ export function HireSignalFilterProvider({
       postedBefore: draft.postedBefore.trim() || undefined,
       offset: 0,
     }));
-  }, [draft, setFilters]);
+  }, [draft, setFilters, isAdmin]);
 
   const applyFiltersRef = useRef(applyFilters);
   applyFiltersRef.current = applyFilters;
 
   const skipInitialAutoApplyRef = useRef(true);
+  /**
+   * React 18 Strict Mode (dev) re-runs effects once with the same state. After we skip the
+   * first empty-draft mount, that second run would otherwise schedule a debounced `applyFilters`
+   * that clears `JobListFilters` and refetches unfiltered rows.
+   */
+  const suppressOneEmptyDebouncedApplyRef = useRef(false);
 
   /** Debounce so rapid control changes and combobox token updates do not refetch on every tick. */
   useEffect(() => {
+    if (effectiveHireSignalDraftFieldCount(draft, isAdmin) > 0) {
+      suppressOneEmptyDebouncedApplyRef.current = false;
+    }
     if (skipInitialAutoApplyRef.current) {
       skipInitialAutoApplyRef.current = false;
+      suppressOneEmptyDebouncedApplyRef.current = true;
+      return;
+    }
+    if (
+      suppressOneEmptyDebouncedApplyRef.current &&
+      effectiveHireSignalDraftFieldCount(draft, isAdmin) === 0
+    ) {
+      suppressOneEmptyDebouncedApplyRef.current = false;
       return;
     }
     const timer = window.setTimeout(() => {
       applyFiltersRef.current();
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [draft]);
+  }, [draft, isAdmin]);
 
   const resetFilters = useCallback(() => {
     setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
@@ -260,32 +354,34 @@ export function HireSignalFilterProvider({
           titles: mergeArr(d.titles, titles).slice(0, 25),
           locations: mergeArr(d.locations, locations).slice(0, 20),
         };
-        if (Array.isArray(ext.skillsAll)) {
-          next.skillsAll = mergeArr(
-            d.skillsAll,
-            ext.skillsAll.map((x) => String(x)),
-          ).slice(0, 25);
-        }
-        if (Array.isArray(ext.educationLevelMins)) {
-          const fromResume = ext.educationLevelMins.map((x) =>
-            String(x).trim().toLowerCase(),
-          );
-          next.educationLevelMins = [
-            ...new Set([
-              ...normalizeHiringSignalTokenList(d.educationLevelMins),
-              ...fromResume.filter(Boolean),
-            ]),
-          ];
+        if (isAdmin) {
+          if (Array.isArray(ext.skillsAll)) {
+            next.skillsAll = mergeArr(
+              d.skillsAll,
+              ext.skillsAll.map((x) => String(x)),
+            ).slice(0, 25);
+          }
+          if (Array.isArray(ext.educationLevelMins)) {
+            const fromResume = ext.educationLevelMins.map((x) =>
+              String(x).trim().toLowerCase(),
+            );
+            next.educationLevelMins = [
+              ...new Set([
+                ...normalizeHiringSignalTokenList(d.educationLevelMins),
+                ...fromResume.filter(Boolean),
+              ]),
+            ];
+          }
         }
         return next;
       });
     },
-    [],
+    [isAdmin],
   );
 
   const activeDraftCount = useMemo(
-    () => countFilledDraftFields(draft),
-    [draft],
+    () => effectiveHireSignalDraftFieldCount(draft, isAdmin),
+    [draft, isAdmin],
   );
 
   const value = useMemo(

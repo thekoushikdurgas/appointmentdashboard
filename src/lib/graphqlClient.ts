@@ -380,7 +380,10 @@ export async function graphqlQuery<T = unknown>(
       const existing = inflightQueries.get(key);
       if (!existing) {
         const bg = graphqlRequest<T>(query, variables, options)
-          .then((fresh) => { cacheSet(key, fresh, ttl); return fresh; })
+          .then((fresh) => {
+            cacheSet(key, fresh, ttl);
+            return fresh;
+          })
           .catch(() => cached) // network error — keep stale
           .finally(() => inflightQueries.delete(key));
         inflightQueries.set(key, bg);
@@ -393,8 +396,10 @@ export async function graphqlQuery<T = unknown>(
   const existing = inflightQueries.get(key);
   if (existing) return existing as Promise<T>;
 
-  const promise = graphqlRequest<T>(query, variables, options)
-    .then((data) => { if (ttl > 0) cacheSet(key, data, ttl); return data; });
+  const promise = graphqlRequest<T>(query, variables, options).then((data) => {
+    if (ttl > 0) cacheSet(key, data, ttl);
+    return data;
+  });
   inflightQueries.set(key, promise);
   promise.finally(() => inflightQueries.delete(key));
   return promise;

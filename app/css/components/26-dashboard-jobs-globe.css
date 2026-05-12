@@ -79,6 +79,15 @@
   line-height: 1.45;
 }
 
+.c360-dashboard-globe__cap-note {
+  margin: 0;
+  max-width: 36rem;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text-muted);
+  text-align: center;
+  line-height: 1.45;
+}
+
 .c360-dashboard-globe__legend {
   display: flex;
   flex-direction: column;

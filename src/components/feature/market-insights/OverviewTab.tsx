@@ -11,7 +11,10 @@ import {
   YAxis,
 } from "recharts";
 import { Card } from "@/components/ui/Card";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import type {
+  HiringSignalIndexStats,
+  LinkedInJobRow,
+} from "@/hooks/useHiringSignals";
 import {
   buildMedianSalary,
   buildMonthlyPostingsSeries,
@@ -24,30 +27,49 @@ import { HiringKpiStrip } from "@/components/feature/hiring-analytics/HiringKpiS
 import type { HiringDashboardKpis } from "@/components/feature/hiring-analytics/HiringKpiStrip";
 import { CHART_COLORS, RECHARTS_DEFAULTS } from "@/lib/chartTheme";
 
-export function OverviewTab({ jobs }: { jobs: LinkedInJobRow[] }) {
+export function OverviewTab({
+  jobs,
+  total,
+  stats,
+  statsLoading,
+  analyticsMatchCappedAt,
+  jobsLoading,
+}: {
+  jobs: LinkedInJobRow[];
+  total?: number;
+  stats: HiringSignalIndexStats;
+  statsLoading: boolean;
+  analyticsMatchCappedAt: number | null;
+  jobsLoading: boolean;
+}) {
   const kpi: HiringDashboardKpis | null = useMemo(() => {
     const med = buildMedianSalary(jobs);
-    const total = jobs.length;
-    const remote = buildRemoteCount(jobs);
+    const listTotal = typeof total === "number" ? total : jobs.length;
     return {
-      total_jobs: total,
+      total_jobs: jobs.length,
+      matching_postings_total: listTotal,
+      loaded_rows: jobs.length,
       jobs_with_salary: med.n,
       median_salary_min_usd: med.median ?? undefined,
-      remote_count: remote,
+      remote_count: buildRemoteCount(jobs),
       distinct_countries: distinctCountries(jobs),
       distinct_companies: distinctCompanies(jobs),
+      global_indexed_jobs: stats.totalJobs,
+      global_jobs_with_company: stats.jobsWithCompany,
+      global_median_salary_min_usd: stats.globalMedianSalaryMinUsd,
+      analytics_match_capped_at: analyticsMatchCappedAt,
     };
-  }, [jobs]);
+  }, [jobs, total, stats, analyticsMatchCappedAt]);
 
   const monthly = useMemo(() => buildMonthlyPostingsSeries(jobs), [jobs]);
   const salary = useMemo(() => buildMonthlySalaryRange(jobs), [jobs]);
 
   return (
     <div className="c360-section-stack">
-      <HiringKpiStrip data={kpi} />
+      <HiringKpiStrip data={kpi} loading={jobsLoading || statsLoading} />
       <div className="c360-2col-grid">
         <Card title="Posting trend" subtitle="Monthly count">
-          <div className="c360-hs-chart" style={{ height: 280 }}>
+          <div className="c360-hs-chart c360-hs-chart--h280">
             {monthly.length === 0 ? (
               <p className="c360-text-sm c360-text-muted">No data.</p>
             ) : (
@@ -79,7 +101,7 @@ export function OverviewTab({ jobs }: { jobs: LinkedInJobRow[] }) {
           </div>
         </Card>
         <Card title="Salary range" subtitle="Median min / max USD by month">
-          <div className="c360-hs-chart" style={{ height: 280 }}>
+          <div className="c360-hs-chart c360-hs-chart--h280">
             {salary.length === 0 ? (
               <p className="c360-text-sm c360-text-muted">No salary data.</p>
             ) : (

@@ -58,7 +58,9 @@ export function ScrapeSessionCard({
   const runIdVal = String(row.runId ?? "").trim();
   const err = row.error != null ? String(row.error) : "";
   const req = parseScrapeRequestBody(row.requestBody);
-  const itemCount = row.itemCount != null ? Number(row.itemCount) : undefined;
+  const itemRaw = row.itemCount ?? row.item_count;
+  const itemCount =
+    itemRaw != null && itemRaw !== "" ? Number(itemRaw) : undefined;
   const maxGoal = req.maxJobs != null && req.maxJobs > 0 ? req.maxJobs : 100;
   const progressValue =
     itemCount != null && Number.isFinite(itemCount)
@@ -97,6 +99,16 @@ export function ScrapeSessionCard({
                 {formatDate(String(row.createdAt ?? "") || undefined) || "—"}
               </span>
             </div>
+            <p className="c360-m-0 c360-text-2xs c360-text-muted">
+              {(itemCount != null && Number.isFinite(itemCount)
+                ? Math.max(0, Math.floor(itemCount))
+                : 0
+              ).toLocaleString()}
+              {req.maxJobs != null && req.maxJobs > 0
+                ? ` / ${req.maxJobs.toLocaleString()}`
+                : ""}{" "}
+              jobs
+            </p>
           </div>
         </div>
 

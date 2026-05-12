@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, FolderOpen, Upload, Columns3 } from "lucide-react";
+import { MoreHorizontal, FolderOpen, Upload, RefreshCw } from "lucide-react";
 import {
   DataGrid,
   type GridColDef,
@@ -11,8 +11,7 @@ import {
   type GridRowSelectionModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
-import { formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { cn, formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
 import { Select } from "@/components/ui/Select";
@@ -31,6 +30,15 @@ export const FILES_DT_PAGE_SIZE_OPTIONS = [
   { value: "50", label: "50" },
   { value: "100", label: "100" },
 ] as const;
+
+/** S3 list prefix scope (matches `useS3Files` folder filters). */
+export type FilesFolderScope = "all" | "upload" | "exports";
+
+export const FILES_FOLDER_SCOPE_OPTIONS = [
+  { value: "all", label: "All files" },
+  { value: "upload", label: "upload/" },
+  { value: "exports", label: "exports/" },
+] as const satisfies ReadonlyArray<{ value: FilesFolderScope; label: string }>;
 
 export const FILES_DT_COLUMN_IDS = [
   "fileRef",
@@ -95,6 +103,13 @@ export interface FilesDataTableProps {
   onDeleteRequest: (f: S3FileInfo) => void;
   /** When provided, toolbar shows delete for current selection. */
   onBulkDelete?: (keys: string[]) => void | Promise<void>;
+  /** When set, toolbar shows Refresh (e.g. list + manifest). */
+  onRefreshAll?: () => void;
+  /** Disables Refresh while loads are in flight. */
+  refreshAllDisabled?: boolean;
+  /** When set with `onFolderScopeChange`, toolbar shows a folder scope dropdown. */
+  folderScope?: FilesFolderScope;
+  onFolderScopeChange?: (scope: FilesFolderScope) => void;
 }
 
 function hashFileId(key: string): string {
@@ -214,52 +229,14 @@ function FilesNoRowsOverlay({
 export interface FilesToolbarTableExtrasProps {
   pageSize: number;
   onPageSizeChange: (n: number) => void;
-  visibleColumns: FilesDataTableColumnId[];
-  onToggleColumn: (id: FilesDataTableColumnId, visible: boolean) => void;
 }
 
 export function FilesToolbarTableExtras({
   pageSize,
   onPageSizeChange,
-  visibleColumns,
-  onToggleColumn,
 }: FilesToolbarTableExtrasProps) {
-  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
-
   return (
     <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-      <Popover
-        trigger={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="c360-gap-1"
-          >
-            <Columns3 size={14} aria-hidden />
-            Columns
-          </Button>
-        }
-        content={
-          <div className="c360-space-y-2 c360-p-1">
-            <p className="c360-m-0 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Visible columns
-            </p>
-            {FILES_DT_COLUMN_IDS.map((id) => (
-              <Checkbox
-                key={id}
-                size="sm"
-                checked={vis.has(id)}
-                disabled={vis.has(id) && visibleColumns.length <= 1}
-                onChange={(c) => onToggleColumn(id, c)}
-                label={FILES_DT_COLUMN_LABELS[id]}
-              />
-            ))}
-          </div>
-        }
-        width={220}
-      />
-      <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
       <Select
         className="c360-w-24"
         fullWidth={false}
@@ -289,6 +266,10 @@ export function FilesDataTable({
   onDownload,
   onDeleteRequest,
   onBulkDelete,
+  onRefreshAll,
+  refreshAllDisabled,
+  folderScope,
+  onFolderScopeChange,
 }: FilesDataTableProps) {
   const [search, setSearch] = useState("");
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -317,6 +298,11 @@ export function FilesDataTable({
   }, [search]);
 
   useEffect(() => {
+    if (folderScope === undefined) return;
+    setSelectedKeys(new Set());
+  }, [folderScope]);
+
+  useEffect(() => {
     const ps = Math.max(1, paginationModel.pageSize);
     const pc = Math.max(1, Math.ceil(filtered.length / ps));
     setPaginationModel((m) => {
@@ -327,19 +313,6 @@ export function FilesDataTable({
   }, [filtered.length, paginationModel.pageSize]);
 
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
-
-  const handleToggleColumn = useCallback(
-    (id: FilesDataTableColumnId, visible: boolean) => {
-      setVisibleColumns((prev) => {
-        const set = new Set(prev);
-        if (visible) set.add(id);
-        else set.delete(id);
-        if (set.size === 0) return prev;
-        return FILES_DT_COLUMN_IDS.filter((x) => set.has(x));
-      });
-    },
-    [],
-  );
 
   const columnVisibilityModel = useMemo(() => {
     const m: GridColumnVisibilityModel = {};
@@ -778,13 +751,55 @@ export function FilesDataTable({
     <div className="c360-files-dt">
       <div className="c360-files-dt__toolbar">
         <div className="c360-files-dt__toolbar-left">
+          {onRefreshAll ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={
+                <RefreshCw
+                  size={14}
+                  className={cn(loading && "c360-spin")}
+                  aria-hidden
+                />
+              }
+              onClick={onRefreshAll}
+              disabled={refreshAllDisabled}
+            >
+              Refresh
+            </Button>
+          ) : null}
+          {onUpload ? (
+            <Button
+              type="button"
+              size="sm"
+              leftIcon={<Upload size={16} aria-hidden />}
+              onClick={onUpload}
+            >
+              Upload files
+            </Button>
+          ) : null}
+          {folderScope !== undefined && onFolderScopeChange ? (
+            <>
+              <span className="c360-text-2xs c360-text-ink-muted">Folder</span>
+              <Select
+                className="c360-min-w-[9.5rem]"
+                fullWidth={false}
+                value={folderScope}
+                onChange={(e) =>
+                  onFolderScopeChange(e.target.value as FilesFolderScope)
+                }
+                options={[...FILES_FOLDER_SCOPE_OPTIONS]}
+                aria-label="Folder scope"
+                triggerClassName="c360-files-dt__folder-scope"
+              />
+            </>
+          ) : null}
           <FilesToolbarTableExtras
             pageSize={paginationModel.pageSize}
             onPageSizeChange={(n) =>
               setPaginationModel({ page: 0, pageSize: n })
             }
-            visibleColumns={visibleColumns}
-            onToggleColumn={handleToggleColumn}
           />
           {onBulkDelete && selectedKeys.size > 0 && (
             <Button
@@ -798,12 +813,6 @@ export function FilesDataTable({
           )}
         </div>
         <div className="c360-files-dt__toolbar-right">
-          <label
-            htmlFor="c360-files-dt-search"
-            className="c360-text-muted c360-text-sm c360-mr-2"
-          >
-            Search:
-          </label>
           <Input
             id="c360-files-dt-search"
             type="search"
@@ -811,6 +820,7 @@ export function FilesDataTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="c360-files-dt__search"
+            aria-label="Filter by file name or key"
           />
         </div>
       </div>

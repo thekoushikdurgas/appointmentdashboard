@@ -8,9 +8,16 @@ import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import type {
+  HiringSignalIndexStats,
+  LinkedInJobRow,
+} from "@/hooks/useHiringSignals";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
+import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
+import { HiringSignalJobsGlobe } from "@/components/feature/hiring-signals/HiringSignalJobsGlobe";
+import { HiringSignalEmploymentTypeCard } from "@/components/feature/hiring-signals/HiringSignalCharts";
+import { HiringSignalTopCompaniesCard } from "@/components/feature/hiring-signals/HiringSignalTopCompaniesCard";
 import { OverviewTab } from "@/components/feature/market-insights/OverviewTab";
 import { SourcesTab } from "@/components/feature/market-insights/SourcesTab";
 import { LocationsTab } from "@/components/feature/market-insights/LocationsTab";
@@ -25,6 +32,10 @@ export interface MarketInsightsPageProps {
     error: string | null;
     filters: JobListFilters;
     refetch: () => Promise<void>;
+    total?: number;
+    stats: HiringSignalIndexStats;
+    statsLoading: boolean;
+    analyticsMatchCappedAt: number | null;
   };
   signalTimePreset: "all" | "new_7d";
 }
@@ -33,11 +44,31 @@ export function MarketInsightsPage({
   hiring,
   signalTimePreset,
 }: MarketInsightsPageProps) {
-  const { jobs, loading, error, filters, refetch } = hiring;
+  const {
+    jobs,
+    loading,
+    error,
+    filters,
+    refetch,
+    total,
+    stats,
+    statsLoading,
+    analyticsMatchCappedAt,
+  } = hiring;
+
+  const toolbarMatchTotal =
+    typeof total === "number" && total > 0 ? total : jobs.length;
   const { activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tab, setTab] = useState("overview");
+  const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
+
+  const previewJobsForDrawer = useMemo(() => {
+    if (!drawerRow?.companyUuid) return [];
+    const u = drawerRow.companyUuid;
+    return jobs.filter((j) => j.companyUuid === u);
+  }, [drawerRow, jobs]);
 
   const toolbar = useMemo(
     () => (
@@ -47,13 +78,13 @@ export function MarketInsightsPage({
           {
             value: "overview",
             label: "Market",
-            count: jobs.length,
+            count: toolbarMatchTotal,
             showCountOnlyWhenActive: false,
           },
         ]}
         activeTab="overview"
         onTabChange={() => {}}
-        totalCount={jobs.length}
+        totalCount={toolbarMatchTotal}
         filterConfig={{
           activeCount: activeDraftCount,
           onOpen: () => setMobileFiltersOpen(true),
@@ -70,7 +101,7 @@ export function MarketInsightsPage({
         ]}
       />
     ),
-    [activeDraftCount, isDesktop, jobs.length, loading, refetch],
+    [activeDraftCount, isDesktop, toolbarMatchTotal, loading, refetch],
   );
 
   return (
@@ -97,9 +128,28 @@ export function MarketInsightsPage({
             appliedListFilters={filters}
             signalTimePreset={signalTimePreset}
             appliedRunId={filters.runId}
+            runScopedJobTotal={
+              filters.runId?.trim() && typeof total === "number"
+                ? total
+                : undefined
+            }
           />
         }
       >
+        <div className="c360-flex c360-flex-col c360-gap-6 c360-mb-4">
+          <HiringSignalJobsGlobe
+            jobs={jobs}
+            loading={loading}
+            fetchCappedAt={analyticsMatchCappedAt}
+          />
+          <div className="c360-2col-grid c360-hs-dashboard-2col">
+            <HiringSignalEmploymentTypeCard jobs={jobs} />
+            <HiringSignalTopCompaniesCard
+              jobs={jobs}
+              onOpenCompanyDrawer={(row) => setDrawerRow(row)}
+            />
+          </div>
+        </div>
         <Tabs value={tab} onValueChange={setTab} variant="floating">
           <TabsList className="c360-mb-4 c360-flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -110,7 +160,14 @@ export function MarketInsightsPage({
             <TabsTrigger value="salary">Salary &amp; Experience</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
-            <OverviewTab jobs={jobs} />
+            <OverviewTab
+              jobs={jobs}
+              total={total}
+              stats={stats}
+              statsLoading={statsLoading}
+              analyticsMatchCappedAt={analyticsMatchCappedAt}
+              jobsLoading={loading}
+            />
           </TabsContent>
           <TabsContent value="sources">
             <SourcesTab jobs={jobs} />
@@ -129,6 +186,12 @@ export function MarketInsightsPage({
           </TabsContent>
         </Tabs>
       </DataPageLayout>
+      <CompanyDrawerPanel
+        anchor={drawerRow}
+        previewJobs={previewJobsForDrawer}
+        isOpen={!!drawerRow}
+        onClose={() => setDrawerRow(null)}
+      />
     </DashboardPageLayout>
   );
 }

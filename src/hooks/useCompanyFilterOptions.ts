@@ -6,7 +6,7 @@ import type { CompanyFilterData } from "@/graphql/generated/types";
 import {
   FILTER_OPTIONS_PAGE_SIZE,
   dedupeFilterOptionsByValue,
-  setCanLoadMoreFromResponse,
+  canLoadMoreAfterPage,
 } from "@/hooks/useFilterOptions";
 
 export interface CompanyFilterOptionsState {
@@ -67,9 +67,9 @@ export function useCompanyFilterOptions() {
         limit: FILTER_OPTIONS_PAGE_SIZE,
       });
       const items = dedupeFilterOptionsByValue(res.items);
-      const canLoadMore = setCanLoadMoreFromResponse(
+      const canLoadMore = canLoadMoreAfterPage(
+        0,
         items.length,
-        res.total,
         res.items.length,
       );
       setByKey((prev) => ({
@@ -124,9 +124,9 @@ export function useCompanyFilterOptions() {
       setByKey((prev) => {
         const cur = prev[filterKey] ?? emptyState();
         const merged = dedupeFilterOptionsByValue([...cur.items, ...res.items]);
-        const canLoadMore = setCanLoadMoreFromResponse(
+        const canLoadMore = canLoadMoreAfterPage(
+          cur.items.length,
           merged.length,
-          Math.max(cur.total, res.total),
           res.items.length,
         );
         return {
@@ -178,9 +178,9 @@ export function useCompanyFilterOptions() {
             searchText: text.trim() || undefined,
           });
           const items = dedupeFilterOptionsByValue(res.items);
-          const canLoadMore = setCanLoadMoreFromResponse(
+          const canLoadMore = canLoadMoreAfterPage(
+            0,
             items.length,
-            res.total,
             res.items.length,
           );
           setByKey((prev) => ({

@@ -1162,7 +1162,7 @@
   gap: 0;
 }
 
-/* Dashboard chart area: first card (Email Activity) sizes to its chart */
+/* Dashboard chart area: first card (Job Activity) sizes to its chart */
 .c360-dashboard-layout__charts > .c360-card:first-child {
   height: fit-content;
 }

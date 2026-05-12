@@ -20,6 +20,8 @@ import {
   satelliteSessionProgressProps,
   scrapeStatusBadgeColor,
   satelliteRunIdFromRow,
+  satelliteStatusFromRow,
+  satelliteJobsCountSummary,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { QueueMetricsBar } from "@/components/feature/hiring-signals/QueueMetricsBar";
 import { ScrapeSessionCard } from "@/components/feature/hiring-signals/ScrapeSessionCard";
@@ -81,7 +83,7 @@ export function RunsTab({
   const filteredSatelliteRows = useMemo(() => {
     if (satelliteFilter === "all") return satelliteRunsRows;
     return satelliteRunsRows.filter((row) => {
-      const st = String(row.status ?? "").toLowerCase();
+      const st = satelliteStatusFromRow(row);
       return st === "pending" || st === "running" || st === "paused";
     });
   }, [satelliteRunsRows, satelliteFilter]);
@@ -126,11 +128,17 @@ export function RunsTab({
         key: "status",
         header: "Status",
         render: (row) => {
-          const st = String(row.status ?? "—");
+          const st = satelliteStatusFromRow(row) || "—";
+          const jobsLine = satelliteJobsCountSummary(row);
           return (
-            <Badge color={scrapeStatusBadgeColor(st)} size="sm">
-              {st}
-            </Badge>
+            <div className="c360-flex c360-flex-col c360-gap-1 c360-items-start">
+              <Badge color={scrapeStatusBadgeColor(st)} size="sm">
+                {st}
+              </Badge>
+              <span className="c360-text-2xs c360-text-muted c360-leading-tight">
+                {jobsLine}
+              </span>
+            </div>
           );
         },
       },
@@ -159,7 +167,13 @@ export function RunsTab({
         header: "Started",
         render: (row) =>
           formatDate(
-            String(row.startedAt ?? row.started_at ?? "") || undefined,
+            String(
+              row.startedAt ??
+                row.started_at ??
+                row.createdAt ??
+                row.created_at ??
+                "",
+            ) || undefined,
           ),
       },
       {
@@ -167,7 +181,13 @@ export function RunsTab({
         header: "Finished",
         render: (row) =>
           formatDate(
-            String(row.finishedAt ?? row.finished_at ?? "") || undefined,
+            String(
+              row.finishedAt ??
+                row.finished_at ??
+                row.completedAt ??
+                row.completed_at ??
+                "",
+            ) || undefined,
           ),
       },
       {
@@ -176,7 +196,7 @@ export function RunsTab({
         align: "right",
         render: (row) => {
           const rid = satelliteRunIdFromRow(row);
-          const st = String(row.status ?? "");
+          const st = satelliteStatusFromRow(row);
           const canCancel = isAdmin && !!rid && hireSignalRunCanCancel(st);
           const canPause = isAdmin && !!rid && hireSignalRunCanPause(st);
           const canResume = isAdmin && !!rid && hireSignalRunCanResume(st);

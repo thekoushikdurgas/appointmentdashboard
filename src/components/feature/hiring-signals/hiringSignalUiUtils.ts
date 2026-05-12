@@ -94,6 +94,29 @@ function stripDangerousTagBlocks(html: string): string {
   return out;
 }
 
+/** Normalize scraper.server session status for UI (badge, Active filter, progress). */
+export function satelliteStatusFromRow(row: Record<string, unknown>): string {
+  const raw =
+    row.status ??
+    row.Status ??
+    row.state ??
+    row.State ??
+    row.phase ??
+    row.Phase;
+  if (raw == null || raw === "") return "";
+  let s = String(raw).trim().toLowerCase();
+  if (
+    s === "success" ||
+    s === "succeeded" ||
+    s === "completed" ||
+    s === "complete"
+  ) {
+    s = "done";
+  }
+  if (s === "canceled") s = "cancelled";
+  return s;
+}
+
 /** Badge tone for scraper.server session statuses (gateway + satellite). */
 export function scrapeStatusBadgeColor(status: string): BadgeColor {
   const s = (status ?? "").trim().toLowerCase();
@@ -149,9 +172,16 @@ export function satelliteRunIdFromRow(row: Record<string, unknown>): string {
 export function satelliteJobsCollected(row: Record<string, unknown>): number {
   const raw =
     row.jobs_collected ??
+    row.JobsCollected ??
+    row.jobsCollected ??
     row.itemCount ??
     row.item_count ??
-    row.jobsCollected ??
+    row.total_jobs ??
+    row.TotalJobs ??
+    row.jobs_count ??
+    row.JobsCount ??
+    row.collected ??
+    row.Collected ??
     0;
   const n = Number(raw);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
@@ -161,11 +191,29 @@ export function satelliteJobsCollected(row: Record<string, unknown>): number {
 export function satelliteMaxJobsGoal(
   row: Record<string, unknown>,
 ): number | null {
-  const m = row.max_jobs ?? row.maxJobs;
+  const m =
+    row.max_jobs ??
+    row.maxJobs ??
+    row.target_max_jobs ??
+    row.TargetMaxJobs ??
+    row.target ??
+    row.Target;
   if (m == null || m === "") return null;
   const n = Number(m);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.floor(n);
+}
+
+/** One-line job count for Runs status column (satellite session row). */
+export function satelliteJobsCountSummary(
+  row: Record<string, unknown>,
+): string {
+  const n = satelliteJobsCollected(row);
+  const cap = satelliteMaxJobsGoal(row);
+  if (cap != null && cap > 0) {
+    return `${n.toLocaleString()} / ${cap.toLocaleString()} jobs`;
+  }
+  return `${n.toLocaleString()} jobs`;
 }
 
 /**
@@ -180,7 +228,7 @@ export function satelliteSessionProgressProps(row: Record<string, unknown>): {
   showValue: boolean;
   label: string;
 } {
-  const status = String(row.status ?? "").toLowerCase();
+  const status = satelliteStatusFromRow(row);
   const collected = satelliteJobsCollected(row);
   const cap = satelliteMaxJobsGoal(row);
   const unlimited = cap == null;

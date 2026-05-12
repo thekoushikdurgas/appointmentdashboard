@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -11,6 +11,7 @@ import { FilesWorkspace } from "@/components/feature/files/FilesWorkspace";
 export function FilesDrawer() {
   const { isOpen, closeFilesDrawer, openRequest } = useFilesDrawer();
   const [mounted, setMounted] = useState(false);
+  const filesStatStripHostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -49,16 +50,15 @@ export function FilesDrawer() {
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
           >
             <header className="c360-files-drawer__header">
-              <div className="c360-min-w-0">
-                <h2
-                  id="c360-files-drawer-title"
-                  className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
-                >
+              <div className="c360-files-drawer__header-main c360-min-w-0">
+                <h2 id="c360-files-drawer-title" className="c360-sr-only">
                   Files
                 </h2>
-                <p className="c360-m-0 c360-mt-1 c360-text-2xs c360-text-ink-muted">
-                  Uploads, exports, and S3-backed workflows
-                </p>
+                <div
+                  ref={filesStatStripHostRef}
+                  className="c360-files-drawer__header-stats-host"
+                  aria-live="polite"
+                />
               </div>
               <Button
                 type="button"
@@ -72,7 +72,10 @@ export function FilesDrawer() {
               </Button>
             </header>
             <div className="c360-files-drawer__body">
-              <FilesWorkspace key={openRequest.seq} />
+              <FilesWorkspace
+                key={openRequest.seq}
+                statStripPortalRef={filesStatStripHostRef}
+              />
             </div>
           </motion.aside>
         </>

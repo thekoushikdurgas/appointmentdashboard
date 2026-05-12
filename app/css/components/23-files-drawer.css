@@ -35,15 +35,135 @@
   gap: var(--c360-spacing-3);
 }
 
+.c360-files-drawer__header-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-files-drawer__header-stats-host {
+  min-width: 0;
+  width: 100%;
+}
+
+.c360-files-drawer__header .c360-files-stat-strip {
+  margin-bottom: 0;
+}
+
 .c360-files-drawer__body {
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
   padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .c360-files-workspace {
   min-width: 0;
+}
+
+/* Files drawer: fill height — workspace → first card → DataGrid shell (preview tweaks) */
+.c360-files-drawer__body > .c360-files-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.c360-files-drawer .c360-files-workspace > .c360-card:first-child {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.c360-files-drawer
+  .c360-files-workspace
+  > .c360-card:first-child
+  > .c360-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-files-drawer .c360-files-dt {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.c360-files-drawer .c360-files-dt__table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-files-drawer .c360-data-table-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-files-drawer .c360-data-table-shell__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.c360-files-drawer .c360-files-data-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.c360-files-drawer .c360-files-data-grid > .MuiDataGrid-root {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100% !important;
+}
+
+.c360-files-drawer .c360-files-data-grid .MuiDataGrid-mainContent {
+  height: 100% !important;
+}
+
+.c360-files-drawer .c360-files-data-grid .MuiDataGrid-main {
+  height: 100% !important;
+}
+
+.c360-files-drawer .c360-files-data-grid .MuiDataGrid-overlayWrapper {
+  height: 100% !important;
+}
+
+.c360-files-drawer .c360-files-data-grid .MuiDataGrid-overlayWrapperInner {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column;
+}
+
+.c360-files-drawer .c360-files-dt__empty {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Override kit `.c360-card__body { width: 50% }` so file table fills drawer */

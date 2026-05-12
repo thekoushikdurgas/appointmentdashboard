@@ -273,8 +273,7 @@ export function FilterCombobox({
                       size="sm"
                     />
                     <span className="c360-truncate" title={optLabel}>
-                      {optLabel.slice(0, 20)}
-                      {optLabel.length > 20 && "..."}
+                      {optLabel}
                     </span>
                   </label>
                 );

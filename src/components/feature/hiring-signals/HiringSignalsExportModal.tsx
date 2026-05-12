@@ -21,6 +21,10 @@ export interface HiringSignalsExportModalProps {
   totalMatching: number;
   selectedKeys: Set<string>;
   defaultFirstN?: number;
+  /** Max LinkedIn job ids per export for this user (400 non-staff; very large for admin). */
+  maxExportJobIds: number;
+  /** Admin / SuperAdmin — UI does not cap N / all-matching below account limits. */
+  staffExport?: boolean;
   busy?: boolean;
   onConfirm: (intent: HiringSignalsExportIntent) => void | Promise<void>;
 }
@@ -44,6 +48,8 @@ export function HiringSignalsExportModal({
   totalMatching,
   selectedKeys,
   defaultFirstN = 25,
+  maxExportJobIds,
+  staffExport = false,
   busy = false,
   onConfirm,
 }: HiringSignalsExportModalProps) {
@@ -61,11 +67,15 @@ export function HiringSignalsExportModal({
     [selectedRows],
   );
 
+  const effectiveMaxRows = staffExport
+    ? Math.max(totalMatching, 1)
+    : Math.min(Math.max(totalMatching, 1), maxExportJobIds);
+
   const firstNParsed = Number.parseInt(firstNInput.trim(), 10);
   const firstNN =
     Number.isFinite(firstNParsed) && firstNParsed >= 1
-      ? Math.min(Math.floor(firstNParsed), Math.max(totalMatching, 1))
-      : Math.min(defaultFirstN, Math.max(totalMatching, 1));
+      ? Math.min(Math.floor(firstNParsed), effectiveMaxRows)
+      : Math.min(defaultFirstN, effectiveMaxRows);
 
   const selectedDisabled = selectedIds.length === 0;
   const queueDisabled =
@@ -145,7 +155,9 @@ export function HiringSignalsExportModal({
               <span className="c360-mt-0-5 c360-block c360-text-2xs c360-text-muted">
                 {selectedDisabled
                   ? "Select rows in the table using the checkboxes."
-                  : `${selectedIds.length} row(s) with LinkedIn job ids.`}
+                  : !staffExport && selectedIds.length > maxExportJobIds
+                    ? `${selectedIds.length} row(s) with LinkedIn job ids — only the first ${maxExportJobIds.toLocaleString()} will be exported per account limit.`
+                    : `${selectedIds.length} row(s) with LinkedIn job ids.`}
               </span>
             </span>
           </label>
@@ -171,7 +183,10 @@ export function HiringSignalsExportModal({
               </span>
               <span className="c360-mt-0-5 c360-block c360-text-2xs c360-text-muted">
                 Same order as the server list for your current filters. Up to{" "}
-                {totalMatching.toLocaleString()} rows available.
+                {effectiveMaxRows.toLocaleString()} rows available
+                {staffExport
+                  ? "."
+                  : ` (max ${maxExportJobIds.toLocaleString()} per export).`}
               </span>
               {scope === "first_n" ? (
                 <div className="c360-mt-2">
@@ -179,7 +194,7 @@ export function HiringSignalsExportModal({
                     label="N"
                     type="number"
                     min={1}
-                    max={Math.max(totalMatching, 1)}
+                    max={effectiveMaxRows}
                     value={firstNInput}
                     onChange={(e) => setFirstNInput(e.target.value)}
                     inputSize="sm"
@@ -209,8 +224,9 @@ export function HiringSignalsExportModal({
                 All matching results
               </span>
               <span className="c360-mt-0-5 c360-block c360-text-2xs c360-text-muted">
-                Every row matching current filters (large lists may hit a safety
-                cap — narrow filters if export is truncated).
+                {staffExport
+                  ? "Every row matching current filters (no account export cap)."
+                  : `Up to ${maxExportJobIds.toLocaleString()} jobs per export for your account. Narrow filters or run multiple exports to cover more rows.`}
               </span>
             </span>
           </label>

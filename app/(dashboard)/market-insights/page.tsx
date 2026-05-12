@@ -14,7 +14,7 @@ export default function MarketInsightsRoutePage() {
   const { isPro, isAdmin } = useRole();
   const hiring = useHiringSignals(
     { limit: HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT },
-    { signalTimePreset: "all" },
+    { signalTimePreset: "all", fetchFullMatchPages: true },
   );
 
   if (!(isPro() || isAdmin)) {

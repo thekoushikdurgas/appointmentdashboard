@@ -23,11 +23,17 @@ const GLOBE_SPEED = 0.0028;
 export interface HiringSignalJobsGlobeProps {
   jobs: LinkedInJobRow[];
   loading?: boolean;
+  /**
+   * When set, the map is built from this many rows max (client hard cap) while the
+   * filtered index may have more matches — avoids silent truncation in the UI.
+   */
+  fetchCappedAt?: number | null;
 }
 
 export function HiringSignalJobsGlobe({
   jobs,
   loading = false,
+  fetchCappedAt = null,
 }: HiringSignalJobsGlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
@@ -169,6 +175,15 @@ export function HiringSignalJobsGlobe({
       ? "No parseable locations in the current hiring-signal sample."
       : `${aggregate.mappedCount.toLocaleString()} jobs mapped to regions · drag to rotate`;
 
+  const capNote =
+    !loading && fetchCappedAt != null && fetchCappedAt > 0 ? (
+      <p className="c360-dashboard-globe__cap-note" role="status">
+        Map uses the first {fetchCappedAt.toLocaleString()} matching jobs
+        (client limit); open Hiring signals for the full list or narrower
+        filters.
+      </p>
+    ) : null;
+
   return (
     <Card
       className="c360-dashboard-hiring-globe-card"
@@ -201,6 +216,7 @@ export function HiringSignalJobsGlobe({
             aria-label="Interactive globe of job locations"
           />
           <p className="c360-dashboard-globe__hint">{subtitle}</p>
+          {capNote}
         </div>
 
         <aside

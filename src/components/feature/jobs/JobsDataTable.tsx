@@ -33,6 +33,7 @@ import type { MappedJob } from "@/lib/jobs/jobsMapper";
 import {
   formatJobIdShort,
   isSuccessfulTerminalJobStatus,
+  isHireSignalXlsxExportJob,
   canDownloadSchedulerOutput,
   schedulerOutputDownloadLabel,
 } from "@/lib/jobs/jobsUtils";
@@ -469,7 +470,9 @@ export function JobsDataTable({
               <span className="c360-jobs-dt__progress-meta">
                 {job.total > 0
                   ? `${job.processed} / ${job.total}`
-                  : job.jobFamily}
+                  : isHireSignalXlsxExportJob(job) && pct > 0
+                    ? `${Math.round(pct)}%`
+                    : job.jobFamily}
               </span>
             </div>
           );

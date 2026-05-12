@@ -27,7 +27,7 @@
 
 .c360-jobs-drawer__header {
   flex-shrink: 0;
-  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  padding: 0 var(--c360-spacing-5);
   border-bottom: 1px solid var(--c360-border);
   display: flex;
   align-items: center;
@@ -44,7 +44,24 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--c360-spacing-4) var(--c360-spacing-5);
+  padding: var(--c360-spacing-4) 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-jobs-drawer__body > .c360-jobs-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-jobs-workspace > .c360-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1023px) {
@@ -94,6 +111,10 @@
 }
 
 .c360-jobs-workspace .c360-card > .c360-card__body--none {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
 }
@@ -101,6 +122,16 @@
 .c360-jobs-workspace .c360-card__body--none > .c360-p-4 {
   width: 100%;
   min-width: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-jobs-workspace .c360-jobs-dt {
+  gap: 0;
+  justify-content: flex-start;
 }
 
 /* Pagination portaled into Jobs Card header */

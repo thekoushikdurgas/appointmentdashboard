@@ -352,6 +352,7 @@ const HIRE_SIGNAL_EXPORT_SELECTED = gql`
         sourceService
         jobFamily
         jobSubtype
+        statusPayload
         createdAt
         updatedAt
       }
@@ -397,6 +398,7 @@ export type HireSignalExportSchedulerJob = {
   sourceService: string;
   jobFamily: string;
   jobSubtype: string | null;
+  statusPayload?: unknown | null;
   createdAt: string;
   updatedAt: string | null;
 };
@@ -518,13 +520,9 @@ function buildExtendedJobFilters(
   const { sortKey, sortOrder } = coerceJobListSortFields(
     filters as JobListFilters & { listSort?: "recent" | "oldest" },
   );
-  if (
-    sortKey !== DEFAULT_JOB_SORT_KEY ||
-    sortOrder !== DEFAULT_JOB_SORT_ORDER
-  ) {
-    x.sortField = sortKey;
-    x.sortOrder = sortOrder === "asc" ? "asc" : "desc";
-  }
+  // Always send explicit sort so gateways/job.server never rely on ambiguous defaults.
+  x.sortField = sortKey;
+  x.sortOrder = sortOrder === "asc" ? "asc" : "desc";
   return Object.keys(x).length > 0 ? x : null;
 }
 
@@ -570,15 +568,16 @@ export function parseJobFilterOptionsPayload(
 export async function fetchHiringSignalJobs(filters: JobListFilters) {
   const limit = Math.max(1, Math.floor(Number(filters.limit) || 50));
   const offset = Math.max(0, Math.floor(Number(filters.offset) || 0));
+  const gqlVars = {
+    limit,
+    offset,
+    ...hireSignalJobListFilterVars(filters),
+  };
   return graphqlQuery<{
     hireSignal: { jobs: HireSignalApiJson };
   }>(
     HIRE_SIGNAL_JOBS,
-    {
-      limit,
-      offset,
-      ...hireSignalJobListFilterVars(filters),
-    },
+    gqlVars,
     // No localStorage TTL: paging must always reflect the requested offset; SWR cache
     // made "next page" look stuck when combined with loading only on empty rows.
     { ...HS_GQL, cacheTtlMs: 0 },
@@ -799,8 +798,15 @@ function linkedinJobIdFromItem(item: unknown): string {
 /** Batch size when paging through jobs for export ID collection. */
 export const HS_EXPORT_FETCH_BATCH = 150;
 
-/** Hard cap per export request (gateway/job.server may impose its own limit). */
-export const HS_MAX_EXPORT_LINKEDIN_IDS = 5000;
+/** Max LinkedIn job IDs per XLSX export for non-staff (free + paid plans). */
+export const HS_EXPORT_MAX_IDS_NON_STAFF = 400;
+/**
+ * Staff (Admin / SuperAdmin) export cap — large enough to be unlimited in practice.
+ * Keep in sync with API `MAX_EXPORT_LINKEDIN_JOB_IDS_STAFF`.
+ */
+export const HS_EXPORT_MAX_IDS_STAFF = 10_000_000;
+/** @deprecated Prefer HS_EXPORT_MAX_IDS_*; legacy default used by older call sites. */
+export const HS_MAX_EXPORT_LINKEDIN_IDS = HS_EXPORT_MAX_IDS_STAFF;
 
 /**
  * Collect up to `n` LinkedIn job IDs in list order for the given filters (paged fetch).
@@ -845,11 +851,11 @@ export type CollectAllExportIdsResult = {
 };
 
 /**
- * Collect LinkedIn job IDs for all rows matching filters, up to {@link HS_MAX_EXPORT_LINKEDIN_IDS}.
+ * Collect LinkedIn job IDs for all rows matching filters, up to `maxIds`.
  */
 export async function fetchLinkedinJobIdsAllMatching(
   filters: JobListFilters,
-  maxIds: number = HS_MAX_EXPORT_LINKEDIN_IDS,
+  maxIds: number = HS_EXPORT_MAX_IDS_NON_STAFF,
 ): Promise<CollectAllExportIdsResult> {
   const ids: string[] = [];
   const seen = new Set<string>();

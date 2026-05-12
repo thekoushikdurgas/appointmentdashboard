@@ -7,65 +7,41 @@ import {
   DEFAULT_TOUR_STEPS,
 } from "@/components/shared/OnboardingTour";
 import { activitiesService } from "@/services/graphql/activitiesService";
-import {
-  analyticsService,
-  type PerformanceMetricRow,
-} from "@/services/graphql/analyticsService";
 import { usePerformanceMetric } from "@/hooks/usePerformanceMetric";
 import { useRole } from "@/context/RoleContext";
 import { DashboardAdCarousel } from "@/components/feature/dashboard/DashboardAdCarousel";
 import { HiringSignalsHomeOverview } from "@/components/feature/hiring-signals/HiringSignalsHomeOverview";
-import {
-  DashboardChartSection,
-  type AreaDataPoint,
-} from "@/components/feature/dashboard/DashboardChartSection";
+import { DashboardChartSection } from "@/components/feature/dashboard/DashboardChartSection";
 import type { ActivityItem } from "@/components/feature/dashboard/DashboardActivityFeed";
-
-/** Build area chart data from analytics performance metrics */
-function buildAreaDataFromMetrics(
-  metrics: PerformanceMetricRow[],
-): AreaDataPoint[] {
-  const buckets: Record<string, { contacts: number; emails: number }> = {};
-  for (const m of metrics) {
-    const date = new Date(m.timestamp ?? m.createdAt);
-    const key = date.toLocaleString([], { hour: "2-digit", minute: "2-digit" });
-    if (!buckets[key]) buckets[key] = { contacts: 0, emails: 0 };
-    if (m.metricName?.toLowerCase().includes("contact")) {
-      buckets[key].contacts += m.metricValue;
-    } else {
-      buckets[key].emails += m.metricValue;
-    }
-  }
-  const entries = Object.entries(buckets).slice(-12);
-  if (entries.length === 0) return [];
-  return entries.map(([time, vals]) => ({ time, ...vals }));
-}
+import { useHiringSignals } from "@/hooks/useHiringSignals";
+import { HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT } from "@/services/graphql/hiringSignalService";
 
 export default function DashboardPage() {
   const { isAdmin, isPro } = useRole();
+  const hiringEnabled = isPro() || isAdmin;
+
+  const hiring = useHiringSignals(
+    hiringEnabled ? { limit: HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT } : {},
+    {
+      signalTimePreset: "all",
+      fetchFullMatchPages: true,
+      enabled: hiringEnabled,
+    },
+  );
+
   // Record dashboard page-view performance metric (fire-and-forget)
   usePerformanceMetric("dashboard_view", undefined, { page: "dashboard" });
 
   const [activity, setActivity] = useState<ActivityItem[]>([]);
-  const [liveData, setLiveData] = useState<AreaDataPoint[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    // FIX (Hypothesis E): Defer data fetching by one tick so React can paint the
-    // dashboard shell (skeleton/empty widgets) BEFORE any network I/O begins.
-    // This removes the perception of a blank page while queries are in-flight.
     const timer = setTimeout(async () => {
       try {
-        const [acts, metrics] = await Promise.allSettled([
-          activitiesService.list({ limit: 50, offset: 0 }),
-          analyticsService.listPerformanceMetrics({ limit: 50 }),
-        ]);
+        const acts = await activitiesService.list({ limit: 50, offset: 0 });
         if (cancelled) return;
 
-        const actItems =
-          acts.status === "fulfilled"
-            ? acts.value.activities.activities.items
-            : [];
+        const actItems = acts.activities.activities.items;
 
         setActivity(
           actItems.slice(0, 5).map((a) => ({
@@ -76,13 +52,8 @@ export default function DashboardPage() {
               a.status === "failed" ? ("info" as const) : ("success" as const),
           })),
         );
-
-        if (metrics.status === "fulfilled" && metrics.value.length > 0) {
-          const built = buildAreaDataFromMetrics(metrics.value);
-          if (built.length > 0) setLiveData(built);
-        }
       } catch {
-        // keep empty arrays
+        /* keep empty */
       }
     }, 0);
     return () => {
@@ -97,13 +68,17 @@ export default function DashboardPage() {
 
       <DashboardAdCarousel interval={6000} />
 
-      {isPro() || isAdmin ? (
+      {hiringEnabled ? (
         <section aria-label="Hiring signals overview">
-          <HiringSignalsHomeOverview />
+          <HiringSignalsHomeOverview hiring={hiring} />
         </section>
       ) : null}
 
-      <DashboardChartSection liveData={liveData} activity={activity} />
+      <DashboardChartSection
+        activity={activity}
+        jobs={hiringEnabled ? hiring.jobs : undefined}
+        jobsLoading={hiringEnabled ? hiring.loading : false}
+      />
     </DashboardPageLayout>
   );
 }

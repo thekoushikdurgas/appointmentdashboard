@@ -396,6 +396,16 @@
   min-height: 200px;
 }
 
+.c360-hs-chart--h280 {
+  height: 280px;
+  min-height: 240px;
+}
+
+.c360-hs-chart--h320 {
+  height: 320px;
+  min-height: 260px;
+}
+
 .c360-hs-chart.c360-hs-chart--pie {
   width: 100%;
   max-width: 100%;

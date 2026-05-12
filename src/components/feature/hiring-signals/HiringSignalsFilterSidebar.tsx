@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
+import { useRole } from "@/context/RoleContext";
 import {
   normalizeHiringSignalTokenList,
   postedAfterISOFromPreset,
@@ -279,6 +280,8 @@ export interface HiringSignalsFilterSidebarProps {
   signalTimePreset: "all" | "new_7d";
   /** Active job.server ingest run filter (from Runs tab drill-down). */
   appliedRunId?: string;
+  /** Total jobs matching the current filters (pass when `appliedRunId` is set to show count on the run chip). */
+  runScopedJobTotal?: number;
   onClearRunId?: () => void;
   className?: string;
   drawerTitleId?: string;
@@ -291,6 +294,7 @@ export function HiringSignalsFilterSidebar({
   appliedListFilters,
   signalTimePreset,
   appliedRunId,
+  runScopedJobTotal,
   onClearRunId,
   className,
   drawerTitleId = "c360-hs-filter-drawer-title",
@@ -298,6 +302,7 @@ export function HiringSignalsFilterSidebar({
   onTableDensityChange,
 }: HiringSignalsFilterSidebarProps) {
   const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
+  const { isAdmin: showFullHireSignalFilters } = useRole();
 
   const toggleCountryCode = (code: string, checked: boolean) => {
     const cur = normalizeHiringSignalTokenList(draft.countries);
@@ -351,19 +356,6 @@ export function HiringSignalsFilterSidebar({
   addTokenChips("title", draft.titles, "Title", "titles");
   addTokenChips("co", draft.companies, "Company", "companies");
   addTokenChips("loc", draft.locations, "Location", "locations");
-  addTokenChips("emp", draft.employmentTypes, "Employment", "employmentTypes");
-  if (draft.employmentType.trim())
-    addChip("emp-single", `Employment type: ${draft.employmentType}`, () =>
-      onDraftField("employmentType", ""),
-    );
-  addTokenChips("wp", draft.workplaceTypes, "Workplace", "workplaceTypes");
-  addTokenChips("ind", draft.industries, "Industry", "industries");
-  addTokenChips(
-    "exind",
-    draft.excludedIndustries,
-    "Excl. industry",
-    "excludedIndustries",
-  );
   addTokenChips("exti", draft.excludedTitles, "Excl. title", "excludedTitles");
   addTokenChips(
     "exco",
@@ -377,87 +369,112 @@ export function HiringSignalsFilterSidebar({
     "Excl. location",
     "excludedLocations",
   );
-  addTokenChips(
-    "xb",
-    draft.experienceBuckets,
-    "Experience",
-    "experienceBuckets",
-  );
-  addTokenChips("rt", draft.roleTracks, "Role track", "roleTracks");
-  addTokenChips(
-    "edu",
-    draft.educationLevelMins,
-    "Education ≥",
-    "educationLevelMins",
-  );
-  addTokenChips("sk", draft.skillsAll, "Skill", "skillsAll");
-  addTokenChips("ctry", draft.countries, "Country", "countries");
-
-  if (draft.applyMethod.trim())
-    addChip(
-      "applym",
-      draft.applyMethod === LINKEDIN_APPLY_METHOD
-        ? "LinkedIn Apply (hosted)"
-        : draft.applyMethod === EASY_APPLY_METHOD
-          ? "Easy apply (LinkedIn)"
-          : `Apply method: ${draft.applyMethod}`,
-      () => onDraftField("applyMethod", ""),
+  if (showFullHireSignalFilters) {
+    addTokenChips(
+      "emp",
+      draft.employmentTypes,
+      "Employment",
+      "employmentTypes",
     );
-
-  if (draft.salaryMin.trim())
-    addChip("salary", `Min salary: $${draft.salaryMin.trim()}`, () =>
-      onDraftField("salaryMin", ""),
+    if (draft.employmentType.trim())
+      addChip("emp-single", `Employment type: ${draft.employmentType}`, () =>
+        onDraftField("employmentType", ""),
+      );
+    addTokenChips("wp", draft.workplaceTypes, "Workplace", "workplaceTypes");
+    addTokenChips("ind", draft.industries, "Industry", "industries");
+    addTokenChips(
+      "exind",
+      draft.excludedIndustries,
+      "Excl. industry",
+      "excludedIndustries",
     );
-
-  if (draft.clearanceMode.trim() === "hide")
-    addChip("clr", "Clearance: hide required", () =>
-      onDraftField("clearanceMode", ""),
+    addTokenChips(
+      "xb",
+      draft.experienceBuckets,
+      "Experience",
+      "experienceBuckets",
     );
-  if (draft.clearanceMode.trim() === "only")
-    addChip("clo", "Clearance: only required", () =>
-      onDraftField("clearanceMode", ""),
+    addTokenChips("rt", draft.roleTracks, "Role track", "roleTracks");
+    addTokenChips(
+      "edu",
+      draft.educationLevelMins,
+      "Education ≥",
+      "educationLevelMins",
     );
+    addTokenChips("sk", draft.skillsAll, "Skill", "skillsAll");
+    addTokenChips("ctry", draft.countries, "Country", "countries");
 
-  if (draft.h1bOnly)
-    addChip("h1b", "H1B / sponsorship mention", () =>
-      onDraftField("h1bOnly", false),
-    );
+    if (draft.applyMethod.trim())
+      addChip(
+        "applym",
+        draft.applyMethod === LINKEDIN_APPLY_METHOD
+          ? "LinkedIn Apply (hosted)"
+          : draft.applyMethod === EASY_APPLY_METHOD
+            ? "Easy apply (LinkedIn)"
+            : `Apply method: ${draft.applyMethod}`,
+        () => onDraftField("applyMethod", ""),
+      );
 
-  if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
-    const s =
-      draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
-    addChip("seniority", `Seniority: ${s}`, () => {
-      onDraftField("seniorityPreset", "");
-      onDraftField("seniorityCustom", "");
-    });
+    if (draft.salaryMin.trim())
+      addChip("salary", `Min salary: $${draft.salaryMin.trim()}`, () =>
+        onDraftField("salaryMin", ""),
+      );
+
+    if (draft.clearanceMode.trim() === "hide")
+      addChip("clr", "Clearance: hide required", () =>
+        onDraftField("clearanceMode", ""),
+      );
+    if (draft.clearanceMode.trim() === "only")
+      addChip("clo", "Clearance: only required", () =>
+        onDraftField("clearanceMode", ""),
+      );
+
+    if (draft.h1bOnly)
+      addChip("h1b", "H1B / sponsorship mention", () =>
+        onDraftField("h1bOnly", false),
+      );
+
+    if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
+      const s =
+        draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
+      addChip("seniority", `Seniority: ${s}`, () => {
+        onDraftField("seniorityPreset", "");
+        onDraftField("seniorityCustom", "");
+      });
+    }
+    if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
+      const s =
+        draft.functionCustom.trim() || draft.functionPreset.trim() || "";
+      addChip("func", `Function: ${s}`, () => {
+        onDraftField("functionPreset", "");
+        onDraftField("functionCustom", "");
+      });
+    }
+    if (
+      draft.datePostedPreset === "24h" ||
+      draft.datePostedPreset === "7d" ||
+      draft.datePostedPreset === "30d"
+    ) {
+      const pk = draft.datePostedPreset;
+      addChip(
+        "dpreset",
+        `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
+        () => {
+          onDraftField("datePostedPreset", "any");
+          onDraftField("postedAfter", "");
+        },
+      );
+    } else if (draft.postedAfter.trim()) {
+      addChip("after", `Posted after ${draft.postedAfter}`, () => {
+        onDraftField("postedAfter", "");
+        onDraftField("datePostedPreset", "any");
+      });
+    }
+    if (draft.postedBefore.trim())
+      addChip("before", `Before ${draft.postedBefore}`, () =>
+        onDraftField("postedBefore", ""),
+      );
   }
-  if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
-    const s = draft.functionCustom.trim() || draft.functionPreset.trim() || "";
-    addChip("func", `Function: ${s}`, () => {
-      onDraftField("functionPreset", "");
-      onDraftField("functionCustom", "");
-    });
-  }
-  if (
-    draft.datePostedPreset === "24h" ||
-    draft.datePostedPreset === "7d" ||
-    draft.datePostedPreset === "30d"
-  ) {
-    const pk = draft.datePostedPreset;
-    addChip("dpreset", `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`, () => {
-      onDraftField("datePostedPreset", "any");
-      onDraftField("postedAfter", "");
-    });
-  } else if (draft.postedAfter.trim()) {
-    addChip("after", `Posted after ${draft.postedAfter}`, () => {
-      onDraftField("postedAfter", "");
-      onDraftField("datePostedPreset", "any");
-    });
-  }
-  if (draft.postedBefore.trim())
-    addChip("before", `Before ${draft.postedBefore}`, () =>
-      onDraftField("postedBefore", ""),
-    );
 
   const runChip =
     appliedRunId?.trim() && onClearRunId ? (
@@ -465,6 +482,10 @@ export function HiringSignalsFilterSidebar({
         <span className="c360-hs-filter-chip__text">
           Run: {appliedRunId.trim().slice(0, 12)}
           {appliedRunId.trim().length > 12 ? "…" : ""}
+          {typeof runScopedJobTotal === "number" &&
+          Number.isFinite(runScopedJobTotal) ? (
+            <> · {runScopedJobTotal.toLocaleString()} jobs</>
+          ) : null}
         </span>
         <button
           type="button"
@@ -660,132 +681,37 @@ export function HiringSignalsFilterSidebar({
       ) : null}
 
       <div className="c360-hs-filters__sections">
-        {onTableDensityChange ? (
-          <ContactsCollapsibleFilterSection
-            title="View"
-            count={tableDensity === "compact" ? 1 : 0}
-            defaultOpen={false}
-            onClear={() => onTableDensityChange("comfortable")}
-          >
-            <Select
-              id="hsf-view-mode"
-              value={tableDensity}
-              onChange={(e) =>
-                onTableDensityChange(
-                  e.target.value as "comfortable" | "compact",
-                )
-              }
-              options={VIEW_MODE_OPTIONS}
-              fullWidth
-              inputSize="md"
+        <ContactsCollapsibleFilterSection
+          title="Title"
+          count={titleValues.length + exTitleCount}
+          defaultOpen
+          onClear={() => {
+            onDraftField("titles", []);
+            onDraftField("excludedTitles", []);
+          }}
+        >
+          <div className="c360-space-y-3">
+            <HiringSignalTextFacetCombobox
+              field="title"
+              label="Include job titles"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={titleValues}
+              onSelectionChange={(v) => onDraftField("titles", v)}
             />
-          </ContactsCollapsibleFilterSection>
-        ) : null}
-
-        <ContactsCollapsibleFilterSection
-          title="Date posted"
-          count={datePostedCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("datePostedPreset", "any");
-            onDraftField("postedAfter", "");
-            onDraftField("postedBefore", "");
-          }}
-        >
-          {signalTimePreset === "new_7d" ? (
-            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              The Signals &quot;New&quot; tab also enforces jobs from at least
-              the last 7 days; the stricter window wins when combined with these
-              presets.
-            </p>
-          ) : null}
-          <Select
-            id="hsf-date-preset"
-            value={draft.datePostedPreset}
-            onChange={(e) => onDatePostedPresetChange(e.target.value)}
-            options={DATE_POSTED_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-2"
-          />
-          {draft.datePostedPreset === "custom" ? (
-            <div className="c360-mb-3 c360-space-y-2">
-              <label
-                htmlFor="hsf-posted-after"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Posted on or after (optional)
-              </label>
-              <Input
-                id="hsf-posted-after"
-                type="date"
-                value={postedAtBoundToDateInputValue(draft.postedAfter)}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    postedAfter: e.target.value.trim(),
-                    datePostedPreset: "custom",
-                  }))
-                }
-              />
-              <label
-                htmlFor="hsf-posted-before"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Posted on or before (optional)
-              </label>
-              <Input
-                id="hsf-posted-before"
-                type="date"
-                value={postedAtBoundToDateInputValue(draft.postedBefore)}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    postedBefore: e.target.value.trim(),
-                    datePostedPreset: "custom",
-                  }))
-                }
-              />
-            </div>
-          ) : null}
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Experience level"
-          count={experienceLevelCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("seniorityPreset", "");
-            onDraftField("seniorityCustom", "");
-            onDraftField("experienceBuckets", []);
-          }}
-        >
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Seniority (matches ingested seniority text)
-          </p>
-          <Select
-            id="hsf-seniority-preset"
-            value={draft.seniorityPreset}
-            onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
-            options={SENIORITY_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Experience bucket (ingest-derived enum)
-          </p>
-          <Select
-            id="hsf-experience-bucket"
-            value={experienceBucketSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("experienceBuckets", v ? [v] : []);
-            }}
-            options={EXPERIENCE_BUCKET_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
+            <HiringSignalTextFacetCombobox
+              field="title"
+              label="Exclude job titles"
+              draft={draft}
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              selectedValues={normalizeHiringSignalTokenList(
+                draft.excludedTitles,
+              )}
+              onSelectionChange={(v) => onDraftField("excludedTitles", v)}
+            />
+          </div>
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
@@ -822,103 +748,6 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Job type"
-          count={employmentCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("employmentTypes", []);
-            onDraftField("employmentType", "");
-          }}
-        >
-          <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
-            Employment type (substring on ingested employment_type)
-          </p>
-          <Select
-            id="hsf-emp-type"
-            value={draft.employmentType}
-            onChange={(e) => onDraftField("employmentType", e.target.value)}
-            options={EMPLOYMENT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Remote / workplace"
-          count={workplaceCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("workplaceTypes", [])}
-        >
-          <Select
-            id="hsf-workplace"
-            value={workplaceSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("workplaceTypes", v ? [v] : []);
-            }}
-            options={WORKPLACE_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="LinkedIn Apply"
-          count={applyMethodCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("applyMethod", "")}
-        >
-          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              className="c360-mt-0.5"
-              checked={draft.applyMethod === EASY_APPLY_METHOD}
-              onChange={(e) =>
-                onDraftField(
-                  "applyMethod",
-                  e.target.checked ? EASY_APPLY_METHOD : "",
-                )
-              }
-            />
-            <span>
-              Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
-              (substring).
-            </span>
-          </label>
-          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              className="c360-mt-0.5"
-              checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
-              onChange={(e) =>
-                onDraftField(
-                  "applyMethod",
-                  e.target.checked ? LINKEDIN_APPLY_METHOD : "",
-                )
-              }
-            />
-            <span>
-              LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches ingested
-              apply_method (substring).
-            </span>
-          </label>
-          <label
-            htmlFor="hsf-apply-method"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-          >
-            Apply channel (fine-tune)
-          </label>
-          <Select
-            id="hsf-apply-method"
-            value={draft.applyMethod}
-            onChange={(e) => onDraftField("applyMethod", e.target.value)}
-            options={APPLY_METHOD_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
           title="Location"
           count={locationValues.length + exLocCount}
           defaultOpen
@@ -951,239 +780,437 @@ export function HiringSignalsFilterSidebar({
           </div>
         </ContactsCollapsibleFilterSection>
 
-        <ContactsCollapsibleFilterSection
-          title="Industries"
-          count={industriesCount + exIndCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("industries", []);
-            onDraftField("excludedIndustries", []);
-          }}
-        >
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Include industry (substring match)
-          </p>
-          <Select
-            id="hsf-industry-include"
-            value={industryIncludeSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("industries", v ? [v] : []);
-            }}
-            options={INDUSTRY_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Exclude industry
-          </p>
-          <Select
-            id="hsf-industry-exclude"
-            value={industryExcludeSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("excludedIndustries", v ? [v] : []);
-            }}
-            options={INDUSTRY_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
+        {showFullHireSignalFilters ? (
+          <>
+            {onTableDensityChange ? (
+              <ContactsCollapsibleFilterSection
+                title="View"
+                count={tableDensity === "compact" ? 1 : 0}
+                defaultOpen={false}
+                onClear={() => onTableDensityChange("comfortable")}
+              >
+                <Select
+                  id="hsf-view-mode"
+                  value={tableDensity}
+                  onChange={(e) =>
+                    onTableDensityChange(
+                      e.target.value as "comfortable" | "compact",
+                    )
+                  }
+                  options={VIEW_MODE_OPTIONS}
+                  fullWidth
+                  inputSize="md"
+                />
+              </ContactsCollapsibleFilterSection>
+            ) : null}
 
-        <ContactsCollapsibleFilterSection
-          title="Job function"
-          count={functionCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("functionPreset", "");
-            onDraftField("functionCustom", "");
-          }}
-        >
-          <Select
-            id="hsf-func-preset"
-            value={draft.functionPreset}
-            onChange={(e) => onDraftField("functionPreset", e.target.value)}
-            options={FUNCTION_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Title"
-          count={titleValues.length + exTitleCount}
-          defaultOpen
-          onClear={() => {
-            onDraftField("titles", []);
-            onDraftField("excludedTitles", []);
-          }}
-        >
-          <div className="c360-space-y-3">
-            <HiringSignalTextFacetCombobox
-              field="title"
-              label="Include job titles"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={titleValues}
-              onSelectionChange={(v) => onDraftField("titles", v)}
-            />
-            <HiringSignalTextFacetCombobox
-              field="title"
-              label="Exclude job titles"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={normalizeHiringSignalTokenList(
-                draft.excludedTitles,
-              )}
-              onSelectionChange={(v) => onDraftField("excludedTitles", v)}
-            />
-          </div>
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Compensation"
-          count={salaryCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("salaryMin", "")}
-        >
-          <label
-            htmlFor="hsf-salary-min"
-            className="c360-block c360-text-2xs c360-text-ink-muted"
-          >
-            Minimum salary (USD / year, ingested jobs only)
-          </label>
-          <Input
-            id="hsf-salary-min"
-            type="number"
-            min={0}
-            value={draft.salaryMin}
-            onChange={(e) => onDraftField("salaryMin", e.target.value)}
-            placeholder="e.g. 120000"
-            autoComplete="off"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Country"
-          count={countryCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("countries", []);
-          }}
-        >
-          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            Match jobs whose inferred country overlaps any selected ISO code
-            (OR).
-          </p>
-          <div className="c360-max-h-48 c360-overflow-y-auto c360-rounded-md c360-border c360-border-ink-8 c360-p-2">
-            <div className="c360-grid c360-grid-cols-1 c360-gap-1 sm:c360-grid-cols-2">
-              {COUNTRY_FILTER_OPTIONS.map((o) => (
-                <label
-                  key={o.value}
-                  className="c360-flex c360-cursor-pointer c360-items-start c360-gap-2 c360-text-2xs"
-                >
-                  <input
-                    type="checkbox"
-                    className="c360-mt-0.5"
-                    checked={normalizedCountries.includes(o.value)}
+            <ContactsCollapsibleFilterSection
+              title="Date posted"
+              count={datePostedCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("datePostedPreset", "any");
+                onDraftField("postedAfter", "");
+                onDraftField("postedBefore", "");
+              }}
+            >
+              {signalTimePreset === "new_7d" ? (
+                <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                  The Signals &quot;New&quot; tab also enforces jobs from at
+                  least the last 7 days; the stricter window wins when combined
+                  with these presets.
+                </p>
+              ) : null}
+              <Select
+                id="hsf-date-preset"
+                value={draft.datePostedPreset}
+                onChange={(e) => onDatePostedPresetChange(e.target.value)}
+                options={DATE_POSTED_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-2"
+              />
+              {draft.datePostedPreset === "custom" ? (
+                <div className="c360-mb-3 c360-space-y-2">
+                  <label
+                    htmlFor="hsf-posted-after"
+                    className="c360-block c360-text-2xs c360-text-ink-muted"
+                  >
+                    Posted on or after (optional)
+                  </label>
+                  <Input
+                    id="hsf-posted-after"
+                    type="date"
+                    value={postedAtBoundToDateInputValue(draft.postedAfter)}
                     onChange={(e) =>
-                      toggleCountryCode(o.value, e.target.checked)
+                      setDraft((d) => ({
+                        ...d,
+                        postedAfter: e.target.value.trim(),
+                        datePostedPreset: "custom",
+                      }))
                     }
                   />
-                  <span>{o.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </ContactsCollapsibleFilterSection>
+                  <label
+                    htmlFor="hsf-posted-before"
+                    className="c360-block c360-text-2xs c360-text-ink-muted"
+                  >
+                    Posted on or before (optional)
+                  </label>
+                  <Input
+                    id="hsf-posted-before"
+                    type="date"
+                    value={postedAtBoundToDateInputValue(draft.postedBefore)}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        postedBefore: e.target.value.trim(),
+                        datePostedPreset: "custom",
+                      }))
+                    }
+                  />
+                </div>
+              ) : null}
+            </ContactsCollapsibleFilterSection>
 
-        <ContactsCollapsibleFilterSection
-          title="Role & education"
-          count={roleTrackCount + eduCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("educationLevelMins", []);
-            onDraftField("roleTracks", []);
-          }}
-        >
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Role track (from title / description)
-          </p>
-          <Select
-            id="hsf-role-track"
-            value={roleTrackSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("roleTracks", v ? [v] : []);
-            }}
-            options={ROLE_TRACK_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Minimum education (job posting mentions)
-          </p>
-          <Select
-            id="hsf-education-min"
-            value={educationMinSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("educationLevelMins", v ? [v] : []);
-            }}
-            options={EDUCATION_MIN_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
+            <ContactsCollapsibleFilterSection
+              title="Experience level"
+              count={experienceLevelCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("seniorityPreset", "");
+                onDraftField("seniorityCustom", "");
+                onDraftField("experienceBuckets", []);
+              }}
+            >
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Seniority (matches ingested seniority text)
+              </p>
+              <Select
+                id="hsf-seniority-preset"
+                value={draft.seniorityPreset}
+                onChange={(e) =>
+                  onDraftField("seniorityPreset", e.target.value)
+                }
+                options={SENIORITY_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-3"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Experience bucket (ingest-derived enum)
+              </p>
+              <Select
+                id="hsf-experience-bucket"
+                value={experienceBucketSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("experienceBuckets", v ? [v] : []);
+                }}
+                options={EXPERIENCE_BUCKET_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
 
-        <ContactsCollapsibleFilterSection
-          title="Compliance & preferences"
-          count={clearanceCount + h1bCount + skillsCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("clearanceMode", "");
-            onDraftField("h1bOnly", false);
-            onDraftField("skillsAll", []);
-          }}
-        >
-          <Select
-            id="hsf-clearance"
-            value={draft.clearanceMode}
-            onChange={(e) => onDraftField("clearanceMode", e.target.value)}
-            options={CLEARANCE_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-          <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-            Clearance flags are inferred from job text (see docs).
-          </p>
-          <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              checked={draft.h1bOnly}
-              onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
-            />
-            H1B / sponsorship mentioned
-          </label>
-          <p className="c360-mt-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Skill (all ingested tags must include selection)
-          </p>
-          <Select
-            id="hsf-skill-tag"
-            value={skillTagSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("skillsAll", v ? [v] : []);
-            }}
-            options={SKILL_TAG_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
+            <ContactsCollapsibleFilterSection
+              title="Job type"
+              count={employmentCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("employmentTypes", []);
+                onDraftField("employmentType", "");
+              }}
+            >
+              <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
+                Employment type (substring on ingested employment_type)
+              </p>
+              <Select
+                id="hsf-emp-type"
+                value={draft.employmentType}
+                onChange={(e) => onDraftField("employmentType", e.target.value)}
+                options={EMPLOYMENT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Remote / workplace"
+              count={workplaceCount}
+              defaultOpen={false}
+              onClear={() => onDraftField("workplaceTypes", [])}
+            >
+              <Select
+                id="hsf-workplace"
+                value={workplaceSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("workplaceTypes", v ? [v] : []);
+                }}
+                options={WORKPLACE_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="LinkedIn Apply"
+              count={applyMethodCount}
+              defaultOpen={false}
+              onClear={() => onDraftField("applyMethod", "")}
+            >
+              <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  className="c360-mt-0.5"
+                  checked={draft.applyMethod === EASY_APPLY_METHOD}
+                  onChange={(e) =>
+                    onDraftField(
+                      "applyMethod",
+                      e.target.checked ? EASY_APPLY_METHOD : "",
+                    )
+                  }
+                />
+                <span>
+                  Easy apply ({EASY_APPLY_METHOD}) — matches ingested
+                  apply_method (substring).
+                </span>
+              </label>
+              <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  className="c360-mt-0.5"
+                  checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
+                  onChange={(e) =>
+                    onDraftField(
+                      "applyMethod",
+                      e.target.checked ? LINKEDIN_APPLY_METHOD : "",
+                    )
+                  }
+                />
+                <span>
+                  LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches
+                  ingested apply_method (substring).
+                </span>
+              </label>
+              <label
+                htmlFor="hsf-apply-method"
+                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Apply channel (fine-tune)
+              </label>
+              <Select
+                id="hsf-apply-method"
+                value={draft.applyMethod}
+                onChange={(e) => onDraftField("applyMethod", e.target.value)}
+                options={APPLY_METHOD_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Industries"
+              count={industriesCount + exIndCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("industries", []);
+                onDraftField("excludedIndustries", []);
+              }}
+            >
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Include industry (substring match)
+              </p>
+              <Select
+                id="hsf-industry-include"
+                value={industryIncludeSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("industries", v ? [v] : []);
+                }}
+                options={INDUSTRY_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-3"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Exclude industry
+              </p>
+              <Select
+                id="hsf-industry-exclude"
+                value={industryExcludeSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("excludedIndustries", v ? [v] : []);
+                }}
+                options={INDUSTRY_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Job function"
+              count={functionCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("functionPreset", "");
+                onDraftField("functionCustom", "");
+              }}
+            >
+              <Select
+                id="hsf-func-preset"
+                value={draft.functionPreset}
+                onChange={(e) => onDraftField("functionPreset", e.target.value)}
+                options={FUNCTION_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Compensation"
+              count={salaryCount}
+              defaultOpen={false}
+              onClear={() => onDraftField("salaryMin", "")}
+            >
+              <label
+                htmlFor="hsf-salary-min"
+                className="c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Minimum salary (USD / year, ingested jobs only)
+              </label>
+              <Input
+                id="hsf-salary-min"
+                type="number"
+                min={0}
+                value={draft.salaryMin}
+                onChange={(e) => onDraftField("salaryMin", e.target.value)}
+                placeholder="e.g. 120000"
+                autoComplete="off"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Country"
+              count={countryCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("countries", []);
+              }}
+            >
+              <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                Match jobs whose inferred country overlaps any selected ISO code
+                (OR).
+              </p>
+              <div className="c360-max-h-48 c360-overflow-y-auto c360-rounded-md c360-border c360-border-ink-8 c360-p-2">
+                <div className="c360-grid c360-grid-cols-1 c360-gap-1 sm:c360-grid-cols-2">
+                  {COUNTRY_FILTER_OPTIONS.map((o) => (
+                    <label
+                      key={o.value}
+                      className="c360-flex c360-cursor-pointer c360-items-start c360-gap-2 c360-text-2xs"
+                    >
+                      <input
+                        type="checkbox"
+                        className="c360-mt-0.5"
+                        checked={normalizedCountries.includes(o.value)}
+                        onChange={(e) =>
+                          toggleCountryCode(o.value, e.target.checked)
+                        }
+                      />
+                      <span>{o.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Role & education"
+              count={roleTrackCount + eduCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("educationLevelMins", []);
+                onDraftField("roleTracks", []);
+              }}
+            >
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Role track (from title / description)
+              </p>
+              <Select
+                id="hsf-role-track"
+                value={roleTrackSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("roleTracks", v ? [v] : []);
+                }}
+                options={ROLE_TRACK_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-3"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Minimum education (job posting mentions)
+              </p>
+              <Select
+                id="hsf-education-min"
+                value={educationMinSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("educationLevelMins", v ? [v] : []);
+                }}
+                options={EDUCATION_MIN_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+
+            <ContactsCollapsibleFilterSection
+              title="Compliance & preferences"
+              count={clearanceCount + h1bCount + skillsCount}
+              defaultOpen={false}
+              onClear={() => {
+                onDraftField("clearanceMode", "");
+                onDraftField("h1bOnly", false);
+                onDraftField("skillsAll", []);
+              }}
+            >
+              <Select
+                id="hsf-clearance"
+                value={draft.clearanceMode}
+                onChange={(e) => onDraftField("clearanceMode", e.target.value)}
+                options={CLEARANCE_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+              <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
+                Clearance flags are inferred from job text (see docs).
+              </p>
+              <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  checked={draft.h1bOnly}
+                  onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
+                />
+                H1B / sponsorship mentioned
+              </label>
+              <p className="c360-mt-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Skill (all ingested tags must include selection)
+              </p>
+              <Select
+                id="hsf-skill-tag"
+                value={skillTagSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("skillsAll", v ? [v] : []);
+                }}
+                options={SKILL_TAG_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </ContactsCollapsibleFilterSection>
+          </>
+        ) : null}
       </div>
     </div>
   );

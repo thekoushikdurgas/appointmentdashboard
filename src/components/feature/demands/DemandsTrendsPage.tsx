@@ -20,7 +20,10 @@ import {
 } from "recharts";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import type {
+  HiringSignalIndexStats,
+  LinkedInJobRow,
+} from "@/hooks/useHiringSignals";
 import { CHART_COLORS, RECHARTS_DEFAULTS } from "@/lib/chartTheme";
 import {
   buildCountryBreakdown,
@@ -71,6 +74,10 @@ export interface DemandsTrendsPageProps {
     error: string | null;
     filters: JobListFilters;
     refetch: () => Promise<void>;
+    total?: number;
+    stats: HiringSignalIndexStats;
+    statsLoading: boolean;
+    analyticsMatchCappedAt: number | null;
   };
   signalTimePreset: "all" | "new_7d";
 }
@@ -79,22 +86,39 @@ export function DemandsTrendsPage({
   hiring,
   signalTimePreset,
 }: DemandsTrendsPageProps) {
-  const { jobs, loading, error, filters, refetch } = hiring;
+  const {
+    jobs,
+    loading,
+    error,
+    filters,
+    refetch,
+    total,
+    stats,
+    statsLoading,
+    analyticsMatchCappedAt,
+  } = hiring;
   const { activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const kpi: HiringDashboardKpis | null = useMemo(() => {
     const med = buildMedianSalary(jobs);
+    const listTotal = typeof total === "number" ? total : jobs.length;
     return {
       total_jobs: jobs.length,
+      matching_postings_total: listTotal,
+      loaded_rows: jobs.length,
       jobs_with_salary: med.n,
       median_salary_min_usd: med.median ?? undefined,
       remote_count: buildRemoteCount(jobs),
       distinct_countries: distinctCountries(jobs),
       distinct_companies: distinctCompanies(jobs),
+      global_indexed_jobs: stats.totalJobs,
+      global_jobs_with_company: stats.jobsWithCompany,
+      global_median_salary_min_usd: stats.globalMedianSalaryMinUsd,
+      analytics_match_capped_at: analyticsMatchCappedAt,
     };
-  }, [jobs]);
+  }, [jobs, total, stats, analyticsMatchCappedAt]);
 
   const daily = useMemo(() => buildDailyPostingsSeries(jobs), [jobs]);
   const locRows = useMemo(
@@ -143,6 +167,9 @@ export function DemandsTrendsPage({
   const industries = useMemo(() => buildTopIndustries(jobs, 12), [jobs]);
   const monthlySal = useMemo(() => buildMonthlySalaryRange(jobs), [jobs]);
 
+  const toolbarMatchTotal =
+    typeof total === "number" && total > 0 ? total : jobs.length;
+
   const toolbar = (
     <DataToolbar
       cssPrefix="c360-toolbar"
@@ -150,13 +177,13 @@ export function DemandsTrendsPage({
         {
           value: "demands",
           label: "Overview",
-          count: jobs.length,
+          count: toolbarMatchTotal,
           showCountOnlyWhenActive: false,
         },
       ]}
       activeTab="demands"
       onTabChange={() => {}}
-      totalCount={jobs.length}
+      totalCount={toolbarMatchTotal}
       filterConfig={{
         activeCount: activeDraftCount,
         onOpen: () => setMobileFiltersOpen(true),
@@ -200,11 +227,16 @@ export function DemandsTrendsPage({
             appliedListFilters={filters}
             signalTimePreset={signalTimePreset}
             appliedRunId={filters.runId}
+            runScopedJobTotal={
+              filters.runId?.trim() && typeof total === "number"
+                ? total
+                : undefined
+            }
           />
         }
       >
         <div className="c360-section-stack">
-          <HiringKpiStrip data={kpi} loading={loading} />
+          <HiringKpiStrip data={kpi} loading={loading || statsLoading} />
 
           <div className="c360-2col-grid">
             <Card title="Top locations" subtitle="Country · city">
@@ -224,7 +256,7 @@ export function DemandsTrendsPage({
               />
             </Card>
             <Card title="Daily postings" subtitle="UTC day from posted date">
-              <div className="c360-hs-chart" style={{ height: 320 }}>
+              <div className="c360-hs-chart c360-hs-chart--h320">
                 {daily.length === 0 ? (
                   <p className="c360-text-sm c360-text-muted">No dated rows.</p>
                 ) : (
@@ -309,7 +341,7 @@ export function DemandsTrendsPage({
           </div>
 
           <Card title="Monthly salary range" subtitle="Median min / max USD">
-            <div className="c360-hs-chart" style={{ height: 280 }}>
+            <div className="c360-hs-chart c360-hs-chart--h280">
               {monthlySal.length === 0 ? (
                 <p className="c360-text-sm c360-text-muted">No salary data.</p>
               ) : (
@@ -354,7 +386,7 @@ export function DemandsTrendsPage({
             title="Posting trends by title"
             subtitle="Top 5 titles · monthly"
           >
-            <div className="c360-hs-chart" style={{ height: 320 }}>
+            <div className="c360-hs-chart c360-hs-chart--h320">
               {titleTrends.chartData.length === 0 ? (
                 <p className="c360-text-sm c360-text-muted">Not enough data.</p>
               ) : (
