@@ -12,6 +12,12 @@ import {
   sanitizeJobDescriptionHtml,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
+function hrefIfHttp(url: string): string | null {
+  const t = url.trim();
+  if (!t || !/^https?:\/\//i.test(t)) return null;
+  return t;
+}
+
 export interface JobDescriptionModalProps {
   job: LinkedInJobRow | null;
   isOpen: boolean;
@@ -24,6 +30,10 @@ export function JobDescriptionModal({
   onClose,
 }: JobDescriptionModalProps) {
   const safeHtml = job ? sanitizeJobDescriptionHtml(job.descriptionHtml) : "";
+  const listingHref = job ? hrefIfHttp(job.jobUrl) : null;
+  const applyHref = job ? hrefIfHttp(job.applyUrl) : null;
+  const sameListingAndApply =
+    Boolean(listingHref && applyHref && listingHref === applyHref);
 
   return (
     <Modal
@@ -33,14 +43,39 @@ export function JobDescriptionModal({
       size="lg"
       footer={
         <div className="c360-flex c360-w-full c360-flex-wrap c360-items-center c360-justify-end c360-gap-2">
-          {job?.jobUrl ? (
+          {sameListingAndApply && listingHref ? (
             <Button asChild variant="primary" size="sm" className="c360-gap-1">
-              <a href={job.jobUrl} target="_blank" rel="noopener noreferrer">
+              <a href={listingHref} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={16} />
-                Open on LinkedIn
+                Open job
               </a>
             </Button>
-          ) : null}
+          ) : (
+            <>
+              {applyHref ? (
+                <Button asChild variant="primary" size="sm" className="c360-gap-1">
+                  <a href={applyHref} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink size={16} />
+                    Apply
+                  </a>
+                </Button>
+              ) : null}
+              {listingHref &&
+              (!applyHref || applyHref !== listingHref) ? (
+                <Button
+                  asChild
+                  variant={applyHref ? "secondary" : "primary"}
+                  size="sm"
+                  className="c360-gap-1"
+                >
+                  <a href={listingHref} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink size={16} />
+                    Open on LinkedIn
+                  </a>
+                </Button>
+              ) : null}
+            </>
+          )}
           <Button type="button" variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>

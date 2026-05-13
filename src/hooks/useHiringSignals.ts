@@ -74,7 +74,10 @@ export type LinkedInJobRow = {
   workplaceTypes?: string[];
   remoteAllowed: string;
   workRemote?: boolean;
+  /** Listing / view URL (LinkedIn job page, `link` from job.server, etc.). */
   jobUrl: string;
+  /** Direct application URL from job.server `applyUrl` / `apply_url` when different from listing. */
+  applyUrl: string;
   descriptionHtml: string;
   seniority: string;
   educationLevelMin?: string;
@@ -198,6 +201,26 @@ function resolveJobTitleSortPrimary(
   return "";
 }
 
+/** Apply / external apply links from raw Apify-style payloads (snake + camel). */
+function extractApplyUrlFromRawPayload(raw: Record<string, unknown> | null): string {
+  if (!raw) return "";
+  const candidates: unknown[] = [
+    raw.applyUrl,
+    raw.apply_url,
+    raw.applyURL,
+    raw.easyApplyUrl,
+    raw.easy_apply_url,
+    raw.externalApplyUrl,
+    raw.applicationUrl,
+    raw.application_url,
+  ];
+  for (const c of candidates) {
+    const s = pickStr(c).trim();
+    if (s) return s;
+  }
+  return "";
+}
+
 /** Normalize a single JSON object from `hireSignal.jobs` / `companyJobs` payloads. */
 export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   const o = asRecord(raw) ?? {};
@@ -240,7 +263,14 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     workplaceTypes: pickStrList(o.workplace_types ?? o.workplaceTypes),
     remoteAllowed: pickStr(o.remote_allowed ?? o.remoteAllowed),
     workRemote: pickBool(o.work_remote ?? o.workRemote),
-    jobUrl: pickStr(o.job_url ?? o.jobUrl ?? o.url ?? o.apply_url),
+    jobUrl: pickStr(
+      o.job_url ?? o.jobUrl ?? o.url ?? o.link ?? o.job_link ?? o.jobLink,
+    ),
+    applyUrl: (() => {
+      const top = pickStr(o.apply_url ?? o.applyUrl).trim();
+      if (top) return top;
+      return extractApplyUrlFromRawPayload(rawPayload);
+    })(),
     descriptionHtml: pickStr(
       o.description_html ?? o.descriptionHtml ?? o.description,
     ),
