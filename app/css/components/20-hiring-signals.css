@@ -719,6 +719,14 @@
   margin-bottom: 0.75rem;
 }
 
+.c360-hs-filter-chips--section {
+  margin-bottom: 0.5rem;
+}
+
+.c360-hs-filters__run-row .c360-hs-filter-chips--run {
+  margin-bottom: 0;
+}
+
 .c360-hs-filter-chip {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,6 +14,8 @@ import {
   postedAfterISOFromPreset,
   postedAtBoundToDateInputValue,
   type DatePostedPreset,
+  type HiringSignalFilterDraft,
+  type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
@@ -268,6 +271,320 @@ const FUNCTION_PRESET_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
+export type HsFilterChipItem = {
+  key: string;
+  label: string;
+  onRemove: () => void;
+};
+
+export type HsChipBucketKey =
+  | "title"
+  | "company"
+  | "location"
+  | "datePosted"
+  | "experienceLevel"
+  | "jobType"
+  | "workplace"
+  | "linkedInApply"
+  | "industries"
+  | "jobFunction"
+  | "compensation"
+  | "country"
+  | "roleEducation"
+  | "compliance";
+
+function emptyHiringSignalChipBuckets(): Record<
+  HsChipBucketKey,
+  HsFilterChipItem[]
+> {
+  return {
+    title: [],
+    company: [],
+    location: [],
+    datePosted: [],
+    experienceLevel: [],
+    jobType: [],
+    workplace: [],
+    linkedInApply: [],
+    industries: [],
+    jobFunction: [],
+    compensation: [],
+    country: [],
+    roleEducation: [],
+    compliance: [],
+  };
+}
+
+function buildHiringSignalChipBuckets(
+  draft: HiringSignalFilterDraft,
+  showFullHireSignalFilters: boolean,
+  onDraftField: (
+    field: HiringSignalDraftField,
+    value: string | string[] | boolean,
+  ) => void,
+): Record<HsChipBucketKey, HsFilterChipItem[]> {
+  const b = emptyHiringSignalChipBuckets();
+  const add = (section: HsChipBucketKey, item: HsFilterChipItem) => {
+    b[section].push(item);
+  };
+
+  const addTokenChips = (
+    section: HsChipBucketKey,
+    prefix: string,
+    values: string[],
+    labelPrefix: string,
+    field: HiringSignalDraftField,
+  ) => {
+    values.forEach((raw, i) => {
+      const t = raw.trim();
+      if (!t) return;
+      add(section, {
+        key: `${prefix}-${i}-${t}`,
+        label: `${labelPrefix}: ${t}`,
+        onRemove: () => {
+          onDraftField(
+            field,
+            values.filter((_, j) => j !== i),
+          );
+        },
+      });
+    });
+  };
+
+  addTokenChips("title", "title", draft.titles, "Title", "titles");
+  addTokenChips("company", "co", draft.companies, "Company", "companies");
+  addTokenChips("location", "loc", draft.locations, "Location", "locations");
+  addTokenChips(
+    "title",
+    "exti",
+    draft.excludedTitles,
+    "Excl. title",
+    "excludedTitles",
+  );
+  addTokenChips(
+    "company",
+    "exco",
+    draft.excludedCompanies,
+    "Excl. company",
+    "excludedCompanies",
+  );
+  addTokenChips(
+    "location",
+    "exloc",
+    draft.excludedLocations,
+    "Excl. location",
+    "excludedLocations",
+  );
+
+  if (showFullHireSignalFilters) {
+    addTokenChips(
+      "jobType",
+      "emp",
+      draft.employmentTypes,
+      "Employment",
+      "employmentTypes",
+    );
+    if (draft.employmentType.trim()) {
+      add("jobType", {
+        key: "emp-single",
+        label: `Employment type: ${draft.employmentType}`,
+        onRemove: () => onDraftField("employmentType", ""),
+      });
+    }
+    addTokenChips(
+      "workplace",
+      "wp",
+      draft.workplaceTypes,
+      "Workplace",
+      "workplaceTypes",
+    );
+    addTokenChips(
+      "industries",
+      "ind",
+      draft.industries,
+      "Industry",
+      "industries",
+    );
+    addTokenChips(
+      "industries",
+      "exind",
+      draft.excludedIndustries,
+      "Excl. industry",
+      "excludedIndustries",
+    );
+    addTokenChips(
+      "experienceLevel",
+      "xb",
+      draft.experienceBuckets,
+      "Experience",
+      "experienceBuckets",
+    );
+    addTokenChips(
+      "roleEducation",
+      "rt",
+      draft.roleTracks,
+      "Role track",
+      "roleTracks",
+    );
+    addTokenChips(
+      "roleEducation",
+      "edu",
+      draft.educationLevelMins,
+      "Education ≥",
+      "educationLevelMins",
+    );
+    addTokenChips(
+      "compliance",
+      "sk",
+      draft.skillsAll,
+      "Skill",
+      "skillsAll",
+    );
+    addTokenChips(
+      "country",
+      "ctry",
+      draft.countries,
+      "Country",
+      "countries",
+    );
+
+    if (draft.applyMethod.trim()) {
+      add("linkedInApply", {
+        key: "applym",
+        label:
+          draft.applyMethod === LINKEDIN_APPLY_METHOD
+            ? "LinkedIn Apply (hosted)"
+            : draft.applyMethod === EASY_APPLY_METHOD
+              ? "Easy apply (LinkedIn)"
+              : `Apply method: ${draft.applyMethod}`,
+        onRemove: () => onDraftField("applyMethod", ""),
+      });
+    }
+
+    if (draft.salaryMin.trim()) {
+      add("compensation", {
+        key: "salary",
+        label: `Min salary: $${draft.salaryMin.trim()}`,
+        onRemove: () => onDraftField("salaryMin", ""),
+      });
+    }
+
+    if (draft.clearanceMode.trim() === "hide") {
+      add("compliance", {
+        key: "clr",
+        label: "Clearance: hide required",
+        onRemove: () => onDraftField("clearanceMode", ""),
+      });
+    }
+    if (draft.clearanceMode.trim() === "only") {
+      add("compliance", {
+        key: "clo",
+        label: "Clearance: only required",
+        onRemove: () => onDraftField("clearanceMode", ""),
+      });
+    }
+
+    if (draft.h1bOnly) {
+      add("compliance", {
+        key: "h1b",
+        label: "H1B / sponsorship mention",
+        onRemove: () => onDraftField("h1bOnly", false),
+      });
+    }
+
+    if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
+      const s =
+        draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
+      add("experienceLevel", {
+        key: "seniority",
+        label: `Seniority: ${s}`,
+        onRemove: () => {
+          onDraftField("seniorityPreset", "");
+          onDraftField("seniorityCustom", "");
+        },
+      });
+    }
+    if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
+      const s =
+        draft.functionCustom.trim() || draft.functionPreset.trim() || "";
+      add("jobFunction", {
+        key: "func",
+        label: `Function: ${s}`,
+        onRemove: () => {
+          onDraftField("functionPreset", "");
+          onDraftField("functionCustom", "");
+        },
+      });
+    }
+    if (
+      draft.datePostedPreset === "24h" ||
+      draft.datePostedPreset === "7d" ||
+      draft.datePostedPreset === "30d"
+    ) {
+      const pk = draft.datePostedPreset;
+      add("datePosted", {
+        key: "dpreset",
+        label: `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
+        onRemove: () => {
+          onDraftField("datePostedPreset", "any");
+          onDraftField("postedAfter", "");
+        },
+      });
+    } else if (draft.postedAfter.trim()) {
+      add("datePosted", {
+        key: "after",
+        label: `Posted after ${draft.postedAfter}`,
+        onRemove: () => {
+          onDraftField("postedAfter", "");
+          onDraftField("datePostedPreset", "any");
+        },
+      });
+    }
+    if (draft.postedBefore.trim()) {
+      add("datePosted", {
+        key: "before",
+        label: `Before ${draft.postedBefore}`,
+        onRemove: () => onDraftField("postedBefore", ""),
+      });
+    }
+  }
+
+  return b;
+}
+
+function HsFilterChipList({
+  items,
+  variant = "default",
+}: {
+  items: HsFilterChipItem[];
+  variant?: "default" | "section";
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div
+      className={cn(
+        "c360-hs-filter-chips",
+        variant === "section" && "c360-hs-filter-chips--section",
+      )}
+      role="list"
+    >
+      {items.map((c) => (
+        <span key={c.key} className="c360-hs-filter-chip" role="listitem">
+          <span className="c360-hs-filter-chip__text">{c.label}</span>
+          <button
+            type="button"
+            className="c360-hs-filter-chip__remove"
+            aria-label={`Remove ${c.label}`}
+            onClick={c.onRemove}
+          >
+            <X size={12} />
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export type {
   HiringSignalFilterDraft,
   HiringSignalDraftField,
@@ -314,174 +631,32 @@ export function HiringSignalsFilterSidebar({
     onDraftField("countries", next);
   };
 
-  const chips: { key: string; label: string; onRemove: () => void }[] = [];
-
-  const addChip = (key: string, label: string, clear: () => void) => {
-    chips.push({ key, label, onRemove: clear });
-  };
-
-  const addTokenChips = (
-    prefix: string,
-    values: string[],
-    labelPrefix: string,
-    field:
-      | "titles"
-      | "companies"
-      | "locations"
-      | "employmentTypes"
-      | "workplaceTypes"
-      | "countries"
-      | "industries"
-      | "excludedIndustries"
-      | "excludedTitles"
-      | "excludedCompanies"
-      | "excludedLocations"
-      | "experienceBuckets"
-      | "roleTracks"
-      | "educationLevelMins"
-      | "skillsAll",
-  ) => {
-    values.forEach((raw, i) => {
-      const t = raw.trim();
-      if (!t) return;
-      addChip(`${prefix}-${i}-${t}`, `${labelPrefix}: ${t}`, () => {
-        onDraftField(
-          field,
-          values.filter((_, j) => j !== i),
-        );
-      });
-    });
-  };
-
-  addTokenChips("title", draft.titles, "Title", "titles");
-  addTokenChips("co", draft.companies, "Company", "companies");
-  addTokenChips("loc", draft.locations, "Location", "locations");
-  addTokenChips("exti", draft.excludedTitles, "Excl. title", "excludedTitles");
-  addTokenChips(
-    "exco",
-    draft.excludedCompanies,
-    "Excl. company",
-    "excludedCompanies",
+  const chipBuckets = useMemo(
+    () =>
+      buildHiringSignalChipBuckets(
+        draft,
+        showFullHireSignalFilters,
+        onDraftField,
+      ),
+    [draft, showFullHireSignalFilters, onDraftField],
   );
-  addTokenChips(
-    "exloc",
-    draft.excludedLocations,
-    "Excl. location",
-    "excludedLocations",
+
+  const draftChipCount = useMemo(
+    () =>
+      Object.values(chipBuckets).reduce((n, arr) => n + arr.length, 0),
+    [chipBuckets],
   );
-  if (showFullHireSignalFilters) {
-    addTokenChips(
-      "emp",
-      draft.employmentTypes,
-      "Employment",
-      "employmentTypes",
-    );
-    if (draft.employmentType.trim())
-      addChip("emp-single", `Employment type: ${draft.employmentType}`, () =>
-        onDraftField("employmentType", ""),
-      );
-    addTokenChips("wp", draft.workplaceTypes, "Workplace", "workplaceTypes");
-    addTokenChips("ind", draft.industries, "Industry", "industries");
-    addTokenChips(
-      "exind",
-      draft.excludedIndustries,
-      "Excl. industry",
-      "excludedIndustries",
-    );
-    addTokenChips(
-      "xb",
-      draft.experienceBuckets,
-      "Experience",
-      "experienceBuckets",
-    );
-    addTokenChips("rt", draft.roleTracks, "Role track", "roleTracks");
-    addTokenChips(
-      "edu",
-      draft.educationLevelMins,
-      "Education ≥",
-      "educationLevelMins",
-    );
-    addTokenChips("sk", draft.skillsAll, "Skill", "skillsAll");
-    addTokenChips("ctry", draft.countries, "Country", "countries");
 
-    if (draft.applyMethod.trim())
-      addChip(
-        "applym",
-        draft.applyMethod === LINKEDIN_APPLY_METHOD
-          ? "LinkedIn Apply (hosted)"
-          : draft.applyMethod === EASY_APPLY_METHOD
-            ? "Easy apply (LinkedIn)"
-            : `Apply method: ${draft.applyMethod}`,
-        () => onDraftField("applyMethod", ""),
-      );
+  const hasRunChip = Boolean(appliedRunId?.trim() && onClearRunId);
+  const totalChips = draftChipCount + (hasRunChip ? 1 : 0);
 
-    if (draft.salaryMin.trim())
-      addChip("salary", `Min salary: $${draft.salaryMin.trim()}`, () =>
-        onDraftField("salaryMin", ""),
-      );
-
-    if (draft.clearanceMode.trim() === "hide")
-      addChip("clr", "Clearance: hide required", () =>
-        onDraftField("clearanceMode", ""),
-      );
-    if (draft.clearanceMode.trim() === "only")
-      addChip("clo", "Clearance: only required", () =>
-        onDraftField("clearanceMode", ""),
-      );
-
-    if (draft.h1bOnly)
-      addChip("h1b", "H1B / sponsorship mention", () =>
-        onDraftField("h1bOnly", false),
-      );
-
-    if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
-      const s =
-        draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
-      addChip("seniority", `Seniority: ${s}`, () => {
-        onDraftField("seniorityPreset", "");
-        onDraftField("seniorityCustom", "");
-      });
-    }
-    if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
-      const s =
-        draft.functionCustom.trim() || draft.functionPreset.trim() || "";
-      addChip("func", `Function: ${s}`, () => {
-        onDraftField("functionPreset", "");
-        onDraftField("functionCustom", "");
-      });
-    }
-    if (
-      draft.datePostedPreset === "24h" ||
-      draft.datePostedPreset === "7d" ||
-      draft.datePostedPreset === "30d"
-    ) {
-      const pk = draft.datePostedPreset;
-      addChip(
-        "dpreset",
-        `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
-        () => {
-          onDraftField("datePostedPreset", "any");
-          onDraftField("postedAfter", "");
-        },
-      );
-    } else if (draft.postedAfter.trim()) {
-      addChip("after", `Posted after ${draft.postedAfter}`, () => {
-        onDraftField("postedAfter", "");
-        onDraftField("datePostedPreset", "any");
-      });
-    }
-    if (draft.postedBefore.trim())
-      addChip("before", `Before ${draft.postedBefore}`, () =>
-        onDraftField("postedBefore", ""),
-      );
-  }
-
+  const runIdTrimmed = appliedRunId?.trim() ?? "";
   const runChip =
-    appliedRunId?.trim() && onClearRunId ? (
-      <span key="run" className="c360-hs-filter-chip">
+    hasRunChip && onClearRunId ? (
+      <span className="c360-hs-filter-chip">
         <span className="c360-hs-filter-chip__text">
-          Run: {appliedRunId.trim().slice(0, 12)}
-          {appliedRunId.trim().length > 12 ? "…" : ""}
+          Run: {runIdTrimmed.slice(0, 12)}
+          {runIdTrimmed.length > 12 ? "…" : ""}
           {typeof runScopedJobTotal === "number" &&
           Number.isFinite(runScopedJobTotal) ? (
             <> · {runScopedJobTotal.toLocaleString()} jobs</>
@@ -497,9 +672,6 @@ export function HiringSignalsFilterSidebar({
         </button>
       </span>
     ) : null;
-
-  const totalChips =
-    chips.length + (appliedRunId?.trim() && onClearRunId ? 1 : 0);
   const titleValues = normalizeHiringSignalTokenList(draft.titles);
   const companyValues = normalizeHiringSignalTokenList(draft.companies);
   const locationValues = normalizeHiringSignalTokenList(draft.locations);
@@ -656,26 +828,10 @@ export function HiringSignalsFilterSidebar({
         </div>
       </div>
 
-      {totalChips > 0 ? (
-        <div className="c360-mb-3">
-          <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            {totalChips} active filter{totalChips === 1 ? "" : "s"}
-          </p>
-          <div className="c360-hs-filter-chips">
+      {hasRunChip ? (
+        <div className="c360-hs-filters__run-row c360-mb-2">
+          <div className="c360-hs-filter-chips c360-hs-filter-chips--run">
             {runChip}
-            {chips.map((c) => (
-              <span key={c.key} className="c360-hs-filter-chip">
-                <span className="c360-hs-filter-chip__text">{c.label}</span>
-                <button
-                  type="button"
-                  className="c360-hs-filter-chip__remove"
-                  aria-label={`Remove ${c.label}`}
-                  onClick={c.onRemove}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
           </div>
         </div>
       ) : null}
@@ -691,6 +847,7 @@ export function HiringSignalsFilterSidebar({
           }}
         >
           <div className="c360-space-y-3">
+            <HsFilterChipList items={chipBuckets.title} variant="section" />
             <HiringSignalTextFacetCombobox
               field="title"
               label="Include job titles"
@@ -724,6 +881,7 @@ export function HiringSignalsFilterSidebar({
           }}
         >
           <div className="c360-space-y-3">
+            <HsFilterChipList items={chipBuckets.company} variant="section" />
             <HiringSignalTextFacetCombobox
               field="company"
               label="Include company names"
@@ -757,6 +915,7 @@ export function HiringSignalsFilterSidebar({
           }}
         >
           <div className="c360-space-y-3">
+            <HsFilterChipList items={chipBuckets.location} variant="section" />
             <HiringSignalTextFacetCombobox
               field="location"
               label="Include locations"
@@ -814,6 +973,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("postedBefore", "");
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.datePosted}
+                variant="section"
+              />
               {signalTimePreset === "new_7d" ? (
                 <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
                   The Signals &quot;New&quot; tab also enforces jobs from at
@@ -882,6 +1045,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("experienceBuckets", []);
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.experienceLevel}
+                variant="section"
+              />
               <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
                 Seniority (matches ingested seniority text)
               </p>
@@ -921,6 +1088,7 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("employmentType", "");
               }}
             >
+              <HsFilterChipList items={chipBuckets.jobType} variant="section" />
               <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
                 Employment type (substring on ingested employment_type)
               </p>
@@ -940,6 +1108,10 @@ export function HiringSignalsFilterSidebar({
               defaultOpen={false}
               onClear={() => onDraftField("workplaceTypes", [])}
             >
+              <HsFilterChipList
+                items={chipBuckets.workplace}
+                variant="section"
+              />
               <Select
                 id="hsf-workplace"
                 value={workplaceSelectValue}
@@ -959,6 +1131,10 @@ export function HiringSignalsFilterSidebar({
               defaultOpen={false}
               onClear={() => onDraftField("applyMethod", "")}
             >
+              <HsFilterChipList
+                items={chipBuckets.linkedInApply}
+                variant="section"
+              />
               <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
                 <input
                   type="checkbox"
@@ -1018,6 +1194,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("excludedIndustries", []);
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.industries}
+                variant="section"
+              />
               <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
                 Include industry (substring match)
               </p>
@@ -1058,6 +1238,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("functionCustom", "");
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.jobFunction}
+                variant="section"
+              />
               <Select
                 id="hsf-func-preset"
                 value={draft.functionPreset}
@@ -1074,6 +1258,10 @@ export function HiringSignalsFilterSidebar({
               defaultOpen={false}
               onClear={() => onDraftField("salaryMin", "")}
             >
+              <HsFilterChipList
+                items={chipBuckets.compensation}
+                variant="section"
+              />
               <label
                 htmlFor="hsf-salary-min"
                 className="c360-block c360-text-2xs c360-text-ink-muted"
@@ -1099,6 +1287,7 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("countries", []);
               }}
             >
+              <HsFilterChipList items={chipBuckets.country} variant="section" />
               <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
                 Match jobs whose inferred country overlaps any selected ISO code
                 (OR).
@@ -1134,6 +1323,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("roleTracks", []);
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.roleEducation}
+                variant="section"
+              />
               <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
                 Role track (from title / description)
               </p>
@@ -1175,6 +1368,10 @@ export function HiringSignalsFilterSidebar({
                 onDraftField("skillsAll", []);
               }}
             >
+              <HsFilterChipList
+                items={chipBuckets.compliance}
+                variant="section"
+              />
               <Select
                 id="hsf-clearance"
                 value={draft.clearanceMode}
