@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Pagination as ArkPagination } from "@ark-ui/react/pagination";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+import { getPaginationBounds } from "@/lib/paginationBounds";
 import { cn, formatCompact } from "@/lib/utils";
 
 export interface PaginationProps {
@@ -17,33 +24,17 @@ export interface PaginationProps {
   showWhenSinglePage?: boolean;
 }
 
-function range(start: number, end: number): number[] {
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-}
-
-function buildPages(
-  current: number,
-  totalPages: number,
-  sibling: number,
-): (number | "dots")[] {
-  const totalShown = sibling * 2 + 5;
-  if (totalPages <= totalShown) return range(1, totalPages);
-
-  const leftSib = Math.max(current - sibling, 1);
-  const rightSib = Math.min(current + sibling, totalPages);
-  const showLeft = leftSib > 2;
-  const showRight = rightSib < totalPages - 1;
-
-  if (!showLeft && showRight) {
-    const leftItems = range(1, 3 + sibling * 2);
-    return [...leftItems, "dots", totalPages];
-  }
-  if (showLeft && !showRight) {
-    const rightItems = range(totalPages - 2 - sibling * 2, totalPages);
-    return [1, "dots", ...rightItems];
-  }
-  return [1, "dots", ...range(leftSib, rightSib), "dots", totalPages];
-}
+const PAGER_TRANSLATIONS = {
+  rootLabel: "Pagination",
+  firstTriggerLabel: "First page",
+  prevTriggerLabel: "Previous page",
+  nextTriggerLabel: "Next page",
+  lastTriggerLabel: "Last page",
+  itemLabel: ({ page: pageNum }: { page: number; totalPages: number }) =>
+    pageNum >= 10_000
+      ? `Page ${pageNum.toLocaleString("en-US")}`
+      : `Page ${pageNum}`,
+};
 
 export function Pagination({
   total,
@@ -54,7 +45,12 @@ export function Pagination({
   className,
   showWhenSinglePage = false,
 }: PaginationProps) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const { pageSize: ps, totalPages, safePage } = getPaginationBounds(
+    total,
+    page,
+    pageSize,
+  );
+
   if (totalPages <= 1 && !showWhenSinglePage) return null;
 
   if (totalPages <= 1 && showWhenSinglePage) {
@@ -62,15 +58,18 @@ export function Pagination({
       <nav aria-label="Pagination" className={cn("c360-pagination", className)}>
         <button
           type="button"
-          className="c360-pagination__btn"
+          className="c360-pagination__page c360-pagination__page--icon"
           disabled
           aria-label="Previous page"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={16} aria-hidden />
         </button>
         <button
           type="button"
-          className={cn("c360-pagination__btn", "c360-pagination__btn--active")}
+          className={cn(
+            "c360-pagination__page",
+            "c360-pagination__page--active",
+          )}
           aria-current="page"
           disabled
         >
@@ -78,67 +77,85 @@ export function Pagination({
         </button>
         <button
           type="button"
-          className="c360-pagination__btn"
+          className="c360-pagination__page c360-pagination__page--icon"
           disabled
           aria-label="Next page"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={16} aria-hidden />
         </button>
       </nav>
     );
   }
 
-  const pages = buildPages(page, totalPages, siblingCount);
-
   return (
-    <nav aria-label="Pagination" className={cn("c360-pagination", className)}>
-      <button
+    <ArkPagination.Root
+      aria-label="Pagination"
+      className={cn("c360-pagination", className)}
+      count={Math.max(0, total)}
+      pageSize={ps}
+      page={safePage}
+      siblingCount={siblingCount}
+      translations={PAGER_TRANSLATIONS}
+      onPageChange={(d) => onPageChange(d.page)}
+    >
+      <ArkPagination.FirstTrigger
         type="button"
-        className="c360-pagination__btn"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        aria-label="Previous page"
+        className="c360-pagination__page c360-pagination__page--icon"
       >
-        <ChevronLeft size={16} />
-      </button>
+        <ChevronsLeft size={16} aria-hidden />
+      </ArkPagination.FirstTrigger>
 
-      {pages.map((p, i) =>
-        p === "dots" ? (
-          <span key={`dots-${i}`} className="c360-pagination__dots">
-            <MoreHorizontal size={16} />
-          </span>
-        ) : (
-          <button
-            type="button"
-            key={p}
-            className={cn(
-              "c360-pagination__btn",
-              p === page && "c360-pagination__btn--active",
-            )}
-            onClick={() => onPageChange(p)}
-            aria-current={p === page ? "page" : undefined}
-            aria-label={
-              p >= 10_000 ? `Page ${p.toLocaleString("en-US")}` : undefined
-            }
-            title={
-              p >= 10_000 ? `Page ${p.toLocaleString("en-US")}` : undefined
-            }
-          >
-            {p >= 10_000 ? formatCompact(p) : p}
-          </button>
-        ),
-      )}
-
-      <button
+      <ArkPagination.PrevTrigger
         type="button"
-        className="c360-pagination__btn"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        aria-label="Next page"
+        className="c360-pagination__page c360-pagination__page--icon"
       >
-        <ChevronRight size={16} />
-      </button>
-    </nav>
+        <ChevronLeft size={16} aria-hidden />
+      </ArkPagination.PrevTrigger>
+
+      <ArkPagination.Context>
+        {(pager) =>
+          pager.pages.map((p, index) =>
+            p.type === "page" ? (
+              <ArkPagination.Item
+                key={`page-${p.value}`}
+                {...p}
+                className="c360-pagination__page"
+                title={
+                  p.value >= 10_000
+                    ? `Page ${p.value.toLocaleString("en-US")}`
+                    : undefined
+                }
+              >
+                {p.value >= 10_000 ? formatCompact(p.value) : p.value}
+              </ArkPagination.Item>
+            ) : (
+              <ArkPagination.Ellipsis
+                key={`ellipsis-${index}`}
+                index={index}
+                className="c360-pagination__ellipsis"
+                aria-hidden
+              >
+                &#8230;
+              </ArkPagination.Ellipsis>
+            ),
+          )
+        }
+      </ArkPagination.Context>
+
+      <ArkPagination.NextTrigger
+        type="button"
+        className="c360-pagination__page c360-pagination__page--icon"
+      >
+        <ChevronRight size={16} aria-hidden />
+      </ArkPagination.NextTrigger>
+
+      <ArkPagination.LastTrigger
+        type="button"
+        className="c360-pagination__page c360-pagination__page--icon"
+      >
+        <ChevronsRight size={16} aria-hidden />
+      </ArkPagination.LastTrigger>
+    </ArkPagination.Root>
   );
 }
 

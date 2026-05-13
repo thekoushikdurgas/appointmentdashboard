@@ -7,13 +7,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import {
-  Building2,
-  Columns3,
-  ExternalLink,
-  FileText,
-  Link2,
-} from "lucide-react";
+import { Building2, ExternalLink, FileText, Link2 } from "lucide-react";
 import {
   DataGrid,
   type GridColDef,
@@ -26,9 +20,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { Popover } from "@/components/ui/Popover";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { cn } from "@/lib/utils";
@@ -41,10 +33,12 @@ import {
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
-import type {
-  JobListFilters,
-  JobListSortKey,
-  JobListSortOrder,
+import {
+  DEFAULT_JOB_SORT_KEY,
+  DEFAULT_JOB_SORT_ORDER,
+  type JobListFilters,
+  type JobListSortKey,
+  type JobListSortOrder,
 } from "@/services/graphql/hiringSignalService";
 
 const PAGE_SIZE_OPTIONS = [
@@ -95,9 +89,6 @@ const SORT_KEY_TO_GRID_FIELD = (
   {},
 );
 
-const DEFAULT_SORT_KEY: JobListSortKey = "posted_at";
-const DEFAULT_SORT_ORDER: JobListSortOrder = "desc";
-
 export const HS_DT_DEFAULT_COLUMNS: HiringSignalsDataTableColumnId[] = [
   ...HS_DT_COLUMN_IDS,
 ];
@@ -132,8 +123,8 @@ function displayLocationForRow(row: LinkedInJobRow): string {
 }
 
 function gridSortModelFromListFilters(f: JobListFilters): GridSortModel {
-  const sk = f.sortKey ?? DEFAULT_SORT_KEY;
-  const so = f.sortOrder ?? DEFAULT_SORT_ORDER;
+  const sk = f.sortKey ?? DEFAULT_JOB_SORT_KEY;
+  const so = f.sortOrder ?? DEFAULT_JOB_SORT_ORDER;
   const field = SORT_KEY_TO_GRID_FIELD[sk] ?? "posted";
   return [{ field, sort: so }];
 }
@@ -141,54 +132,15 @@ function gridSortModelFromListFilters(f: JobListFilters): GridSortModel {
 export interface HiringSignalsToolbarTableExtrasProps {
   pageSize: number;
   onPageSizeChange: (n: number) => void;
-  visibleColumns: HiringSignalsDataTableColumnId[];
-  onToggleColumn: (
-    id: HiringSignalsDataTableColumnId,
-    visible: boolean,
-  ) => void;
 }
 
-/** Columns popover + page size — intended for `DataToolbar` `actionPrefix` on hiring signals. */
+/** Page size — intended for `DataToolbar` `actionPrefix` on hiring signals. */
 export function HiringSignalsToolbarTableExtras({
   pageSize,
   onPageSizeChange,
-  visibleColumns,
-  onToggleColumn,
 }: HiringSignalsToolbarTableExtrasProps) {
-  const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
-
   return (
     <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-      <Popover
-        trigger={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="c360-gap-1"
-          >
-            <Columns3 size={14} aria-hidden />
-            Columns
-          </Button>
-        }
-        content={
-          <div className="c360-space-y-2 c360-p-1">
-            <p className="c360-m-0 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Visible columns
-            </p>
-            {HS_DT_COLUMN_IDS.map((id) => (
-              <Checkbox
-                key={id}
-                size="sm"
-                checked={vis.has(id)}
-                onChange={(c) => onToggleColumn(id, c)}
-                label={COL_LABELS[id]}
-              />
-            ))}
-          </div>
-        }
-        width={220}
-      />
       <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
       <Select
         className="c360-w-24"
@@ -337,8 +289,8 @@ export function HiringSignalsDataTable({
       if (!first?.sort) {
         setListFilters((f) => ({
           ...f,
-          sortKey: DEFAULT_SORT_KEY,
-          sortOrder: DEFAULT_SORT_ORDER,
+          sortKey: DEFAULT_JOB_SORT_KEY,
+          sortOrder: DEFAULT_JOB_SORT_ORDER,
           offset: 0,
         }));
         return;
@@ -557,6 +509,11 @@ export function HiringSignalsDataTable({
         width: 128,
         minWidth: 118,
         sortable: true,
+        /**
+         * MUI: first sort on a column uses `sortingOrder[0]` (see getNextGridSortDirection).
+         * Job boards expect newest-first on Posted when the user activates this column.
+         */
+        sortingOrder: ["desc", "asc"],
         filterable: false,
         type: "dateTime",
         valueGetter: (_value, row) =>
@@ -675,7 +632,6 @@ export function HiringSignalsDataTable({
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={handleRowSelectionModelChange}
               sortingMode="server"
-              sortingOrder={["asc", "desc"]}
               sortModel={sortModel}
               onSortModelChange={handleSortModelChange}
               paginationMode="server"

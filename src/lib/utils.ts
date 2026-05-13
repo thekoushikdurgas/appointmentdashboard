@@ -24,6 +24,24 @@ export function formatDate(date: string | Date | null | undefined): string {
   }
 }
 
+/** Format a date-time as "May 10, 2026, 3:45 PM" (locale en-US). */
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  try {
+    const d = typeof date === "string" ? new Date(date) : date;
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
 /** Format a date as relative time: "2 hours ago" */
 export function formatRelativeTime(
   date: string | Date | null | undefined,

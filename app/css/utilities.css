@@ -892,15 +892,45 @@
   color: var(--c360-primary);
 }
 
-.c360-pagination__page--active {
+.c360-pagination__page--active,
+.c360-pagination__page[data-selected] {
   background: var(--c360-primary);
   border-color: var(--c360-primary);
   color: #fff;
 }
 
-.c360-pagination__page--disabled {
+.c360-pagination__page--active:hover,
+.c360-pagination__page[data-selected]:hover {
+  border-color: var(--c360-primary);
+  color: #fff;
+}
+
+.c360-pagination__page--disabled,
+.c360-pagination__page[data-disabled],
+.c360-pagination__page:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.c360-pagination__page[data-disabled]:hover,
+.c360-pagination__page:disabled:hover {
+  border-color: var(--c360-border-strong);
+  color: var(--c360-text);
+}
+
+.c360-pagination__page--icon {
+  padding: 0;
+}
+
+.c360-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-xs);
+  user-select: none;
 }
 
 /* ─── Toolbar ────────────────────────────────────────────────────────────── */

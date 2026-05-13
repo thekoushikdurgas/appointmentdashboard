@@ -163,6 +163,27 @@ export function parseScrapeRequestBody(requestBody: unknown): {
   return { keywords, geoId, maxJobs, rescheduleAfterHours };
 }
 
+/** Search terms for a scraper.server session row (top-level or nested request). */
+export function satelliteKeywordsFromRow(row: Record<string, unknown>): string {
+  const top = row.keywords ?? row.search_keywords ?? row.query ?? row.searchQuery;
+  if (typeof top === "string" && top.trim()) return top.trim();
+  const fromBody = parseScrapeRequestBody(
+    row.requestBody ?? row.request_body ?? row.body ?? row.request,
+  );
+  if (fromBody.keywords?.trim()) return fromBody.keywords.trim();
+  const cfg = asRecord(row.config ?? row.Config ?? row.params ?? row.payload);
+  if (cfg) {
+    const k =
+      cfg.keywords ??
+      cfg.search_keywords ??
+      cfg.query ??
+      cfg.searchQuery ??
+      cfg.search_query;
+    if (typeof k === "string" && k.trim()) return k.trim();
+  }
+  return "";
+}
+
 /** Resolve satellite session id from list_sessions / metrics rows. */
 export function satelliteRunIdFromRow(row: Record<string, unknown>): string {
   return String(row.job_id ?? row.runId ?? row.run_id ?? row.id ?? "");

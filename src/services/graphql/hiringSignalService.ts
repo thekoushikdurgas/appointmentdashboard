@@ -418,15 +418,16 @@ export type JobListSortKey =
 
 export type JobListSortOrder = "asc" | "desc";
 
-const DEFAULT_JOB_SORT_KEY: JobListSortKey = "posted_at";
-const DEFAULT_JOB_SORT_ORDER: JobListSortOrder = "desc";
+/** Default hiring-signals list: newest `posted_at` first (job.server + DataGrid). */
+export const DEFAULT_JOB_SORT_KEY: JobListSortKey = "posted_at";
+export const DEFAULT_JOB_SORT_ORDER: JobListSortOrder = "desc";
 
 /** Merge persisted filters with legacy `listSort` (saved searches). */
 export function coerceJobListSortFields(
   f: Partial<JobListFilters> & { listSort?: "recent" | "oldest" },
 ): { sortKey: JobListSortKey; sortOrder: JobListSortOrder } {
   if (!f.sortKey && f.listSort === "oldest") {
-    return { sortKey: "posted_at", sortOrder: "asc" };
+    return { sortKey: DEFAULT_JOB_SORT_KEY, sortOrder: "asc" };
   }
   return {
     sortKey: f.sortKey ?? DEFAULT_JOB_SORT_KEY,

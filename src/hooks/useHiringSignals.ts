@@ -11,16 +11,48 @@ import {
 } from "react";
 import {
   asRecord,
+  DEFAULT_JOB_SORT_KEY,
+  DEFAULT_JOB_SORT_ORDER,
   fetchHiringSignalDashboardKpis,
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
   hireSignalJobsListFromJson,
   type HireSignalApiJson,
   type JobListFilters,
+  type JobListSortKey,
+  type JobListSortOrder,
 } from "@/services/graphql/hiringSignalService";
 
 /** Upper bound when merging all pages of a filter match in the browser (memory). */
 const HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP = 100_000;
+
+/** Parse `postedAt` ISO for stable client-side ordering (ties broken by LinkedIn job id). */
+function postedAtSortMs(iso: string): number {
+  const t = Date.parse((iso ?? "").trim());
+  return Number.isFinite(t) ? t : 0;
+}
+
+/**
+ * Stable ordering by normalized `postedAt` (UI ISO) for the current page / merged fetch.
+ * Aligns the grid with `JobListFilters` when list order from job.server / Mongo does not
+ * match displayed dates (e.g. sort on BSON `posted_at` vs client `resolvePostedAtIso`).
+ */
+function sortJobRowsByPostedAt(
+  rows: LinkedInJobRow[],
+  order: "asc" | "desc",
+): LinkedInJobRow[] {
+  const copy = [...rows];
+  copy.sort((a, b) => {
+    const da = postedAtSortMs(a.postedAt);
+    const db = postedAtSortMs(b.postedAt);
+    if (da !== db) return order === "asc" ? da - db : db - da;
+    const ka = (a.linkedinJobId || a.id || "").localeCompare(
+      b.linkedinJobId || b.id || "",
+    );
+    return ka;
+  });
+  return copy;
+}
 
 /** One hiring-signal job row (job.server / Mongo JSON, camelCase + legacy snake_case). */
 export type LinkedInJobRow = {
@@ -386,6 +418,8 @@ export function useHiringSignals(
 
   const [filters, setFilters] = useState<JobListFilters>(() => ({
     ...initial,
+    sortKey: initial.sortKey ?? DEFAULT_JOB_SORT_KEY,
+    sortOrder: initial.sortOrder ?? DEFAULT_JOB_SORT_ORDER,
     limit: initial.limit ?? 50,
     offset: initial.offset ?? 0,
   }));
@@ -410,6 +444,11 @@ export function useHiringSignals(
 
   /** Ignore stale `fetchHiringSignalJobs` results when filters/preset change faster than the network. */
   const hireSignalLoadGenRef = useRef(0);
+  /** Sort fields for the last successful `setJobs` — used to drop rows immediately when sort changes (avoids desc header + asc rows until fetch completes). */
+  const lastSuccessfulJobListSortRef = useRef<{
+    sortKey: JobListSortKey;
+    sortOrder: JobListSortOrder;
+  } | null>(null);
   /** Latest merged list filters — for `refetch()` only; scheduled loads pass `listFilters` from the effect. */
   const listFiltersRef = useRef<JobListFilters | null>(null);
 
@@ -427,6 +466,16 @@ export function useHiringSignals(
     async (filtersToFetch: JobListFilters) => {
       const gen = ++hireSignalLoadGenRef.current;
       const snapshot: JobListFilters = { ...filtersToFetch };
+      const snapSortKey = snapshot.sortKey ?? DEFAULT_JOB_SORT_KEY;
+      const snapSortOrder: JobListSortOrder =
+        snapshot.sortOrder === "asc" ? "asc" : DEFAULT_JOB_SORT_ORDER;
+      const prevSort = lastSuccessfulJobListSortRef.current;
+      const sortParamsChanged =
+        prevSort != null &&
+        (prevSort.sortKey !== snapSortKey || prevSort.sortOrder !== snapSortOrder);
+      if (sortParamsChanged) {
+        setJobs([]);
+      }
       setLoading(true);
       setError(null);
       setAnalyticsMatchCappedAt(null);
@@ -443,8 +492,18 @@ export function useHiringSignals(
               : "Job list temporarily unavailable. Try Refresh or narrow filters.",
           );
           if (parsed.data.length > 0) {
-            setJobs(parsed.data);
+            const ord: "asc" | "desc" =
+              snapSortOrder === "asc" ? "asc" : DEFAULT_JOB_SORT_ORDER;
+            let rows = parsed.data;
+            if (snapSortKey === "posted_at") {
+              rows = sortJobRowsByPostedAt(rows, ord);
+            }
+            setJobs(rows);
             setTotal(parsed.total);
+            lastSuccessfulJobListSortRef.current = {
+              sortKey: snapSortKey,
+              sortOrder: snapSortOrder,
+            };
           }
           return;
         }
@@ -487,14 +546,25 @@ export function useHiringSignals(
         setAnalyticsMatchCappedAt(
           hitCap ? HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP : null,
         );
+        const sortKeyEff = snapshot.sortKey ?? DEFAULT_JOB_SORT_KEY;
+        const sortOrderEff: "asc" | "desc" =
+          snapshot.sortOrder === "asc" ? "asc" : DEFAULT_JOB_SORT_ORDER;
+        if (sortKeyEff === "posted_at") {
+          merged = sortJobRowsByPostedAt(merged, sortOrderEff);
+        }
         setJobs(merged);
         setTotal(listTotal);
+        lastSuccessfulJobListSortRef.current = {
+          sortKey: sortKeyEff,
+          sortOrder: sortOrderEff,
+        };
       } catch (e) {
         if (gen !== hireSignalLoadGenRef.current) return;
         setError(e instanceof Error ? e.message : "Failed to load jobs");
         setJobs([]);
         setTotal(0);
         setAnalyticsMatchCappedAt(null);
+        lastSuccessfulJobListSortRef.current = null;
       } finally {
         if (gen === hireSignalLoadGenRef.current) {
           setLoading(false);
@@ -544,6 +614,7 @@ export function useHiringSignals(
       setAnalyticsMatchCappedAt(null);
       setError(null);
       setLoading(false);
+      lastSuccessfulJobListSortRef.current = null;
       return;
     }
     void runLoad(listFilters);

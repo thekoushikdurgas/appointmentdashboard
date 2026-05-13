@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
-import { Card } from "@/components/ui/Card";
-import { ROUTES } from "@/lib/routes";
 import { useRole } from "@/context/RoleContext";
 import { useHiringSignals } from "@/hooks/useHiringSignals";
 import { HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT } from "@/services/graphql/hiringSignalService";
 import { HireSignalFilterProvider } from "@/context/HireSignalFilterContext";
 import { DemandsTrendsPage } from "@/components/feature/demands/DemandsTrendsPage";
+import { ProfessionalFeatureGate } from "@/components/shared/ProfessionalFeatureGate";
 
 export default function DemandsAndTrendsPage() {
   const { isPro, isAdmin } = useRole();
@@ -18,19 +15,7 @@ export default function DemandsAndTrendsPage() {
   );
 
   if (!(isPro() || isAdmin)) {
-    return (
-      <DashboardPageLayout>
-        <Card title="Professional feature">
-          <p className="c360-text-sm c360-mb-4">
-            Demands &amp; Trends is available on Professional plans and for
-            admins.
-          </p>
-          <Link href={ROUTES.BILLING} className="c360-btn c360-btn--primary">
-            View plans
-          </Link>
-        </Card>
-      </DashboardPageLayout>
-    );
+    return <ProfessionalFeatureGate featureName="Demands & Trends" />;
   }
 
   return (

@@ -22,6 +22,7 @@ import {
   type GridSortModel,
 } from "@mui/x-data-grid";
 import { Button } from "@/components/ui/Button";
+import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Popover } from "@/components/ui/Popover";
@@ -744,34 +745,18 @@ export function JobsDataTable({
         paginationPortalRef && "c360-jobs-dt__footer--portal",
       )}
     >
-      <div className="c360-jobs-dt__pager">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={safePage <= 0}
-          onClick={() =>
-            setPaginationModel((m) => ({ ...m, page: Math.max(0, m.page - 1) }))
-          }
-        >
-          Previous
-        </Button>
-        <span className="c360-jobs-dt__footer-text">
-          Page {safePage + 1} of {pageCount}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={safePage >= pageCount - 1}
-          onClick={() =>
-            setPaginationModel((m) => ({
-              ...m,
-              page: Math.min(pageCount - 1, m.page + 1),
-            }))
-          }
-        >
-          Next
-        </Button>
-      </div>
+      <Pagination
+        className="c360-jobs-dt__pager"
+        total={filtered.length}
+        page={safePage + 1}
+        pageSize={paginationModel.pageSize}
+        onPageChange={(p) =>
+          setPaginationModel((m) => ({
+            ...m,
+            page: Math.min(pageCount - 1, Math.max(0, p - 1)),
+          }))
+        }
+      />
     </div>
   );
 

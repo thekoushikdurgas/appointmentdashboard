@@ -392,28 +392,6 @@ function HiringSignalsPageBody({
     setVisibleColumns(loadHireSignalVisibleColumns());
   }, []);
 
-  const handleHireSignalToggleColumn = useCallback(
-    (id: HiringSignalsDataTableColumnId, visible: boolean) => {
-      setVisibleColumns((prev) => {
-        const nextSet = new Set(prev);
-        if (visible) nextSet.add(id);
-        else nextSet.delete(id);
-        const next = HS_DT_COLUMN_IDS.filter((col) => nextSet.has(col));
-        if (next.length === 0) return prev;
-        try {
-          localStorage.setItem(
-            HS_VISIBLE_COLUMNS_STORAGE_KEY,
-            JSON.stringify(next),
-          );
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
-    },
-    [],
-  );
-
   const signalsToolbar = useMemo(
     () => (
       <DataToolbar
@@ -462,8 +440,6 @@ function HiringSignalsPageBody({
           <HiringSignalsToolbarTableExtras
             pageSize={filters.limit}
             onPageSizeChange={setPageSize}
-            visibleColumns={visibleColumns}
-            onToggleColumn={handleHireSignalToggleColumn}
           />
         }
         actions={[
@@ -499,7 +475,6 @@ function HiringSignalsPageBody({
       currentPage,
       filters.limit,
       filters.runId,
-      handleHireSignalToggleColumn,
       isDesktop,
       isSuperAdmin,
       loading,
@@ -509,7 +484,6 @@ function HiringSignalsPageBody({
       setSignalTimePreset,
       signalTimePreset,
       total,
-      visibleColumns,
     ],
   );
 

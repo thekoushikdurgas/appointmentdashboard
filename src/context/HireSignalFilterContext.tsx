@@ -10,7 +10,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+import {
+  DEFAULT_JOB_SORT_KEY,
+  DEFAULT_JOB_SORT_ORDER,
+  type JobListFilters,
+} from "@/services/graphql/hiringSignalService";
 import {
   EMPTY_HIRING_SIGNAL_DRAFT,
   normalizeHiringSignalTokenList,
@@ -321,6 +325,8 @@ export function HireSignalFilterProvider({
       hideApplied: false,
       countries: undefined,
       applyMethod: undefined,
+      sortKey: DEFAULT_JOB_SORT_KEY,
+      sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
     }));
   }, [setFilters]);

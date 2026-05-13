@@ -9,7 +9,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { Button } from "@/components/ui/Button";
 import { Accordion } from "@/components/ui/Accordion";
 import { Progress } from "@/components/ui/Progress";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import {
   hireSignalRunCanCancel,
   hireSignalRunCanPause,
@@ -17,6 +17,7 @@ import {
   useHireSignalRuns,
 } from "@/hooks/useHireSignalRuns";
 import {
+  satelliteKeywordsFromRow,
   satelliteSessionProgressProps,
   scrapeStatusBadgeColor,
   satelliteRunIdFromRow,
@@ -125,6 +126,29 @@ export function RunsTab({
         },
       },
       {
+        key: "keywords",
+        header: "Keywords",
+        render: (row) => {
+          const full = satelliteKeywordsFromRow(row);
+          if (!full) {
+            return (
+              <span className="c360-text-2xs c360-text-muted c360-italic">
+                —
+              </span>
+            );
+          }
+          const short =
+            full.length > 56 ? `${full.slice(0, 54).trimEnd()}…` : full;
+          return (
+            <Tooltip content={full} placement="top">
+              <span className="c360-block c360-max-w-[14rem] c360-truncate c360-text-2xs c360-text-ink">
+                {short}
+              </span>
+            </Tooltip>
+          );
+        },
+      },
+      {
         key: "status",
         header: "Status",
         render: (row) => {
@@ -166,12 +190,14 @@ export function RunsTab({
         key: "started",
         header: "Started",
         render: (row) =>
-          formatDate(
+          formatDateTime(
             String(
               row.startedAt ??
                 row.started_at ??
+                row.StartedAt ??
                 row.createdAt ??
                 row.created_at ??
+                row.CreatedAt ??
                 "",
             ) || undefined,
           ),
@@ -180,12 +206,14 @@ export function RunsTab({
         key: "finished",
         header: "Finished",
         render: (row) =>
-          formatDate(
+          formatDateTime(
             String(
               row.finishedAt ??
                 row.finished_at ??
+                row.FinishedAt ??
                 row.completedAt ??
                 row.completed_at ??
+                row.CompletedAt ??
                 "",
             ) || undefined,
           ),
