@@ -6,7 +6,10 @@ import { Linkedin, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CompanyHiringTab } from "@/components/feature/companies/CompanyHiringTab";
-import { fetchConnectraCompany, asRecord } from "@/services/graphql/hiringSignalService";
+import {
+  fetchConnectraCompany,
+  asRecord,
+} from "@/services/graphql/hiringSignalService";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   hiringSignalInitials,
@@ -189,7 +192,10 @@ export function CompanyDrawerPanel({
           </section>
         ) : null}
 
-        <section className="c360-mb-1" aria-label="Hiring analytics for this page">
+        <section
+          className="c360-mb-1"
+          aria-label="Hiring analytics for this page"
+        >
           <CompanyHiringTab jobs={previewJobs} loading={false} />
         </section>
       </div>

@@ -2075,8 +2075,8 @@ export type InvoiceConnection = {
 };
 
 export type InvoicePaginationInput = {
-  limit?: Scalars["Int"]["input"];
-  offset?: Scalars["Int"]["input"];
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type JobConnection = {
