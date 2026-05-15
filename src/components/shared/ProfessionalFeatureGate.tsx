@@ -38,7 +38,8 @@ function ProGatePillStrip() {
             key={label}
             className={cn(
               "c360-database-soon__pill",
-              index === PILL_HIGHLIGHT_INDEX && "c360-database-soon__pill--active",
+              index === PILL_HIGHLIGHT_INDEX &&
+                "c360-database-soon__pill--active",
             )}
           >
             {label}
@@ -91,7 +92,9 @@ export function ProfessionalFeatureGate({
             <div className="c360-database-soon__card-shine" aria-hidden />
 
             <div className="c360-database-soon__body">
-              <p className="c360-database-soon__eyebrow">Professional feature</p>
+              <p className="c360-database-soon__eyebrow">
+                Professional feature
+              </p>
               <h1 id={titleId} className="c360-database-soon__title">
                 {featureName}
               </h1>

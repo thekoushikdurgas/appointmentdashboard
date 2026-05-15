@@ -398,7 +398,6 @@ export default function CompanyDetailPage({ params }: PageProps) {
           <div className="c360-section-stack">
             <CompanyContactsTable
               companyName={company.name}
-              contactCount={contactsTotal}
               contacts={contacts}
               loading={contactsLoading}
               error={contactsError}

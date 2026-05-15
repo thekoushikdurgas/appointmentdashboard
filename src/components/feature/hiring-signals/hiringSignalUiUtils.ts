@@ -165,7 +165,8 @@ export function parseScrapeRequestBody(requestBody: unknown): {
 
 /** Search terms for a scraper.server session row (top-level or nested request). */
 export function satelliteKeywordsFromRow(row: Record<string, unknown>): string {
-  const top = row.keywords ?? row.search_keywords ?? row.query ?? row.searchQuery;
+  const top =
+    row.keywords ?? row.search_keywords ?? row.query ?? row.searchQuery;
   if (typeof top === "string" && top.trim()) return top.trim();
   const fromBody = parseScrapeRequestBody(
     row.requestBody ?? row.request_body ?? row.body ?? row.request,

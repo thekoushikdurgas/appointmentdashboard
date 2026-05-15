@@ -45,11 +45,11 @@ export function Pagination({
   className,
   showWhenSinglePage = false,
 }: PaginationProps) {
-  const { pageSize: ps, totalPages, safePage } = getPaginationBounds(
-    total,
-    page,
-    pageSize,
-  );
+  const {
+    pageSize: ps,
+    totalPages,
+    safePage,
+  } = getPaginationBounds(total, page, pageSize);
 
   if (totalPages <= 1 && !showWhenSinglePage) return null;
 

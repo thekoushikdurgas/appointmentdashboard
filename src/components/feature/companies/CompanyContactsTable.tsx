@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import {
   ContactsDataTable,
   type ContactsDataTableColumnId,
@@ -23,7 +22,6 @@ const EMBEDDED_VISIBLE_COLUMNS: ContactsDataTableColumnId[] = [
 
 interface CompanyContactsTableProps {
   companyName: string;
-  contactCount?: number | null;
   contacts: Contact[];
   loading: boolean;
   error?: string | null;
@@ -35,7 +33,6 @@ interface CompanyContactsTableProps {
 
 export function CompanyContactsTable({
   companyName,
-  contactCount,
   contacts,
   loading,
   error = null,
@@ -57,12 +54,7 @@ export function CompanyContactsTable({
 
   return (
     <>
-      <Card
-        title="Contacts"
-        subtitle={`People at ${companyName}`}
-        actions={<Badge color="gray">{contactCount ?? 0}</Badge>}
-        padding="none"
-      >
+      <Card padding="none">
         <div className="c360-p-0">
           <ContactsDataTable
             className="c360-company-contacts-dt"

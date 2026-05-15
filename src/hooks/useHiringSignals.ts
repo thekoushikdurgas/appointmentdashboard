@@ -213,7 +213,8 @@ export function useHiringSignals(
       const prevSort = lastSuccessfulJobListSortRef.current;
       const sortParamsChanged =
         prevSort != null &&
-        (prevSort.sortKey !== snapSortKey || prevSort.sortOrder !== snapSortOrder);
+        (prevSort.sortKey !== snapSortKey ||
+          prevSort.sortOrder !== snapSortOrder);
       if (sortParamsChanged) {
         setJobs([]);
       }

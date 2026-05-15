@@ -14,3 +14,31 @@
   border: 1px solid var(--c360-border);
   min-height: 21rem;
 }
+
+/* Modals: bounded scroll on both axes; avoid forcing the page-sized min-height. */
+.c360-data-table-shell__scroll.c360-data-table-shell__scroll--modal {
+  min-height: 0;
+  max-height: min(50vh, 24rem);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Modal tables use `c360-table-wrapper` for markup consistency, but the shell
+ * scroll region must own both axes — otherwise the wrapper’s overflow-x traps
+ * horizontal scroll without sharing the shell’s max-height.
+ */
+.c360-data-table-shell__scroll.c360-data-table-shell__scroll--modal
+  > .c360-table-wrapper {
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-data-table-shell__scroll.c360-data-table-shell__scroll--modal .c360-table {
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}

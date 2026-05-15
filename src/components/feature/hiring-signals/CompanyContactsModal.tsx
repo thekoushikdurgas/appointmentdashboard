@@ -5,26 +5,18 @@ import {
   Building2,
   Loader2,
   ExternalLink,
-  Users,
   Linkedin,
-  Mail,
-  Download,
+  X,
 } from "lucide-react";
-import Papa from "papaparse";
-import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
-import { Progress } from "@/components/ui/Progress";
-import { MediaObject } from "@/components/ui/MediaObject";
+import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import {
   fetchCompanyHiringSignalJobs,
   fetchConnectraCompany,
-  fetchConnectraContactsForCompany,
   asRecord,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import {
   normalizeLinkedInJobRow,
   type LinkedInJobRow,
@@ -32,10 +24,13 @@ import {
 import {
   hiringSignalInitials,
   pickCompanyDisplay,
-  pickContactDisplay,
-  connectraContactStableKey,
+  formatHireSignalPostedDate,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import { HiringSignalAsideDrawer } from "@/components/feature/hiring-signals/HiringSignalAsideDrawer";
+
+const modalTableShellScrollClass =
+  "c360-data-table-shell__scroll--modal c360-min-h-0";
 
 function rowFromItem(item: unknown): LinkedInJobRow {
   const o = asRecord(item) ?? {};
@@ -92,7 +87,7 @@ export interface CompanyContactsModalProps {
 }
 
 /**
- * Company: Mongo job rows for the same `company_uuid`, plus Connectra (sync) profile + people.
+ * Company: Mongo job rows for the same `company_uuid`, plus Connectra (sync) profile in the header strip.
  */
 export function CompanyContactsModal({
   companyUuid,
@@ -100,21 +95,13 @@ export function CompanyContactsModal({
   isOpen,
   onClose,
 }: CompanyContactsModalProps) {
-  const [tab, setTab] = useState<"jobs" | "connectra">("jobs");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<LinkedInJobRow[]>([]);
   const [total, setTotal] = useState(0);
   const [companyLoading, setCompanyLoading] = useState(false);
-  const [cLoading, setCLoading] = useState(false);
   const [cRecord, setCRecord] = useState<unknown | null>(null);
-  const [cPeople, setCPeople] = useState<unknown[]>([]);
-  const [cErr, setCErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) setTab("jobs");
-  }, [isOpen, companyUuid]);
-
-  /** Load company record on open so header logo works on "Open roles" tab (was only fetched on Connectra tab). */
+  /** Load company record on open for header logo and links. */
   useEffect(() => {
     if (!isOpen || !companyUuid.trim()) return;
     let cancelled = false;
@@ -172,81 +159,41 @@ export function CompanyContactsModal({
     };
   }, [isOpen, companyUuid]);
 
-  useEffect(() => {
-    if (!isOpen || !companyUuid.trim() || tab !== "connectra") return;
-    let cancelled = false;
-    (async () => {
-      setCLoading(true);
-      setCErr(null);
-      try {
-        const peo = await fetchConnectraContactsForCompany(companyUuid, {
-          limit: 50,
-        });
-        if (cancelled) return;
-        const pr = asRecord(peo.hireSignal?.connectraContactsForCompany);
-        if (pr && pr.success === false) {
-          setCErr(String(pr.detail ?? "Connectra people failed"));
-          setCPeople([]);
-        } else {
-          const d = pr?.data;
-          const arr =
-            d && typeof d === "object" && !Array.isArray(d) && "contacts" in d
-              ? (d as { contacts?: unknown[] }).contacts
-              : null;
-          setCPeople(Array.isArray(arr) ? arr : []);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          const msg = e instanceof Error ? e.message : "Connectra load failed";
-          setCErr(msg);
-          setCPeople([]);
-          toast.error("Connectra", { description: msg });
-        }
-      } finally {
-        if (!cancelled) setCLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, companyUuid, tab]);
-
   const co = pickCompanyDisplay(cRecord);
 
-  const exportPeopleCsv = () => {
-    if (cPeople.length === 0) {
-      toast.message("Nothing to export", {
-        description: "Load contacts on the Connectra tab first.",
-      });
-      return;
-    }
-    const flat = cPeople.map((row) => {
-      const p = pickContactDisplay(row);
-      return {
-        name: p.name,
-        title: p.title,
-        email: p.email,
-        linkedin_url: p.linkedinUrl,
-      };
-    });
-    const csv = Papa.unparse(flat);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `connectra-contacts-${companyUuid.slice(0, 8)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported contacts", { description: `${flat.length} rows` });
+  const companyWebsiteHref = (website: string) => {
+    const w = website.trim();
+    if (!w) return "";
+    if (/^https?:\/\//i.test(w)) return w;
+    return `https://${w}`;
   };
 
   return (
-    <Modal
+    <HiringSignalAsideDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Company on hiring signal"
-      size="lg"
+      ariaLabelledBy="c360-hs-company-contacts-title"
     >
+      <header className="c360-hs-drawer__header">
+        <h2
+          id="c360-hs-company-contacts-title"
+          className="c360-m-0 c360-min-w-0 c360-text-lg c360-font-semibold c360-text-ink"
+        >
+          Company on hiring signal
+        </h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="c360-shrink-0"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X size={20} />
+        </Button>
+      </header>
+
+      <div className="c360-hs-drawer__body">
       <div className="c360-mb-3 c360-flex c360-items-start c360-gap-3 c360-rounded c360-border c360-border-ink-8 c360-bg-ink-2/15 c360-p-3">
         <div
           className="c360-stat-card__icon c360-relative c360-flex c360-h-10 c360-w-10 c360-shrink-0 c360-overflow-hidden c360-rounded-full"
@@ -276,10 +223,46 @@ export function CompanyContactsModal({
               {companyUuid}
             </p>
           ) : null}
-          {tab === "connectra" && co.industry ? (
-            <Badge color="info" size="sm" className="c360-mt-2">
-              {co.industry}
-            </Badge>
+          {co.industry ||
+          co.website ||
+          co.employees ||
+          co.linkedinUrl ? (
+            <div className="c360-mt-2 c360-space-y-1">
+              {co.industry ? (
+                <Badge color="info" size="sm">
+                  {co.industry}
+                </Badge>
+              ) : null}
+              <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-x-3 c360-gap-y-1 c360-text-sm c360-text-ink">
+                {co.website ? (
+                  <a
+                    href={companyWebsiteHref(co.website)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary hover:c360-underline"
+                  >
+                    <ExternalLink size={14} />
+                    Website
+                  </a>
+                ) : null}
+                {co.linkedinUrl ? (
+                  <a
+                    href={co.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary hover:c360-underline"
+                  >
+                    <Linkedin size={14} />
+                    Company LinkedIn
+                  </a>
+                ) : null}
+              </div>
+              {co.employees ? (
+                <p className="c360-text-2xs c360-text-ink-muted">
+                  Employees: {co.employees}
+                </p>
+              ) : null}
+            </div>
           ) : null}
         </div>
         <Building2
@@ -289,221 +272,106 @@ export function CompanyContactsModal({
         />
       </div>
 
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as "jobs" | "connectra")}
-        className="c360-mb-2"
-      >
-        <TabsList>
-          <TabsTrigger value="jobs">Open roles (Mongo)</TabsTrigger>
-          <TabsTrigger value="connectra" icon={<Users size={14} />}>
-            Connectra
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="jobs">
-          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            {loading
-              ? "Loading open roles…"
-              : `Showing ${rows.length} of ${total} row(s) for this company.`}
+      <div className="c360-mb-2">
+        <p className="c360-mb-1 c360-text-sm c360-font-medium c360-text-ink">
+          Open roles (Mongo)
+        </p>
+        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+          {loading
+            ? "Loading open roles…"
+            : `Showing ${rows.length} of ${total} row(s) for this company.`}
+        </p>
+        {loading && rows.length === 0 ? (
+          <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
+            <Loader2 className="c360-animate-spin" size={20} />
+            Loading…
+          </div>
+        ) : rows.length === 0 ? (
+          <p className="c360-py-6 c360-text-center c360-text-sm c360-text-ink-muted">
+            No jobs returned for this company. Try a refresh after the next
+            scrape.
           </p>
-          {loading && rows.length === 0 ? (
-            <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
-              <Loader2 className="c360-animate-spin" size={20} />
-              Loading…
-            </div>
-          ) : rows.length === 0 ? (
-            <p className="c360-py-6 c360-text-center c360-text-sm c360-text-ink-muted">
-              No jobs returned for this company. Try a refresh after the next
-              scrape.
-            </p>
-          ) : (
-            <ul
-              className="c360-max-h-[min(50vh,24rem)] c360-space-y-2 c360-overflow-auto c360-pr-1"
-              role="list"
-            >
-              {rows.map((row) => (
-                <li
-                  key={`${row.linkedinJobId}-${row.apifyItemId}`}
-                  className="c360-rounded c360-border c360-border-ink-12 c360-p-2"
-                >
-                  <p className="c360-text-sm c360-font-medium c360-text-ink">
-                    {row.title}
-                  </p>
-                  {row.location ? (
-                    <p className="c360-text-2xs c360-text-ink-muted">
-                      {row.location}
-                    </p>
-                  ) : null}
-                  {row.jobUrl ? (
-                    <a
-                      href={row.jobUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        "c360-inline-flex c360-items-center c360-gap-1 c360-mt-1",
-                        "c360-text-xs c360-text-primary hover:c360-underline",
-                      )}
-                    >
-                      <ExternalLink size={12} />
-                      LinkedIn
-                    </a>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </TabsContent>
-
-        <TabsContent value="connectra">
-          {cLoading ? (
-            <div className="c360-space-y-3" aria-busy>
-              <div className="c360-h-20 c360-animate-pulse c360-rounded c360-bg-ink-2/30" />
-              <div className="c360-h-32 c360-animate-pulse c360-rounded c360-bg-ink-2/30" />
-            </div>
-          ) : cErr ? (
-            <p className="c360-text-sm c360-text-ink-muted" role="alert">
-              {cErr}
-            </p>
-          ) : (
-            <div className="c360-space-y-4 c360-text-2xs c360-text-ink-muted">
-              <Progress
-                value={(cRecord ? 50 : 0) + (cPeople.length > 0 ? 50 : 0)}
-                max={100}
-                size="sm"
-                color="primary"
-                label="Connectra completeness"
-                showValue
-                className="c360-mb-1"
-              />
-              <div className="c360-rounded c360-border c360-border-ink-8 c360-p-3">
-                <p className="c360-mb-2 c360-text-sm c360-font-medium c360-text-ink">
-                  Company record
-                </p>
-                {cRecord ? (
-                  <div className="c360-space-y-1 c360-text-sm c360-text-ink">
-                    {co.name ? (
-                      <p className="c360-font-medium">{co.name}</p>
-                    ) : null}
-                    {co.website ? <p>Website: {co.website}</p> : null}
-                    {co.employees ? <p>Employees: {co.employees}</p> : null}
-                    {co.linkedinUrl ? (
-                      <a
-                        href={co.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary"
-                      >
-                        <Linkedin size={14} />
-                        Company LinkedIn
-                      </a>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p>None returned.</p>
-                )}
-              </div>
-              <div>
-                <div className="c360-mb-2 c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-                  <p className="c360-text-sm c360-font-medium c360-text-ink">
-                    People (VQL) · {cPeople.length} shown
-                  </p>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="c360-gap-1"
-                    onClick={exportPeopleCsv}
-                    disabled={cPeople.length === 0}
-                    leftIcon={<Download size={14} />}
-                  >
-                    Export CSV
-                  </Button>
-                </div>
-                {cPeople.length === 0 ? (
-                  <p>No contacts, or list empty.</p>
-                ) : (
-                  <ul
-                    className="c360-max-h-48 c360-space-y-2 c360-overflow-auto"
-                    role="list"
-                  >
-                    {cPeople.map((row, i) => {
-                      const p = pickContactDisplay(row);
-                      return (
-                        <li
-                          key={connectraContactStableKey(row, i)}
-                          className="c360-rounded c360-border c360-border-ink-8 c360-bg-ink-1/40 c360-p-2"
+        ) : (
+          <C360DataTableShell scrollClassName={modalTableShellScrollClass}>
+            <div className="c360-table-wrapper c360-w-full">
+              <table className="c360-table c360-w-full">
+                <thead>
+                  <tr>
+                    <th className="c360-min-w-0">Title</th>
+                    <th className="c360-whitespace-nowrap">Location</th>
+                    <th className="c360-whitespace-nowrap">Type</th>
+                    <th className="c360-whitespace-nowrap">Posted</th>
+                    <th className="c360-text-right c360-whitespace-nowrap">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={`${row.linkedinJobId}-${row.apifyItemId}`}>
+                      <td className="c360-min-w-0 c360-max-w-[14rem] c360-font-medium">
+                        <span
+                          className="c360-block c360-truncate c360-text-sm"
+                          title={row.title}
                         >
-                          <MediaObject
-                            media={
-                              <div className="c360-hs-avatar">
-                                {hiringSignalInitials(p.name)}
-                              </div>
-                            }
-                            title={
-                              <span className="c360-text-sm c360-font-medium c360-text-ink">
-                                {p.name}
-                              </span>
-                            }
-                            body={
-                              p.title ? (
-                                <span className="c360-text-2xs c360-text-ink-muted">
-                                  {p.title}
-                                </span>
-                              ) : null
-                            }
-                            actions={
-                              <div className="c360-flex c360-gap-1">
-                                {p.linkedinUrl ? (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="c360-p-0-5"
-                                    asChild
-                                  >
-                                    <a
-                                      href={p.linkedinUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      title="LinkedIn"
-                                    >
-                                      <Linkedin size={16} />
-                                    </a>
-                                  </Button>
-                                ) : null}
-                                {p.email ? (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="c360-p-0-5"
-                                    asChild
-                                  >
-                                    <a href={`mailto:${p.email}`} title="Email">
-                                      <Mail size={16} />
-                                    </a>
-                                  </Button>
-                                ) : null}
-                              </div>
-                            }
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+                          {row.title}
+                        </span>
+                      </td>
+                      <td className="c360-text-2xs c360-text-ink-muted">
+                        {row.location?.trim() ? (
+                          <span className="c360-line-clamp-2">
+                            {row.location}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="c360-text-2xs c360-text-ink-muted">
+                        {row.employmentType?.trim() || "—"}
+                      </td>
+                      <td className="c360-text-2xs c360-text-ink-muted c360-whitespace-nowrap">
+                        {formatHireSignalPostedDate(row.postedAt, {
+                          withTime: false,
+                          emptyAsDash: true,
+                        })}
+                      </td>
+                      <td className="c360-text-right">
+                        {row.jobUrl ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="c360-p-0-5"
+                            asChild
+                          >
+                            <a
+                              href={row.jobUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label="Open job on LinkedIn"
+                            >
+                              <ExternalLink size={16} />
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="c360-text-ink-muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </C360DataTableShell>
+        )}
+      </div>
+      </div>
 
-      <div className="c360-mt-4 c360-flex c360-justify-end">
-        <Button type="button" variant="secondary" onClick={onClose}>
+      <footer className="c360-hs-drawer__footer">
+        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
           Close
         </Button>
-      </div>
-    </Modal>
+      </footer>
+    </HiringSignalAsideDrawer>
   );
 }

@@ -353,6 +353,33 @@
   padding: var(--c360-spacing-5) var(--c360-spacing-6);
 }
 
+/* Company drawer — `CompanyHiringTab` (browser preview layout) */
+.c360-hs-drawer section.c360-mb-1 {
+  box-sizing: content-box;
+}
+
+.c360-hs-drawer section.c360-mb-1 > .c360-section-stack {
+  gap: 0;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.c360-hs-drawer section.c360-mb-1 .c360-2col-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.c360-hs-drawer section.c360-mb-1 .c360-card {
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.c360-hs-drawer section.c360-mb-1 .c360-card__body {
+  width: 100%;
+}
+
 .c360-hs-drawer__footer {
   flex-shrink: 0;
   padding: var(--c360-spacing-4) var(--c360-spacing-6);

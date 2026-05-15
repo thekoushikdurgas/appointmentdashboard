@@ -72,9 +72,9 @@ export function setCanLoadMoreFromResponse(
 }
 
 /** Dedupe by `value` while preserving first occurrence order. */
-export function dedupeFilterOptionsByValue<
-  T extends FacetFilterOptionRow,
->(items: T[]): T[] {
+export function dedupeFilterOptionsByValue<T extends FacetFilterOptionRow>(
+  items: T[],
+): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const it of items) {
@@ -200,7 +200,10 @@ export function usePagedFacetFilterOptions<T extends FacetFilterOptionRow>(
         });
         setByKey((prev) => {
           const cur = prev[filterKey] ?? emptyFacetState<T>();
-          const merged = dedupeFilterOptionsByValue([...cur.items, ...res.items]);
+          const merged = dedupeFilterOptionsByValue([
+            ...cur.items,
+            ...res.items,
+          ]);
           const canLoadMore = canLoadMoreAfterPage(
             cur.items.length,
             merged.length,
@@ -304,9 +307,8 @@ export function usePagedFacetFilterOptions<T extends FacetFilterOptionRow>(
   };
 }
 
-const fetchContactFacetPage: FetchFacetPage<ContactFilterData> = async (
-  args,
-) => contactsService.filterData(args);
+const fetchContactFacetPage: FetchFacetPage<ContactFilterData> = async (args) =>
+  contactsService.filterData(args);
 
 /**
  * Paginated + searchable filter option loader for contact facet keys.

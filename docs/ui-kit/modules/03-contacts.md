@@ -88,14 +88,14 @@ Use the kit as **layout/pattern** reference with **`--c360-*`**:
 
 ## 3b. `src/` layout (contacts)
 
-| Area                | Location                                                                       |
-| ------------------- | ------------------------------------------------------------------------------ |
-| **Route**           | `app/(dashboard)/contacts/page.tsx`                                            |
-| **GraphQL strings** | `src/graphql/contactsOperations.ts`                                            |
-| **Service**         | `src/services/graphql/contactsService.ts`                                      |
-| **Hook**            | `src/hooks/useContacts.ts`                                                     |
+| Area                | Location                                                                  |
+| ------------------- | ------------------------------------------------------------------------- |
+| **Route**           | `app/(dashboard)/contacts/page.tsx`                                       |
+| **GraphQL strings** | `src/graphql/contactsOperations.ts`                                       |
+| **Service**         | `src/services/graphql/contactsService.ts`                                 |
+| **Hook**            | `src/hooks/useContacts.ts`                                                |
 | **Feature UI**      | `src/components/feature/contacts/*`, `src/components/vql/VqlBuilderModal` |
-| **Patterns**        | `src/components/patterns/*`, `src/components/shared/WorldMap`                  |
+| **Patterns**        | `src/components/patterns/*`, `src/components/shared/WorldMap`             |
 
 ---
 

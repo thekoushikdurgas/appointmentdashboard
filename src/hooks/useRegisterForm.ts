@@ -2,10 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { AuthRegisterOptions } from "@/context/AuthContext";
-import {
-  getGraphQLFieldErrors,
-  firstFieldMessage,
-} from "@/lib/errorParser";
+import { getGraphQLFieldErrors, firstFieldMessage } from "@/lib/errorParser";
 
 export interface UseRegisterFormOptions {
   register: (

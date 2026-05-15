@@ -18,14 +18,25 @@ import { cn } from "@/lib/utils";
 export type DatabaseComingSoonModule = "contacts" | "companies";
 
 /** Decorative labels (waitlist.md pill strip); not linked routes. */
-const PILL_LABELS = ["Features", "Roadmap", "Beta", "Launch", "Updates"] as const;
+const PILL_LABELS = [
+  "Features",
+  "Roadmap",
+  "Beta",
+  "Launch",
+  "Updates",
+] as const;
 const PILL_HIGHLIGHT_INDEX = 2;
 
 const AVATAR_MOD = ["a", "b", "c"] as const;
 
 const COPY: Record<
   DatabaseComingSoonModule,
-  { title: string; blurb: string; socialProof: string; avatarInitials: [string, string, string] }
+  {
+    title: string;
+    blurb: string;
+    socialProof: string;
+    avatarInitials: [string, string, string];
+  }
 > = {
   contacts: {
     title: "Contacts",
@@ -45,14 +56,19 @@ const COPY: Record<
 
 function TopPillStrip() {
   return (
-    <div className="c360-database-soon__pills-outer" role="presentation" aria-hidden="true">
+    <div
+      className="c360-database-soon__pills-outer"
+      role="presentation"
+      aria-hidden="true"
+    >
       <div className="c360-database-soon__pills">
         {PILL_LABELS.map((feature, index) => (
           <span
             key={feature}
             className={cn(
               "c360-database-soon__pill",
-              index === PILL_HIGHLIGHT_INDEX && "c360-database-soon__pill--active",
+              index === PILL_HIGHLIGHT_INDEX &&
+                "c360-database-soon__pill--active",
             )}
           >
             {feature}
@@ -110,7 +126,9 @@ function CountdownStrip({
       >
         {liveSummary}
       </div>
-      <p className="c360-database-soon__count-label">Estimated time remaining</p>
+      <p className="c360-database-soon__count-label">
+        Estimated time remaining
+      </p>
       <div className="c360-database-soon__count-row" aria-hidden>
         {segments.map(({ label, value }, i) => (
           <Fragment key={label}>
@@ -328,7 +346,11 @@ export function DatabaseModuleComingSoon({
                     liveSummary={liveSummary}
                   />
 
-                  <Button asChild variant="primary" className={WAITLIST_BTN_CLASS}>
+                  <Button
+                    asChild
+                    variant="primary"
+                    className={WAITLIST_BTN_CLASS}
+                  >
                     <Link href={backHref}>Back to dashboard</Link>
                   </Button>
                 </>
@@ -357,14 +379,21 @@ export function DatabaseModuleComingSoon({
                     We&apos;ll notify you at {email.trim()} when this workspace
                     opens.
                   </p>
-                  <Button asChild variant="primary" className={WAITLIST_BTN_CLASS}>
+                  <Button
+                    asChild
+                    variant="primary"
+                    className={WAITLIST_BTN_CLASS}
+                  >
                     <Link href={backHref}>Back to dashboard</Link>
                   </Button>
                 </div>
               )}
             </div>
 
-            <div className="c360-database-soon__card-footer-shine" aria-hidden />
+            <div
+              className="c360-database-soon__card-footer-shine"
+              aria-hidden
+            />
           </div>
         </section>
       </div>

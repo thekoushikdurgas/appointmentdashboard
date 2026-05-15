@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Loader2, UserCircle2, Users, Linkedin } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import {
+  Building2,
+  Loader2,
+  UserCircle2,
+  Users,
+  Linkedin,
+  X,
+  Download,
+} from "lucide-react";
+import Papa from "papaparse";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { MediaObject } from "@/components/ui/MediaObject";
 import {
   fetchJobConnectraCompany,
@@ -12,7 +21,6 @@ import {
   asRecord,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   hiringSignalInitials,
@@ -21,6 +29,7 @@ import {
   connectraContactStableKey,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import { HiringSignalAsideDrawer } from "@/components/feature/hiring-signals/HiringSignalAsideDrawer";
 
 type ConnectraState =
   | { kind: "idle" }
@@ -52,6 +61,9 @@ function parseJobServerJson(raw: unknown): ParseResult {
   }
   return { ok: false, message: "Invalid data shape" };
 }
+
+const modalTableShellScrollClass =
+  "c360-data-table-shell__scroll--modal c360-min-h-0";
 
 export interface JobConnectraModalProps {
   job: LinkedInJobRow;
@@ -130,13 +142,59 @@ export function JobConnectraModal({
     Boolean(companyDisp?.name?.trim()) &&
     rowNameNorm !== connectraNameNorm;
 
+  const exportContactsCsv = () => {
+    if (state.kind !== "ok" || state.contacts.length === 0) {
+      toast.message("Nothing to export", {
+        description: "No contacts returned for this job.",
+      });
+      return;
+    }
+    const flat = state.contacts.map((row) => {
+      const p = pickContactDisplay(row);
+      return {
+        name: p.name,
+        title: p.title,
+        email: p.email,
+        linkedin_url: p.linkedinUrl,
+      };
+    });
+    const csv = Papa.unparse(flat);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `connectra-contacts-job-${job.linkedinJobId.slice(0, 8)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported contacts", { description: `${flat.length} rows` });
+  };
+
   return (
-    <Modal
+    <HiringSignalAsideDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Connectra for this role"
-      size="lg"
+      ariaLabelledBy="c360-hs-job-connectra-title"
     >
+      <header className="c360-hs-drawer__header">
+        <h2
+          id="c360-hs-job-connectra-title"
+          className="c360-m-0 c360-min-w-0 c360-text-lg c360-font-semibold c360-text-ink"
+        >
+          Connectra for this role
+        </h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="c360-shrink-0"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X size={20} />
+        </Button>
+      </header>
+
+      <div className="c360-hs-drawer__body">
       <div className="c360-mb-2 c360-space-y-1">
         <p className="c360-text-2xs c360-text-ink-muted">
           LinkedIn job{" "}
@@ -284,16 +342,29 @@ export function JobConnectraModal({
             className="c360-rounded c360-border c360-border-ink-8 c360-p-3"
             aria-labelledby="c360-connectra-people"
           >
-            <h3
-              id="c360-connectra-people"
-              className="c360-mb-2 c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
-            >
-              <Users size={16} aria-hidden />
-              People at this company
-              {state.contacts.length
-                ? ` (${state.contacts.length} shown)`
-                : null}
-            </h3>
+            <div className="c360-mb-2 c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
+              <h3
+                id="c360-connectra-people"
+                className="c360-m-0 c360-flex c360-items-center c360-gap-2 c360-text-sm c360-font-medium c360-text-ink"
+              >
+                <Users size={16} aria-hidden />
+                People at this company
+                {state.contacts.length
+                  ? ` (${state.contacts.length} shown)`
+                  : null}
+              </h3>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="c360-gap-1"
+                onClick={exportContactsCsv}
+                disabled={state.contacts.length === 0}
+                leftIcon={<Download size={14} />}
+              >
+                Export CSV
+              </Button>
+            </div>
             {state.contacts.length === 0 ? (
               <p className="c360-text-2xs c360-text-ink-muted">
                 No contacts indexed in Connectra for this job&apos;s{" "}
@@ -302,70 +373,91 @@ export function JobConnectraModal({
                 contact documents yet.
               </p>
             ) : (
-              <ul
-                className="c360-max-h-[min(40vh,18rem)] c360-space-y-2 c360-overflow-auto"
-                role="list"
-              >
-                {state.contacts.map((row, i) => {
-                  const p = pickContactDisplay(row);
-                  return (
-                    <li
-                      key={connectraContactStableKey(row, i)}
-                      className="c360-rounded c360-border c360-border-ink-8 c360-p-2"
-                    >
-                      <MediaObject
-                        media={
-                          <div className="c360-hs-avatar">
-                            {hiringSignalInitials(p.name)}
-                          </div>
-                        }
-                        title={
-                          <span className="c360-text-xs c360-font-medium c360-text-ink">
-                            {p.name}
-                          </span>
-                        }
-                        body={
-                          p.title ? (
-                            <span className="c360-text-2xs c360-text-ink-muted">
-                              {p.title}
-                            </span>
-                          ) : null
-                        }
-                        actions={
-                          p.linkedinUrl ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="c360-p-0-5"
-                              asChild
-                            >
-                              <a
-                                href={p.linkedinUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="LinkedIn"
+              <C360DataTableShell scrollClassName={modalTableShellScrollClass}>
+                <div className="c360-table-wrapper c360-w-full">
+                  <table className="c360-table c360-w-full">
+                    <thead>
+                      <tr>
+                        <th
+                          className="c360-w-10 c360-text-center"
+                          scope="col"
+                          aria-label="Initials"
+                        />
+                        <th>Name</th>
+                        <th className="c360-min-w-0">Title</th>
+                        <th className="c360-text-right c360-whitespace-nowrap">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {state.contacts.map((row, i) => {
+                        const p = pickContactDisplay(row);
+                        return (
+                          <tr key={connectraContactStableKey(row, i)}>
+                            <td className="c360-align-middle">
+                              <div
+                                className="c360-hs-avatar c360-mx-auto"
+                                aria-hidden
                               >
-                                <Linkedin size={16} />
-                              </a>
-                            </Button>
-                          ) : null
-                        }
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
+                                {hiringSignalInitials(p.name)}
+                              </div>
+                            </td>
+                            <td className="c360-text-sm c360-font-medium c360-text-ink">
+                              {p.name}
+                            </td>
+                            <td className="c360-min-w-0 c360-max-w-[12rem] c360-text-2xs c360-text-ink-muted">
+                              {p.title ? (
+                                <span
+                                  className="c360-line-clamp-2"
+                                  title={p.title}
+                                >
+                                  {p.title}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="c360-text-right">
+                              {p.linkedinUrl ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="c360-p-0-5"
+                                  asChild
+                                >
+                                  <a
+                                    href={p.linkedinUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="LinkedIn"
+                                  >
+                                    <Linkedin size={16} />
+                                  </a>
+                                </Button>
+                              ) : (
+                                <span className="c360-text-ink-muted">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </C360DataTableShell>
             )}
           </section>
         </div>
       ) : null}
+      </div>
 
-      <div className={cn("c360-mt-4 c360-flex c360-justify-end")}>
-        <Button type="button" variant="secondary" onClick={onClose}>
+      <footer className="c360-hs-drawer__footer">
+        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
           Close
         </Button>
-      </div>
-    </Modal>
+      </footer>
+    </HiringSignalAsideDrawer>
   );
 }

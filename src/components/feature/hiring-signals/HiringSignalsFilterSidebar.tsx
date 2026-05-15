@@ -433,20 +433,8 @@ function buildHiringSignalChipBuckets(
       "Education ≥",
       "educationLevelMins",
     );
-    addTokenChips(
-      "compliance",
-      "sk",
-      draft.skillsAll,
-      "Skill",
-      "skillsAll",
-    );
-    addTokenChips(
-      "country",
-      "ctry",
-      draft.countries,
-      "Country",
-      "countries",
-    );
+    addTokenChips("compliance", "sk", draft.skillsAll, "Skill", "skillsAll");
+    addTokenChips("country", "ctry", draft.countries, "Country", "countries");
 
     if (draft.applyMethod.trim()) {
       add("linkedInApply", {
@@ -642,8 +630,7 @@ export function HiringSignalsFilterSidebar({
   );
 
   const draftChipCount = useMemo(
-    () =>
-      Object.values(chipBuckets).reduce((n, arr) => n + arr.length, 0),
+    () => Object.values(chipBuckets).reduce((n, arr) => n + arr.length, 0),
     [chipBuckets],
   );
 

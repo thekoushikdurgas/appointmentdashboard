@@ -32,8 +32,9 @@ export function JobDescriptionModal({
   const safeHtml = job ? sanitizeJobDescriptionHtml(job.descriptionHtml) : "";
   const listingHref = job ? hrefIfHttp(job.jobUrl) : null;
   const applyHref = job ? hrefIfHttp(job.applyUrl) : null;
-  const sameListingAndApply =
-    Boolean(listingHref && applyHref && listingHref === applyHref);
+  const sameListingAndApply = Boolean(
+    listingHref && applyHref && listingHref === applyHref,
+  );
 
   return (
     <Modal
@@ -53,22 +54,30 @@ export function JobDescriptionModal({
           ) : (
             <>
               {applyHref ? (
-                <Button asChild variant="primary" size="sm" className="c360-gap-1">
+                <Button
+                  asChild
+                  variant="primary"
+                  size="sm"
+                  className="c360-gap-1"
+                >
                   <a href={applyHref} target="_blank" rel="noopener noreferrer">
                     <ExternalLink size={16} />
                     Apply
                   </a>
                 </Button>
               ) : null}
-              {listingHref &&
-              (!applyHref || applyHref !== listingHref) ? (
+              {listingHref && (!applyHref || applyHref !== listingHref) ? (
                 <Button
                   asChild
                   variant={applyHref ? "secondary" : "primary"}
                   size="sm"
                   className="c360-gap-1"
                 >
-                  <a href={listingHref} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={listingHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <ExternalLink size={16} />
                     Open on LinkedIn
                   </a>

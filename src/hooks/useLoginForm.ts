@@ -2,10 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { AuthLoginOptions } from "@/context/AuthContext";
-import {
-  getGraphQLFieldErrors,
-  firstFieldMessage,
-} from "@/lib/errorParser";
+import { getGraphQLFieldErrors, firstFieldMessage } from "@/lib/errorParser";
 
 export interface UseLoginFormOptions {
   login: (

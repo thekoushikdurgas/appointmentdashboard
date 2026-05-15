@@ -9,7 +9,6 @@ import {
   Mail,
   ExternalLink,
   Phone,
-  Hash,
   RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -59,9 +58,6 @@ export function CompanyHeader({
   reloading,
 }: CompanyHeaderProps) {
   const details = [
-    companyUuid
-      ? { icon: <Hash size={16} />, label: "UUID", value: companyUuid }
-      : null,
     { icon: <Globe size={16} />, label: "Domain", value: domain },
     {
       icon: <Users size={16} />,
