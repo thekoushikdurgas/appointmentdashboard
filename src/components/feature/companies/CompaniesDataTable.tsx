@@ -2,14 +2,14 @@
 
 import { useCallback, useMemo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Columns3, ExternalLink, Users } from "lucide-react";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridColumnVisibilityModel,
-  type GridRenderCellParams,
-  type GridRowSelectionModel,
-  type GridSortModel,
+import type {
+  GridColDef,
+  GridColumnVisibilityModel,
+  GridRenderCellParams,
+  GridRowSelectionModel,
+  GridSortModel,
 } from "@mui/x-data-grid";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -33,6 +33,18 @@ import {
   COL_ID_TO_FIELD,
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
+
+const DataGrid = dynamic(
+  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
+        <span className="c360-spinner" aria-label="Loading table…" />
+      </div>
+    ),
+  },
+) as typeof import("@mui/x-data-grid").DataGrid;
 
 export {
   COMPANIES_DT_COLUMN_IDS,

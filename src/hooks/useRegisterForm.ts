@@ -5,7 +5,7 @@ import type { AuthRegisterOptions } from "@/context/AuthContext";
 import {
   getGraphQLFieldErrors,
   firstFieldMessage,
-} from "@/lib/graphqlFieldErrors";
+} from "@/lib/errorParser";
 
 export interface UseRegisterFormOptions {
   register: (

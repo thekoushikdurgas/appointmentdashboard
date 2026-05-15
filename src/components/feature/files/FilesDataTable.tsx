@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { MoreHorizontal, FolderOpen, Upload, RefreshCw } from "lucide-react";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridColumnVisibilityModel,
-  type GridPaginationModel,
-  type GridRenderCellParams,
-  type GridRowSelectionModel,
-  type GridSortModel,
+import type {
+  GridColDef,
+  GridColumnVisibilityModel,
+  GridPaginationModel,
+  GridRenderCellParams,
+  GridRowSelectionModel,
+  GridSortModel,
 } from "@mui/x-data-grid";
 import { cn, formatFileSize, normalizeS3FileSizeBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +24,18 @@ import {
 } from "@/lib/tabularUpload";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+
+const DataGrid = dynamic(
+  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
+        <span className="c360-spinner" aria-label="Loading table…" />
+      </div>
+    ),
+  },
+) as typeof import("@mui/x-data-grid").DataGrid;
 
 export const FILES_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },

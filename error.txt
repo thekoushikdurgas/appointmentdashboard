@@ -1,982 +1,133 @@
-
-E:\ayan\contact360\contact360.io\app>codebase.bat
-
-========================================
-  CONTACT360 DASHBOARD STATE CHECK
-========================================
-
-Current directory: E:\ayan\contact360\contact360.io\app
-
-[0] CSS styling inventory...
-----------------------------------------
-  Lists @import graph, Tailwind signals, inline style={{}} locations.
-  Output: reports\css-inventory.txt
-========================================================================
-CONTACT360 — CSS INVENTORY (custom design system + hygiene report)
-Generated: 2026-05-12T08:33:51.703Z
-========================================================================
-
-## 1) Package.json — Tailwind / PostCSS related
-  (none) — no tailwindcss / @tailwindcss / postcss packages listed.
-
-## 2) Config files (Tailwind / PostCSS)
-  (none) — no tailwind.config.* or postcss.config.* at app root.
-
-## 3) App entry CSS graph (globals.css → @import chain)
-  Entry: app\globals.css
-  @import ./css/core.css → app\css\core.css
-  @import ./css/dashboard-kit.css → app\css\dashboard-kit.css
-  @import ./css/layout.css → app\css\layout.css
-  @import ./css/components.css → app\css\components.css
-  @import ./css/utilities.css → app\css\utilities.css
-  @import ./css/vendor.css → app\css\vendor.css
-  @import ./css/responsive.css → app\css\responsive.css
-  @import ./css/vql.css → app\css\vql.css
-  @import ./components/01-button.css → app\css\components\01-button.css
-  @import ./components/02-form-controls.css → app\css\components\02-form-controls.css
-  @import ./components/03-media-accordion-card-badge.css → app\css\components\03-media-accordion-card-badge.css
-  @import ./components/04-tabs-modal-progress.css → app\css\components\04-tabs-modal-progress.css
-  @import ./components/05-checkbox-radio-table-alert.css → app\css\components\05-checkbox-radio-table-alert.css
-  @import ./components/06-popover-dialogs.css → app\css\components\06-popover-dialogs.css
-  @import ./components/07-page-layout-patterns.css → app\css\components\07-page-layout-patterns.css
-  @import ./components/08-animation.css → app\css\components\08-animation.css
-  @import ./components/09-chat-ui.css → app\css\components\09-chat-ui.css
-  @import ./components/10-profile-billing-checkout.css → app\css\components\10-profile-billing-checkout.css
-  @import ./components/11-email-campaign-widgets.css → app\css\components\11-email-campaign-widgets.css
-  @import ./components/12-filter-company-monospace.css → app\css\components\12-filter-company-monospace.css
-  @import ./components/13-inline-flex-dropzone-result.css → app\css\components\13-inline-flex-dropzone-result.css
-  @import ./components/14-form-wizards-search.css → app\css\components\14-form-wizards-search.css
-  @import ./components/15-code-ads-activity-widgets.css → app\css\components\15-code-ads-activity-widgets.css
-  @import ./components/19-contacts-and-sequences.css → app\css\components\19-contacts-and-sequences.css
-  @import ./components/16-app-pages-tail.css → app\css\components\16-app-pages-tail.css
-  @import ./components/18-app-dynamic-maps-widgets.css → app\css\components\18-app-dynamic-maps-widgets.css
-  @import ./components/24-circular-testimonials.css → app\css\components\24-circular-testimonials.css
-  @import ./components/25-dashboard-job-chart.css → app\css\components\25-dashboard-job-chart.css
-  @import ./components/26-dashboard-jobs-globe.css → app\css\components\26-dashboard-jobs-globe.css
-  @import ./components/27-data-table-shell.css → app\css\components\27-data-table-shell.css
-  @import ./components/17-onboarding-tour.css → app\css\components\17-onboarding-tour.css
-  @import ./components/20-hiring-signals.css → app\css\components\20-hiring-signals.css
-  @import ./components/21-jobs-drawer.css → app\css\components\21-jobs-drawer.css
-  @import ./components/22-notifications-drawer.css → app\css\components\22-notifications-drawer.css
-  @import ./components/23-review-drawer.css → app\css\components\23-review-drawer.css
-  @import ./components/23-files-drawer.css → app\css\components\23-files-drawer.css
-
-## 4) All .css files under app/ (size + ~.c360 rule lines)
-    59644 B   2380 lines  ~ 300 .c360…  app/css/layout.css
-    50039 B   2250 lines  ~ 362 .c360…  app/css/components/16-app-pages-tail.css
-    25613 B    986 lines  ~ 162 .c360…  app/css/components/19-contacts-and-sequences.css
-    25378 B   1037 lines  ~ 181 .c360…  app/css/components/15-code-ads-activity-widgets.css
-    22564 B    977 lines  ~ 143 .c360…  app/css/components/10-profile-billing-checkout.css
-    22322 B   1090 lines  ~ 226 .c360…  app/css/utilities.css
-    20237 B    880 lines  ~ 141 .c360…  app/css/components/20-hiring-signals.css
-    14963 B    580 lines  ~  81 .c360…  app/css/components/04-tabs-modal-progress.css
-    12472 B    490 lines  ~  58 .c360…  app/css/components/24-circular-testimonials.css
-    11935 B    343 lines  ~  52 .c360…  app/css/components/07-page-layout-patterns.css
-    10602 B    402 lines  ~  59 .c360…  app/css/components/06-popover-dialogs.css
-    10392 B    438 lines  ~  55 .c360…  app/css/dashboard-kit.css
-    10173 B    408 lines  ~  61 .c360…  app/css/components/05-checkbox-radio-table-alert.css
-     9134 B    322 lines  ~   0 .c360…  app/css/core.css
-     9118 B    388 lines  ~  62 .c360…  app/css/components/18-app-dynamic-maps-widgets.css
-     8015 B    367 lines  ~  48 .c360…  app/css/components/09-chat-ui.css
-     7068 B    277 lines  ~  46 .c360…  app/css/components/03-media-accordion-card-badge.css
-     6617 B    172 lines  ~  22 .c360…  app/css/components/14-form-wizards-search.css
-     6468 B    277 lines  ~  42 .c360…  app/css/components/02-form-controls.css
-     5596 B    211 lines  ~  33 .c360…  app/css/components/13-inline-flex-dropzone-result.css
-     4004 B    186 lines  ~  28 .c360…  app/css/components/25-dashboard-job-chart.css
-     3768 B    176 lines  ~  20 .c360…  app/css/components/26-dashboard-jobs-globe.css
-     3677 B    179 lines  ~  23 .c360…  app/css/components/23-files-drawer.css
-     3594 B    160 lines  ~  17 .c360…  app/css/components/17-onboarding-tour.css
-     3262 B    161 lines  ~  20 .c360…  app/css/components/21-jobs-drawer.css
-     3167 B    116 lines  ~  17 .c360…  app/css/components/01-button.css
-     3151 B    141 lines  ~   0 .c360…  app/css/responsive.css
-     3047 B    127 lines  ~  17 .c360…  app/css/vendor.css
-     3001 B     73 lines  ~   9 .c360…  app/css/components/11-email-campaign-widgets.css
-     2509 B     53 lines  ~   6 .c360…  app/css/components/12-filter-company-monospace.css
-     2433 B    112 lines  ~  13 .c360…  app/css/components/23-review-drawer.css
-     1781 B     87 lines  ~  15 .c360…  app/css/vql.css
-     1674 B     77 lines  ~   7 .c360…  app/css/components/22-notifications-drawer.css
-     1613 B     32 lines  ~   0 .c360…  app/css/components.css
-      695 B     17 lines  ~   1 .c360…  app/css/components/08-animation.css
-      660 B     19 lines  ~   0 .c360…  app/globals.css
-      436 B     17 lines  ~   2 .c360…  app/css/components/27-data-table-shell.css
-
-## 5) components.css barrel (numbered partials)
-  @import "./components/01-button.css";
-  @import "./components/02-form-controls.css";
-  @import "./components/03-media-accordion-card-badge.css";
-  @import "./components/04-tabs-modal-progress.css";
-  @import "./components/05-checkbox-radio-table-alert.css";
-  @import "./components/06-popover-dialogs.css";
-  @import "./components/07-page-layout-patterns.css";
-  @import "./components/08-animation.css";
-  @import "./components/09-chat-ui.css";
-  @import "./components/10-profile-billing-checkout.css";
-  @import "./components/11-email-campaign-widgets.css";
-  @import "./components/12-filter-company-monospace.css";
-  @import "./components/13-inline-flex-dropzone-result.css";
-  @import "./components/14-form-wizards-search.css";
-  @import "./components/15-code-ads-activity-widgets.css";
-  @import "./components/19-contacts-and-sequences.css";
-  @import "./components/16-app-pages-tail.css";
-  @import "./components/18-app-dynamic-maps-widgets.css";
-  @import "./components/24-circular-testimonials.css";
-  @import "./components/25-dashboard-job-chart.css";
-  @import "./components/26-dashboard-jobs-globe.css";
-  @import "./components/27-data-table-shell.css";
-  @import "./components/17-onboarding-tour.css";
-  @import "./components/20-hiring-signals.css";
-  @import "./components/21-jobs-drawer.css";
-  @import "./components/22-notifications-drawer.css";
-  @import "./components/23-review-drawer.css";
-  @import "./components/23-files-drawer.css";
-
-## 6) External <link rel="stylesheet"> in TSX/JSX
-  (none found in scanned app/ + src/)
-
-## 7) Tailwind-related signals (twMerge, @tailwind, sm:/md: variants)
-  - src\components\feature\demands\DemandsTrendsPage.tsx  (responsive variant (sm:/md:/…))
-  - src\components\feature\hiring-signals\HiringSignalsFilterSidebar.tsx  (responsive variant (sm:/md:/…))
-  - src\components\feature\hiring-signals\RunsTab.tsx  (responsive variant (sm:/md:/…))
-  - src\components\feature\jobs\StartJobFromS3Modal.tsx  (responsive variant (sm:/md:/…))
-  - src\components\feature\market-insights\LocationsTab.tsx  (responsive variant (sm:/md:/…))
-
-## 8) Inline styles (React style={{ … }} and style="…")
-  Files with inline style: 16 (sorted by inline style count, descending).
-  Total lines matching style={{ or style=": React blocks ~22, HTML attr ~0
-
-  Files with inline style (first 80 paths):
-  - src\components\feature\dashboard\DashboardJobActivityChart.tsx  (react=3, htmlAttr=0)  lines: 45, 219, 227
-  - src\components\shared\DashboardLineChart.tsx  (react=3, htmlAttr=0)  lines: 77, 249, 257
-  - src\components\feature\companies\CompanyHiringTab.tsx  (react=2, htmlAttr=0)  lines: 97, 170
-  - src\components\feature\market-insights\SkillsTab.tsx  (react=2, htmlAttr=0)  lines: 116, 149
-  - src\components\feature\dashboard\DashboardActivityFeed.tsx  (react=1, htmlAttr=0)  lines: 72
-  - src\components\feature\hiring-analytics\HeatmapTable.tsx  (react=1, htmlAttr=0)  lines: 99
-  - src\components\feature\hiring-analytics\HorizontalBarChart.tsx  (react=1, htmlAttr=0)  lines: 52
-  - src\components\feature\hiring-signals\CompanyContactsModal.tsx  (react=1, htmlAttr=0)  lines: 258
-  - src\components\feature\market-insights\SalaryTab.tsx  (react=1, htmlAttr=0)  lines: 45
-  - src\components\feature\market-insights\TitlesTab.tsx  (react=1, htmlAttr=0)  lines: 59
-  - src\components\feature\resume\DiffPreviewModal.tsx  (react=1, htmlAttr=0)  lines: 53
-  - src\components\feature\resume\EnrichmentPanel.tsx  (react=1, htmlAttr=0)  lines: 48
-  - src\components\feature\resume\ResumePreview.tsx  (react=1, htmlAttr=0)  lines: 58
-  - src\components\shared\DonutChart.tsx  (react=1, htmlAttr=0)  lines: 31
-  - src\components\shared\WorldMap.tsx  (react=1, htmlAttr=0)  lines: 105
-  - src\components\ui\circular-testimonials\CircularTestimonials.tsx  (react=1, htmlAttr=0)  lines: 193
-
-## 8b) Inline style blocks — design-system variable hint (--c360-*)
-  Opening lines with style={{ (same count as §8): 22.
-  Blocks where `--c360-` appears within the next 10 lines: 1 (likely token / variable bridge to CSS).
-  Blocks with no `--c360-` in that window: 21 (often portals, maps, library geometry, or plain left/top/transform).
-  Total `--c360-` substring matches in scanned TSX/JSX (includes style + rare strings): ~159
-
-## 9) Suggested workflow (unique classes + custom CSS)
-  - Prefer c360-<feature>-<element> or existing utilities in utilities.css.
-  - Replace style={{}} with classes; keep dynamic values as minimal inline.
-  - New feature CSS: add to the smallest relevant components/NN-*.css or utilities.
-  - Large partials (e.g. layout.css, utilities.css, or app-page bundles): split by domain into new NN-* files
-    and add @import lines to components.css (see 18-app-dynamic-maps-widgets.css for a recent split).
-
-========================================================================
-Full report written to: reports\css-inventory.txt
-========================================================================
-  OK CSS inventory written
-
-
-[1/10] Cleaning and preparing...
-----------------------------------------
-  Running: npm run clean:all
-
-> contact360-app@0.1.0 clean:all
-> npm run clean
-
-
-> contact360-app@0.1.0 clean
-> rimraf .next out dist
-
-  OK Clean completed
-
-  Running: npm install
-
-> contact360-app@0.1.0 prepare
-> husky
-
-
-up to date, audited 1152 packages in 10s
-
-349 packages are looking for funding
-  run `npm fund` for details
-
-1 high severity vulnerability
-
-To address all issues, run:
-  npm audit fix
-
-Run `npm audit` for details.
-  OK Dependencies installed
-
-[2/10] GraphQL Codegen...
-----------------------------------------
-  Regenerates src/graphql/generated/types.ts from the API schema.
-  Requires a reachable schema: set CODEGEN_SCHEMA_URL in .env or start the API (see .env.example).
-  Running: npm run codegen
-
-> contact360-app@0.1.0 codegen
-> graphql-codegen --config codegen.ts
-
-√ Parse Configuration
-√ Generate outputs
-  OK GraphQL types regenerated
-
-[3/10] Type checking...
-----------------------------------------
-  Same as npm run typecheck (tsc --noEmit); duplicates removed vs older bat.
-  Running: npm run typecheck
-
-> contact360-app@0.1.0 typecheck
-> tsc --noEmit
-
-app/(dashboard)/dashboard/page.tsx:21:36 - error TS2349: This expression is not callable.
-  Type 'Boolean' has no call signatures.
-
-21   const hiringEnabled = isPro() || isAdmin();
-                                      ~~~~~~~
-
-src/components/feature/hiring-signals/HiringSignalsHomeOverview.tsx:61:9 - error TS2322: Type '{ jobs: LinkedInJobRow[]; loading: boolean; statsBar: Element; belowStatsSlot: Element; onOpenCompanyDrawer: (row: any) => void; latestRun: Record<string, unknown>; runsLoading: boolean; onGoToRuns: () => void; }' is not assignable to type 'IntrinsicAttributes & HiringSignalsDashboardProps'.
-  Property 'belowStatsSlot' does not exist on type 'IntrinsicAttributes & HiringSignalsDashboardProps'.
-
-61         belowStatsSlot={
-           ~~~~~~~~~~~~~~
-
-src/components/feature/hiring-signals/HiringSignalsHomeOverview.tsx:68:31 - error TS7006: Parameter 'row' implicitly has an 'any' type.
-
-68         onOpenCompanyDrawer={(row) => setDrawerRow(row)}
-                                 ~~~
-
-
-Found 3 errors in 2 files.
-
-Errors  Files
-     1  app/(dashboard)/dashboard/page.tsx:21
-     2  src/components/feature/hiring-signals/HiringSignalsHomeOverview.tsx:61
-  X Type check failed
-
-[4/10] Prettier (format check)...
-----------------------------------------
-  Formatter: Prettier (respects .prettierrc / .prettierignore if present)
-  Running: npx prettier --check .
-Checking formatting...
-All matched files use Prettier code style!
-  OK Prettier check passed
-
-[5/10] Linting...
-----------------------------------------
-  Running: npm run lint
-
-> contact360-app@0.1.0 lint
-> eslint . --ext .ts,.tsx --max-warnings 0
-
-
-E:\ayan\contact360\contact360.io\app\src\components\feature\hiring-signals\HiringSignalsDataTable.tsx
-  300:5  warning  React Hook useMemo has a missing dependency: 'listFilters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-✖ 1 problem (0 errors, 1 warning)
-
-ESLint found too many warnings (maximum: 0).
-  X Linting errors found
-
-> contact360-app@0.1.0 lint:fix
-> eslint . --ext .ts,.tsx --fix
-
-
-E:\ayan\contact360\contact360.io\app\src\components\feature\hiring-signals\HiringSignalsDataTable.tsx
-  300:5  warning  React Hook useMemo has a missing dependency: 'listFilters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-✖ 1 problem (0 errors, 1 warning)
-
-
-> contact360-app@0.1.0 lint
-> eslint . --ext .ts,.tsx --max-warnings 0
-
-
-E:\ayan\contact360\contact360.io\app\src\components\feature\hiring-signals\HiringSignalsDataTable.tsx
-  300:5  warning  React Hook useMemo has a missing dependency: 'listFilters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-✖ 1 problem (0 errors, 1 warning)
-
-ESLint found too many warnings (maximum: 0).
-
-[6/10] Running tests...
-----------------------------------------
-  Running: npm run test
-
-> contact360-app@0.1.0 test
-> vitest run --passWithNoTests
-
-2:07:11 PM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
-`optimizeDeps.rollupOptions` / `ssr.optimizeDeps.rollupOptions` is deprecated. Use `optimizeDeps.rolldownOptions` instead. Note that this option may be set by a plugin. Set VITE_DEPRECATION_TRACE=1 to see where it is called.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic', jsxImportSource: undefined }`
-[vite:react-babel] We recommend switching to `@vitejs/plugin-react-oxc` for improved performance. More information at https://vite.dev/rolldown
-
- RUN  v4.1.2 E:/ayan/contact360/contact360.io/app
-
- ✓ src/lib/geo/hiringJobLocationMarkers.test.ts (4 tests) 17ms
- ✓ src/lib/dashboardJobActivitySeries.test.ts (3 tests) 105ms
- ✓ src/graphql/graphql.contracts.test.ts (23 tests) 38ms
- ✓ src/hooks/useFilterOptions.test.ts (9 tests) 21ms
-
- Test Files  4 passed (4)
-      Tests  39 passed (39)
-   Start at  14:07:12
-   Duration  2.61s (transform 1.49s, setup 0ms, import 2.58s, tests 181ms, environment 1ms)
-
-  OK All tests passed
-
-[6b] Coverage skipped (set RUN_TEST_COVERAGE=1 to run npm run test:coverage)
-
-[7/10] Next.js best-practices checklist...
-----------------------------------------
-  ~86 scored checks (default threshold 80 reports\check_report_*.json
-  Config: .next-checker-config.json  -  env BEST_PRACTICES_THRESHOLD, BEST_PRACTICES_FORMAT, BEST_PRACTICES_NO_FAIL
-  Running: node scripts\check-best-practices.mjs
-
-======================================================================
-Next.js Best Practices Check Summary
-======================================================================
-Project root: E:\ayan\contact360\contact360.io\app
-Total points: 86
-Passed: 84
-Failed: 2
-Score: 97.7%
-
-Project Structure: 9/9 passed (100%)
-Security: 9/9 passed (100%)
-Code Organization: 6/6 passed (100%)
-Quality Tooling: 7/7 passed (100%)
-Testing: 10/10 passed (100%)
-Performance: 9/9 passed (100%)
-Deployment: 8/8 passed (100%)
-Styling / CSS: 4/5 passed (80%)
-TypeScript Discipline: 7/7 passed (100%)
-Code Architecture: 6/7 passed (85.7%)
-GraphQL & API Contract: 5/5 passed (100%)
-Error Handling & UX: 4/4 passed (100%)
-
-Codebase meets best practices threshold (80%+)
-
-Report saved to: E:\ayan\contact360\contact360.io\app\reports\check_report_2026-05-12T08-37-16.json
-  OK Best-practices check passed
-
-[8/10] Final format verification (Prettier via npm)...
-----------------------------------------
-  Running: npm run format
-
-> contact360-app@0.1.0 format
-> prettier --write "**/*.{ts,tsx,json,css,md}"
-
-.eslintrc.json 49ms (unchanged)
-.next-checker-config.json 12ms (unchanged)
-app/(auth)/forgot-password/page.tsx 190ms (unchanged)
-app/(auth)/layout.tsx 19ms (unchanged)
-app/(auth)/lock-screen/page.tsx 66ms (unchanged)
-app/(auth)/login/2fa/page.tsx 55ms (unchanged)
-app/(auth)/login/page.tsx 54ms (unchanged)
-app/(auth)/register/page.tsx 11ms (unchanged)
-app/(auth)/reset-password/page.tsx 72ms (unchanged)
-app/(dashboard)/activities/layout.tsx 13ms (unchanged)
-app/(dashboard)/activities/page.tsx 274ms (unchanged)
-app/(dashboard)/ai-chat/page.tsx 200ms (unchanged)
-app/(dashboard)/billing/page.tsx 122ms (unchanged)
-app/(dashboard)/campaigns/[id]/page.tsx 15ms (unchanged)
-app/(dashboard)/campaigns/new/page.tsx 103ms (unchanged)
-app/(dashboard)/campaigns/page.tsx 93ms (unchanged)
-app/(dashboard)/campaigns/sequences/[id]/page.tsx 194ms (unchanged)
-app/(dashboard)/campaigns/sequences/page.tsx 73ms (unchanged)
-app/(dashboard)/campaigns/templates/[id]/edit/page.tsx 68ms (unchanged)
-app/(dashboard)/campaigns/templates/page.tsx 108ms (unchanged)
-app/(dashboard)/companies/[id]/page.tsx 153ms (unchanged)
-app/(dashboard)/companies/page.tsx 216ms (unchanged)
-app/(dashboard)/contacts/[uuid]/page.tsx 103ms (unchanged)
-app/(dashboard)/contacts/page.tsx 206ms (unchanged)
-app/(dashboard)/dashboard/page.tsx 34ms (unchanged)
-app/(dashboard)/demands-and-trends/page.tsx 13ms (unchanged)
-app/(dashboard)/email/page.tsx 18ms (unchanged)
-app/(dashboard)/files/page.tsx 9ms (unchanged)
-app/(dashboard)/hiring-signals/page.tsx 312ms (unchanged)
-app/(dashboard)/jobs/page.tsx 18ms (unchanged)
-app/(dashboard)/layout.tsx 13ms (unchanged)
-app/(dashboard)/linkedin/page.tsx 154ms (unchanged)
-app/(dashboard)/market-insights/page.tsx 16ms (unchanged)
-app/(dashboard)/notifications/[id]/page.tsx 28ms (unchanged)
-app/(dashboard)/notifications/page.tsx 7ms (unchanged)
-app/(dashboard)/phone/page.tsx 20ms (unchanged)
-app/(dashboard)/profile/page.tsx 42ms (unchanged)
-app/(dashboard)/resume/[id]/page.tsx 73ms (unchanged)
-app/(dashboard)/resume/page.tsx 24ms (unchanged)
-app/(dashboard)/sales-navigator/page.tsx 84ms (unchanged)
-app/(dashboard)/settings/page.tsx 27ms (unchanged)
-app/(dashboard)/ui-kit/page.tsx 106ms (unchanged)
-app/400/page.tsx 7ms (unchanged)
-app/403/page.tsx 12ms (unchanged)
-app/404/page.tsx 5ms (unchanged)
-app/500/page.tsx 9ms (unchanged)
-app/503/page.tsx 6ms (unchanged)
-app/api/proxy/linkedin-logo/route.ts 18ms (unchanged)
-app/ConditionalLayout.tsx 15ms (unchanged)
-app/css/components.css 60ms (unchanged)
-app/css/components/01-button.css 64ms (unchanged)
-app/css/components/02-form-controls.css 76ms (unchanged)
-app/css/components/03-media-accordion-card-badge.css 58ms (unchanged)
-app/css/components/04-tabs-modal-progress.css 99ms (unchanged)
-app/css/components/05-checkbox-radio-table-alert.css 74ms (unchanged)
-app/css/components/06-popover-dialogs.css 65ms (unchanged)
-app/css/components/07-page-layout-patterns.css 60ms (unchanged)
-app/css/components/08-animation.css 11ms (unchanged)
-app/css/components/09-chat-ui.css 93ms (unchanged)
-app/css/components/10-profile-billing-checkout.css 166ms (unchanged)
-app/css/components/11-email-campaign-widgets.css 17ms (unchanged)
-app/css/components/12-filter-company-monospace.css 19ms (unchanged)
-app/css/components/13-inline-flex-dropzone-result.css 49ms (unchanged)
-app/css/components/14-form-wizards-search.css 29ms (unchanged)
-app/css/components/15-code-ads-activity-widgets.css 150ms (unchanged)
-app/css/components/16-app-pages-tail.css 490ms (unchanged)
-app/css/components/17-onboarding-tour.css 43ms (unchanged)
-app/css/components/18-app-dynamic-maps-widgets.css 172ms (unchanged)
-app/css/components/19-contacts-and-sequences.css 188ms (unchanged)
-app/css/components/20-hiring-signals.css 157ms (unchanged)
-app/css/components/21-jobs-drawer.css 29ms (unchanged)
-app/css/components/22-notifications-drawer.css 18ms (unchanged)
-app/css/components/23-files-drawer.css 32ms (unchanged)
-app/css/components/23-review-drawer.css 27ms (unchanged)
-app/css/components/24-circular-testimonials.css 117ms (unchanged)
-app/css/components/25-dashboard-job-chart.css 34ms (unchanged)
-app/css/components/26-dashboard-jobs-globe.css 27ms (unchanged)
-app/css/components/27-data-table-shell.css 5ms (unchanged)
-app/css/core.css 45ms (unchanged)
-app/css/dashboard-kit.css 76ms (unchanged)
-app/css/layout.css 337ms (unchanged)
-app/css/responsive.css 17ms (unchanged)
-app/css/utilities.css 147ms (unchanged)
-app/css/vendor.css 31ms (unchanged)
-app/css/vql.css 24ms (unchanged)
-app/error.tsx 31ms (unchanged)
-app/globals.css 19ms (unchanged)
-app/layout.tsx 42ms (unchanged)
-app/not-found.tsx 33ms (unchanged)
-app/page.tsx 8ms (unchanged)
-codegen.ts 30ms (unchanged)
-deploy/README.md 142ms (unchanged)
-docs/AI-CHAT.md 33ms (unchanged)
-docs/BACKLOG_DECOMPOSED.md 297ms (unchanged)
-docs/best-practices-report/ci_check_report.json 245ms (unchanged)
-docs/CONTACTS_GEO_ANALYTICS.md 64ms (unchanged)
-docs/contacts-parity-architecture.md 93ms (unchanged)
-docs/CSS.md 45ms (unchanged)
-docs/DIALOG-PATTERNS.md 28ms (unchanged)
-docs/DISTILLED_ANALYSIS.md 30ms (unchanged)
-docs/GRAPHQL_PARITY.md 281ms (unchanged)
-docs/hiring-signals-ui.md 59ms (unchanged)
-docs/README.md 13ms (unchanged)
-docs/UI_KIT_MAPPING.md 201ms (unchanged)
-docs/ui-kit/extended-module-notes.md 101ms (unchanged)
-docs/ui-kit/modules/00-overview.md 184ms (unchanged)
-docs/ui-kit/modules/01-auth.md 132ms (unchanged)
-docs/ui-kit/modules/02-users.md 83ms (unchanged)
-docs/ui-kit/modules/03-contacts.md 60ms (unchanged)
-docs/ui-kit/modules/04-companies.md 86ms (unchanged)
-docs/ui-kit/modules/05-notifications.md 52ms (unchanged)
-docs/ui-kit/modules/07-s3.md 136ms (unchanged)
-docs/ui-kit/modules/08-health.md 161ms (unchanged)
-docs/ui-kit/modules/09-usage.md 89ms (unchanged)
-docs/ui-kit/modules/10-upload-handoff.md 45ms (unchanged)
-docs/ui-kit/modules/11-activities.md 84ms (unchanged)
-docs/ui-kit/modules/13-admin.md 23ms (unchanged)
-docs/ui-kit/modules/14-billing.md 59ms (unchanged)
-docs/ui-kit/modules/15-email.md 77ms (unchanged)
-docs/ui-kit/modules/16-jobs.md 80ms (unchanged)
-docs/ui-kit/modules/17-ai-chats.md 69ms (unchanged)
-docs/ui-kit/modules/18-analytics.md 67ms (unchanged)
-docs/ui-kit/modules/18-health-envelope.md 55ms (unchanged)
-docs/ui-kit/modules/19-pages.md 88ms (unchanged)
-docs/ui-kit/modules/21-linkedin.md 74ms (unchanged)
-docs/ui-kit/modules/22-campaigns.md 67ms (unchanged)
-docs/ui-kit/modules/23-sales-navigator.md 64ms (unchanged)
-docs/ui-kit/modules/24-sequences.md 58ms (unchanged)
-docs/ui-kit/modules/25-campaign-templates.md 57ms (unchanged)
-docs/ui-kit/modules/27-two-factor.md 61ms (unchanged)
-docs/ui-kit/modules/28-profile.md 58ms (unchanged)
-docs/ui-kit/modules/29-resume.md 57ms (unchanged)
-docs/ui-kit/README.md 36ms (unchanged)
-e2e/auth-guard.spec.ts 12ms (unchanged)
-e2e/smoke.spec.ts 6ms (unchanged)
-next.config.ts 24ms (unchanged)
-package-lock.json 288ms (unchanged)
-package.json 7ms (unchanged)
-playwright.config.ts 10ms (unchanged)
-proxy.ts 6ms (unchanged)
-public/assets/countries-110m.json 882ms (unchanged)
-README.md 50ms (unchanged)
-src/components/contacts/VQLQueryBuilder.tsx 17ms (unchanged)
-src/components/feature/activities/ActivitiesFilterSidebar.tsx 72ms (unchanged)
-src/components/feature/activities/ActivityAnalyticsTab.tsx 62ms (unchanged)
-src/components/feature/activities/ActivityCalendarTab.tsx 39ms (unchanged)
-src/components/feature/activities/ActivityFeedTab.tsx 38ms (unchanged)
-src/components/feature/activities/ActivityFiltersBar.tsx 67ms (unchanged)
-src/components/feature/activities/SavedSearchesTab.tsx 47ms (unchanged)
-src/components/feature/ai-chat/AIChatInput.tsx 10ms (unchanged)
-src/components/feature/ai-chat/AIChatMessageList.tsx 20ms (unchanged)
-src/components/feature/auth/AuthBrandHeader.tsx 10ms (unchanged)
-src/components/feature/auth/AuthLoginFallback.tsx 19ms (unchanged)
-src/components/feature/auth/AuthLoginForm.tsx 26ms (unchanged)
-src/components/feature/auth/AuthRegisterForm.tsx 41ms (unchanged)
-src/components/feature/auth/AuthTabList.tsx 15ms (unchanged)
-src/components/feature/billing/BillingCheckoutWizard.tsx 104ms (unchanged)
-src/components/feature/billing/BillingCreditSummary.tsx 25ms (unchanged)
-src/components/feature/billing/BillingInvoiceList.tsx 46ms (unchanged)
-src/components/feature/billing/BillingMyPaymentRequests.tsx 25ms (unchanged)
-src/components/feature/billing/BillingPaymentProofForm.tsx 43ms (unchanged)
-src/components/feature/billing/BillingPlanCards.tsx 80ms (unchanged)
-src/components/feature/billing/CreditHistoryCalendar.tsx 85ms (unchanged)
-src/components/feature/billing/ManualPaymentInstructions.tsx 30ms (unchanged)
-src/components/feature/billing/PaymentReceiptDropzone.tsx 21ms (unchanged)
-src/components/feature/campaigns/CampaignRow.tsx 14ms (unchanged)
-src/components/feature/campaigns/CampaignWriteActions.tsx 14ms (unchanged)
-src/components/feature/campaigns/CqlPlaygroundCard.tsx 29ms (unchanged)
-src/components/feature/campaigns/TemplatePicker.tsx 39ms (unchanged)
-src/components/feature/companies/CompaniesDataTable.tsx 128ms (unchanged)
-src/components/feature/companies/CompaniesFilterSidebar.tsx 72ms (unchanged)
-src/components/feature/companies/companiesTableModel.ts 10ms (unchanged)
-src/components/feature/companies/CompanyCard.tsx 23ms (unchanged)
-src/components/feature/companies/CompanyContactsTable.tsx 19ms (unchanged)
-src/components/feature/companies/CompanyCreateModal.tsx 24ms (unchanged)
-src/components/feature/companies/CompanyExportModal.tsx 38ms (unchanged)
-src/components/feature/companies/CompanyFindEmailsPanel.tsx 9ms (unchanged)
-src/components/feature/companies/CompanyHeader.tsx 37ms (unchanged)
-src/components/feature/companies/CompanyHiringTab.tsx 39ms (unchanged)
-src/components/feature/companies/CompanyImportModal.tsx 60ms (unchanged)
-src/components/feature/companies/CompanyLogoThumb.tsx 29ms (unchanged)
-src/components/feature/companies/CompanyPagination.tsx 14ms (unchanged)
-src/components/feature/contacts/ContactCreateModal.tsx 29ms (unchanged)
-src/components/feature/contacts/ContactDetailPanel.tsx 43ms (unchanged)
-src/components/feature/contacts/ContactExportModal.tsx 69ms (unchanged)
-src/components/feature/contacts/ContactFilterBar.tsx 57ms (unchanged)
-src/components/feature/contacts/ContactImportModal.tsx 119ms (unchanged)
-src/components/feature/contacts/ContactPagination.tsx 14ms (unchanged)
-src/components/feature/contacts/ContactRow.tsx 18ms (unchanged)
-src/components/feature/contacts/ContactsCollapsibleFilterSection.tsx 23ms (unchanged)
-src/components/feature/contacts/ContactsDataTable.tsx 164ms (unchanged)
-src/components/feature/contacts/ContactsFilterSidebar.tsx 119ms (unchanged)
-src/components/feature/dashboard/DashboardActivityFeed.tsx 26ms (unchanged)
-src/components/feature/dashboard/DashboardAdCarousel.tsx 8ms (unchanged)
-src/components/feature/dashboard/DashboardChartSection.tsx 11ms (unchanged)
-src/components/feature/dashboard/DashboardJobActivityChart.tsx 55ms (unchanged)
-src/components/feature/dashboard/DashboardStatRow.tsx 39ms (unchanged)
-src/components/feature/demands/DemandsTrendsPage.tsx 139ms (unchanged)
-src/components/feature/email/EmailBulkFinderTab.tsx 164ms (unchanged)
-src/components/feature/email/EmailBulkVerifierTab.tsx 110ms (unchanged)
-src/components/feature/email/EmailFinderSingleTab.tsx 27ms (unchanged)
-src/components/feature/email/EmailPatternsTab.tsx 106ms (unchanged)
-src/components/feature/email/EmailVerifierTab.tsx 22ms (unchanged)
-src/components/feature/email/EmailWebSearchTab.tsx 31ms (unchanged)
-src/components/feature/files/BatchFileUploadStatus.tsx 33ms (unchanged)
-src/components/feature/files/FilesDataTable.tsx 143ms (unchanged)
-src/components/feature/files/FilesDrawer.tsx 24ms (unchanged)
-src/components/feature/files/FilesWorkspace.tsx 95ms (unchanged)
-src/components/feature/files/OpenFilesDrawerButton.tsx 10ms (unchanged)
-src/components/feature/files/S3FileDetailModal.tsx 70ms (unchanged)
-src/components/feature/files/S3FileJobsModal.tsx 61ms (unchanged)
-src/components/feature/files/S3FilePreviewModal.tsx 41ms (unchanged)
-src/components/feature/files/S3FileSchemaModal.tsx 24ms (unchanged)
-src/components/feature/files/S3FileStatsModal.tsx 24ms (unchanged)
-src/components/feature/files/S3FileUploadModal.tsx 73ms (unchanged)
-src/components/feature/files/UploadGatewayTab.tsx 83ms (unchanged)
-src/components/feature/hiring-analytics/HeatmapTable.tsx 30ms (unchanged)
-src/components/feature/hiring-analytics/HiringKpiStrip.tsx 38ms (unchanged)
-src/components/feature/hiring-analytics/HorizontalBarChart.tsx 22ms (unchanged)
-src/components/feature/hiring-signals/CompanyContactsModal.tsx 93ms (unchanged)
-src/components/feature/hiring-signals/CompanyDrawerPanel.tsx 65ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalCharts.tsx 27ms (unchanged)
-src/components/feature/hiring-signals/hiringSignalFilterDraft.ts 22ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalJobsGlobe.tsx 52ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsDashboard.tsx 29ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsDataTable.tsx 134ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsExportModal.tsx 86ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsFilterSidebar.tsx 176ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsHomeOverview.tsx 15ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalsResumeImport.tsx 17ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalStatsBar.tsx 33ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalTextFacetCombobox.tsx 41ms (unchanged)
-src/components/feature/hiring-signals/HiringSignalTopCompaniesCard.tsx 20ms (unchanged)
-src/components/feature/hiring-signals/hiringSignalUiUtils.ts 91ms (unchanged)
-src/components/feature/hiring-signals/JobConnectraModal.tsx 74ms (unchanged)
-src/components/feature/hiring-signals/JobDescriptionModal.tsx 33ms (unchanged)
-src/components/feature/hiring-signals/QueueMetricsBar.tsx 28ms (unchanged)
-src/components/feature/hiring-signals/RunScrapeModal.tsx 64ms (unchanged)
-src/components/feature/hiring-signals/RunsTab.tsx 67ms (unchanged)
-src/components/feature/hiring-signals/ScrapeSessionCard.tsx 63ms (unchanged)
-src/components/feature/jobs/JobDetailPanel.tsx 64ms (unchanged)
-src/components/feature/jobs/jobDownload.ts 31ms (unchanged)
-src/components/feature/jobs/JobsDataTable.tsx 184ms (unchanged)
-src/components/feature/jobs/JobsDrawer.tsx 14ms (unchanged)
-src/components/feature/jobs/JobsWorkspace.tsx 75ms (unchanged)
-src/components/feature/jobs/jobsWorkspaceConsts.ts 4ms (unchanged)
-src/components/feature/jobs/OpenJobsDrawerButton.tsx 10ms (unchanged)
-src/components/feature/jobs/StartJobFromS3Modal.tsx 142ms (unchanged)
-src/components/feature/linkedin/LinkedInSearchResultRow.tsx 29ms (unchanged)
-src/components/feature/linkedin/LinkedInUrlSearch.tsx 12ms (unchanged)
-src/components/feature/live-voice/LiveVoicePanel.tsx 56ms (unchanged)
-src/components/feature/market-insights/LocationsTab.tsx 24ms (unchanged)
-src/components/feature/market-insights/MarketInsightsPage.tsx 21ms (unchanged)
-src/components/feature/market-insights/OverviewTab.tsx 21ms (unchanged)
-src/components/feature/market-insights/SalaryTab.tsx 15ms (unchanged)
-src/components/feature/market-insights/SkillsTab.tsx 38ms (unchanged)
-src/components/feature/market-insights/SourcesTab.tsx 17ms (unchanged)
-src/components/feature/market-insights/TitlesTab.tsx 11ms (unchanged)
-src/components/feature/notifications/NotificationCard.tsx 16ms (unchanged)
-src/components/feature/notifications/NotificationPreferencesTab.tsx 13ms (unchanged)
-src/components/feature/notifications/NotificationsDrawer.tsx 10ms (unchanged)
-src/components/feature/notifications/NotificationsWorkspace.tsx 35ms (unchanged)
-src/components/feature/notifications/NotificationTypeFilter.tsx 12ms (unchanged)
-src/components/feature/phone/PhoneFinderSingleTab.tsx 19ms (unchanged)
-src/components/feature/phone/PhoneJobStatusTab.tsx 19ms (unchanged)
-src/components/feature/phone/PhoneVerifierSingleTab.tsx 9ms (unchanged)
-src/components/feature/profile/ProfileApiKeysTab.tsx 35ms (unchanged)
-src/components/feature/profile/ProfileInfoTab.tsx 24ms (unchanged)
-src/components/feature/profile/ProfileSecurityTab.tsx 3ms (unchanged)
-src/components/feature/profile/ProfileSessionsTab.tsx 17ms (unchanged)
-src/components/feature/profile/ProfileTeamTab.tsx 26ms (unchanged)
-src/components/feature/resume/AiResumeCard.tsx 12ms (unchanged)
-src/components/feature/resume/CoverLetterPanel.tsx 11ms (unchanged)
-src/components/feature/resume/DiffPreviewModal.tsx 18ms (unchanged)
-src/components/feature/resume/EnrichmentPanel.tsx 11ms (unchanged)
-src/components/feature/resume/KeywordScore.tsx 11ms (unchanged)
-src/components/feature/resume/ResumeCard.tsx 13ms (unchanged)
-src/components/feature/resume/ResumeCreateModal.tsx 10ms (unchanged)
-src/components/feature/resume/ResumeEditModal.tsx 11ms (unchanged)
-src/components/feature/resume/ResumePreview.tsx 16ms (unchanged)
-src/components/feature/resume/ResumeUploadDropzone.tsx 14ms (unchanged)
-src/components/feature/resume/TailorPanel.tsx 12ms (unchanged)
-src/components/feature/resume/TemplateSelector.tsx 9ms (unchanged)
-src/components/feature/reviews/ReviewDrawer.tsx 17ms (unchanged)
-src/components/feature/reviews/ReviewWorkspace.tsx 34ms (unchanged)
-src/components/feature/saved-searches/SavedSearchesMenu.tsx 34ms (unchanged)
-src/components/feature/two-factor/TwoFactorPanel.tsx 55ms (unchanged)
-src/components/feature/usage/FeatureOverviewPanel.tsx 38ms (unchanged)
-src/components/feature/usage/FeatureUsageCard.tsx 13ms (unchanged)
-src/components/layout/AccountMenuPanel.tsx 14ms (unchanged)
-src/components/layout/MainLayout.tsx 21ms (unchanged)
-src/components/layout/MobileBottomDock.tsx 34ms (unchanged)
-src/components/layout/Sidebar.tsx 34ms (unchanged)
-src/components/layout/SidebarNav.tsx 54ms (unchanged)
-src/components/layout/SidebarQuickActions.tsx 24ms (unchanged)
-src/components/layout/TopBarCredits.tsx 20ms (unchanged)
-src/components/layouts/DashboardPageLayout.tsx 9ms (unchanged)
-src/components/layouts/DataPageLayout.tsx 33ms (unchanged)
-src/components/layouts/FilterPeekPinButton.tsx 8ms (unchanged)
-src/components/patterns/DataToolbar.tsx 12ms (unchanged)
-src/components/patterns/FilterSection.tsx 26ms (unchanged)
-src/components/patterns/GenericToolbar.tsx 42ms (unchanged)
-src/components/patterns/PageHeader.tsx 7ms (unchanged)
-src/components/patterns/Pagination.tsx 10ms (unchanged)
-src/components/patterns/SearchBar.tsx 15ms (unchanged)
-src/components/shared/ActivityBarChart.tsx 15ms (unchanged)
-src/components/shared/CalendarView.tsx 50ms (unchanged)
-src/components/shared/ChartCard.tsx 25ms (unchanged)
-src/components/shared/DashboardLineChart.tsx 76ms (unchanged)
-src/components/shared/DataState.tsx 17ms (unchanged)
-src/components/shared/DonutChart.tsx 16ms (unchanged)
-src/components/shared/ErrorPageGoBack.tsx 8ms (unchanged)
-src/components/shared/ExportJobStatusStepper.tsx 15ms (unchanged)
-src/components/shared/InvoiceCard.tsx 49ms (unchanged)
-src/components/shared/NavCommandPalette.tsx 36ms (unchanged)
-src/components/shared/OnboardingTour.tsx 40ms (unchanged)
-src/components/shared/ReviewCard.tsx 21ms (unchanged)
-src/components/shared/ReviewList.tsx 65ms (unchanged)
-src/components/shared/SidebarSearch.tsx 17ms (unchanged)
-src/components/shared/Skeleton.tsx 35ms (unchanged)
-src/components/shared/SparklineChart.tsx 16ms (unchanged)
-src/components/shared/StatCard.tsx 20ms (unchanged)
-src/components/shared/TiptapEditor.tsx 88ms (unchanged)
-src/components/shared/WebVitalsReporter.tsx 15ms (unchanged)
-src/components/shared/WorldMap.tsx 30ms (unchanged)
-src/components/ui/Accordion.tsx 14ms (unchanged)
-src/components/ui/Alert.tsx 13ms (unchanged)
-src/components/ui/Badge.tsx 10ms (unchanged)
-src/components/ui/Button.tsx 17ms (unchanged)
-src/components/ui/ButtonGroup.tsx 27ms (unchanged)
-src/components/ui/C360DataTableShell.tsx 8ms (unchanged)
-src/components/ui/C360MuiThemeProvider.tsx 12ms (unchanged)
-src/components/ui/Card.tsx 23ms (unchanged)
-src/components/ui/Carousel.tsx 34ms (unchanged)
-src/components/ui/Checkbox.tsx 14ms (unchanged)
-src/components/ui/circular-testimonials/CircularTestimonials.tsx 66ms (unchanged)
-src/components/ui/circular-testimonials/dashboardDemoTestimonials.ts 24ms (unchanged)
-src/components/ui/ConfirmModal.tsx 33ms (unchanged)
-src/components/ui/ContextMenu.tsx 72ms (unchanged)
-src/components/ui/CountUpNumber.tsx 23ms (unchanged)
-src/components/ui/DataTable.tsx 52ms (unchanged)
-src/components/ui/FilterCombobox.tsx 47ms (unchanged)
-src/components/ui/index.ts 16ms (unchanged)
-src/components/ui/Input.tsx 35ms (unchanged)
-src/components/ui/MediaObject.tsx 15ms (unchanged)
-src/components/ui/Modal.tsx 16ms (unchanged)
-src/components/ui/Pagination.tsx 33ms (unchanged)
-src/components/ui/Popover.tsx 50ms (unchanged)
-src/components/ui/Progress.tsx 30ms (unchanged)
-src/components/ui/ProgressBar.tsx 9ms (unchanged)
-src/components/ui/Radio.tsx 21ms (unchanged)
-src/components/ui/RadioGroup.tsx 15ms (unchanged)
-src/components/ui/RangeSlider.tsx 47ms (unchanged)
-src/components/ui/Select.tsx 47ms (unchanged)
-src/components/ui/SweetAlert.tsx 31ms (unchanged)
-src/components/ui/Table.tsx 42ms (unchanged)
-src/components/ui/Tabs.tsx 47ms (unchanged)
-src/components/ui/Tooltip.tsx 26ms (unchanged)
-src/components/vql/VqlBuilderModal.tsx 32ms (unchanged)
-src/components/vql/VqlColumnPicker.tsx 27ms (unchanged)
-src/components/vql/VqlFormParts.tsx 63ms (unchanged)
-src/components/vql/VqlQueryPreview.tsx 16ms (unchanged)
-src/components/vql/VqlSortEditor.tsx 22ms (unchanged)
-src/context/AuthContext.tsx 78ms (unchanged)
-src/context/DataFiltersPeekContext.tsx 17ms (unchanged)
-src/context/FilesDrawerContext.tsx 51ms (unchanged)
-src/context/HireSignalFilterContext.tsx 71ms (unchanged)
-src/context/JobsDrawerContext.tsx 14ms (unchanged)
-src/context/NotificationsDrawerContext.tsx 17ms (unchanged)
-src/context/ReviewDrawerContext.tsx 15ms (unchanged)
-src/context/RoleContext.tsx 21ms (unchanged)
-src/context/ShellSearchContext.tsx 19ms (unchanged)
-src/context/ThemeContext.tsx 23ms (unchanged)
-src/graphql/activitiesOperations.ts 12ms (unchanged)
-src/graphql/authOperations.ts 12ms (unchanged)
-src/graphql/authSelections.ts 2ms (unchanged)
-src/graphql/companiesOperations.ts 7ms (unchanged)
-src/graphql/contactsOperations.ts 6ms (unchanged)
-src/graphql/generated/types.ts 606ms (unchanged)
-src/graphql/graphql.contracts.test.ts 69ms (unchanged)
-src/graphql/healthOperations.ts 12ms (unchanged)
-src/graphql/notificationsOperations.ts 12ms (unchanged)
-src/graphql/phoneOperations.ts 10ms (unchanged)
-src/graphql/s3Operations.ts 10ms (unchanged)
-src/graphql/uploadOperations.ts 3ms (unchanged)
-src/graphql/usageOperations.ts 4ms (unchanged)
-src/graphql/usersOperations.ts 5ms (unchanged)
-src/hooks/common/useBreakpoint.ts 12ms (unchanged)
-src/hooks/useActivities.ts 34ms (unchanged)
-src/hooks/useAIChat.ts 35ms (unchanged)
-src/hooks/useAuthRedirect.ts 12ms (unchanged)
-src/hooks/useAuthSession.ts 12ms (unchanged)
-src/hooks/useBilling.ts 30ms (unchanged)
-src/hooks/useCampaignSequences.ts 15ms (unchanged)
-src/hooks/useCampaignsList.ts 17ms (unchanged)
-src/hooks/useCampaignTemplates.ts 16ms (unchanged)
-src/hooks/useCompanies.ts 33ms (unchanged)
-src/hooks/useCompanyDetail.ts 22ms (unchanged)
-src/hooks/useCompanyFilterOptions.ts 36ms (unchanged)
-src/hooks/useCompanyFilters.ts 37ms (unchanged)
-src/hooks/useCompanyHiringSignals.ts 17ms (unchanged)
-src/hooks/useContactFilters.ts 33ms (unchanged)
-src/hooks/useContacts.ts 54ms (unchanged)
-src/hooks/useCountryAggregates.ts 31ms (unchanged)
-src/hooks/useCSSVars.ts 16ms (unchanged)
-src/hooks/useEmailFinderSingle.ts 15ms (unchanged)
-src/hooks/useEmailJobPoller.ts 20ms (unchanged)
-src/hooks/useEmailVerification.ts 10ms (unchanged)
-src/hooks/useFeatureOverview.ts 9ms (unchanged)
-src/hooks/useFilterOptions.test.ts 13ms (unchanged)
-src/hooks/useFilterOptions.ts 41ms (unchanged)
-src/hooks/useHireSignalRuns.ts 49ms (unchanged)
-src/hooks/useHiringSignals.ts 103ms (unchanged)
-src/hooks/useJobDetail.ts 16ms (unchanged)
-src/hooks/useJobPoller.ts 17ms (unchanged)
-src/hooks/useJobs.ts 38ms (unchanged)
-src/hooks/useLinkedInSearch.ts 12ms (unchanged)
-src/hooks/useLoginForm.ts 50ms (unchanged)
-src/hooks/useModal.ts 4ms (unchanged)
-src/hooks/useMultipartUpload.ts 28ms (unchanged)
-src/hooks/useMutationWithRetry.ts 23ms (unchanged)
-src/hooks/useNotifications.ts 45ms (unchanged)
-src/hooks/useOverlayLayer.ts 18ms (unchanged)
-src/hooks/usePerformanceMetric.ts 10ms (unchanged)
-src/hooks/usePhoneFinderSingle.ts 16ms (unchanged)
-src/hooks/usePhoneVerifierSingle.ts 13ms (unchanged)
-src/hooks/useProfile.ts 40ms (unchanged)
-src/hooks/useProfileGeneral.ts 31ms (unchanged)
-src/hooks/useRegisterForm.ts 17ms (unchanged)
-src/hooks/useResume.ts 58ms (unchanged)
-src/hooks/useResumeAi.ts 11ms (unchanged)
-src/hooks/useResumeOne.ts 34ms (unchanged)
-src/hooks/useS3Files.ts 69ms (unchanged)
-src/hooks/useSalesNavigator.ts 64ms (unchanged)
-src/hooks/useSavedSearches.ts 24ms (unchanged)
-src/hooks/useSessionGuard.ts 18ms (unchanged)
-src/hooks/useTwoFactor.ts 44ms (unchanged)
-src/hooks/useUsage.ts 56ms (unchanged)
-src/lib/activityDisplay.ts 14ms (unchanged)
-src/lib/analyticsMetricFormat.ts 6ms (unchanged)
-src/lib/analyticsPeriod.ts 6ms (unchanged)
-src/lib/applyCssVars.ts 6ms (unchanged)
-src/lib/authGeo.ts 6ms (unchanged)
-src/lib/campaignListMapping.ts 17ms (unchanged)
-src/lib/campaignSatelliteErrors.ts 3ms (unchanged)
-src/lib/chartTheme.ts 9ms (unchanged)
-src/lib/companiesListPrefs.ts 10ms (unchanged)
-src/lib/companyListVql.ts 15ms (unchanged)
-src/lib/companyLogoUrl.ts 11ms (unchanged)
-src/lib/config.ts 19ms (unchanged)
-src/lib/constants.ts 17ms (unchanged)
-src/lib/contactEmailStatus.ts 13ms (unchanged)
-src/lib/contactFacetVql.ts 23ms (unchanged)
-src/lib/contactImportCsv.ts 40ms (unchanged)
-src/lib/contactsColumnVql.ts 6ms (unchanged)
-src/lib/contactsFilterMetrics.ts 9ms (unchanged)
-src/lib/contactsListCache.ts 34ms (unchanged)
-src/lib/dashboardJobActivitySeries.test.ts 14ms (unchanged)
-src/lib/dashboardJobActivitySeries.ts 24ms (unchanged)
-src/lib/emailCsv.ts 49ms (unchanged)
-src/lib/emailErrors.ts 9ms (unchanged)
-src/lib/emailStatus.ts 4ms (unchanged)
-src/lib/errorParser.ts 25ms (unchanged)
-src/lib/featureAccess.ts 15ms (unchanged)
-src/lib/gatewayDocs.ts 6ms (unchanged)
-src/lib/geo/hiringJobLocationMarkers.test.ts 13ms (unchanged)
-src/lib/geo/hiringJobLocationMarkers.ts 112ms (unchanged)
-src/lib/graphqlClient.ts 146ms (unchanged)
-src/lib/graphqlFieldErrors.ts 18ms (unchanged)
-src/lib/hiringAnalytics.ts 415ms (unchanged)
-src/lib/isoCountryCodes.ts 30ms (unchanged)
-src/lib/jobs/exportOutputPrefix.ts 95ms (unchanged)
-src/lib/jobs/jobBucketCounts.ts 12ms (unchanged)
-src/lib/jobs/jobsMapper.ts 13ms (unchanged)
-src/lib/jobs/jobsUtils.ts 45ms (unchanged)
-src/lib/jobs/statusPayload.ts 52ms (unchanged)
-src/lib/jobsListLocalCache.ts 19ms (unchanged)
-src/lib/linkedinMappers.ts 21ms (unchanged)
-src/lib/linkedinValidation.ts 28ms (unchanged)
-src/lib/multipartCsvUpload.ts 28ms (unchanged)
-src/lib/multipartGatewayUpload.ts 10ms (unchanged)
-src/lib/multipartUploadTypes.ts 3ms (unchanged)
-src/lib/navConfig.ts 19ms (unchanged)
-src/lib/notificationDisplay.ts 21ms (unchanged)
-src/lib/paymentReceiptImage.ts 13ms (unchanged)
-src/lib/phoneErrors.ts 16ms (unchanged)
-src/lib/profileAvatarUpload.ts 9ms (unchanged)
-src/lib/profileUtils.ts 8ms (unchanged)
-src/lib/resumeAiClient.ts 81ms (unchanged)
-src/lib/resumeAiPrompts.ts 7ms (unchanged)
-src/lib/resumeDisplay.ts 13ms (unchanged)
-src/lib/resumeErrors.ts 17ms (unchanged)
-src/lib/routes.ts 16ms (unchanged)
-src/lib/s3FileData.ts 24ms (unchanged)
-src/lib/s3FilesLocalCache.ts 32ms (unchanged)
-src/lib/salesNavigatorBulk.ts 74ms (unchanged)
-src/lib/savedSearchPayload.ts 34ms (unchanged)
-src/lib/sequenceListMapping.ts 24ms (unchanged)
-src/lib/skillCategories.ts 24ms (unchanged)
-src/lib/storageErrors.ts 14ms (unchanged)
-src/lib/tabularUpload.ts 10ms (unchanged)
-src/lib/templateListMapping.ts 16ms (unchanged)
-src/lib/tokenManager.ts 17ms (unchanged)
-src/lib/ttlLocalStorageCache.ts 17ms (unchanged)
-src/lib/twoFactorUtils.ts 10ms (unchanged)
-src/lib/uploadPaymentReceipt.ts 11ms (unchanged)
-src/lib/usageDisplay.ts 11ms (unchanged)
-src/lib/utils.ts 45ms (unchanged)
-src/lib/vqlDraft.ts 71ms (unchanged)
-src/lib/vqlFieldMeta.ts 35ms (unchanged)
-src/services/graphql/activitiesService.ts 15ms (unchanged)
-src/services/graphql/aiChatService.ts 119ms (unchanged)
-src/services/graphql/analyticsService.ts 36ms (unchanged)
-src/services/graphql/authService.ts 94ms (unchanged)
-src/services/graphql/billingService.ts 95ms (unchanged)
-src/services/graphql/campaignSatelliteService.ts 30ms (unchanged)
-src/services/graphql/campaignsService.ts 31ms (unchanged)
-src/services/graphql/companiesService.ts 73ms (unchanged)
-src/services/graphql/contactsService.ts 103ms (unchanged)
-src/services/graphql/emailService.ts 74ms (unchanged)
-src/services/graphql/healthService.ts 18ms (unchanged)
-src/services/graphql/hiringSignalService.ts 242ms (unchanged)
-src/services/graphql/index.ts 7ms (unchanged)
-src/services/graphql/jobsService.ts 62ms (unchanged)
-src/services/graphql/linkedinService.ts 15ms (unchanged)
-src/services/graphql/notificationsService.ts 22ms (unchanged)
-src/services/graphql/phoneService.ts 14ms (unchanged)
-src/services/graphql/profileService.ts 24ms (unchanged)
-src/services/graphql/resumeService.ts 14ms (unchanged)
-src/services/graphql/s3Service.ts 25ms (unchanged)
-src/services/graphql/salesNavigatorService.ts 19ms (unchanged)
-src/services/graphql/savedSearchesService.ts 12ms (unchanged)
-src/services/graphql/twoFactorService.ts 15ms (unchanged)
-src/services/graphql/uploadService.ts 15ms (unchanged)
-src/services/graphql/usageService.ts 7ms (unchanged)
-src/services/graphql/usersService.ts 45ms (unchanged)
-src/styles/auth/auth-shell.css 43ms (unchanged)
-src/types/api-modules.ts 8ms (unchanged)
-src/types/campaignSatelliteShapes.ts 8ms (unchanged)
-src/types/graphql-gateway.ts 21ms (unchanged)
-src/types/health.ts 5ms (unchanged)
-src/types/index.ts 12ms (unchanged)
-src/types/linkedin.ts 14ms (unchanged)
-src/types/react-simple-maps.d.ts 16ms (unchanged)
-tsconfig.eslint.json 8ms (unchanged)
-tsconfig.json 5ms (unchanged)
-vitest.config.ts 8ms (unchanged)
-  OK Final formatting applied
-
-[9/10] Production build check...
-----------------------------------------
-  Running: npm run build
-
-> contact360-app@0.1.0 build
-> next build
-
-▲ Next.js 16.2.4 (Turbopack)
-- Environments: .env.production, .env
-- Experiments (use with caution):
-  · proxyTimeout: 300000
-  · serverActions
-
-  Creating an optimized production build ...
-✓ Compiled successfully in 45s
-  Running TypeScript  .Failed to type check.
-
-./app/(dashboard)/dashboard/page.tsx:21:36
-Type error: This expression is not callable.
-  Type 'Boolean' has no call signatures.
-
-  19 | export default function DashboardPage() {
-  20 |   const { isAdmin, isPro } = useRole();
-> 21 |   const hiringEnabled = isPro() || isAdmin();
-     |                                    ^
-  22 |
-  23 |   const hiring = useHiringSignals(
-  24 |     hiringEnabled ? { limit: HIRE_SIGNAL_ANALYTICS_FETCH_LIMIT } : {},
-Next.js build worker exited with code: 1 and signal: null
-  X Build failed
-
-
-========================================
-  SUMMARY
-========================================
-
-Section Status:
-  [0] CSS inventory:                  see reports\css-inventory.txt if not skipped
-  [1] Cleanup and Preparation:        PASSED
-  [2] GraphQL Codegen:                PASSED
-  [3] Type Checking:                  FAILED
-  [4] Prettier:                       PASSED
-  [5] Linting:                        FAILED
-  [6] Testing:                        PASSED
-  [6b] Vitest coverage:               SKIPPED
-  [7] Best practices ~86 checks:      PASSED
-  [8] Final Format:                   PASSED
-  [9] Build Verification:             FAILED
-
-  X Found 3 error(s)
-
-  Please fix the errors before proceeding.
-
-========================================
-  CHECK COMPLETE
-========================================
-
-
-E:\ayan\contact360\contact360.io\app>
+Console Error
+
+
+
+GraphQL request failed {} Error: Page with identifier 'landing-platform-tabs' not found
+src/lib/graphqlClient.ts (390:21) @ graphqlRequest
+
+
+  388 |             parsedError.message.includes("try again later");
+  389 |           if (isDevelopment() && !isPagesServiceUnavailable) {
+> 390 |             console.error(
+      |                     ^
+  391 |               "GraphQL request failed",
+  392 |               { query, variables, errors },
+  393 |               apiError
+Call Stack
+7
+
+Hide 3 ignore-listed frame(s)
+createConsoleError
+node_modules/next/src/next-devtools/shared/console-error.ts (16:35)
+handleConsoleError
+node_modules/next/src/next-devtools/userspace/app/errors/use-error-handler.ts (31:31)
+console.error
+node_modules/next/src/next-devtools/userspace/app/errors/intercept-console-error.ts (33:27)
+graphqlRequest
+src/lib/graphqlClient.ts (390:21)
+async getPage
+src/services/graphql/pagesService.ts (79:16)
+async getMarketingPage
+src/services/graphql/marketingService.ts (171:18)
+async load
+src/hooks/useLandingContent.ts (54:25)
+Console Error
+
+
+
+GraphQL request failed {} Error: Page with identifier 'landing-product-showcase' not found
+src/lib/graphqlClient.ts (390:21) @ graphqlRequest
+
+
+  388 |             parsedError.message.includes("try again later");
+  389 |           if (isDevelopment() && !isPagesServiceUnavailable) {
+> 390 |             console.error(
+      |                     ^
+  391 |               "GraphQL request failed",
+  392 |               { query, variables, errors },
+  393 |               apiError
+Call Stack
+7
+
+Show 3 ignore-listed frame(s)
+graphqlRequest
+src/lib/graphqlClient.ts (390:21)
+async getPage
+src/services/graphql/pagesService.ts (79:16)
+async getMarketingPage
+src/services/graphql/marketingService.ts (171:18)
+async load
+src/hooks/useLandingContent.ts (54:25)
+Console Error
+
+
+
+Error fetching marketing page landing-product-showcase {} Error: Page with identifier 'landing-product-showcase' not found
+src/services/graphql/marketingService.ts (197:13) @ getMarketingPage
+
+
+  195 |     }
+  196 |     showApiErrorToast(error);
+> 197 |     console.error(
+      |             ^
+  198 |       `Error fetching marketing page ${pageId}`,
+  199 |       { pageId, operation: "getMarketingPage" },
+  200 |       error
+Call Stack
+5
+
+Show 3 ignore-listed frame(s)
+getMarketingPage
+src/services/graphql/marketingService.ts (197:13)
+async load
+src/hooks/useLandingContent.ts (54:25)
+Console Error
+
+
+
+GraphQL request failed {} Error: Page with identifier 'landing-sales-cta' not found
+src/lib/graphqlClient.ts (390:21) @ graphqlRequest
+
+
+  388 |             parsedError.message.includes("try again later");
+  389 |           if (isDevelopment() && !isPagesServiceUnavailable) {
+> 390 |             console.error(
+      |                     ^
+  391 |               "GraphQL request failed",
+  392 |               { query, variables, errors },
+  393 |               apiError
+Call Stack
+7
+
+Show 3 ignore-listed frame(s)
+graphqlRequest
+src/lib/graphqlClient.ts (390:21)
+async getPage
+src/services/graphql/pagesService.ts (79:16)
+async getMarketingPage
+src/services/graphql/marketingService.ts (171:18)
+async load
+src/hooks/useLandingContent.ts (54:25)
+Console Error
+
+
+
+Error fetching marketing page landing-sales-cta {} Error: Page with identifier 'landing-sales-cta' not found
+src/services/graphql/marketingService.ts (197:13) @ getMarketingPage
+
+
+  195 |     }
+  196 |     showApiErrorToast(error);
+> 197 |     console.error(
+      |             ^
+  198 |       `Error fetching marketing page ${pageId}`,
+  199 |       { pageId, operation: "getMarketingPage" },
+  200 |       error
+Call Stack
+5
+
+Show 3 ignore-listed frame(s)
+getMarketingPage
+src/services/graphql/marketingService.ts (197:13)
+async load
+src/hooks/useLandingContent.ts (54:25)

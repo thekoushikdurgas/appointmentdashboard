@@ -7,7 +7,7 @@ import {
   ContactsDataTable,
   type ContactsDataTableColumnId,
 } from "@/components/feature/contacts/ContactsDataTable";
-import { Pagination } from "@/components/patterns/Pagination";
+import { Pagination } from "@/components/ui/Pagination";
 import type { Contact } from "@/services/graphql/contactsService";
 
 const EMBEDDED_VISIBLE_COLUMNS: ContactsDataTableColumnId[] = [

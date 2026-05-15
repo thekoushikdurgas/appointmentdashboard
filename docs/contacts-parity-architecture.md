@@ -25,7 +25,7 @@ This document satisfies Phase 0 of the contacts UX/UI parity plan: traces for bo
 | Layout shell                 | Resizable sidebar, toolbar slot, metadata, pagination | Extended `DataPageLayout` with toolbar/metadata/pagination slots + mobile filter drawer |
 | Tabs                         | Toolbar tabs (Total, Net New, …)                      | Toolbar tabs; list scope still drives `applyFilters` (net_new / do_not_contact)         |
 | Sidebar header               | Title, “N Active”, CLEAR, refresh metadata            | Same + optional close on mobile drawer                                                  |
-| Advanced VQL                 | Simpler `VQLQueryBuilder` + `filterGroups`            | Keep richer `VqlBuilderModal` + `DraftQuery`                                            |
+| Advanced VQL                 | `VqlBuilderModal` + `DraftQuery` (same stack as companies) | Same `VqlBuilderModal` + `DraftQuery`                                            |
 | Saved searches / bulk insert | Present in d1                                         | Out of scope unless backend parity                                                      |
 | AI search                    | Sidebar AI row                                        | Feature-flagged stub or future API                                                      |
 

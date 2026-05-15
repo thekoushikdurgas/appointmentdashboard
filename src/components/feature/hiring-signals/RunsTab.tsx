@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { History, Play, RefreshCw } from "lucide-react";
-import { Pagination } from "@/components/patterns/Pagination";
+import { Pagination } from "@/components/ui/Pagination";
 import { Table, type TableColumn } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Tooltip } from "@/components/ui/Tooltip";

@@ -7,15 +7,15 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import dynamic from "next/dynamic";
 import { Building2, ExternalLink, FileText, Link2 } from "lucide-react";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridColumnVisibilityModel,
-  type GridPaginationModel,
-  type GridRenderCellParams,
-  type GridRowSelectionModel,
-  type GridSortModel,
+import type {
+  GridColDef,
+  GridColumnVisibilityModel,
+  GridPaginationModel,
+  GridRenderCellParams,
+  GridRowSelectionModel,
+  GridSortModel,
 } from "@mui/x-data-grid";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -40,6 +40,18 @@ import {
   type JobListSortKey,
   type JobListSortOrder,
 } from "@/services/graphql/hiringSignalService";
+
+const DataGrid = dynamic(
+  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
+        <span className="c360-spinner" aria-label="Loading table…" />
+      </div>
+    ),
+  },
+) as typeof import("@mui/x-data-grid").DataGrid;
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },

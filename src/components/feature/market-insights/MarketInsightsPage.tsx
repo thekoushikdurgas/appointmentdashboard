@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -15,7 +16,6 @@ import type {
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
-import { HiringSignalJobsGlobe } from "@/components/feature/hiring-signals/HiringSignalJobsGlobe";
 import { HiringSignalEmploymentTypeCard } from "@/components/feature/hiring-signals/HiringSignalCharts";
 import { HiringSignalTopCompaniesCard } from "@/components/feature/hiring-signals/HiringSignalTopCompaniesCard";
 import { OverviewTab } from "@/components/feature/market-insights/OverviewTab";
@@ -24,6 +24,21 @@ import { LocationsTab } from "@/components/feature/market-insights/LocationsTab"
 import { TitlesTab } from "@/components/feature/market-insights/TitlesTab";
 import { SkillsTab } from "@/components/feature/market-insights/SkillsTab";
 import { SalaryTab } from "@/components/feature/market-insights/SalaryTab";
+
+const HiringSignalJobsGlobe = dynamic(
+  () =>
+    import("@/components/feature/hiring-signals/HiringSignalJobsGlobe").then(
+      (m) => m.HiringSignalJobsGlobe,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-min-h-[200px] c360-items-center c360-justify-center">
+        <span className="c360-spinner" aria-label="Loading globe…" />
+      </div>
+    ),
+  },
+);
 
 export interface MarketInsightsPageProps {
   hiring: {

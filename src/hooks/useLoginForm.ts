@@ -5,7 +5,7 @@ import type { AuthLoginOptions } from "@/context/AuthContext";
 import {
   getGraphQLFieldErrors,
   firstFieldMessage,
-} from "@/lib/graphqlFieldErrors";
+} from "@/lib/errorParser";
 
 export interface UseLoginFormOptions {
   login: (

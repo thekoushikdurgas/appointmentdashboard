@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { SearchBar } from "@/components/patterns/SearchBar";
-import { Pagination } from "@/components/patterns/Pagination";
+import { Pagination } from "@/components/ui/Pagination";
 import { ReviewList } from "@/components/shared/ReviewList";
 import { DataState } from "@/components/shared/DataState";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -286,7 +286,7 @@ export default function CampaignsPage() {
             <div className="c360-card-search-header c360-card-search-header--footer">
               <Pagination
                 page={page}
-                totalPages={Math.max(1, Math.ceil(filtered.length / 10))}
+                pageSize={10}
                 total={filtered.length}
                 onPageChange={setPage}
               />

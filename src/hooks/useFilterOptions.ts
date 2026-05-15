@@ -7,8 +7,11 @@ import type { ContactFilterData } from "@/graphql/generated/types";
 /** Page size for filter facet option requests (Connectra pagination). */
 export const FILTER_OPTIONS_PAGE_SIZE = 50;
 
-export interface FilterOptionsState {
-  items: ContactFilterData[];
+/** Shared facet option row shape (contacts + companies). */
+export type FacetFilterOptionRow = { value: string; displayValue: string };
+
+export type FacetFilterState<T extends FacetFilterOptionRow> = {
+  items: T[];
   /** Last successfully fetched page (1-based). */
   page: number;
   /** Total distinct values reported by API (may be 0 if unknown). */
@@ -19,9 +22,14 @@ export interface FilterOptionsState {
   searchText: string;
   /** Whether another page can be requested (see `canLoadMoreAfterPage`). */
   canLoadMore: boolean;
-}
+};
 
-function emptyState(): FilterOptionsState {
+/** @deprecated Prefer `FacetFilterState<ContactFilterData>` */
+export type FilterOptionsState = FacetFilterState<ContactFilterData>;
+
+function emptyFacetState<
+  T extends FacetFilterOptionRow,
+>(): FacetFilterState<T> {
   return {
     items: [],
     page: 0,
@@ -65,7 +73,7 @@ export function setCanLoadMoreFromResponse(
 
 /** Dedupe by `value` while preserving first occurrence order. */
 export function dedupeFilterOptionsByValue<
-  T extends { value: string; displayValue: string },
+  T extends FacetFilterOptionRow,
 >(items: T[]): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
@@ -79,17 +87,27 @@ export function dedupeFilterOptionsByValue<
 }
 
 /** Whether more pages can be loaded for infinite scroll. */
-export function computeFilterHasMore(st: FilterOptionsState): boolean {
+export function computeFilterHasMore<T extends FacetFilterOptionRow>(
+  st: FacetFilterState<T>,
+): boolean {
   if (st.loading || st.loadingMore) return false;
   return st.canLoadMore;
 }
 
+type FetchFacetPage<T extends FacetFilterOptionRow> = (args: {
+  filterKey: string;
+  page: number;
+  limit: number;
+  searchText?: string;
+}) => Promise<{ items: T[]; total: number }>;
+
 /**
- * Paginated + searchable filter option loader for contact facet keys.
- * Used by `useContactFilters` and tests.
+ * Generic paginated + searchable filter facet loader (contacts, companies, …).
  */
-export function useFilterOptions() {
-  const [byKey, setByKey] = useState<Record<string, FilterOptionsState>>({});
+export function usePagedFacetFilterOptions<T extends FacetFilterOptionRow>(
+  fetchPage: FetchFacetPage<T>,
+) {
+  const [byKey, setByKey] = useState<Record<string, FacetFilterState<T>>>({});
   const searchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
     {},
   );
@@ -101,166 +119,176 @@ export function useFilterOptions() {
   };
 
   const getState = useCallback(
-    (filterKey: string): FilterOptionsState => byKey[filterKey] ?? emptyState(),
+    (filterKey: string): FacetFilterState<T> =>
+      byKey[filterKey] ?? emptyFacetState<T>(),
     [byKey],
   );
 
-  const openFilter = useCallback(async (filterKey: string) => {
-    setByKey((prev) => ({
-      ...prev,
-      [filterKey]: {
-        ...(prev[filterKey] ?? emptyState()),
-        loading: true,
-        searchText: "",
-      },
-    }));
-    try {
-      const res = await contactsService.filterData({
-        filterKey,
-        page: 1,
-        limit: FILTER_OPTIONS_PAGE_SIZE,
-      });
-      const items = dedupeFilterOptionsByValue(res.items);
-      const canLoadMore = canLoadMoreAfterPage(
-        0,
-        items.length,
-        res.items.length,
-      );
+  const openFilter = useCallback(
+    async (filterKey: string) => {
       setByKey((prev) => ({
         ...prev,
         [filterKey]: {
-          items,
+          ...(prev[filterKey] ?? emptyFacetState<T>()),
+          loading: true,
+          searchText: "",
+        },
+      }));
+      try {
+        const res = await fetchPage({
+          filterKey,
           page: 1,
-          total: res.total,
-          loading: false,
-          loadingMore: false,
-          searchText: "",
-          canLoadMore,
-        },
-      }));
-    } catch {
-      setByKey((prev) => ({
-        ...prev,
-        [filterKey]: {
-          ...(prev[filterKey] ?? emptyState()),
-          items: [],
-          page: 0,
-          total: 0,
-          loading: false,
-          loadingMore: false,
-          searchText: "",
-          canLoadMore: false,
-        },
-      }));
-    }
-  }, []);
-
-  const loadMore = useCallback(async (filterKey: string) => {
-    let snapshot: FilterOptionsState | undefined;
-    setByKey((prev) => {
-      const s = prev[filterKey];
-      if (!s || s.loading || s.loadingMore || !s.canLoadMore) return prev;
-      snapshot = s;
-      return {
-        ...prev,
-        [filterKey]: { ...s, loadingMore: true },
-      };
-    });
-    if (!snapshot) return;
-    const nextPage = snapshot.page + 1;
-    try {
-      const res = await contactsService.filterData({
-        filterKey,
-        page: nextPage,
-        limit: FILTER_OPTIONS_PAGE_SIZE,
-        searchText: snapshot.searchText.trim() || undefined,
-      });
-      setByKey((prev) => {
-        const cur = prev[filterKey] ?? emptyState();
-        const merged = dedupeFilterOptionsByValue([...cur.items, ...res.items]);
+          limit: FILTER_OPTIONS_PAGE_SIZE,
+        });
+        const items = dedupeFilterOptionsByValue(res.items);
         const canLoadMore = canLoadMoreAfterPage(
-          cur.items.length,
-          merged.length,
+          0,
+          items.length,
           res.items.length,
         );
-        return {
-          ...prev,
-          [filterKey]: {
-            ...cur,
-            items: merged,
-            page: nextPage,
-            total: Math.max(cur.total, res.total),
-            loadingMore: false,
-            canLoadMore,
-          },
-        };
-      });
-    } catch {
-      setByKey((prev) => ({
-        ...prev,
-        [filterKey]: {
-          ...(prev[filterKey] ?? emptyState()),
-          loadingMore: false,
-        },
-      }));
-    }
-  }, []);
-
-  const setSearch = useCallback((filterKey: string, text: string) => {
-    clearTimer(filterKey);
-    setByKey((prev) => ({
-      ...prev,
-      [filterKey]: {
-        ...(prev[filterKey] ?? emptyState()),
-        searchText: text,
-      },
-    }));
-    searchTimers.current[filterKey] = setTimeout(() => {
-      void (async () => {
         setByKey((prev) => ({
           ...prev,
           [filterKey]: {
-            ...(prev[filterKey] ?? emptyState()),
-            loading: true,
+            items,
+            page: 1,
+            total: res.total,
+            loading: false,
+            loadingMore: false,
+            searchText: "",
+            canLoadMore,
           },
         }));
-        try {
-          const res = await contactsService.filterData({
-            filterKey,
-            page: 1,
-            limit: FILTER_OPTIONS_PAGE_SIZE,
-            searchText: text.trim() || undefined,
-          });
-          const items = dedupeFilterOptionsByValue(res.items);
+      } catch {
+        setByKey((prev) => ({
+          ...prev,
+          [filterKey]: {
+            ...(prev[filterKey] ?? emptyFacetState<T>()),
+            items: [],
+            page: 0,
+            total: 0,
+            loading: false,
+            loadingMore: false,
+            searchText: "",
+            canLoadMore: false,
+          },
+        }));
+      }
+    },
+    [fetchPage],
+  );
+
+  const loadMore = useCallback(
+    async (filterKey: string) => {
+      let snapshot: FacetFilterState<T> | undefined;
+      setByKey((prev) => {
+        const s = prev[filterKey];
+        if (!s || s.loading || s.loadingMore || !s.canLoadMore) return prev;
+        snapshot = s;
+        return {
+          ...prev,
+          [filterKey]: { ...s, loadingMore: true },
+        };
+      });
+      if (!snapshot) return;
+      const nextPage = snapshot.page + 1;
+      try {
+        const res = await fetchPage({
+          filterKey,
+          page: nextPage,
+          limit: FILTER_OPTIONS_PAGE_SIZE,
+          searchText: snapshot.searchText.trim() || undefined,
+        });
+        setByKey((prev) => {
+          const cur = prev[filterKey] ?? emptyFacetState<T>();
+          const merged = dedupeFilterOptionsByValue([...cur.items, ...res.items]);
           const canLoadMore = canLoadMoreAfterPage(
-            0,
-            items.length,
+            cur.items.length,
+            merged.length,
             res.items.length,
           );
-          setByKey((prev) => ({
+          return {
             ...prev,
             [filterKey]: {
-              items,
-              page: 1,
-              total: res.total,
-              loading: false,
+              ...cur,
+              items: merged,
+              page: nextPage,
+              total: Math.max(cur.total, res.total),
               loadingMore: false,
-              searchText: text,
               canLoadMore,
             },
-          }));
-        } catch {
+          };
+        });
+      } catch {
+        setByKey((prev) => ({
+          ...prev,
+          [filterKey]: {
+            ...(prev[filterKey] ?? emptyFacetState<T>()),
+            loadingMore: false,
+          },
+        }));
+      }
+    },
+    [fetchPage],
+  );
+
+  const setSearch = useCallback(
+    (filterKey: string, text: string) => {
+      clearTimer(filterKey);
+      setByKey((prev) => ({
+        ...prev,
+        [filterKey]: {
+          ...(prev[filterKey] ?? emptyFacetState<T>()),
+          searchText: text,
+        },
+      }));
+      searchTimers.current[filterKey] = setTimeout(() => {
+        void (async () => {
           setByKey((prev) => ({
             ...prev,
             [filterKey]: {
-              ...(prev[filterKey] ?? emptyState()),
-              loading: false,
+              ...(prev[filterKey] ?? emptyFacetState<T>()),
+              loading: true,
             },
           }));
-        }
-      })();
-    }, 300);
-  }, []);
+          try {
+            const res = await fetchPage({
+              filterKey,
+              page: 1,
+              limit: FILTER_OPTIONS_PAGE_SIZE,
+              searchText: text.trim() || undefined,
+            });
+            const items = dedupeFilterOptionsByValue(res.items);
+            const canLoadMore = canLoadMoreAfterPage(
+              0,
+              items.length,
+              res.items.length,
+            );
+            setByKey((prev) => ({
+              ...prev,
+              [filterKey]: {
+                items,
+                page: 1,
+                total: res.total,
+                loading: false,
+                loadingMore: false,
+                searchText: text,
+                canLoadMore,
+              },
+            }));
+          } catch {
+            setByKey((prev) => ({
+              ...prev,
+              [filterKey]: {
+                ...(prev[filterKey] ?? emptyFacetState<T>()),
+                loading: false,
+              },
+            }));
+          }
+        })();
+      }, 300);
+    },
+    [fetchPage],
+  );
 
   const resetAll = useCallback(() => {
     for (const k of Object.keys(searchTimers.current)) clearTimer(k);
@@ -274,4 +302,16 @@ export function useFilterOptions() {
     setSearch,
     resetAll,
   };
+}
+
+const fetchContactFacetPage: FetchFacetPage<ContactFilterData> = async (
+  args,
+) => contactsService.filterData(args);
+
+/**
+ * Paginated + searchable filter option loader for contact facet keys.
+ * Used by `useContactFilters` and tests.
+ */
+export function useFilterOptions() {
+  return usePagedFacetFilterOptions(fetchContactFacetPage);
 }

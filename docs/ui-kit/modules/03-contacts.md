@@ -80,7 +80,7 @@ Full legend: [`README.md`](README.md#task-tracking-graphql--ui).
 Use the kit as **layout/pattern** reference with **`--c360-*`**:
 
 - Tables / row actions — `ecom-customers.html`, `ecom-product-list.html`.
-- Filters — `form-element`, dropdown patterns; existing **`FilterSection`**, **`VQLQueryBuilder`**.
+- Filters — `form-element`, dropdown patterns; existing **`FilterSection`**, **`VqlBuilderModal`**.
 - Export wizard / progress — `form-wizard.html`; **Modal + `Progress` + job polling** (export modal).
 - Map — **`WorldMap`** from current page rows (full geo analytics may need server aggregates).
 
@@ -94,7 +94,7 @@ Use the kit as **layout/pattern** reference with **`--c360-*`**:
 | **GraphQL strings** | `src/graphql/contactsOperations.ts`                                            |
 | **Service**         | `src/services/graphql/contactsService.ts`                                      |
 | **Hook**            | `src/hooks/useContacts.ts`                                                     |
-| **Feature UI**      | `src/components/feature/contacts/*`, `src/components/contacts/VQLQueryBuilder` |
+| **Feature UI**      | `src/components/feature/contacts/*`, `src/components/vql/VqlBuilderModal` |
 | **Patterns**        | `src/components/patterns/*`, `src/components/shared/WorldMap`                  |
 
 ---

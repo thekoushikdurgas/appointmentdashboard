@@ -10,16 +10,16 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import { MoreHorizontal, Loader2, Download } from "lucide-react";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridColumnVisibilityModel,
-  type GridPaginationModel,
-  type GridRenderCellParams,
-  type GridRowClassNameParams,
-  type GridRowSelectionModel,
-  type GridSortModel,
+import type {
+  GridColDef,
+  GridColumnVisibilityModel,
+  GridPaginationModel,
+  GridRenderCellParams,
+  GridRowClassNameParams,
+  GridRowSelectionModel,
+  GridSortModel,
 } from "@mui/x-data-grid";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
@@ -38,6 +38,18 @@ import {
   canDownloadSchedulerOutput,
   schedulerOutputDownloadLabel,
 } from "@/lib/jobs/jobsUtils";
+
+const DataGrid = dynamic(
+  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
+        <span className="c360-spinner" aria-label="Loading table…" />
+      </div>
+    ),
+  },
+) as typeof import("@mui/x-data-grid").DataGrid;
 
 export const JOBS_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },

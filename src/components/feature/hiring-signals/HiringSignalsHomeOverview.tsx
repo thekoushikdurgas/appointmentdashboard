@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/HiringSignalsDashboard";
-import { HiringSignalJobsGlobe } from "@/components/feature/hiring-signals/HiringSignalJobsGlobe";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
 import { useHireSignalRuns } from "@/hooks/useHireSignalRuns";
@@ -11,6 +11,21 @@ import type {
   LinkedInJobRow,
   UseHiringSignalsResult,
 } from "@/hooks/useHiringSignals";
+
+const HiringSignalJobsGlobe = dynamic(
+  () =>
+    import("@/components/feature/hiring-signals/HiringSignalJobsGlobe").then(
+      (m) => m.HiringSignalJobsGlobe,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="c360-flex c360-min-h-[200px] c360-items-center c360-justify-center">
+        <span className="c360-spinner" aria-label="Loading globe…" />
+      </div>
+    ),
+  },
+);
 
 const RUNS_TAB_PAGE_SIZE = 10;
 
