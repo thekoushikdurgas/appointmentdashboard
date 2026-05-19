@@ -105,13 +105,6 @@ export function HireSignalFilterProvider({
     const titles = normalizeHiringSignalTokenList(draft.titles);
     const companies = normalizeHiringSignalTokenList(draft.companies);
     const locations = normalizeHiringSignalTokenList(draft.locations);
-    const excludedTitles = normalizeHiringSignalTokenList(draft.excludedTitles);
-    const excludedCompanies = normalizeHiringSignalTokenList(
-      draft.excludedCompanies,
-    );
-    const excludedLocations = normalizeHiringSignalTokenList(
-      draft.excludedLocations,
-    );
 
     const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
     const empLegacy = draft.employmentType.trim();
