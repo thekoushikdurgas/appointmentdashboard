@@ -339,18 +339,63 @@
 
 .c360-hs-drawer__header {
   flex-shrink: 0;
-  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+  padding: 5px 15px;
   border-bottom: 1px solid var(--c360-border);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--c360-spacing-3);
+  gap: 0;
+}
+
+.c360-hs-drawer__header-company {
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.c360-hs-drawer__header-company .c360-hs-drawer__header-meta {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.c360-hs-drawer__header-company .c360-hs-drawer__header-meta > p.c360-text-ink {
+  width: 100%;
+}
+
+.c360-hs-drawer__header-company
+  .c360-hs-drawer__header-meta
+  > a.c360-btn:first-of-type {
+  margin-right: 5px;
+}
+
+.c360-hs-drawer__header-company .c360-media__title {
+  font-size: var(--c360-text-lg);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.c360-hs-drawer__header-company .c360-media__title--solo {
+  margin-bottom: 0;
 }
 
 .c360-hs-drawer__body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--c360-spacing-5) var(--c360-spacing-6);
+  padding: 0;
+}
+
+/* DataGrid inside hiring-signal aside drawers (narrow shell; horizontal scroll in shell) */
+.c360-hs-drawer .c360-hs-data-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.c360-hs-drawer .c360-hs-data-grid .MuiDataGrid-root {
+  min-width: 520px;
 }
 
 /* Company drawer — `CompanyHiringTab` (browser preview layout) */
@@ -410,6 +455,28 @@
 .c360-hs-drawer__avatar img {
   position: absolute;
   inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Connectra drawer — section title row (browser preview layout) */
+.c360-hs-drawer__section-toolbar {
+  padding: 5px 15px;
+}
+
+.c360-hs-drawer__jobs-meta {
+  padding: 5px 10px;
+}
+
+/* Connectra / company sections — MediaObject logo (50×50) */
+.c360-hs-drawer .c360-media__figure {
+  width: 50px;
+  height: 50px;
+}
+
+.c360-hs-drawer .c360-media__figure img {
   display: block;
   width: 100%;
   height: 100%;
@@ -685,6 +752,39 @@
   flex: 1;
   min-width: 0;
   gap: 0;
+}
+
+/* Sticky signals toolbar: stays visible under fixed topbar while scrolling the list */
+.c360-page.c360-hiring-signals-page
+  > .c360-data-layout--with-toolbar
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar {
+  position: sticky;
+  z-index: 5;
+  align-self: stretch;
+}
+
+.c360-main:not(.c360-main--collapsed)
+  .c360-page.c360-hiring-signals-page
+  > .c360-data-layout--with-toolbar
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar,
+.c360-shell--sidebar-peek
+  .c360-main.c360-main--collapsed
+  .c360-page.c360-hiring-signals-page
+  > .c360-data-layout--with-toolbar
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar {
+  top: var(--c360-topbar-height);
+}
+
+.c360-shell:not(.c360-shell--sidebar-peek)
+  .c360-main.c360-main--collapsed
+  .c360-page.c360-hiring-signals-page
+  > .c360-data-layout--with-toolbar
+  > .c360-data-layout__content
+  > .c360-data-layout__toolbar {
+  top: var(--c360-topbar-height-collapsed);
 }
 
 .c360-page.c360-hiring-signals-page .c360-toolbar {

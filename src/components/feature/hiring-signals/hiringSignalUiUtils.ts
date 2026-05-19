@@ -332,6 +332,28 @@ export function pickContactDisplay(row: unknown): {
   };
 }
 
+/** First/last for email finder; prefers nested fields, else splits display name. */
+export function pickContactFinderNames(row: unknown): {
+  firstName: string;
+  lastName: string;
+} {
+  const o = asRecord(row);
+  if (!o) {
+    return { firstName: "", lastName: "" };
+  }
+  const nested =
+    asRecord(o.pg_contact) ?? asRecord(o.pgContact) ?? asRecord(o.contact) ?? o;
+  let firstName = String(nested.first_name ?? nested.firstName ?? "").trim();
+  let lastName = String(nested.last_name ?? nested.lastName ?? "").trim();
+  if (!firstName) {
+    const display = pickContactDisplay(row);
+    const parts = display.name.trim().split(/\s+/).filter(Boolean);
+    firstName = parts[0] ?? "";
+    lastName = parts.slice(1).join(" ");
+  }
+  return { firstName, lastName };
+}
+
 /** Stable list key for Connectra / VQL contact rows. */
 export function connectraContactStableKey(row: unknown, index: number): string {
   const o = asRecord(row);
@@ -383,6 +405,20 @@ export function pickCompanyDisplay(row: unknown): {
       o.profile_pic ?? o.profilePic ?? o.logo ?? o.company_logo ?? "",
     ),
   };
+}
+
+/** Absolute https URL for a company website/domain string from Connectra or scraper. */
+export function companyWebsiteHref(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  try {
+    const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+    const u = new URL(withProto);
+    if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /**

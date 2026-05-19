@@ -3,12 +3,10 @@
 import {
   useCallback,
   useMemo,
-  useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
 import dynamic from "next/dynamic";
-import { Building2, ExternalLink, FileText, Link2 } from "lucide-react";
 import type {
   GridColDef,
   GridColumnVisibilityModel,
@@ -17,21 +15,23 @@ import type {
   GridRowSelectionModel,
   GridSortModel,
 } from "@mui/x-data-grid";
-import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
-import { Badge } from "@/components/ui/Badge";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import { hiringSignalRowKey } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import { getHiringSignalsDataGridSx } from "@/components/feature/hiring-signals/hiringSignalsDataGridTheme";
 import {
-  employmentTypeBadgeColor,
-  hiringSignalInitials,
-  hiringSignalRowKey,
-  formatHireSignalPostedDate,
-  proxiedCompanyLogoSrc,
-} from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+  HiringSignalsJobActionsCellMain,
+  HiringSignalsJobCompanyCellComfortable,
+  HiringSignalsJobCompanyCellCompact,
+  HiringSignalsJobLocationCell,
+  HiringSignalsJobPostedCell,
+  HiringSignalsJobTitleCellComfortable,
+  HiringSignalsJobTitleCellCompact,
+  HiringSignalsJobTypeBadgesCell,
+} from "@/components/feature/hiring-signals/hiringSignalsGridCells";
 
 import {
   DEFAULT_JOB_SORT_KEY,
@@ -114,24 +114,14 @@ const COL_LABELS: Record<HiringSignalsDataTableColumnId, string> = {
   actions: "Actions",
 };
 
-function isRemoteAllowed(remote: string): boolean {
-  const x = remote.trim().toLowerCase();
+function HiringSignalsNoRowsOverlay() {
   return (
-    x === "true" ||
-    x === "yes" ||
-    x === "1" ||
-    x.includes("remote") ||
-    x.includes("hybrid")
+    <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4">
+      <p className="c360-table__empty c360-m-0 c360-text-sm c360-text-ink-muted">
+        No job rows yet. Run a scrape from job.server or check filters.
+      </p>
+    </div>
   );
-}
-
-/** Prefer geo string; when LinkedIn omits location, show workplace types (Remote/Hybrid) if present. */
-function displayLocationForRow(row: LinkedInJobRow): string {
-  const geo = row.location?.trim();
-  if (geo) return geo;
-  const wt = row.workplaceTypes?.filter(Boolean) ?? [];
-  if (wt.length) return wt.join(", ");
-  return "—";
 }
 
 function gridSortModelFromListFilters(f: JobListFilters): GridSortModel {
@@ -161,48 +151,6 @@ export function HiringSignalsToolbarTableExtras({
         onChange={(e) => onPageSizeChange(Number(e.target.value) || 25)}
         options={PAGE_SIZE_OPTIONS}
       />
-    </div>
-  );
-}
-
-/** Logo with fallback to initials when URL fails or returns a broken asset (avoids thin strips in cells). */
-function HiringSignalsCompanyAvatar({
-  logoUrl,
-  companyName,
-}: {
-  logoUrl?: string | null;
-  companyName?: string | null;
-}) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const raw = logoUrl?.trim();
-  const showImg = Boolean(raw && !imgFailed);
-
-  return (
-    <div className="c360-hs-avatar c360-hs-grid-company-avatar" aria-hidden>
-      {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element -- remote URLs from raw_payload / ingest
-        <img
-          src={proxiedCompanyLogoSrc(raw!)}
-          alt=""
-          className="c360-h-full c360-w-full c360-object-cover"
-          onError={() => setImgFailed(true)}
-          loading="lazy"
-        />
-      ) : (
-        <span className="c360-hs-grid-company-avatar__initials">
-          {hiringSignalInitials(companyName || "C")}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function HiringSignalsNoRowsOverlay() {
-  return (
-    <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4">
-      <p className="c360-table__empty c360-m-0 c360-text-sm c360-text-ink-muted">
-        No job rows yet. Run a scrape from job.server or check filters.
-      </p>
     </div>
   );
 }
@@ -368,44 +316,13 @@ export function HiringSignalsDataTable({
         renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => {
           const row = params.row;
           if (density === "compact") {
-            return (
-              <span
-                className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink"
-                title={row.title || undefined}
-              >
-                {row.title || "—"}
-              </span>
-            );
+            return <HiringSignalsJobTitleCellCompact row={row} />;
           }
           return (
-            <div className="c360-hs-grid-title-stack">
-              <div className="c360-hs-grid-title-stack__row">
-                <span
-                  className="c360-hs-grid-title-stack__title c360-min-w-0 c360-font-medium c360-text-ink"
-                  title={row.title || undefined}
-                >
-                  {row.title || "—"}
-                </span>
-                <Tooltip content="Job description" placement="top">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="c360-hs-grid-title-stack__jd c360-shrink-0 c360-gap-1 c360-px-2"
-                    onClick={() => onOpenDescription(row)}
-                    aria-label="View job description"
-                  >
-                    <FileText size={16} aria-hidden />
-                    JD
-                  </Button>
-                </Tooltip>
-              </div>
-              {row.seniority ? (
-                <p className="c360-hs-grid-title-stack__meta">
-                  {row.seniority}
-                </p>
-              ) : null}
-            </div>
+            <HiringSignalsJobTitleCellComfortable
+              row={row}
+              onOpenDescription={onOpenDescription}
+            />
           );
         },
         cellClassName:
@@ -422,47 +339,18 @@ export function HiringSignalsDataTable({
         renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => {
           const row = params.row;
           if (density === "compact") {
-            return onOpenCompanyDrawer && row.companyUuid ? (
-              <button
-                type="button"
-                className="c360-hs-table__company-link c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-left c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
-                onClick={() => onOpenCompanyDrawer(row)}
-              >
-                {row.companyName || "—"}
-              </button>
-            ) : (
-              <span className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink">
-                {row.companyName || "—"}
-              </span>
+            return (
+              <HiringSignalsJobCompanyCellCompact
+                row={row}
+                onOpenCompanyDrawer={onOpenCompanyDrawer}
+              />
             );
           }
           return (
-            <div className="c360-hs-grid-company-cell">
-              <HiringSignalsCompanyAvatar
-                logoUrl={row.companyLogoUrl}
-                companyName={row.companyName}
-              />
-              <div className="c360-min-w-0 c360-flex-1">
-                {onOpenCompanyDrawer && row.companyUuid ? (
-                  <button
-                    type="button"
-                    className="c360-hs-table__company-link c360-block c360-max-w-full c360-truncate c360-text-left c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
-                    onClick={() => onOpenCompanyDrawer(row)}
-                  >
-                    {row.companyName || "—"}
-                  </button>
-                ) : (
-                  <span className="c360-text-sm c360-font-medium c360-text-ink">
-                    {row.companyName || "—"}
-                  </span>
-                )}
-                {row.functionCategory ? (
-                  <p className="c360-m-0 c360-mt-0-5 c360-text-xs c360-text-ink-muted">
-                    {row.functionCategory}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            <HiringSignalsJobCompanyCellComfortable
+              row={row}
+              onOpenCompanyDrawer={onOpenCompanyDrawer}
+            />
           );
         },
         cellClassName:
@@ -477,9 +365,7 @@ export function HiringSignalsDataTable({
         minWidth: 140,
         sortable: true,
         renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => (
-          <span className="c360-hs-grid-meta-text">
-            {displayLocationForRow(params.row)}
-          </span>
+          <HiringSignalsJobLocationCell row={params.row} />
         ),
         cellClassName: "c360-hs-grid-cell--center",
       },
@@ -490,28 +376,12 @@ export function HiringSignalsDataTable({
         width: 168,
         minWidth: 148,
         sortable: true,
-        renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => {
-          const row = params.row;
-          return (
-            <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-              {row.employmentType ? (
-                <Badge
-                  color={employmentTypeBadgeColor(row.employmentType)}
-                  size={badgeSize}
-                >
-                  {row.employmentType}
-                </Badge>
-              ) : (
-                <span className="c360-text-xs c360-text-ink-muted">—</span>
-              )}
-              {isRemoteAllowed(row.remoteAllowed) ? (
-                <Badge color="emerald" size={badgeSize}>
-                  Remote
-                </Badge>
-              ) : null}
-            </div>
-          );
-        },
+        renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => (
+          <HiringSignalsJobTypeBadgesCell
+            row={params.row}
+            badgeSize={badgeSize}
+          />
+        ),
         cellClassName: "c360-hs-grid-cell--center",
       },
       {
@@ -531,12 +401,7 @@ export function HiringSignalsDataTable({
         valueGetter: (_value, row) =>
           row.postedAt ? new Date(row.postedAt) : null,
         renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => (
-          <span className="c360-hs-grid-meta-text">
-            {formatHireSignalPostedDate(params.row.postedAt, {
-              withTime: false,
-              emptyAsDash: true,
-            })}
-          </span>
+          <HiringSignalsJobPostedCell row={params.row} />
         ),
         cellClassName: "c360-hs-grid-cell--center",
       },
@@ -550,63 +415,14 @@ export function HiringSignalsDataTable({
         filterable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => {
-          const row = params.row;
-          return (
-            <div
-              className="c360-hs-grid-actions-row c360-flex c360-items-center c360-justify-end"
-              role="group"
-              aria-label={`Actions for ${row.title || "job"}`}
-            >
-              {row.companyUuid ? (
-                <Tooltip content="Company roles (Mongo)" placement="top">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="c360-hs-grid-action-btn c360-gap-1 c360-px-2"
-                    onClick={() => onOpenCompany(row)}
-                    aria-label="Open company roles"
-                  >
-                    <Building2 size={iconSz} aria-hidden />
-                  </Button>
-                </Tooltip>
-              ) : null}
-              <Tooltip content="Connectra profile & people" placement="top">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="c360-hs-grid-action-btn c360-gap-1 c360-px-2"
-                  onClick={() => onOpenConnectra(row)}
-                  aria-label="Open Connectra data"
-                >
-                  <Link2 size={iconSz} aria-hidden />
-                </Button>
-              </Tooltip>
-              {row.jobUrl ? (
-                <Tooltip content="Open on LinkedIn" placement="top">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    asChild
-                    className="c360-hs-grid-action-btn c360-p-2"
-                  >
-                    <a
-                      href={row.jobUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Open job on LinkedIn"
-                    >
-                      <ExternalLink size={iconSz} aria-hidden />
-                    </a>
-                  </Button>
-                </Tooltip>
-              ) : null}
-            </div>
-          );
-        },
+        renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => (
+          <HiringSignalsJobActionsCellMain
+            row={params.row}
+            iconSz={iconSz}
+            onOpenCompany={onOpenCompany}
+            onOpenConnectra={onOpenConnectra}
+          />
+        ),
         cellClassName: "c360-hs-grid-cell--center",
       },
     ];
@@ -663,51 +479,7 @@ export function HiringSignalsDataTable({
                 noRowsOverlay: HiringSignalsNoRowsOverlay,
               }}
               showColumnVerticalBorder
-              sx={(theme) => ({
-                border: "none",
-                borderRadius: 0,
-                fontFamily: "inherit",
-                "& .MuiDataGrid-columnHeaders": {
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255, 255, 255, 0.06)"
-                      : "rgba(148, 163, 184, 0.14)",
-                },
-                "& .MuiDataGrid-columnHeader": {},
-                "& .MuiDataGrid-cell": {
-                  display: "flex",
-                  alignItems: "center",
-                },
-                "& .MuiDataGrid-cell.c360-hs-grid-cell--top": {
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                  paddingLeft: 0,
-                  paddingRight: 0,
-                },
-                "& .MuiDataGrid-cell[data-field='company']": {
-                  justifyContent:
-                    density === "compact" ? "flex-start" : "center",
-                },
-                "& .MuiDataGrid-cell[data-field='location']": {
-                  flexDirection: "column",
-                  justifyContent: "center",
-                },
-                "& .MuiDataGrid-cell[data-field='type']": {
-                  paddingLeft: 0,
-                  paddingRight: 0,
-                },
-                "& .MuiDataGrid-row": {
-                  maxHeight: "none !important",
-                },
-                "& .MuiDataGrid-columnHeaderTitle": {
-                  fontWeight: 600,
-                  fontSize: "0.8125rem",
-                },
-                "& .MuiDataGrid-footerContainer": {
-                  borderTop: "none",
-                },
-              })}
+              sx={getHiringSignalsDataGridSx(density)}
               autoHeight
             />
           </div>

@@ -721,6 +721,12 @@
 .c360-h-12 {
   height: 48px;
 }
+.c360-w-50 {
+  width: 50px;
+}
+.c360-h-50 {
+  height: 50px;
+}
 .c360-h-full {
   height: 100%;
 }

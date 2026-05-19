@@ -8,7 +8,6 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import { useRole } from "@/context/RoleContext";
 import {
   normalizeHiringSignalTokenList,
   postedAfterISOFromPreset,
@@ -324,7 +323,6 @@ function emptyHiringSignalChipBuckets(): Record<
 
 function buildHiringSignalChipBuckets(
   draft: HiringSignalFilterDraft,
-  showFullHireSignalFilters: boolean,
   onDraftField: (
     field: HiringSignalDraftField,
     value: string | string[] | boolean,
@@ -383,171 +381,162 @@ function buildHiringSignalChipBuckets(
     "excludedLocations",
   );
 
-  if (showFullHireSignalFilters) {
-    addTokenChips(
-      "jobType",
-      "emp",
-      draft.employmentTypes,
-      "Employment",
-      "employmentTypes",
-    );
-    if (draft.employmentType.trim()) {
-      add("jobType", {
-        key: "emp-single",
-        label: `Employment type: ${draft.employmentType}`,
-        onRemove: () => onDraftField("employmentType", ""),
-      });
-    }
-    addTokenChips(
-      "workplace",
-      "wp",
-      draft.workplaceTypes,
-      "Workplace",
-      "workplaceTypes",
-    );
-    addTokenChips(
-      "industries",
-      "ind",
-      draft.industries,
-      "Industry",
-      "industries",
-    );
-    addTokenChips(
-      "industries",
-      "exind",
-      draft.excludedIndustries,
-      "Excl. industry",
-      "excludedIndustries",
-    );
-    addTokenChips(
-      "experienceLevel",
-      "xb",
-      draft.experienceBuckets,
-      "Experience",
-      "experienceBuckets",
-    );
-    addTokenChips(
-      "roleEducation",
-      "rt",
-      draft.roleTracks,
-      "Role track",
-      "roleTracks",
-    );
-    addTokenChips(
-      "roleEducation",
-      "edu",
-      draft.educationLevelMins,
-      "Education ≥",
-      "educationLevelMins",
-    );
-    addTokenChips(
-      "skills",
-      "sk",
-      draft.skillsAll,
-      "Required skill",
-      "skillsAll",
-    );
-    addTokenChips("country", "ctry", draft.countries, "Country", "countries");
+  addTokenChips(
+    "jobType",
+    "emp",
+    draft.employmentTypes,
+    "Employment",
+    "employmentTypes",
+  );
+  if (draft.employmentType.trim()) {
+    add("jobType", {
+      key: "emp-single",
+      label: `Employment type: ${draft.employmentType}`,
+      onRemove: () => onDraftField("employmentType", ""),
+    });
+  }
+  addTokenChips(
+    "workplace",
+    "wp",
+    draft.workplaceTypes,
+    "Workplace",
+    "workplaceTypes",
+  );
+  addTokenChips(
+    "industries",
+    "ind",
+    draft.industries,
+    "Industry",
+    "industries",
+  );
+  addTokenChips(
+    "industries",
+    "exind",
+    draft.excludedIndustries,
+    "Excl. industry",
+    "excludedIndustries",
+  );
+  addTokenChips(
+    "experienceLevel",
+    "xb",
+    draft.experienceBuckets,
+    "Experience",
+    "experienceBuckets",
+  );
+  addTokenChips(
+    "roleEducation",
+    "rt",
+    draft.roleTracks,
+    "Role track",
+    "roleTracks",
+  );
+  addTokenChips(
+    "roleEducation",
+    "edu",
+    draft.educationLevelMins,
+    "Education ≥",
+    "educationLevelMins",
+  );
+  addTokenChips("skills", "sk", draft.skillsAll, "Required skill", "skillsAll");
+  addTokenChips("country", "ctry", draft.countries, "Country", "countries");
 
-    if (draft.applyMethod.trim()) {
-      add("linkedInApply", {
-        key: "applym",
-        label:
-          draft.applyMethod === LINKEDIN_APPLY_METHOD
-            ? "LinkedIn Apply (hosted)"
-            : draft.applyMethod === EASY_APPLY_METHOD
-              ? "Easy apply (LinkedIn)"
-              : `Apply method: ${draft.applyMethod}`,
-        onRemove: () => onDraftField("applyMethod", ""),
-      });
-    }
+  if (draft.applyMethod.trim()) {
+    add("linkedInApply", {
+      key: "applym",
+      label:
+        draft.applyMethod === LINKEDIN_APPLY_METHOD
+          ? "LinkedIn Apply (hosted)"
+          : draft.applyMethod === EASY_APPLY_METHOD
+            ? "Easy apply (LinkedIn)"
+            : `Apply method: ${draft.applyMethod}`,
+      onRemove: () => onDraftField("applyMethod", ""),
+    });
+  }
 
-    if (draft.salaryMin.trim()) {
-      add("compensation", {
-        key: "salary",
-        label: `Min salary: $${draft.salaryMin.trim()}`,
-        onRemove: () => onDraftField("salaryMin", ""),
-      });
-    }
+  if (draft.salaryMin.trim()) {
+    add("compensation", {
+      key: "salary",
+      label: `Min salary: $${draft.salaryMin.trim()}`,
+      onRemove: () => onDraftField("salaryMin", ""),
+    });
+  }
 
-    if (draft.clearanceMode.trim() === "hide") {
-      add("compliance", {
-        key: "clr",
-        label: "Clearance: hide required",
-        onRemove: () => onDraftField("clearanceMode", ""),
-      });
-    }
-    if (draft.clearanceMode.trim() === "only") {
-      add("compliance", {
-        key: "clo",
-        label: "Clearance: only required",
-        onRemove: () => onDraftField("clearanceMode", ""),
-      });
-    }
+  if (draft.clearanceMode.trim() === "hide") {
+    add("compliance", {
+      key: "clr",
+      label: "Clearance: hide required",
+      onRemove: () => onDraftField("clearanceMode", ""),
+    });
+  }
+  if (draft.clearanceMode.trim() === "only") {
+    add("compliance", {
+      key: "clo",
+      label: "Clearance: only required",
+      onRemove: () => onDraftField("clearanceMode", ""),
+    });
+  }
 
-    if (draft.h1bOnly) {
-      add("compliance", {
-        key: "h1b",
-        label: "H1B / sponsorship mention",
-        onRemove: () => onDraftField("h1bOnly", false),
-      });
-    }
+  if (draft.h1bOnly) {
+    add("compliance", {
+      key: "h1b",
+      label: "H1B / sponsorship mention",
+      onRemove: () => onDraftField("h1bOnly", false),
+    });
+  }
 
-    if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
-      const s =
-        draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
-      add("experienceLevel", {
-        key: "seniority",
-        label: `Seniority: ${s}`,
-        onRemove: () => {
-          onDraftField("seniorityPreset", "");
-          onDraftField("seniorityCustom", "");
-        },
-      });
-    }
-    if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
-      const s =
-        draft.functionCustom.trim() || draft.functionPreset.trim() || "";
-      add("jobFunction", {
-        key: "func",
-        label: `Function: ${s}`,
-        onRemove: () => {
-          onDraftField("functionPreset", "");
-          onDraftField("functionCustom", "");
-        },
-      });
-    }
-    if (
-      draft.datePostedPreset === "24h" ||
-      draft.datePostedPreset === "7d" ||
-      draft.datePostedPreset === "30d"
-    ) {
-      const pk = draft.datePostedPreset;
-      add("datePosted", {
-        key: "dpreset",
-        label: `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
-        onRemove: () => {
-          onDraftField("datePostedPreset", "any");
-          onDraftField("postedAfter", "");
-        },
-      });
-    } else if (draft.postedAfter.trim()) {
-      add("datePosted", {
-        key: "after",
-        label: `Posted after ${draft.postedAfter}`,
-        onRemove: () => {
-          onDraftField("postedAfter", "");
-          onDraftField("datePostedPreset", "any");
-        },
-      });
-    }
-    if (draft.postedBefore.trim()) {
-      add("datePosted", {
-        key: "before",
-        label: `Before ${draft.postedBefore}`,
-        onRemove: () => onDraftField("postedBefore", ""),
-      });
-    }
+  if (draft.seniorityPreset.trim() || draft.seniorityCustom.trim()) {
+    const s =
+      draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || "";
+    add("experienceLevel", {
+      key: "seniority",
+      label: `Seniority: ${s}`,
+      onRemove: () => {
+        onDraftField("seniorityPreset", "");
+        onDraftField("seniorityCustom", "");
+      },
+    });
+  }
+  if (draft.functionPreset.trim() || draft.functionCustom.trim()) {
+    const s = draft.functionCustom.trim() || draft.functionPreset.trim() || "";
+    add("jobFunction", {
+      key: "func",
+      label: `Function: ${s}`,
+      onRemove: () => {
+        onDraftField("functionPreset", "");
+        onDraftField("functionCustom", "");
+      },
+    });
+  }
+  if (
+    draft.datePostedPreset === "24h" ||
+    draft.datePostedPreset === "7d" ||
+    draft.datePostedPreset === "30d"
+  ) {
+    const pk = draft.datePostedPreset;
+    add("datePosted", {
+      key: "dpreset",
+      label: `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
+      onRemove: () => {
+        onDraftField("datePostedPreset", "any");
+        onDraftField("postedAfter", "");
+      },
+    });
+  } else if (draft.postedAfter.trim()) {
+    add("datePosted", {
+      key: "after",
+      label: `Posted after ${draft.postedAfter}`,
+      onRemove: () => {
+        onDraftField("postedAfter", "");
+        onDraftField("datePostedPreset", "any");
+      },
+    });
+  }
+  if (draft.postedBefore.trim()) {
+    add("datePosted", {
+      key: "before",
+      label: `Before ${draft.postedBefore}`,
+      onRemove: () => onDraftField("postedBefore", ""),
+    });
   }
 
   return b;
@@ -620,7 +609,6 @@ export function HiringSignalsFilterSidebar({
   onTableDensityChange,
 }: HiringSignalsFilterSidebarProps) {
   const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
-  const { isAdmin: showFullHireSignalFilters } = useRole();
 
   const appendCountryCode = (code: string) => {
     const v = code.trim();
@@ -639,13 +627,8 @@ export function HiringSignalsFilterSidebar({
   };
 
   const chipBuckets = useMemo(
-    () =>
-      buildHiringSignalChipBuckets(
-        draft,
-        showFullHireSignalFilters,
-        onDraftField,
-      ),
-    [draft, showFullHireSignalFilters, onDraftField],
+    () => buildHiringSignalChipBuckets(draft, onDraftField),
+    [draft, onDraftField],
   );
 
   const draftChipCount = useMemo(
@@ -1353,36 +1336,32 @@ export function HiringSignalsFilterSidebar({
             H1B / sponsorship mentioned
           </label>
         </ContactsCollapsibleFilterSection>
-        {showFullHireSignalFilters ? (
-          <>
-            <ContactsCollapsibleFilterSection
-              title="Compensation"
-              count={salaryCount}
-              defaultOpen={false}
-              onClear={() => onDraftField("salaryMin", "")}
-            >
-              <HsFilterChipList
-                items={chipBuckets.compensation}
-                variant="section"
-              />
-              <label
-                htmlFor="hsf-salary-min"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Minimum salary (USD / year, ingested jobs only)
-              </label>
-              <Input
-                id="hsf-salary-min"
-                type="number"
-                min={0}
-                value={draft.salaryMin}
-                onChange={(e) => onDraftField("salaryMin", e.target.value)}
-                placeholder="e.g. 120000"
-                autoComplete="off"
-              />
-            </ContactsCollapsibleFilterSection>
-          </>
-        ) : null}
+        <ContactsCollapsibleFilterSection
+          title="Compensation"
+          count={salaryCount}
+          defaultOpen={false}
+          onClear={() => onDraftField("salaryMin", "")}
+        >
+          <HsFilterChipList
+            items={chipBuckets.compensation}
+            variant="section"
+          />
+          <label
+            htmlFor="hsf-salary-min"
+            className="c360-block c360-text-2xs c360-text-ink-muted"
+          >
+            Minimum salary (USD / year, ingested jobs only)
+          </label>
+          <Input
+            id="hsf-salary-min"
+            type="number"
+            min={0}
+            value={draft.salaryMin}
+            onChange={(e) => onDraftField("salaryMin", e.target.value)}
+            placeholder="e.g. 120000"
+            autoComplete="off"
+          />
+        </ContactsCollapsibleFilterSection>
       </div>
     </div>
   );

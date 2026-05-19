@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Linkedin, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { MediaObject } from "@/components/ui/MediaObject";
 import { CompanyHiringTab } from "@/components/feature/companies/CompanyHiringTab";
 import {
   fetchConnectraCompany,
@@ -17,6 +18,8 @@ import {
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { HiringSignalAsideDrawer } from "@/components/feature/hiring-signals/HiringSignalAsideDrawer";
+import { HiringSignalCompanyWebsiteButton } from "@/components/feature/hiring-signals/HiringSignalCompanyWebsiteButton";
+import { HiringSignalCompanyLinkedInButton } from "@/components/feature/hiring-signals/HiringSignalCompanyLinkedInButton";
 import { toast } from "sonner";
 
 export interface CompanyDrawerPanelProps {
@@ -34,6 +37,7 @@ export function CompanyDrawerPanel({
   onClose,
 }: CompanyDrawerPanelProps) {
   const [cRecord, setCRecord] = useState<unknown | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
 
   const companyUuid = anchor?.companyUuid?.trim() ?? "";
   const companyName = anchor?.companyName || "Company";
@@ -49,9 +53,11 @@ export function CompanyDrawerPanel({
   useEffect(() => {
     if (!isOpen || !companyUuid) {
       setCRecord(null);
+      setCompanyLoading(false);
       return;
     }
     let cancelled = false;
+    setCompanyLoading(true);
     (async () => {
       try {
         const rec = await fetchConnectraCompany(companyUuid);
@@ -68,6 +74,8 @@ export function CompanyDrawerPanel({
           toast.error("Company panel", { description: msg });
           setCRecord(null);
         }
+      } finally {
+        if (!cancelled) setCompanyLoading(false);
       }
     })();
     return () => {
@@ -76,6 +84,42 @@ export function CompanyDrawerPanel({
   }, [isOpen, companyUuid]);
 
   const co = pickCompanyDisplay(cRecord);
+  const companyDisplayName = co.name || companyName;
+
+  const companyLogoMedia = companyLoading ? (
+    <span
+      className="c360-skeleton c360-block c360-h-50 c360-w-50 c360-rounded-full"
+      aria-hidden
+    />
+  ) : (
+    <div className="c360-stat-card__icon c360-flex c360-h-50 c360-w-50 c360-shrink-0 c360-overflow-hidden c360-rounded-full">
+      {co.profilePic ? (
+        // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+        <img
+          src={proxiedCompanyLogoSrc(co.profilePic)}
+          alt=""
+          className="c360-h-full c360-w-full c360-object-cover"
+        />
+      ) : (
+        hiringSignalInitials(companyDisplayName)
+      )}
+    </div>
+  );
+
+  const companyMetaBody =
+    !companyLoading &&
+    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+      <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
+        {co.website ? (
+          <HiringSignalCompanyWebsiteButton website={co.website} />
+        ) : null}
+        {co.industry ? <p className="c360-text-ink">{co.industry}</p> : null}
+        {co.employees ? <p>~{co.employees} employees</p> : null}
+        {co.linkedinUrl ? (
+          <HiringSignalCompanyLinkedInButton linkedinUrl={co.linkedinUrl} />
+        ) : null}
+      </div>
+    ) : null;
 
   return (
     <HiringSignalAsideDrawer
@@ -84,45 +128,55 @@ export function CompanyDrawerPanel({
       ariaLabelledBy="c360-hs-drawer-title"
     >
       <header className="c360-hs-drawer__header">
-        <div className="c360-flex c360-items-start c360-gap-3">
-          <div
-            className="c360-hs-drawer__avatar c360-overflow-hidden c360-rounded-full"
-            aria-hidden
-          >
-            {co.profilePic ? (
-              // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
-              <img
-                src={proxiedCompanyLogoSrc(co.profilePic)}
-                alt=""
-                className="c360-h-full c360-w-full c360-object-cover"
-              />
-            ) : (
-              hiringSignalInitials(companyName)
-            )}
-          </div>
-          <div className="c360-min-w-0">
-            <h2
-              id="c360-hs-drawer-title"
-              className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
-            >
-              {companyUuid ? (
-                <Link
-                  href={`/companies/${companyUuid}`}
-                  onClick={onClose}
-                  className="c360-text-primary hover:c360-underline c360-break-words"
+        <div className="c360-min-w-0 c360-flex-1">
+          {companyLoading ? (
+            <MediaObject
+              className="c360-hs-drawer__header-company"
+              media={companyLogoMedia}
+              title={
+                <h2
+                  id="c360-hs-drawer-title"
+                  className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
                 >
-                  {co.name || companyName}
-                </Link>
-              ) : (
-                co.name || companyName
-              )}
-            </h2>
-            {co.industry ? (
-              <Badge color="info" size="sm" className="c360-mt-2">
-                {co.industry}
-              </Badge>
-            ) : null}
-          </div>
+                  {companyDisplayName}
+                </h2>
+              }
+              body={
+                <p className="c360-m-0 c360-flex c360-items-center c360-gap-2 c360-text-2xs c360-text-ink-muted">
+                  <Loader2
+                    className="c360-animate-spin"
+                    size={14}
+                    aria-hidden
+                  />
+                  Loading company profile…
+                </p>
+              }
+            />
+          ) : (
+            <MediaObject
+              className="c360-hs-drawer__header-company"
+              media={companyLogoMedia}
+              title={
+                <h2
+                  id="c360-hs-drawer-title"
+                  className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
+                >
+                  {companyUuid ? (
+                    <Link
+                      href={`/companies/${companyUuid}`}
+                      onClick={onClose}
+                      className="c360-text-primary hover:c360-underline c360-break-words"
+                    >
+                      {companyDisplayName}
+                    </Link>
+                  ) : (
+                    companyDisplayName
+                  )}
+                </h2>
+              }
+              body={companyMetaBody}
+            />
+          )}
         </div>
         <Button
           type="button"
@@ -137,45 +191,10 @@ export function CompanyDrawerPanel({
       </header>
 
       <div className="c360-hs-drawer__body">
-        <div className="c360-mb-4 c360-grid c360-gap-2 c360-text-sm">
-          <p className="c360-m-0 c360-text-muted">
-            <span className="c360-font-medium c360-text-ink">Open roles</span>{" "}
-            on this page: {previewJobs.length}
-          </p>
-          {co.employees ? (
-            <p className="c360-m-0 c360-text-muted">
-              <span className="c360-font-medium c360-text-ink">
-                Employees (Connectra)
-              </span>{" "}
-              ~{co.employees}
-            </p>
-          ) : null}
-          {co.website ? (
-            <a
-              href={
-                co.website.startsWith("http")
-                  ? co.website
-                  : `https://${co.website}`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="c360-text-primary"
-            >
-              {co.website}
-            </a>
-          ) : null}
-          {co.linkedinUrl ? (
-            <a
-              href={co.linkedinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="c360-inline-flex c360-items-center c360-gap-1 c360-text-primary"
-            >
-              <Linkedin size={16} />
-              Company LinkedIn
-            </a>
-          ) : null}
-        </div>
+        <p className="c360-mb-4 c360-text-sm c360-text-muted">
+          <span className="c360-font-medium c360-text-ink">Open roles</span> on
+          this page: {previewJobs.length}
+        </p>
 
         {rolePills.length > 0 ? (
           <section className="c360-mb-4">

@@ -644,6 +644,7 @@ function HiringSignalsPageBody({
           companyName={companyRow.companyName || "Company"}
           isOpen={!!companyRow}
           onClose={() => setCompanyRow(null)}
+          density={tableDensity}
         />
       ) : null}
       {connectraRow ? (
@@ -651,6 +652,7 @@ function HiringSignalsPageBody({
           job={connectraRow}
           isOpen={!!connectraRow}
           onClose={() => setConnectraRow(null)}
+          density={tableDensity}
         />
       ) : null}
 
