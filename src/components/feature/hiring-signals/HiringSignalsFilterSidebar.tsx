@@ -240,12 +240,12 @@ const DATE_POSTED_PRESET_OPTIONS: {
   value: DatePostedPreset;
   label: string;
 }[] = [
-    { value: "any", label: "Any time" },
-    { value: "24h", label: "Last 4 days (UTC, rolling)" },
-    { value: "7d", label: "Last 7 days (UTC)" },
-    { value: "30d", label: "Last 30 days (UTC)" },
-    { value: "custom", label: "Custom range" },
-  ];
+  { value: "any", label: "Any time" },
+  { value: "24h", label: "Last 4 days (UTC, rolling)" },
+  { value: "7d", label: "Last 7 days (UTC)" },
+  { value: "30d", label: "Last 30 days (UTC)" },
+  { value: "custom", label: "Custom range" },
+];
 
 const DATE_POSTED_PRESET_LABELS: Record<
   Exclude<DatePostedPreset, "any" | "custom">,
@@ -664,7 +664,7 @@ export function HiringSignalsFilterSidebar({
           Run: {runIdTrimmed.slice(0, 12)}
           {runIdTrimmed.length > 12 ? "…" : ""}
           {typeof runScopedJobTotal === "number" &&
-            Number.isFinite(runScopedJobTotal) ? (
+          Number.isFinite(runScopedJobTotal) ? (
             <> · {runScopedJobTotal.toLocaleString()} jobs</>
           ) : null}
         </span>
@@ -695,7 +695,7 @@ export function HiringSignalsFilterSidebar({
   const workplaceCount = normalizedWorkplaceTypes.length;
   const workplaceSelectValue =
     normalizedWorkplaceTypes.length === 1 &&
-      WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
+    WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
       ? normalizedWorkplaceTypes[0]
       : "";
   const normalizedExperienceBuckets = normalizeHiringSignalTokenList(
@@ -703,15 +703,15 @@ export function HiringSignalsFilterSidebar({
   );
   const experienceBucketSelectValue =
     normalizedExperienceBuckets.length === 1 &&
-      EXPERIENCE_BUCKET_OPTIONS.some(
-        (o) => o.value === normalizedExperienceBuckets[0],
-      )
+    EXPERIENCE_BUCKET_OPTIONS.some(
+      (o) => o.value === normalizedExperienceBuckets[0],
+    )
       ? normalizedExperienceBuckets[0]
       : "";
   const normalizedRoleTracks = normalizeHiringSignalTokenList(draft.roleTracks);
   const roleTrackSelectValue =
     normalizedRoleTracks.length === 1 &&
-      ROLE_TRACK_OPTIONS.some((o) => o.value === normalizedRoleTracks[0])
+    ROLE_TRACK_OPTIONS.some((o) => o.value === normalizedRoleTracks[0])
       ? normalizedRoleTracks[0]
       : "";
   const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
@@ -719,15 +719,15 @@ export function HiringSignalsFilterSidebar({
   );
   const educationMinSelectValue =
     normalizedEducationLevelMins.length === 1 &&
-      EDUCATION_MIN_OPTIONS.some(
-        (o) => o.value === normalizedEducationLevelMins[0],
-      )
+    EDUCATION_MIN_OPTIONS.some(
+      (o) => o.value === normalizedEducationLevelMins[0],
+    )
       ? normalizedEducationLevelMins[0]
       : "";
   const normalizedIndustries = normalizeHiringSignalTokenList(draft.industries);
   const industryIncludeSelectValue =
     normalizedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
+    INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
       ? normalizedIndustries[0]
       : "";
   const normalizedExcludedIndustries = normalizeHiringSignalTokenList(
@@ -735,9 +735,9 @@ export function HiringSignalsFilterSidebar({
   );
   const industryExcludeSelectValue =
     normalizedExcludedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some(
-        (o) => o.value === normalizedExcludedIndustries[0],
-      )
+    INDUSTRY_FILTER_OPTIONS.some(
+      (o) => o.value === normalizedExcludedIndustries[0],
+    )
       ? normalizedExcludedIndustries[0]
       : "";
   const industriesCount = normalizeHiringSignalTokenList(
@@ -770,7 +770,7 @@ export function HiringSignalsFilterSidebar({
   const applyMethodCount = draft.applyMethod.trim() ? 1 : 0;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
-      draft.clearanceMode.trim() === "only"
+    draft.clearanceMode.trim() === "only"
       ? 1
       : 0;
   const h1bCount = draft.h1bOnly ? 1 : 0;
@@ -969,15 +969,12 @@ export function HiringSignalsFilterSidebar({
             onDraftField("postedBefore", "");
           }}
         >
-          <HsFilterChipList
-            items={chipBuckets.datePosted}
-            variant="section"
-          />
+          <HsFilterChipList items={chipBuckets.datePosted} variant="section" />
           {signalTimePreset === "new_7d" ? (
             <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              The Signals &quot;New&quot; tab also enforces jobs from at
-              least the last 7 days; the stricter window wins when combined
-              with these presets.
+              The Signals &quot;New&quot; tab also enforces jobs from at least
+              the last 7 days; the stricter window wins when combined with these
+              presets.
             </p>
           ) : null}
           <Select
@@ -1051,9 +1048,7 @@ export function HiringSignalsFilterSidebar({
           <Select
             id="hsf-seniority-preset"
             value={draft.seniorityPreset}
-            onChange={(e) =>
-              onDraftField("seniorityPreset", e.target.value)
-            }
+            onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
             options={SENIORITY_PRESET_OPTIONS}
             fullWidth
             inputSize="md"
@@ -1104,10 +1099,7 @@ export function HiringSignalsFilterSidebar({
           defaultOpen={false}
           onClear={() => onDraftField("workplaceTypes", [])}
         >
-          <HsFilterChipList
-            items={chipBuckets.workplace}
-            variant="section"
-          />
+          <HsFilterChipList items={chipBuckets.workplace} variant="section" />
           <Select
             id="hsf-workplace"
             value={workplaceSelectValue}
@@ -1144,8 +1136,8 @@ export function HiringSignalsFilterSidebar({
               }
             />
             <span>
-              Easy apply ({EASY_APPLY_METHOD}) — matches ingested
-              apply_method (substring).
+              Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
+              (substring).
             </span>
           </label>
           <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
@@ -1161,8 +1153,8 @@ export function HiringSignalsFilterSidebar({
               }
             />
             <span>
-              LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches
-              ingested apply_method (substring).
+              LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches ingested
+              apply_method (substring).
             </span>
           </label>
           <label
@@ -1190,10 +1182,7 @@ export function HiringSignalsFilterSidebar({
             onDraftField("excludedIndustries", []);
           }}
         >
-          <HsFilterChipList
-            items={chipBuckets.industries}
-            variant="section"
-          />
+          <HsFilterChipList items={chipBuckets.industries} variant="section" />
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Include industry (substring match)
           </p>
@@ -1234,10 +1223,7 @@ export function HiringSignalsFilterSidebar({
             onDraftField("functionCustom", "");
           }}
         >
-          <HsFilterChipList
-            items={chipBuckets.jobFunction}
-            variant="section"
-          />
+          <HsFilterChipList items={chipBuckets.jobFunction} variant="section" />
           <Select
             id="hsf-func-preset"
             value={draft.functionPreset}
@@ -1259,8 +1245,8 @@ export function HiringSignalsFilterSidebar({
           <HsFilterChipList items={chipBuckets.country} variant="section" />
           <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
             Match jobs whose inferred country overlaps any selected ISO code
-            (OR). Choose a country to add it; remove selections with the
-            chips above. Duplicates are ignored.
+            (OR). Choose a country to add it; remove selections with the chips
+            above. Duplicates are ignored.
           </p>
           <Select
             id="hsf-country-add"
@@ -1324,9 +1310,8 @@ export function HiringSignalsFilterSidebar({
         >
           <HsFilterChipList items={chipBuckets.skills} variant="section" />
           <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            Jobs must include every listed skill in ingested tags (AND).
-            Add from the list; remove with the chips above. Duplicates are
-            ignored.
+            Jobs must include every listed skill in ingested tags (AND). Add
+            from the list; remove with the chips above. Duplicates are ignored.
           </p>
           <Select
             id="hsf-skill-tag-add"
@@ -1347,10 +1332,7 @@ export function HiringSignalsFilterSidebar({
             onDraftField("h1bOnly", false);
           }}
         >
-          <HsFilterChipList
-            items={chipBuckets.compliance}
-            variant="section"
-          />
+          <HsFilterChipList items={chipBuckets.compliance} variant="section" />
           <Select
             id="hsf-clearance"
             value={draft.clearanceMode}
@@ -1373,7 +1355,6 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
         {showFullHireSignalFilters ? (
           <>
-
             <ContactsCollapsibleFilterSection
               title="Compensation"
               count={salaryCount}
@@ -1400,7 +1381,6 @@ export function HiringSignalsFilterSidebar({
                 autoComplete="off"
               />
             </ContactsCollapsibleFilterSection>
-
           </>
         ) : null}
       </div>
