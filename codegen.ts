@@ -2,12 +2,16 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 
 /**
  * Introspects the Strawberry gateway and emits TypeScript schema types.
- * Run with API up: `CODEGEN_SCHEMA_URL=http://api.contact360.io/graphql npm run codegen`
+ * Production URL requires Cloudflare **proxied** DNS (orange cloud); grey cloud + Origin CA
+ * breaks TLS (`unable to verify the first certificate`).
+ *
+ * Local API: `CODEGEN_SCHEMA_URL=http://127.0.0.1:8000/graphql npm run codegen`
+ * Or: `npm run codegen:local`
  */
 const schema =
   process.env.CODEGEN_SCHEMA_URL ||
   process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-  "http://api.contact360.io/graphql";
+  "https://api.contact360.io/graphql";
 
 const config: CodegenConfig = {
   schema,
