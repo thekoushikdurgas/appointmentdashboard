@@ -5,7 +5,7 @@ User-facing dashboard SPA for [app.contact360.io](https://app.contact360.io).
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
 - **Styling:** Custom CSS with Dashboard UI kit design tokens (**no Tailwind** — intentional; see below)
 - **API:** GraphQL via `graphql-request` → `contact360.io/api`
-- **Deploy:** EC2 **`54.160.179.222`** (HTTP) and **`app.contact360.io`** (HTTPS recommended); reverse proxy (nginx) → `next start` on port **3000** (or Docker). Gateway: **`api.contact360.io`** — must allow **CORS** for `https://app.contact360.io` (and `http://localhost:3000` for dev) via `ALLOWED_ORIGINS` on the API.
+- **Deploy:** EC2 **`32.197.236.59`** / **`app.contact360.io`** with Nginx + **Cloudflare Origin CA** (see [`contact360.io/cloundflare/ssl/README.md`](../cloundflare/ssl/README.md)); reverse proxy → `next start` on port **3000** (or Docker). Gateway **`api.contact360.io`** — **CORS** for `https://app.contact360.io` via `ALLOWED_ORIGINS` on the API.
 - **Admin / logs:** Operations UI lives in [contact360.io/admin](https://admin.contact360.io) (separate repo); optional `NEXT_PUBLIC_ADMIN_URL` links from Settings.
 
 ## Quick start
