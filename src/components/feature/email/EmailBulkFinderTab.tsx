@@ -2,7 +2,13 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { OpenJobsDrawerButton } from "@/components/feature/jobs/OpenJobsDrawerButton";
-import { Upload, ChevronRight, ChevronLeft, Download, RefreshCw } from "lucide-react";
+import {
+  Upload,
+  ChevronRight,
+  ChevronLeft,
+  Download,
+  RefreshCw,
+} from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -109,7 +115,9 @@ export function EmailBulkFinderTab() {
   const [syncRowCount, setSyncRowCount] = useState(SYNC_CAP);
   const [startingFinderJob, setStartingFinderJob] = useState(false);
   const [s3JobId, setS3JobId] = useState<string | null>(null);
-  const [s3JobStatus, setS3JobStatus] = useState<EmailJobStatusResponse | null>(null);
+  const [s3JobStatus, setS3JobStatus] = useState<EmailJobStatusResponse | null>(
+    null,
+  );
   const [s3PollingActive, setS3PollingActive] = useState(false);
   const [s3DownloadUrl, setS3DownloadUrl] = useState<string | null>(null);
   const s3PollCountRef = useRef(0);
@@ -193,6 +201,56 @@ export function EmailBulkFinderTab() {
     else toast.error("Please drop a CSV file.");
   };
 
+  /** Poll email job status until done or max polls reached. */
+  const pollS3JobStatus = useCallback(async (jobId: string) => {
+    s3PollCountRef.current = 0;
+    setS3PollingActive(true);
+    setS3DownloadUrl(null);
+
+    const doPoll = async () => {
+      if (s3PollCountRef.current >= S3_JOB_MAX_POLLS) {
+        setS3PollingActive(false);
+        toast.error("Job status polling timed out. Check Jobs for progress.");
+        return;
+      }
+      s3PollCountRef.current += 1;
+      try {
+        const res = await emailService.emailJobStatus(jobId);
+        const status = res.email.emailJobStatus;
+        setS3JobStatus(status);
+
+        if (status.done) {
+          setS3PollingActive(false);
+          if (status.outputCsvKey) {
+            try {
+              const dl = await s3Service.getDownloadUrl(status.outputCsvKey);
+              const url = dl.s3.s3FileDownloadUrl.downloadUrl;
+              if (url) {
+                setS3DownloadUrl(url);
+                toast.success("Export ready — click Download to save.");
+              }
+            } catch {
+              toast.success("Job complete. Download manually from Files.");
+            }
+          } else {
+            toast.success("Job complete.");
+          }
+          return;
+        }
+        setTimeout(() => {
+          void doPoll();
+        }, S3_JOB_POLL_INTERVAL_MS);
+      } catch (e) {
+        setS3PollingActive(false);
+        toast.error(e instanceof Error ? e.message : "Polling error.");
+      }
+    };
+
+    setTimeout(() => {
+      void doPoll();
+    }, S3_JOB_POLL_INTERVAL_MS);
+  }, []);
+
   /** Upload current CSV to workspace S3, then enqueue email.server finder job (same payload as Jobs modal). */
   const startFinderJobFromWizard = useCallback(async () => {
     if (!rawCsv.trim()) {
@@ -275,52 +333,6 @@ export function EmailBulkFinderTab() {
       setLoadingSync(false);
     }
   };
-
-  /** Poll email job status until done or max polls reached. */
-  const pollS3JobStatus = useCallback(async (jobId: string) => {
-    s3PollCountRef.current = 0;
-    setS3PollingActive(true);
-    setS3DownloadUrl(null);
-
-    const doPoll = async () => {
-      if (s3PollCountRef.current >= S3_JOB_MAX_POLLS) {
-        setS3PollingActive(false);
-        toast.error("Job status polling timed out. Check Jobs for progress.");
-        return;
-      }
-      s3PollCountRef.current += 1;
-      try {
-        const res = await emailService.emailJobStatus(jobId);
-        const status = res.email.emailJobStatus;
-        setS3JobStatus(status);
-
-        if (status.done) {
-          setS3PollingActive(false);
-          if (status.outputCsvKey) {
-            try {
-              const dl = await s3Service.getDownloadUrl(status.outputCsvKey);
-              const url = dl.s3.s3FileDownloadUrl.downloadUrl;
-              if (url) {
-                setS3DownloadUrl(url);
-                toast.success("Export ready — click Download to save.");
-              }
-            } catch {
-              toast.success("Job complete. Download manually from Files.");
-            }
-          } else {
-            toast.success("Job complete.");
-          }
-          return;
-        }
-        setTimeout(() => { void doPoll(); }, S3_JOB_POLL_INTERVAL_MS);
-      } catch (e) {
-        setS3PollingActive(false);
-        toast.error(e instanceof Error ? e.message : "Polling error.");
-      }
-    };
-
-    setTimeout(() => { void doPoll(); }, S3_JOB_POLL_INTERVAL_MS);
-  }, []);
 
   const jobButtonBusy = startingFinderJob || s3Uploading;
 
@@ -545,11 +557,12 @@ export function EmailBulkFinderTab() {
                     </code>
                   )}
                   {s3PollingActive && (
-                    <RefreshCw size={13} className="c360-spin c360-text-muted" />
+                    <RefreshCw
+                      size={13}
+                      className="c360-spin c360-text-muted"
+                    />
                   )}
-                  {s3JobStatus?.done && (
-                    <Badge color="green">Done</Badge>
-                  )}
+                  {s3JobStatus?.done && <Badge color="green">Done</Badge>}
                   {s3JobStatus && !s3JobStatus.done && (
                     <Badge color="yellow">
                       {s3JobStatus.status ?? "running"}

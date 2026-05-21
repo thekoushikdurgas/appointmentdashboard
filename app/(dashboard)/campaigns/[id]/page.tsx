@@ -88,7 +88,9 @@ export default function CampaignDetailPage() {
     try {
       const d = await campaignSatelliteService.listCampaigns();
       const parsed = parseCampaigns(d.campaignSatellite.campaigns);
-      const rows = parsed.map((row, i) => mapCampaignSatelliteToListRow(row, i));
+      const rows = parsed.map((row, i) =>
+        mapCampaignSatelliteToListRow(row, i),
+      );
       const found = rows.find((r) => r.id === id) ?? null;
       setCampaign(found);
     } catch (e) {
@@ -264,7 +266,10 @@ export default function CampaignDetailPage() {
               actions={<BarChart2 size={16} className="c360-text-muted" />}
             >
               <div className="c360-empty-state c360-p-8 c360-text-center c360-text-muted">
-                <BarChart2 size={32} className="c360-mx-auto c360-mb-2 c360-opacity-30" />
+                <BarChart2
+                  size={32}
+                  className="c360-mx-auto c360-mb-2 c360-opacity-30"
+                />
                 <p>
                   Per-campaign analytics will appear here when the campaign
                   satellite publishes the <code>/campaigns/{"{id}"}/stats</code>{" "}

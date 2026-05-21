@@ -816,11 +816,6 @@ export type CancelSubscriptionResult = {
   subscriptionStatus: Scalars["String"]["output"];
 };
 
-export type ComingSoonResponse = {
-  endpoint: Scalars["String"]["output"];
-  message: Scalars["String"]["output"];
-};
-
 export type Company = {
   address?: Maybe<Scalars["String"]["output"]>;
   annualRevenue?: Maybe<Scalars["Int"]["output"]>;
@@ -1535,6 +1530,18 @@ export type EmailFinderResponse = {
   total: Scalars["Int"]["output"];
 };
 
+export type EmailFinderS3Input = {
+  csvColumns: EmailS3CsvColumnsInput;
+  inputCsvKey: Scalars["String"]["input"];
+  outputPrefix: Scalars["String"]["input"];
+  s3Bucket: Scalars["String"]["input"];
+};
+
+export type EmailGoogleSheetImportInput = {
+  scrapCol?: Scalars["String"]["input"];
+  sheetUrl: Scalars["String"]["input"];
+};
+
 export type EmailJobStatusResponse = {
   createdAt?: Maybe<Scalars["String"]["output"]>;
   credits?: Maybe<Scalars["Int"]["output"]>;
@@ -1554,6 +1561,10 @@ export type EmailJobStatusResponse = {
 export type EmailMutation = {
   addEmailPattern: EmailPatternResult;
   addEmailPatternBulk: EmailPatternBulkAddResponse;
+  createEmailFinderS3Job: EmailS3JobResponse;
+  createEmailVerifierS3Job: EmailS3JobResponse;
+  importFromGoogleSheet: EmailS3JobResponse;
+  learnPatternsFromS3: EmailS3JobResponse;
 };
 
 export type EmailMutationAddEmailPatternArgs = {
@@ -1562,6 +1573,22 @@ export type EmailMutationAddEmailPatternArgs = {
 
 export type EmailMutationAddEmailPatternBulkArgs = {
   input: EmailPatternBulkAddInput;
+};
+
+export type EmailMutationCreateEmailFinderS3JobArgs = {
+  input: EmailFinderS3Input;
+};
+
+export type EmailMutationCreateEmailVerifierS3JobArgs = {
+  input: EmailVerifierS3Input;
+};
+
+export type EmailMutationImportFromGoogleSheetArgs = {
+  input: EmailGoogleSheetImportInput;
+};
+
+export type EmailMutationLearnPatternsFromS3Args = {
+  input: EmailPatternS3Input;
 };
 
 export type EmailPatternAddInput = {
@@ -1645,22 +1672,33 @@ export type EmailPatternResult = {
   uuid: Scalars["String"]["output"];
 };
 
+export type EmailPatternS3Input = {
+  csvColumns: EmailS3CsvColumnsInput;
+  inputCsvKey: Scalars["String"]["input"];
+  outputPrefix: Scalars["String"]["input"];
+  s3Bucket: Scalars["String"]["input"];
+};
+
 export type EmailQuery = {
   emailJobStatus: EmailJobStatusResponse;
   emailSatelliteJobs: Array<EmailSatelliteJobSummary>;
-  exportEmails: ComingSoonResponse;
+  exportEmails: EmailS3JobResponse;
   findEmails: EmailFinderResponse;
   findEmailsBulk: BulkEmailFinderResponse;
   predictEmailPattern: EmailPatternPredictResult;
   predictEmailPatternBulk: EmailPatternPredictBulkResult;
   verifyEmailsBulk: BulkEmailVerifierResponse;
   verifySingleEmail: SingleEmailVerifierResponse;
-  verifyexportEmail: ComingSoonResponse;
+  verifyexportEmail: EmailS3JobResponse;
   webSearch: Scalars["JSON"]["output"];
 };
 
 export type EmailQueryEmailJobStatusArgs = {
   jobId: Scalars["String"]["input"];
+};
+
+export type EmailQueryExportEmailsArgs = {
+  input: EmailFinderS3Input;
 };
 
 export type EmailQueryFindEmailsArgs = {
@@ -1687,6 +1725,10 @@ export type EmailQueryVerifySingleEmailArgs = {
   input: SingleEmailVerifierInput;
 };
 
+export type EmailQueryVerifyexportEmailArgs = {
+  input: EmailVerifierS3Input;
+};
+
 export type EmailQueryWebSearchArgs = {
   input: WebSearchInput;
 };
@@ -1709,6 +1751,21 @@ export type EmailRiskAnalysisResponse = {
   riskScore: Scalars["Int"]["output"];
 };
 
+export type EmailS3CsvColumnsInput = {
+  companyUuid?: InputMaybe<Scalars["String"]["input"]>;
+  domain?: InputMaybe<Scalars["String"]["input"]>;
+  email?: InputMaybe<Scalars["String"]["input"]>;
+  firstName?: InputMaybe<Scalars["String"]["input"]>;
+  lastName?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type EmailS3JobResponse = {
+  jobId: Scalars["String"]["output"];
+  message: Scalars["String"]["output"];
+  statusUrl: Scalars["String"]["output"];
+  success: Scalars["Boolean"]["output"];
+};
+
 export type EmailSatelliteJobSummary = {
   completed: Scalars["Int"]["output"];
   createdAt?: Maybe<Scalars["String"]["output"]>;
@@ -1719,6 +1776,14 @@ export type EmailSatelliteJobSummary = {
   totalEmails: Scalars["Int"]["output"];
   unknownCount: Scalars["Int"]["output"];
   updatedAt?: Maybe<Scalars["String"]["output"]>;
+};
+
+export type EmailVerifierS3Input = {
+  csvColumns: EmailS3CsvColumnsInput;
+  inputCsvKey: Scalars["String"]["input"];
+  outputPrefix: Scalars["String"]["input"];
+  provider?: InputMaybe<Scalars["String"]["input"]>;
+  s3Bucket: Scalars["String"]["input"];
 };
 
 export type EndpointPerformance = {

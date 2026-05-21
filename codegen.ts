@@ -14,7 +14,7 @@ const schema =
   process.env.NEXT_PUBLIC_GRAPHQL_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://api.contact360.io/graphql"
-    : "http://127.0.0.1:8000/graphql");
+    : "https://api.contact360.io/graphql");
 
 const config: CodegenConfig = {
   schema,
