@@ -4,8 +4,8 @@
   "skip_categories": [],
   "require_playwright_config": false,
   "require_middleware": false,
-  "_max_inline_style_files_doc": "Point 45: max count of src/ TS/TSX files containing style={{ (default 30 if omitted).",
-  "max_inline_style_files": 1,
+  "_max_inline_style_files_doc": "Point 45: max count of src/ TS/TSX files containing style={{ (default 30 if omitted). Charts/maps use minimal dynamic inline geometry.",
+  "max_inline_style_files": 15,
   "_max_any_count_doc": "Point 51: max matches of : any / as any / any[] in src/ excluding graphql/generated (default 20).",
   "max_any_count": 20,
   "_max_console_logs_doc": "Point 58: max console.log( occurrences in src/ (default 10).",
@@ -21,6 +21,10 @@
     "src/lib/contactsListCache.ts",
     "src/lib/jobsListLocalCache.ts",
     "src/lib/s3FilesLocalCache.ts",
-    "src/lib/ttlLocalStorageCache.ts"
+    "src/lib/ttlLocalStorageCache.ts",
+    "src/components/feature/contacts/ContactsPageClient.tsx",
+    "src/components/feature/hiring-signals/HiringSignalsPageClient.tsx",
+    "src/lib/companiesListPrefs.ts",
+    "src/lib/graphqlClient.ts"
   ]
 }

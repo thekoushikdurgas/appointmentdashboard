@@ -24,7 +24,7 @@
     "pre-push": "npm run typecheck && npm run lint && npm run test",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run css:inventory && npm run check:best-practices && npm run build",
     "check:best-practices": "node scripts/check-best-practices.mjs",
-    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen": "node --use-system-ca ./node_modules/@graphql-codegen/cli/cjs/bin.js --config codegen.ts",
     "codegen:local": "graphql-codegen --config codegen.local.ts",
     "health:smoke": "node scripts/health-smoke.mjs",
     "css:inventory": "node scripts/css-inventory.mjs"

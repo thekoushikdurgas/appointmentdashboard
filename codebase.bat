@@ -145,9 +145,14 @@ call :color_echo "%BLUE%" "  Requires a reachable schema: set CODEGEN_SCHEMA_URL
 call :color_echo "%YELLOW%" "  Running: npm run codegen"
 call npm run codegen
 if errorlevel 1 (
+    call :color_echo "%YELLOW%" "  Retrying: npm run codegen:local (http://127.0.0.1:8000/graphql)..."
+    call npm run codegen:local
+)
+if errorlevel 1 (
     set /a WARNING_COUNT+=1
     set "SECTION2_STATUS=WARNING"
     call :color_echo "%YELLOW%" "  ! Codegen failed  -  API may be down; continuing with existing generated types"
+    call :color_echo "%YELLOW%" "  Tip: set CODEGEN_SCHEMA_URL=http://127.0.0.1:8000/graphql in .env or start the local API"
 ) else (
     set "SECTION2_STATUS=PASSED"
     call :color_echo "%GREEN%" "  OK GraphQL types regenerated"

@@ -39,6 +39,10 @@ export const JOBS_S3_BUCKET =
 export const EXPORTS_FEATURE_ENABLED =
   process.env.NEXT_PUBLIC_EXPORTS_FEATURE_ENABLED === "true";
 
+/** Contacts list AI-assisted filter (requires matching API support). */
+export const CONTACTS_AI_SEARCH_ENABLED =
+  process.env.NEXT_PUBLIC_CONTACTS_AI_SEARCH === "1";
+
 export const ENABLE_GEOLOCATION =
   process.env.NEXT_PUBLIC_ENABLE_GEOLOCATION !== "false";
 

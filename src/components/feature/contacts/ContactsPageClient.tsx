@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
+import { CONTACTS_AI_SEARCH_ENABLED } from "@/lib/config";
 import { parseOperationError } from "@/lib/errorParser";
 import { useContacts } from "@/hooks/useContacts";
 import { useContactFilters } from "@/hooks/useContactFilters";
@@ -534,7 +535,7 @@ export default function ContactsPageClient() {
   );
 
   const handleAiSearch = useCallback(() => {
-    if (process.env.NEXT_PUBLIC_CONTACTS_AI_SEARCH === "1") {
+    if (CONTACTS_AI_SEARCH_ENABLED) {
       setAiSearching(true);
       try {
         toast.info("AI filter integration is not wired yet.");

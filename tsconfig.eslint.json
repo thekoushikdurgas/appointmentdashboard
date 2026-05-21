@@ -11,6 +11,7 @@
     "next-env.d.ts",
     "vitest.config.ts",
     "codegen.ts",
+    "codegen.local.ts",
     "e2e/**/*.ts",
     "e2e/**/*.tsx"
   ],

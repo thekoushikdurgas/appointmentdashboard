@@ -1,11 +1,10 @@
 import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
 import path from "path";
 
 const isGithubActions = process.env.GITHUB_ACTIONS === "true";
 
 export default defineConfig({
-  plugins: [react()],
+  // Unit tests are .ts only (no JSX); omit @vitejs/plugin-react to avoid Rolldown deprecation noise.
   test: {
     environment: "node",
     globals: true,
