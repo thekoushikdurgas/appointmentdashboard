@@ -60,6 +60,7 @@ export function RunsTab({
     resumeRunId,
     scrapeDownloadId,
     satelliteRunsRows,
+    satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,
@@ -68,8 +69,9 @@ export function RunsTab({
     onResumeRun,
     onDownloadCsv,
   } = useHireSignalRuns("runs", {
-    satellitePage: 1,
+    satellitePage,
     runsPageSize: RUNS_PAGE_SIZE,
+    satelliteFilter,
   });
 
   useEffect(() => {
@@ -90,19 +92,27 @@ export function RunsTab({
   }, [satelliteRunsRows, satelliteFilter]);
 
   const satellitePaged = useMemo(() => {
+    if (satelliteFilter === "all") return satelliteRunsRows;
     const start = (satellitePage - 1) * RUNS_PAGE_SIZE;
     return filteredSatelliteRows.slice(start, start + RUNS_PAGE_SIZE);
-  }, [filteredSatelliteRows, satellitePage]);
+  }, [
+    satelliteFilter,
+    satelliteRunsRows,
+    filteredSatelliteRows,
+    satellitePage,
+  ]);
 
   const satelliteTotalFiltered = filteredSatelliteRows.length;
+  const satellitePaginationTotal =
+    satelliteFilter === "all" ? satelliteRunsTotal : satelliteTotalFiltered;
 
   useEffect(() => {
     const maxPage = Math.max(
       1,
-      Math.ceil(satelliteTotalFiltered / RUNS_PAGE_SIZE),
+      Math.ceil(satellitePaginationTotal / RUNS_PAGE_SIZE),
     );
     if (satellitePage > maxPage) setSatellitePage(maxPage);
-  }, [satelliteTotalFiltered, satellitePage]);
+  }, [satellitePaginationTotal, satellitePage]);
 
   const trackedPaged = useMemo(() => {
     const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
@@ -448,12 +458,12 @@ export function RunsTab({
                     }
                   />
                 </div>
-                {satelliteTotalFiltered > RUNS_PAGE_SIZE ? (
+                {satellitePaginationTotal > RUNS_PAGE_SIZE ? (
                   <Pagination
                     className="c360-hs-table-pagination"
                     page={satellitePage}
                     pageSize={RUNS_PAGE_SIZE}
-                    total={satelliteTotalFiltered}
+                    total={satellitePaginationTotal}
                     onPageChange={setSatellitePage}
                   />
                 ) : null}

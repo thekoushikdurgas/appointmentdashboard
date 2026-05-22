@@ -859,12 +859,17 @@
 }
 
 .c360-hs-filters__group-header {
-  margin: 0 0 6px;
-  padding: 10px 0 4px;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   font-size: var(--c360-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-align: center;
+  vertical-align: middle;
   color: var(--c360-text-ink-muted);
   border-bottom: 1px solid var(--c360-border-ink-8);
 }

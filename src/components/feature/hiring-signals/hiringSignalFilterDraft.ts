@@ -53,9 +53,30 @@ export type HiringSignalFilterDraft = {
   /** Quick date filter row — drives `postedAfter` unless `custom`. */
   datePostedPreset: DatePostedPreset;
 
-  /** Connectra company name search (merged into companies.companyQuery VQL). */
-  companyNameSearch: string;
-  /** Connectra company-index facets (country, industries, revenue, etc.). */
+  /**
+   * Company names from job index facets (`company_name.keyword` + job count in UI).
+   * Resolved to Connectra companies via VQL `name` eq/in, then jobs filter by `company_uuid`.
+   */
+  companyNames: string[];
+  /** Connectra company names to exclude (resolved to `excludedCompanyUuids` on jobs). */
+  excludedCompanyNames: string[];
+  /** Funding bucket ids (include), e.g. `1000000-10000000`, `1000000000+`. */
+  companyFunding: string[];
+  /** Funding bucket ids (exclude). */
+  excludedCompanyFunding: string[];
+  /** Connectra `country` tokens (include). */
+  companyCountries: string[];
+  /** Connectra `country` tokens (exclude). */
+  excludedCompanyCountries: string[];
+  /** Connectra `industries` tokens (include). */
+  companyIndustries: string[];
+  /** Connectra `industries` tokens (exclude). */
+  excludedCompanyIndustries: string[];
+  /** Employee-size bucket ids (include), e.g. `10-100`, `10000+`. */
+  companyEmployeeSizes: string[];
+  /** Employee-size bucket ids (exclude). */
+  excludedCompanyEmployeeSizes: string[];
+  /** Connectra company-index facets (revenue, etc.). */
   companyFacetValues: Record<string, string[]>;
 };
 
@@ -89,7 +110,16 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   countries: [],
   applyMethod: "",
   datePostedPreset: "any",
-  companyNameSearch: "",
+  companyNames: [],
+  excludedCompanyNames: [],
+  companyFunding: [],
+  excludedCompanyFunding: [],
+  companyCountries: [],
+  excludedCompanyCountries: [],
+  companyIndustries: [],
+  excludedCompanyIndustries: [],
+  companyEmployeeSizes: [],
+  excludedCompanyEmployeeSizes: [],
   companyFacetValues: {},
 };
 

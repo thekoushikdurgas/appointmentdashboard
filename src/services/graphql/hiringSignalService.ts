@@ -4,7 +4,6 @@
 
 import { gql } from "graphql-request";
 import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
-
 /** Hiring-signal operations: hooks/modals show toasts; avoid duplicate client toasts. */
 const HS_GQL = { showToastOnError: false as const };
 
@@ -479,6 +478,8 @@ export interface JobListFilters {
   sortOrder?: JobListSortOrder;
   /** Connectra company cohort — job.server `company_uuid` terms filter. */
   companyUuids?: string[];
+  /** Connectra company cohort exclude — job.server `excluded_company_uuid` terms. */
+  excludedCompanyUuids?: string[];
   limit: number;
   offset: number;
 }
@@ -486,7 +487,30 @@ export interface JobListFilters {
 export type HireSignalJobFilterOptionRow = {
   value: string;
   count: number;
+  /** Connectra facet label when not a raw numeric funding token. */
+  displayValue?: string;
 };
+
+/** Format OS/Connectra total_funding token for dropdown labels when numeric. */
+export function formatCompanyFundingLabel(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  const n = Number(t);
+  if (!Number.isFinite(n) || n <= 0) return t;
+  if (n >= 1_000_000_000) {
+    const v = n / 1_000_000_000;
+    return `$${v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)}B`;
+  }
+  if (n >= 1_000_000) {
+    const v = n / 1_000_000;
+    return `$${v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)}M`;
+  }
+  if (n >= 1_000) {
+    const v = n / 1_000;
+    return `$${v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)}K`;
+  }
+  return `$${n.toLocaleString("en-US")}`;
+}
 
 function buildExtendedJobFilters(
   filters: JobListFilters,
@@ -534,6 +558,10 @@ function buildExtendedJobFilters(
   // Always send explicit sort so gateways/job.server never rely on ambiguous defaults.
   x.sortField = sortKey;
   x.sortOrder = sortOrder === "asc" ? "asc" : "desc";
+  /** Cohort exclude — passed via JSON until all gateways expose `excludedCompanyUuids` arg. */
+  if (filters.excludedCompanyUuids?.length) {
+    x.excludedCompanyUuids = filters.excludedCompanyUuids;
+  }
   return Object.keys(x).length > 0 ? x : null;
 }
 
@@ -600,7 +628,14 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
 }
 
 export async function fetchHireSignalJobFilterOptions(
-  field: "title" | "company" | "location",
+  field:
+    | "title"
+    | "company"
+    | "location"
+    | "company_funding"
+    | "company_country"
+    | "company_industry"
+    | "company_employee_size",
   filters: JobListFilters,
   options?: { q?: string; limit?: number; offset?: number },
 ) {
@@ -618,6 +653,112 @@ export async function fetchHireSignalJobFilterOptions(
     { ...HS_GQL, cacheTtlMs: 120_000 },
   );
   return parseJobFilterOptionsPayload(res.hireSignal?.jobFilterOptions);
+}
+
+function isStaleCompanyCohortFieldError(
+  err: unknown,
+  field:
+    | "company_funding"
+    | "company_country"
+    | "company_industry"
+    | "company_employee_size",
+): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    msg.includes("field must be one of") &&
+    msg.includes("title") &&
+    msg.includes("company") &&
+    msg.includes("location") &&
+    !msg.includes(field)
+  );
+}
+
+/** Funding facet options via `hireSignal.jobFilterOptions` (job.server; API may fall back to Connectra). */
+export async function fetchHireSignalCompanyFundingFilterOptions(
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number; offset?: number },
+): Promise<HireSignalJobFilterOptionRow[]> {
+  try {
+    return await fetchHireSignalJobFilterOptions(
+      "company_funding",
+      filters,
+      options,
+    );
+  } catch (err) {
+    if (isStaleCompanyCohortFieldError(err, "company_funding")) {
+      throw new Error(
+        "Funding filter requires a restarted GraphQL API (company_funding). " +
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+      );
+    }
+    throw err;
+  }
+}
+
+/** Company country facet options via `hireSignal.jobFilterOptions` (job.server; API may fall back to Connectra). */
+export async function fetchHireSignalCompanyCountryFilterOptions(
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number; offset?: number },
+): Promise<HireSignalJobFilterOptionRow[]> {
+  try {
+    return await fetchHireSignalJobFilterOptions(
+      "company_country",
+      filters,
+      options,
+    );
+  } catch (err) {
+    if (isStaleCompanyCohortFieldError(err, "company_country")) {
+      throw new Error(
+        "Country filter requires a restarted GraphQL API (company_country). " +
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+      );
+    }
+    throw err;
+  }
+}
+
+/** Company industry facet options via `hireSignal.jobFilterOptions` (job.server; API may fall back to Connectra). */
+export async function fetchHireSignalCompanyIndustryFilterOptions(
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number; offset?: number },
+): Promise<HireSignalJobFilterOptionRow[]> {
+  try {
+    return await fetchHireSignalJobFilterOptions(
+      "company_industry",
+      filters,
+      options,
+    );
+  } catch (err) {
+    if (isStaleCompanyCohortFieldError(err, "company_industry")) {
+      throw new Error(
+        "Industry filter requires a restarted GraphQL API (company_industry). " +
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+      );
+    }
+    throw err;
+  }
+}
+
+/** Employee-size bucket facet options via `hireSignal.jobFilterOptions` (job.server). */
+export async function fetchHireSignalCompanyEmployeeSizeFilterOptions(
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number; offset?: number },
+): Promise<HireSignalJobFilterOptionRow[]> {
+  try {
+    return await fetchHireSignalJobFilterOptions(
+      "company_employee_size",
+      filters,
+      options,
+    );
+  } catch (err) {
+    if (isStaleCompanyCohortFieldError(err, "company_employee_size")) {
+      throw new Error(
+        "Employee size filter requires a restarted GraphQL API (company_employee_size). " +
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+      );
+    }
+    throw err;
+  }
 }
 
 export async function fetchHiringSignalStats() {

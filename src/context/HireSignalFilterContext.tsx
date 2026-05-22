@@ -27,6 +27,16 @@ import {
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
   "companies",
+  "companyNames",
+  "excludedCompanyNames",
+  "companyFunding",
+  "excludedCompanyFunding",
+  "companyCountries",
+  "excludedCompanyCountries",
+  "companyIndustries",
+  "excludedCompanyIndustries",
+  "companyEmployeeSizes",
+  "excludedCompanyEmployeeSizes",
   "locations",
   "employmentTypes",
   "workplaceTypes",
@@ -76,7 +86,6 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
       if (v) n += 1;
     } else if (String(v).trim()) n += 1;
   });
-  if (d.companyNameSearch.trim()) n += 1;
   return n;
 }
 
@@ -290,6 +299,7 @@ export function HireSignalFilterProvider({
       countries: undefined,
       applyMethod: undefined,
       companyUuids: undefined,
+      excludedCompanyUuids: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
@@ -302,7 +312,12 @@ export function HireSignalFilterProvider({
       value: string | string[] | boolean | Record<string, string[]>,
     ) => {
       setDraft((d) => {
-        if (field === "companyFacetValues" && value && typeof value === "object" && !Array.isArray(value)) {
+        if (
+          field === "companyFacetValues" &&
+          value &&
+          typeof value === "object" &&
+          !Array.isArray(value)
+        ) {
           return {
             ...d,
             companyFacetValues: value as Record<string, string[]>,

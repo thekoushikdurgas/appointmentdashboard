@@ -1,32 +1,26 @@
 import { buildCompanyListVql } from "@/lib/companyListVql";
 import {
-  companyFacetFilterFromDraft,
+  companyCohortExcludeFiltersFromDraft,
+  companyCohortIncludeFiltersFromDraft,
   HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE,
   HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP,
   isCompanyCohortActive,
 } from "@/lib/hireSignalCompanyCohort";
 import { companiesService } from "@/services/graphql/companiesService";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import type { VqlFilterInput } from "@/graphql/generated/types";
 
 export type CompanyCohortResolveResult = {
   uuids: string[];
+  excludedUuids: string[];
   total: number;
   truncated: boolean;
 };
 
-/**
- * Resolve Connectra company UUIDs for hiring-signals company cohort filters.
- * Returns `null` when no company cohort filters are active.
- */
-export async function resolveCompanyCohortUuids(
-  draft: HiringSignalFilterDraft,
-): Promise<CompanyCohortResolveResult | null> {
-  if (!isCompanyCohortActive(draft)) {
-    return null;
-  }
-
-  const facetFilter = companyFacetFilterFromDraft(draft);
-  const filters = facetFilter ? { filters: facetFilter } : {};
+async function paginateCompanyUuidsFromFilter(
+  cohortFilter: VqlFilterInput,
+): Promise<{ uuids: string[]; total: number; truncated: boolean }> {
+  const filters = { filters: cohortFilter };
   const pageSize = HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE;
   const uuids: string[] = [];
   let total = 0;
@@ -36,7 +30,7 @@ export async function resolveCompanyCohortUuids(
     const query = buildCompanyListVql(
       page,
       pageSize,
-      draft.companyNameSearch,
+      "",
       {
         ...filters,
         selectColumns: ["uuid"],
@@ -58,6 +52,43 @@ export async function resolveCompanyCohortUuids(
     page += 1;
   }
 
-  const truncated = total > uuids.length;
-  return { uuids, total, truncated };
+  return { uuids, total, truncated: total > uuids.length };
+}
+
+/**
+ * Resolve Connectra company UUIDs for hiring-signals company cohort filters.
+ * Returns `null` when no company cohort filters are active.
+ */
+export async function resolveCompanyCohortUuids(
+  draft: HiringSignalFilterDraft,
+): Promise<CompanyCohortResolveResult | null> {
+  if (!isCompanyCohortActive(draft)) {
+    return null;
+  }
+
+  const includeFilter = companyCohortIncludeFiltersFromDraft(draft);
+  const excludeFilter = companyCohortExcludeFiltersFromDraft(draft);
+
+  let uuids: string[] = [];
+  let total = 0;
+  let truncated = false;
+
+  if (includeFilter) {
+    const inc = await paginateCompanyUuidsFromFilter(includeFilter);
+    uuids = inc.uuids;
+    total = inc.total;
+    truncated = inc.truncated;
+  }
+
+  let excludedUuids: string[] = [];
+  if (excludeFilter) {
+    const ex = await paginateCompanyUuidsFromFilter(excludeFilter);
+    excludedUuids = ex.uuids;
+    if (uuids.length > 0 && excludedUuids.length > 0) {
+      const exSet = new Set(excludedUuids);
+      uuids = uuids.filter((id) => !exSet.has(id));
+    }
+  }
+
+  return { uuids, excludedUuids, total, truncated };
 }

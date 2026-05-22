@@ -24,6 +24,7 @@ import {
   hiringSignalInitials,
   pickCompanyDisplay,
   pickContactDisplay,
+  pickContactDepartments,
   connectraContactStableKey,
   collectDepartmentOptionsFromContacts,
   proxiedCompanyLogoSrc,
@@ -49,6 +50,26 @@ type ConnectraState =
 
 const DRAWER_CONTACTS_LIMIT = 50;
 const BASELINE_CONTACTS_LIMIT = 100;
+
+function filterConnectraContacts(
+  contacts: unknown[],
+  titleQ: string,
+  departments: string[],
+): unknown[] {
+  const titleNorm = titleQ.trim().toLowerCase();
+  const deptSet = new Set(departments.map((d) => d.trim()).filter(Boolean));
+  return contacts.filter((row) => {
+    if (titleNorm) {
+      const t = pickContactDisplay(row).title.toLowerCase();
+      if (!t.includes(titleNorm)) return false;
+    }
+    if (deptSet.size > 0) {
+      const rowDepts = pickContactDepartments(row);
+      if (!rowDepts.some((d) => deptSet.has(d))) return false;
+    }
+    return true;
+  });
+}
 
 type ParseResult =
   | { ok: true; data: Record<string, unknown> }
@@ -107,8 +128,8 @@ export function JobConnectraModal({
   const [departmentOptions, setDepartmentOptions] = useState<
     FilterComboboxOption[]
   >([]);
-  const [contactsReloading, setContactsReloading] = useState(false);
   const initialContactsLoadedRef = useRef(false);
+  const rawContactsRef = useRef<unknown[]>([]);
 
   const onRevealRow = useCallback((rowId: string, email: string) => {
     setRevealedRowIds((prev) => new Set(prev).add(rowId));
@@ -206,6 +227,7 @@ export function JobConnectraModal({
           );
         }
         const company = a.data?.company;
+        rawContactsRef.current = filtered.contacts;
         setState({
           kind: "ok",
           company: company ?? null,
@@ -237,57 +259,26 @@ export function JobConnectraModal({
       !initialContactsLoadedRef.current
     )
       return;
-    let cancelled = false;
-    (async () => {
-      setContactsReloading(true);
-      try {
-        const ct = await fetchJobConnectraContacts(job.linkedinJobId, {
-          limit: DRAWER_CONTACTS_LIMIT,
-          includePoster: true,
-          title: debouncedTitleFilter || undefined,
-          departments:
-            contactDepartmentsFilter.length > 0
-              ? contactDepartmentsFilter
-              : undefined,
-        });
-        if (cancelled) return;
-        const parsed = parseContactsPayload(
-          ct.hireSignal?.jobConnectraContacts,
-        );
-        if (!parsed.ok) {
-          toast.error("Contacts filter", { description: parsed.message });
-          return;
-        }
-        setState((prev) =>
-          prev.kind === "ok"
-            ? {
-                ...prev,
-                contacts: parsed.contacts,
-                poster: parsed.poster,
-                total: parsed.total,
-              }
-            : prev,
-        );
-        setSelectedContactKeys(new Set());
-      } catch (e) {
-        if (!cancelled) {
-          toast.error("Contacts filter", {
-            description: e instanceof Error ? e.message : "Load failed",
-          });
-        }
-      } finally {
-        if (!cancelled) setContactsReloading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    const filtered = filterConnectraContacts(
+      rawContactsRef.current,
+      debouncedTitleFilter,
+      contactDepartmentsFilter,
+    );
+    setState((prev) =>
+      prev.kind === "ok"
+        ? {
+            ...prev,
+            contacts: filtered,
+            total: filtered.length,
+          }
+        : prev,
+    );
+    setSelectedContactKeys(new Set());
   }, [
     isOpen,
     job.linkedinJobId,
     debouncedTitleFilter,
     contactDepartmentsFilter,
-    parseContactsPayload,
   ]);
 
   const clearContactFilters = useCallback(() => {
@@ -583,9 +574,9 @@ export function JobConnectraModal({
                 selectedDepartments={contactDepartmentsFilter}
                 onDepartmentsChange={setContactDepartmentsFilter}
                 onClear={clearContactFilters}
-                disabled={contactsReloading}
+                disabled={false}
               />
-              {state.contacts.length === 0 && !contactsReloading ? (
+              {state.contacts.length === 0 ? (
                 <p className="c360-text-2xs c360-text-ink-muted">
                   No contacts indexed in Connectra for this job&apos;s{" "}
                   <span className="c360-font-mono">company_uuid</span>. Export
@@ -595,7 +586,7 @@ export function JobConnectraModal({
               ) : (
                 <HiringSignalDrawerContactsGrid
                   contacts={state.contacts}
-                  loading={contactsReloading}
+                  loading={false}
                   density={density}
                   selectedKeys={selectedContactKeys}
                   onSelectionChange={setSelectedContactKeys}

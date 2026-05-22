@@ -1996,11 +1996,9 @@ export type HireSignalQueryConnectraCompanyArgs = {
 
 export type HireSignalQueryConnectraContactsForCompanyArgs = {
   companyUuid: Scalars["String"]["input"];
-  departments?: InputMaybe<Array<Scalars["String"]["input"]>>;
   limit?: Scalars["Int"]["input"];
   page?: Scalars["Int"]["input"];
   populateCompany?: Scalars["Boolean"]["input"];
-  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryExportDownloadUrlArgs = {
@@ -2026,13 +2024,11 @@ export type HireSignalQueryJobConnectraCompanyArgs = {
 };
 
 export type HireSignalQueryJobConnectraContactsArgs = {
-  departments?: InputMaybe<Array<Scalars["String"]["input"]>>;
   includePoster?: Scalars["Boolean"]["input"];
   limit?: Scalars["Int"]["input"];
   linkedinJobId: Scalars["String"]["input"];
   page?: Scalars["Int"]["input"];
   populateCompany?: Scalars["Boolean"]["input"];
-  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryJobFilterOptionsArgs = {
@@ -2040,6 +2036,7 @@ export type HireSignalQueryJobFilterOptionsArgs = {
   company?: InputMaybe<Scalars["String"]["input"]>;
   companyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  excludedCompanyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   field: Scalars["String"]["input"];
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
@@ -2062,6 +2059,7 @@ export type HireSignalQueryJobsArgs = {
   company?: InputMaybe<Scalars["String"]["input"]>;
   companyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
+  excludedCompanyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
   hideApplied?: Scalars["Boolean"]["input"];

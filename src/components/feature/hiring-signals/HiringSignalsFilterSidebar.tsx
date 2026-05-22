@@ -24,6 +24,8 @@ import {
   HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS,
   HIRE_SIGNAL_COMPANY_COHORT_LABELS,
 } from "@/lib/hireSignalCompanyCohort";
+import { formatCompanyEmployeeSizeBucketLabel } from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
+import { formatCompanyFundingBucketLabel } from "@/lib/hireSignalCompanyFundingBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
@@ -333,7 +335,7 @@ function buildHiringSignalChipBuckets(
   draft: HiringSignalFilterDraft,
   onDraftField: (
     field: HiringSignalDraftField,
-    value: string | string[] | boolean,
+    value: string | string[] | boolean | Record<string, string[]>,
   ) => void,
 ): Record<HsChipBucketKey, HsFilterChipItem[]> {
   const b = emptyHiringSignalChipBuckets();
@@ -364,13 +366,104 @@ function buildHiringSignalChipBuckets(
     });
   };
 
-  if (draft.companyNameSearch.trim()) {
+  addTokenChips(
+    "companyCohort",
+    "co-name",
+    draft.companyNames,
+    "Include company",
+    "companyNames",
+  );
+  addTokenChips(
+    "companyCohort",
+    "co-name-ex",
+    draft.excludedCompanyNames,
+    "Exclude company",
+    "excludedCompanyNames",
+  );
+  draft.companyFunding.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
     add("companyCohort", {
-      key: "co-name",
-      label: `Company name: ${draft.companyNameSearch.trim()}`,
-      onRemove: () => onDraftField("companyNameSearch", ""),
+      key: `co-fund-${i}-${t}`,
+      label: `Include funding: ${formatCompanyFundingBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "companyFunding",
+          draft.companyFunding.filter((_, j) => j !== i),
+        );
+      },
     });
-  }
+  });
+  draft.excludedCompanyFunding.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    add("companyCohort", {
+      key: `co-fund-ex-${i}-${t}`,
+      label: `Exclude funding: ${formatCompanyFundingBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "excludedCompanyFunding",
+          draft.excludedCompanyFunding.filter((_, j) => j !== i),
+        );
+      },
+    });
+  });
+  addTokenChips(
+    "companyCohort",
+    "co-country",
+    draft.companyCountries,
+    "Include country",
+    "companyCountries",
+  );
+  addTokenChips(
+    "companyCohort",
+    "co-country-ex",
+    draft.excludedCompanyCountries,
+    "Exclude country",
+    "excludedCompanyCountries",
+  );
+  addTokenChips(
+    "companyCohort",
+    "co-industry",
+    draft.companyIndustries,
+    "Include industry",
+    "companyIndustries",
+  );
+  addTokenChips(
+    "companyCohort",
+    "co-industry-ex",
+    draft.excludedCompanyIndustries,
+    "Exclude industry",
+    "excludedCompanyIndustries",
+  );
+  draft.companyEmployeeSizes.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    add("companyCohort", {
+      key: `co-emp-size-${i}-${t}`,
+      label: `Include employee size: ${formatCompanyEmployeeSizeBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "companyEmployeeSizes",
+          draft.companyEmployeeSizes.filter((_, j) => j !== i),
+        );
+      },
+    });
+  });
+  draft.excludedCompanyEmployeeSizes.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    add("companyCohort", {
+      key: `co-emp-size-ex-${i}-${t}`,
+      label: `Exclude employee size: ${formatCompanyEmployeeSizeBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "excludedCompanyEmployeeSizes",
+          draft.excludedCompanyEmployeeSizes.filter((_, j) => j !== i),
+        );
+      },
+    });
+  });
   for (const key of HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS) {
     const vals = draft.companyFacetValues[key] ?? [];
     const labelPrefix =
@@ -872,6 +965,8 @@ export function HiringSignalsFilterSidebar({
 
       <div className="c360-hs-filters__sections">
         <HiringSignalsCompanyFilters
+          appliedListFilters={appliedListFilters}
+          signalTimePreset={signalTimePreset}
           companyCohortResolving={companyCohortResolving}
           companyCohortMatchTotal={companyCohortMatchTotal}
           companyCohortTruncated={companyCohortTruncated}
@@ -987,11 +1082,6 @@ export function HiringSignalsFilterSidebar({
             />
             <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
               Country (ISO code)
-            </p>
-            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              Match jobs whose inferred country overlaps any selected ISO code
-              (OR). Choose a country to add it; remove selections with the chips
-              above. Duplicates are ignored.
             </p>
             <Select
               id="hsf-country-add"

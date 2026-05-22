@@ -257,7 +257,10 @@ export function useHiringSignals(
         if (cohort != null) {
           setCompanyCohortMatchTotal(cohort.total);
           setCompanyCohortTruncated(cohort.truncated);
-          if (cohort.uuids.length === 0) {
+          const hasExcludeOnly =
+            cohort.uuids.length === 0 &&
+            (cohort.excludedUuids?.length ?? 0) > 0;
+          if (cohort.uuids.length === 0 && !hasExcludeOnly) {
             setJobs([]);
             setTotal(0);
             setError(
@@ -271,10 +274,17 @@ export function useHiringSignals(
           }
           fetchSnapshot = {
             ...fetchSnapshot,
-            companyUuids: cohort.uuids,
+            companyUuids: cohort.uuids.length ? cohort.uuids : undefined,
+            excludedCompanyUuids: cohort.excludedUuids?.length
+              ? cohort.excludedUuids
+              : undefined,
           };
         } else {
-          fetchSnapshot = { ...fetchSnapshot, companyUuids: undefined };
+          fetchSnapshot = {
+            ...fetchSnapshot,
+            companyUuids: undefined,
+            excludedCompanyUuids: undefined,
+          };
         }
 
         setResolvedCompanyUuids(fetchSnapshot.companyUuids);

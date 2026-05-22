@@ -46,18 +46,27 @@ export function hireSignalRunCanResume(
 /** How many satellite runs to load for Overview “latest run” preview (first page). */
 export const HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT = 25;
 
+/** Satellite table filter on the Runs tab (client filter for active only). */
+export type HireSignalSatelliteFilter = "active" | "all";
+
 export type UseHireSignalRunsOpts = {
-  /** 1-based page when `mainTab === "runs"` (server-side offset). */
+  /** 1-based page when `mainTab === "runs"`. */
   satellitePage: number;
   /** Page size for satellite runs on the Runs tab. */
   runsPageSize: number;
+  /** Active = load a batch and filter client-side; All = server-paginated pages. */
+  satelliteFilter?: HireSignalSatelliteFilter;
 };
 
 export function useHireSignalRuns(
   mainTab: "overview" | "signals" | "runs",
   opts: UseHireSignalRunsOpts,
 ) {
-  const { satellitePage, runsPageSize } = opts;
+  const {
+    satellitePage,
+    runsPageSize,
+    satelliteFilter = "active",
+  } = opts;
 
   const [runsLoading, setRunsLoading] = useState(false);
   const [metrics, setMetrics] = useState<Record<string, unknown> | null>(null);
@@ -75,9 +84,16 @@ export function useHireSignalRuns(
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
     try {
-      const limit = mainTab === "runs" ? 500 : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
-      const offset =
-        mainTab === "runs" ? 0 : Math.max(0, satellitePage - 1) * runsPageSize;
+      const runsAllServerPage =
+        mainTab === "runs" && satelliteFilter === "all";
+      const limit = runsAllServerPage
+        ? runsPageSize
+        : mainTab === "runs"
+          ? 500
+          : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
+      const offset = runsAllServerPage
+        ? Math.max(0, satellitePage - 1) * runsPageSize
+        : 0;
 
       const [r, s, m] = await Promise.all([
         fetchHireSignalRuns(limit, offset),
@@ -101,7 +117,7 @@ export function useHireSignalRuns(
     } finally {
       setRunsLoading(false);
     }
-  }, [mainTab, runsPageSize, satellitePage]);
+  }, [mainTab, runsPageSize, satellitePage, satelliteFilter]);
 
   useEffect(() => {
     if (mainTab === "runs" || mainTab === "overview") void loadRuns();

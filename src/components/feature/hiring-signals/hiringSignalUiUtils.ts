@@ -121,7 +121,8 @@ export function satelliteStatusFromRow(row: Record<string, unknown>): string {
 export function scrapeStatusBadgeColor(status: string): BadgeColor {
   const s = (status ?? "").trim().toLowerCase();
   if (s === "done" || s === "succeeded") return "success";
-  if (s === "running" || s === "pending") return "warning";
+  if (s === "running") return "primary";
+  if (s === "pending") return "warning";
   if (s === "paused") return "info";
   if (s === "failed") return "danger";
   if (s === "cancelled") return "gray";
@@ -220,10 +221,27 @@ export function satelliteMaxJobsGoal(
     row.TargetMaxJobs ??
     row.target ??
     row.Target;
-  if (m == null || m === "") return null;
-  const n = Number(m);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
+  if (m != null && m !== "") {
+    const n = Number(m);
+    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  }
+  const fromBody = parseScrapeRequestBody(
+    row.requestBody ?? row.request_body ?? row.body ?? row.request,
+  );
+  if (fromBody.maxJobs != null && fromBody.maxJobs > 0) {
+    return Math.floor(fromBody.maxJobs);
+  }
+  return null;
+}
+
+/** Fraction of max_jobs collected (0–1); null when uncapped or cap missing. */
+export function satelliteJobsCompletionRatio(
+  row: Record<string, unknown>,
+): number | null {
+  const cap = satelliteMaxJobsGoal(row);
+  if (cap == null || cap <= 0) return null;
+  const n = satelliteJobsCollected(row);
+  return Math.min(1, n / cap);
 }
 
 /** One-line job count for Runs status column (satellite session row). */
@@ -232,8 +250,17 @@ export function satelliteJobsCountSummary(
 ): string {
   const n = satelliteJobsCollected(row);
   const cap = satelliteMaxJobsGoal(row);
+  const st = satelliteStatusFromRow(row);
   if (cap != null && cap > 0) {
-    return `${n.toLocaleString()} / ${cap.toLocaleString()} jobs`;
+    const base = `${n.toLocaleString()} / ${cap.toLocaleString()} jobs`;
+    if (
+      (st === "done" || st === "failed" || st === "cancelled") &&
+      n < cap
+    ) {
+      const pct = Math.round((n / cap) * 100);
+      return `${base} (${pct}% of target)`;
+    }
+    return base;
   }
   return `${n.toLocaleString()} jobs`;
 }
@@ -257,8 +284,14 @@ export function satelliteSessionProgressProps(row: Record<string, unknown>): {
 
   let color: NonNullable<ProgressProps["color"]> = "primary";
   if (status === "failed") color = "danger";
-  else if (status === "done" || status === "succeeded") color = "success";
-  else if (status === "cancelled") color = "warning";
+  else if (status === "done" || status === "succeeded") {
+    const ratio = satelliteJobsCompletionRatio(row);
+    color =
+      ratio != null && ratio < 0.5 && cap != null && cap > 0
+        ? "warning"
+        : "success";
+  } else if (status === "cancelled") color = "warning";
+  else if (status === "pending") color = "warning";
 
   const active =
     status === "pending" || status === "running" || status === "paused";

@@ -66,12 +66,23 @@ export function ScrapeSessionCard({
     itemCount != null && Number.isFinite(itemCount)
       ? Math.min(itemCount, maxGoal)
       : 0;
+  const st = status.toLowerCase();
+  const collected =
+    itemCount != null && Number.isFinite(itemCount)
+      ? Math.max(0, Math.floor(itemCount))
+      : 0;
+  const target =
+    req.maxJobs != null && req.maxJobs > 0 ? req.maxJobs : null;
   const progressColor =
-    status.toLowerCase() === "failed"
+    st === "failed"
       ? "danger"
-      : status.toLowerCase() === "done"
-        ? "success"
-        : "primary";
+      : st === "done" && target != null && collected < target * 0.5
+        ? "warning"
+        : st === "done"
+          ? "success"
+          : st === "pending"
+            ? "warning"
+            : "primary";
 
   const canCancel =
     showManageActions && !!runIdVal && hireSignalRunCanCancel(status);
