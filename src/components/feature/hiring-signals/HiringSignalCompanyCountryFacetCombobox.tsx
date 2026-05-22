@@ -71,6 +71,7 @@ export function HiringSignalCompanyCountryFacetCombobox({
           appliedListFilters,
           draft,
           signalTimePreset,
+          { excludeSelfFirmographicDimension: "country" },
         );
         const rows = await fetchHireSignalCompanyCountryFilterOptions(base, {
           q: searchText,

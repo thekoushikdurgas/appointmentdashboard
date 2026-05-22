@@ -56,6 +56,7 @@ import {
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
 import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
 import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
@@ -110,10 +111,9 @@ function HiringSignalsPageBody({
     companyCohortResolving,
     companyCohortMatchTotal,
     companyCohortTruncated,
-    resolvedCompanyUuids,
   } = hiring;
 
-  const { activeDraftCount } = useHireSignalFilter();
+  const { activeDraftCount, draft, resetFilters } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -216,13 +216,31 @@ function HiringSignalsPageBody({
     [getHireSignalSavedPayload, handleApplyHireSignalSaved],
   );
 
+  const hireSignalFiltersPinExtra = useMemo(
+    () => (
+      <>
+        {hireSignalSavedSearchesMenu}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="c360-contacts-filters__clear-text"
+          onClick={resetFilters}
+        >
+          Clear
+        </Button>
+      </>
+    ),
+    [hireSignalSavedSearchesMenu, resetFilters],
+  );
+
   const effectiveJobListFilters = useMemo(
     () => ({
       ...filters,
       postedAfter: effectivePostedAfter(signalTimePreset, filters.postedAfter),
-      companyUuids: resolvedCompanyUuids ?? filters.companyUuids,
+      companyUuids: filters.companyUuids,
     }),
-    [filters, signalTimePreset, resolvedCompanyUuids],
+    [filters, signalTimePreset],
   );
 
   const hireSignalExportIdCap = useMemo(
@@ -545,13 +563,13 @@ function HiringSignalsPageBody({
             filterDrawerTitleId="c360-hs-filter-drawer-title"
             filtersPeekRail
             filtersPeekScope="hiring-signals"
-            filtersPinExtra={hireSignalSavedSearchesMenu}
+            filtersPinExtra={hireSignalFiltersPinExtra}
             toolbar={signalsToolbar}
             filters={
               <>
                 {!isDesktop ? (
-                  <div className="c360-data-layout__filters-mobile-saved">
-                    {hireSignalSavedSearchesMenu}
+                  <div className="c360-data-layout__filters-mobile-saved c360-data-layout__filters-mobile-saved--actions">
+                    {hireSignalFiltersPinExtra}
                   </div>
                 ) : null}
                 <HiringSignalsFilterSidebar

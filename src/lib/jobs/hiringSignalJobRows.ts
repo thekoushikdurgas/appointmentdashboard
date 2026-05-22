@@ -148,8 +148,9 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
       "",
   ).trim();
   if (top) {
+    // Keep calendar dates as YYYY-MM-DD (OpenSearch `time_posted` has no time-of-day).
     if (/^\d{4}-\d{2}-\d{2}$/.test(top)) {
-      return `${top}T00:00:00.000Z`;
+      return top;
     }
     return top;
   }

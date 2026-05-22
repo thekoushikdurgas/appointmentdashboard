@@ -50,7 +50,7 @@ export function HiringSignalDrawerContactFilters({
 
   return (
     <div className="c360-mb-3 c360-space-y-2">
-      <div className="c360-grid c360-gap-2 sm:c360-grid-cols-2">
+      <div className="c360-hs-drawer-contact-filters__grid">
         <div>
           <label
             htmlFor="hs-drawer-contact-title"

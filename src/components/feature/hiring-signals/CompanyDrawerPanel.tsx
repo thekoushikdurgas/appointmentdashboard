@@ -218,12 +218,6 @@ export function CompanyDrawerPanel({
           <CompanyHiringTab jobs={previewJobs} loading={false} />
         </section>
       </div>
-
-      <footer className="c360-hs-drawer__footer">
-        <Button type="button" variant="primary" size="sm" onClick={onClose}>
-          Done
-        </Button>
-      </footer>
     </HiringSignalAsideDrawer>
   );
 }

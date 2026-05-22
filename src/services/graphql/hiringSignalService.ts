@@ -103,6 +103,14 @@ const HIRE_SIGNAL_JOBS = gql`
   }
 `;
 
+const HIRE_SIGNAL_RESOLVE_COMPANY_COHORT = gql`
+  query HireSignalResolveCompanyCohort($cohortFilters: JSON) {
+    hireSignal {
+      resolveCompanyCohortUuids(cohortFilters: $cohortFilters)
+    }
+  }
+`;
+
 const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
   query HireSignalJobFilterOptions(
     $field: String!
@@ -476,10 +484,21 @@ export interface JobListFilters {
   /** Column sort — extendedJobFilters.sortField / sortOrder → job.server query params. */
   sortKey?: JobListSortKey;
   sortOrder?: JobListSortOrder;
-  /** Connectra company cohort — job.server `company_uuid` terms filter. */
+  /** Explicit company UUID list (small lists only; prefer firmographic bucket fields). */
   companyUuids?: string[];
-  /** Connectra company cohort exclude — job.server `excluded_company_uuid` terms. */
+  /** Explicit excluded company UUIDs (small lists only). */
   excludedCompanyUuids?: string[];
+  /** Firmographic cohort bucket ids — resolved on job.server (no long URLs). */
+  companyEmployeeSizes?: string[];
+  excludedCompanyEmployeeSizes?: string[];
+  companyFunding?: string[];
+  excludedCompanyFunding?: string[];
+  companyRevenue?: string[];
+  excludedCompanyRevenue?: string[];
+  companyCountries?: string[];
+  excludedCompanyCountries?: string[];
+  companyIndustries?: string[];
+  excludedCompanyIndustries?: string[];
   limit: number;
   offset: number;
 }
@@ -558,11 +577,168 @@ function buildExtendedJobFilters(
   // Always send explicit sort so gateways/job.server never rely on ambiguous defaults.
   x.sortField = sortKey;
   x.sortOrder = sortOrder === "asc" ? "asc" : "desc";
-  /** Cohort exclude — passed via JSON until all gateways expose `excludedCompanyUuids` arg. */
   if (filters.excludedCompanyUuids?.length) {
     x.excludedCompanyUuids = filters.excludedCompanyUuids;
   }
+  if (filters.companyEmployeeSizes?.length) {
+    x.companyEmployeeSizes = filters.companyEmployeeSizes;
+  }
+  if (filters.excludedCompanyEmployeeSizes?.length) {
+    x.excludedCompanyEmployeeSizes = filters.excludedCompanyEmployeeSizes;
+  }
+  if (filters.companyFunding?.length) {
+    x.companyFunding = filters.companyFunding;
+  }
+  if (filters.excludedCompanyFunding?.length) {
+    x.excludedCompanyFunding = filters.excludedCompanyFunding;
+  }
+  if (filters.companyRevenue?.length) {
+    x.companyRevenue = filters.companyRevenue;
+  }
+  if (filters.excludedCompanyRevenue?.length) {
+    x.excludedCompanyRevenue = filters.excludedCompanyRevenue;
+  }
+  if (filters.companyCountries?.length) {
+    x.companyCountries = filters.companyCountries;
+  }
+  if (filters.excludedCompanyCountries?.length) {
+    x.excludedCompanyCountries = filters.excludedCompanyCountries;
+  }
+  if (filters.companyIndustries?.length) {
+    x.companyIndustries = filters.companyIndustries;
+  }
+  if (filters.excludedCompanyIndustries?.length) {
+    x.excludedCompanyIndustries = filters.excludedCompanyIndustries;
+  }
   return Object.keys(x).length > 0 ? x : null;
+}
+
+/** Firmographic facet field — exclude same dimension from option-count base filters. */
+export type HireSignalFirmographicFacetDimension =
+  | "employeeSize"
+  | "funding"
+  | "revenue"
+  | "country"
+  | "industry";
+
+const HIRE_SIGNAL_FIRMOGRAPHIC_FILTER_KEYS = [
+  "companyEmployeeSizes",
+  "excludedCompanyEmployeeSizes",
+  "companyFunding",
+  "excludedCompanyFunding",
+  "companyRevenue",
+  "excludedCompanyRevenue",
+  "companyCountries",
+  "excludedCompanyCountries",
+  "companyIndustries",
+  "excludedCompanyIndustries",
+] as const;
+
+const FIRMOGRAPHIC_DIMENSION_KEYS: Record<
+  HireSignalFirmographicFacetDimension,
+  readonly (typeof HIRE_SIGNAL_FIRMOGRAPHIC_FILTER_KEYS)[number][]
+> = {
+  employeeSize: ["companyEmployeeSizes", "excludedCompanyEmployeeSizes"],
+  funding: ["companyFunding", "excludedCompanyFunding"],
+  revenue: ["companyRevenue", "excludedCompanyRevenue"],
+  country: ["companyCountries", "excludedCompanyCountries"],
+  industry: ["companyIndustries", "excludedCompanyIndustries"],
+};
+
+/** Remove one firmographic dimension so facet counts show "switch to this bucket" totals. */
+export function omitFirmographicDimensionFromJobListFilters(
+  base: JobListFilters,
+  dimension: HireSignalFirmographicFacetDimension,
+): JobListFilters {
+  const out = { ...base } as JobListFilters;
+  for (const key of FIRMOGRAPHIC_DIMENSION_KEYS[dimension]) {
+    out[key] = undefined;
+  }
+  return out;
+}
+
+/** Clears all firmographic bucket fields (used before re-applying from draft). */
+export function clearFirmographicJobListFilterFields(
+  base: JobListFilters,
+): JobListFilters {
+  const cleared = { ...base } as JobListFilters;
+  for (const key of HIRE_SIGNAL_FIRMOGRAPHIC_FILTER_KEYS) {
+    cleared[key] = undefined;
+  }
+  return cleared;
+}
+
+/** Draft is source of truth for firmographics — clears stale values on `base` first. */
+export function applyFirmographicFiltersFromDraft(
+  base: JobListFilters,
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): JobListFilters {
+  return {
+    ...clearFirmographicJobListFilterFields(base),
+    ...hireSignalFirmographicListFiltersFromDraft(draft),
+  };
+}
+
+/** Stable key for refetch when firmographic draft tokens change. */
+export function hireSignalFirmographicDraftKey(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): string {
+  const f = hireSignalFirmographicListFiltersFromDraft(draft);
+  return JSON.stringify(f);
+}
+
+/** Firmographic filters from draft for job list / facet scoping (server-side UUID resolve). */
+export function hireSignalFirmographicListFiltersFromDraft(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): Pick<
+  JobListFilters,
+  | "companyEmployeeSizes"
+  | "excludedCompanyEmployeeSizes"
+  | "companyFunding"
+  | "excludedCompanyFunding"
+  | "companyRevenue"
+  | "excludedCompanyRevenue"
+  | "companyCountries"
+  | "excludedCompanyCountries"
+  | "companyIndustries"
+  | "excludedCompanyIndustries"
+> {
+  const trim = (xs: string[]) =>
+    xs.map((n) => String(n).trim()).filter(Boolean);
+  const out: Pick<
+    JobListFilters,
+    | "companyEmployeeSizes"
+    | "excludedCompanyEmployeeSizes"
+    | "companyFunding"
+    | "excludedCompanyFunding"
+    | "companyRevenue"
+    | "excludedCompanyRevenue"
+    | "companyCountries"
+    | "excludedCompanyCountries"
+    | "companyIndustries"
+    | "excludedCompanyIndustries"
+  > = {};
+  const es = trim(draft.companyEmployeeSizes);
+  if (es.length) out.companyEmployeeSizes = es;
+  const exEs = trim(draft.excludedCompanyEmployeeSizes);
+  if (exEs.length) out.excludedCompanyEmployeeSizes = exEs;
+  const fund = trim(draft.companyFunding);
+  if (fund.length) out.companyFunding = fund;
+  const exFund = trim(draft.excludedCompanyFunding);
+  if (exFund.length) out.excludedCompanyFunding = exFund;
+  const rev = trim(draft.companyRevenue);
+  if (rev.length) out.companyRevenue = rev;
+  const exRev = trim(draft.excludedCompanyRevenue);
+  if (exRev.length) out.excludedCompanyRevenue = exRev;
+  const co = trim(draft.companyCountries);
+  if (co.length) out.companyCountries = co;
+  const exCo = trim(draft.excludedCompanyCountries);
+  if (exCo.length) out.excludedCompanyCountries = exCo;
+  const ind = trim(draft.companyIndustries);
+  if (ind.length) out.companyIndustries = ind;
+  const exInd = trim(draft.excludedCompanyIndustries);
+  if (exInd.length) out.excludedCompanyIndustries = exInd;
+  return out;
 }
 
 function hireSignalJobListFilterVars(filters: JobListFilters) {
@@ -783,6 +959,70 @@ export async function fetchHireSignalCompanyRevenueFilterOptions(
     }
     throw err;
   }
+}
+
+/** Firmographic-only subset of filter draft for cohort UUID resolution. */
+export function hireSignalFirmographicCohortFiltersFromDraft(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): Record<string, string[]> {
+  const trim = (xs: string[]) =>
+    xs.map((n) => String(n).trim()).filter(Boolean);
+  return {
+    companyFunding: trim(draft.companyFunding),
+    excludedCompanyFunding: trim(draft.excludedCompanyFunding),
+    companyCountries: trim(draft.companyCountries),
+    excludedCompanyCountries: trim(draft.excludedCompanyCountries),
+    companyIndustries: trim(draft.companyIndustries),
+    excludedCompanyIndustries: trim(draft.excludedCompanyIndustries),
+    companyEmployeeSizes: trim(draft.companyEmployeeSizes),
+    excludedCompanyEmployeeSizes: trim(draft.excludedCompanyEmployeeSizes),
+    companyRevenue: trim(draft.companyRevenue),
+    excludedCompanyRevenue: trim(draft.excludedCompanyRevenue),
+  };
+}
+
+export type HireSignalCompanyCohortResolvePayload = {
+  uuids: string[];
+  excludedUuids: string[];
+  total: number;
+  truncated: boolean;
+};
+
+export function parseResolveCompanyCohortPayload(
+  raw: HireSignalApiJson,
+): HireSignalCompanyCohortResolvePayload {
+  const r = asRecord(raw);
+  const uuids = Array.isArray(r?.uuids)
+    ? (r.uuids as unknown[])
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+    : [];
+  const excludedUuids = Array.isArray(r?.excludedUuids)
+    ? (r.excludedUuids as unknown[])
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+    : [];
+  const total =
+    typeof r?.total === "number" ? r.total : uuids.length;
+  return {
+    uuids,
+    excludedUuids,
+    total,
+    truncated: Boolean(r?.truncated),
+  };
+}
+
+export async function fetchHireSignalResolveCompanyCohortUuids(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+) {
+  const cohortFilters = hireSignalFirmographicCohortFiltersFromDraft(draft);
+  return graphqlQuery<{
+    hireSignal: { resolveCompanyCohortUuids: HireSignalApiJson };
+  }>(
+    HIRE_SIGNAL_RESOLVE_COMPANY_COHORT,
+    { cohortFilters },
+    { ...HS_GQL, cacheTtlMs: 0 },
+  );
 }
 
 export async function fetchHiringSignalStats() {

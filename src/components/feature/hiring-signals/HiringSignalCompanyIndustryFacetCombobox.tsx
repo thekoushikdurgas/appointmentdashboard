@@ -70,7 +70,29 @@ export function HiringSignalCompanyIndustryFacetCombobox({
           appliedListFilters,
           draft,
           signalTimePreset,
+          { excludeSelfFirmographicDimension: "industry" },
         );
+        // #region agent log
+        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "7dc299",
+          },
+          body: JSON.stringify({
+            sessionId: "7dc299",
+            runId: "post-fix",
+            hypothesisId: "H7",
+            location: "HiringSignalCompanyIndustryFacetCombobox.tsx:runFetch",
+            message: "industry facet base (self dimension omitted)",
+            data: {
+              draftIndustries: draft.companyIndustries,
+              baseIndustries: base.companyIndustries,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         const rows = await fetchHireSignalCompanyIndustryFilterOptions(base, {
           q: searchText,
           limit: DEFAULT_PAGE_SIZE,

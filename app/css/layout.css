@@ -313,6 +313,10 @@
     width var(--c360-transition-default);
 }
 
+.c360-sidebar--collapsed .c360-sidebar__brand-mark {
+  display: none;
+}
+
 .c360-sidebar--collapsed .c360-sidebar__brand-text {
   opacity: 0;
   pointer-events: none;
@@ -570,11 +574,35 @@
   border-bottom: 1px solid var(--c360-border);
 }
 
-.c360-sidebar__quick-actions--rail {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  padding-left: var(--c360-spacing-2);
-  padding-right: var(--c360-spacing-2);
+/* Collapsed rail: grid stack (beats flex row + 40px icon buttons in a 45px rail) */
+.c360-sidebar__quick-actions--rail,
+.c360-sidebar__quick-actions[data-rail-collapsed="true"],
+.c360-sidebar--collapsed:not(.c360-sidebar--rail-expanded)
+  .c360-sidebar__quick-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  row-gap: var(--c360-spacing-1);
+  padding: var(--c360-spacing-2) var(--c360-spacing-1) var(--c360-spacing-3);
+  overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.c360-sidebar__quick-actions--rail
+  .c360-btn.c360-btn--ghost.c360-btn--icon.c360-sidebar__quick-btn,
+.c360-sidebar__quick-actions[data-rail-collapsed="true"]
+  .c360-btn.c360-btn--ghost.c360-btn--icon.c360-sidebar__quick-btn,
+.c360-sidebar--collapsed:not(.c360-sidebar--rail-expanded)
+  .c360-sidebar__quick-actions
+  .c360-btn.c360-btn--ghost.c360-btn--icon.c360-sidebar__quick-btn {
+  /* Match collapsed search trigger (30px) so four icons fit in 45px rail */
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  max-width: 30px;
+  padding: 0;
 }
 
 .c360-sidebar__quick-btn {
@@ -1414,6 +1442,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: var(--c360-spacing-2);
 }
 
 /* Peek rail collapsed strip: funnel only; pin + Saved appear on hover / focus-within / pinned */
@@ -1503,6 +1532,18 @@
   justify-content: center;
 }
 
+.c360-data-layout__filters-mobile-saved--actions {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+}
+
+.c360-data-layout__filters-mobile-saved--actions .c360-popover__trigger,
+.c360-data-layout__filters-mobile-saved--actions > .c360-btn {
+  flex: 1;
+  min-width: 0;
+}
+
 .c360-data-layout__filters-body-scroll {
   flex: 1 1 auto;
   min-width: 0;
@@ -1540,6 +1581,13 @@
 
 .c360-data-layout__filters-body-scroll
   .c360-companies-filters
+  .c360-contacts-filters__head-row {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.c360-data-layout__filters-body-scroll
+  .c360-hs-filters
   .c360-contacts-filters__head-row {
   padding-top: 0;
   padding-bottom: 0;

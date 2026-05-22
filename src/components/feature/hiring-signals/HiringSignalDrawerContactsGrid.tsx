@@ -156,11 +156,6 @@ export function HiringSignalDrawerContactsGrid({
 
   const handleFindEmail = useCallback(
     async (row: HiringSignalContactGridRow) => {
-      const fromContact = row.email.trim();
-      if (fromContact) {
-        onRevealRow(row.id, fromContact);
-        return;
-      }
       if (!row.firstName.trim()) {
         toast.error("Contact must have a first name to find email.");
         return;

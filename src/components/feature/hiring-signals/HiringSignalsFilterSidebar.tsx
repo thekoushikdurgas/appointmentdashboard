@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
@@ -20,6 +19,10 @@ import {
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
 import { HiringSignalsCompanyFilters } from "@/components/feature/hiring-signals/HiringSignalsCompanyFilters";
+import {
+  HsFilterChipList,
+  type HsFilterChipItem,
+} from "@/components/feature/hiring-signals/hsFilterChips";
 import {
   HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS,
   HIRE_SIGNAL_COMPANY_COHORT_LABELS,
@@ -286,11 +289,7 @@ const FUNCTION_PRESET_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
-export type HsFilterChipItem = {
-  key: string;
-  label: string;
-  onRemove: () => void;
-};
+export type { HsFilterChipItem };
 
 export type HsChipBucketKey =
   | "companyCohort"
@@ -496,7 +495,8 @@ function buildHiringSignalChipBuckets(
   for (const key of HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS) {
     const vals = draft.companyFacetValues[key] ?? [];
     const labelPrefix =
-      HIRE_SIGNAL_COMPANY_COHORT_LABELS[key] ?? key.replace(/_/g, " ");
+      HIRE_SIGNAL_COMPANY_COHORT_LABELS[key] ??
+      String(key).replace(/_/g, " ");
     vals.forEach((raw, i) => {
       const t = raw.trim();
       if (!t) return;
@@ -712,39 +712,6 @@ function buildHiringSignalChipBuckets(
   return b;
 }
 
-function HsFilterChipList({
-  items,
-  variant = "default",
-}: {
-  items: HsFilterChipItem[];
-  variant?: "default" | "section";
-}) {
-  if (items.length === 0) return null;
-  return (
-    <div
-      className={cn(
-        "c360-hs-filter-chips",
-        variant === "section" && "c360-hs-filter-chips--section",
-      )}
-      role="list"
-    >
-      {items.map((c) => (
-        <span key={c.key} className="c360-hs-filter-chip" role="listitem">
-          <span className="c360-hs-filter-chip__text">{c.label}</span>
-          <button
-            type="button"
-            className="c360-hs-filter-chip__remove"
-            aria-label={`Remove ${c.label}`}
-            onClick={c.onRemove}
-          >
-            <X size={12} />
-          </button>
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export type {
   HiringSignalFilterDraft,
   HiringSignalDraftField,
@@ -784,7 +751,7 @@ export function HiringSignalsFilterSidebar({
   companyCohortMatchTotal = null,
   companyCohortTruncated = false,
 }: HiringSignalsFilterSidebarProps) {
-  const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
+  const { draft, onDraftField, setDraft } = useHireSignalFilter();
 
   const appendCountryCode = (code: string) => {
     const v = code.trim();
@@ -971,17 +938,6 @@ export function HiringSignalsFilterSidebar({
           </div>
           <p className="c360-contacts-filters__subtitle">{totalChips} active</p>
         </div>
-        <div className="c360-contacts-filters__head-actions">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="c360-contacts-filters__clear-text"
-            onClick={resetFilters}
-          >
-            Clear
-          </Button>
-        </div>
       </div>
 
       {hasRunChip ? (
@@ -999,20 +955,14 @@ export function HiringSignalsFilterSidebar({
           companyCohortResolving={companyCohortResolving}
           companyCohortMatchTotal={companyCohortMatchTotal}
           companyCohortTruncated={companyCohortTruncated}
+          companyFilterChips={chipBuckets.companyCohort}
         />
-        {chipBuckets.companyCohort.length > 0 ? (
-          <HsFilterChipList
-            items={chipBuckets.companyCohort}
-            variant="section"
-          />
-        ) : null}
 
         <h3 className="c360-hs-filters__group-header">Job filters</h3>
 
         <ContactsCollapsibleFilterSection
           title="Title"
           count={titleValues.length + exTitleCount}
-          defaultOpen
           onClear={() => {
             onDraftField("titles", []);
             onDraftField("excludedTitles", []);
@@ -1046,7 +996,6 @@ export function HiringSignalsFilterSidebar({
         <ContactsCollapsibleFilterSection
           title="Employer on posting"
           count={companyValues.length + exCoCount}
-          defaultOpen
           onClear={() => {
             onDraftField("companies", []);
             onDraftField("excludedCompanies", []);
@@ -1080,7 +1029,6 @@ export function HiringSignalsFilterSidebar({
         <ContactsCollapsibleFilterSection
           title="Location"
           count={locationValues.length + exLocCount + countryCount}
-          defaultOpen
           onClear={() => {
             onDraftField("locations", []);
             onDraftField("excludedLocations", []);

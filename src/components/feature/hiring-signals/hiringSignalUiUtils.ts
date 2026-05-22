@@ -2,53 +2,10 @@ import type { BadgeColor, BadgeProps } from "@/components/ui/Badge";
 import type { ProgressProps } from "@/components/ui/Progress";
 import { asRecord } from "@/services/graphql/hiringSignalService";
 export { hiringSignalRowKey } from "@/lib/jobs/hiringSignalRowKeys";
-
-/**
- * Format job `postedAt` / ISO strings from job.server for the hiring-signals UI.
- * Hardened for `en-IN` locale quirks and empty `toLocaleString` in some runtimes.
- */
-export function formatHireSignalPostedDate(
-  iso: string,
-  options?: { withTime?: boolean; emptyAsDash?: boolean },
-): string {
-  const withTime = options?.withTime ?? false;
-  const emptyAsDash = options?.emptyAsDash ?? !withTime;
-  const s = iso?.trim() ?? "";
-  if (!s) return emptyAsDash ? "—" : "";
-  if (s.startsWith("0001-01-01")) return emptyAsDash ? "—" : "";
-  try {
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime())) return withTime ? s : emptyAsDash ? "—" : s;
-    if (d.getUTCFullYear() < 1970) return emptyAsDash ? "—" : s;
-    let out = "";
-    try {
-      out = withTime
-        ? d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
-        : d.toLocaleString("en-IN", { dateStyle: "medium" });
-    } catch {
-      out = "";
-    }
-    if (!out?.trim()) {
-      out = withTime
-        ? d.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : d.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          });
-    }
-    const t = out.trim() || s.slice(0, 10);
-    return t;
-  } catch {
-    return emptyAsDash ? "—" : s;
-  }
-}
+export {
+  formatHireSignalPostedDate,
+  isHireSignalPostedDateOnly,
+} from "@/lib/jobs/hiringSignalPostedDate";
 
 /** Initials for avatar (company or person). */
 export function hiringSignalInitials(name: string, fallback = "?"): string {

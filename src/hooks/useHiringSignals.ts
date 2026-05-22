@@ -17,6 +17,7 @@ import {
   fetchHiringSignalDashboardKpis,
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
+  applyFirmographicFiltersFromDraft,
   type JobListFilters,
   type JobListSortKey,
   type JobListSortOrder,
@@ -27,7 +28,6 @@ import {
   sortJobRowsByPostedAt,
   type LinkedInJobRow,
 } from "@/lib/jobs/hiringSignalJobRows";
-import { resolveCompanyCohortUuids } from "@/lib/resolveCompanyCohortUuids";
 import { isCompanyCohortActiveExcludingNames } from "@/lib/hireSignalCompanyCohort";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import {
@@ -260,12 +260,46 @@ export function useHiringSignals(
       setCompanyCohortMatchTotal(null);
       setCompanyCohortTruncated(false);
       try {
-        let fetchSnapshot: JobListFilters = { ...snapshot };
         const draftForCohort =
           cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
-        setCompanyCohortResolving(true);
-        const cohort = await resolveCompanyCohortUuids(draftForCohort);
         setCompanyCohortResolving(false);
+        let fetchSnapshot = applyFirmographicFiltersFromDraft(
+          {
+            ...snapshot,
+            companyUuids: undefined,
+            excludedCompanyUuids: undefined,
+          },
+          draftForCohort,
+        );
+        // #region agent log
+        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "7dc299",
+          },
+          body: JSON.stringify({
+            sessionId: "7dc299",
+            runId: "post-fix",
+            hypothesisId: "H5",
+            location: "useHiringSignals.ts:jobFetch",
+            message: "firmographic from draft (snapshot cleared first)",
+            data: {
+              draftEmployeeSizes: draftForCohort.companyEmployeeSizes,
+              draftEmployeeSizeCount:
+                draftForCohort.companyEmployeeSizes?.length ?? 0,
+              draftIndustries: draftForCohort.companyIndustries,
+              draftIndustryCount:
+                draftForCohort.companyIndustries?.length ?? 0,
+              fetchEmployeeSizes: fetchSnapshot.companyEmployeeSizes,
+              fetchIndustries: fetchSnapshot.companyIndustries,
+              fetchIndustryCount:
+                fetchSnapshot.companyIndustries?.length ?? 0,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         if (gen !== hireSignalLoadGenRef.current) {
           return;
         }
@@ -276,47 +310,6 @@ export function useHiringSignals(
         const excludePostingNames = normalizeHiringSignalTokenList(
           draftForCohort.excludedCompanyNames,
         );
-
-        if (cohort != null) {
-          setCompanyCohortMatchTotal(cohort.total);
-          setCompanyCohortTruncated(cohort.truncated);
-          const hasExcludeOnly =
-            cohort.uuids.length === 0 &&
-            (cohort.excludedUuids?.length ?? 0) > 0;
-          const hasFirmographicInclude = isCompanyCohortActiveExcludingNames(
-            draftForCohort,
-          );
-          if (
-            cohort.uuids.length === 0 &&
-            !hasExcludeOnly &&
-            hasFirmographicInclude &&
-            includePostingNames.length === 0
-          ) {
-            setJobs([]);
-            setTotal(0);
-            setError(
-              "No companies match these company filters. Clear company filters or broaden criteria.",
-            );
-            lastSuccessfulJobListSortRef.current = {
-              sortKey: snapSortKey,
-              sortOrder: snapSortOrder,
-            };
-            return;
-          }
-          fetchSnapshot = {
-            ...fetchSnapshot,
-            companyUuids: cohort.uuids.length ? cohort.uuids : undefined,
-            excludedCompanyUuids: cohort.excludedUuids?.length
-              ? cohort.excludedUuids
-              : undefined,
-          };
-        } else {
-          fetchSnapshot = {
-            ...fetchSnapshot,
-            companyUuids: undefined,
-            excludedCompanyUuids: undefined,
-          };
-        }
 
         if (includePostingNames.length > 0) {
           fetchSnapshot = {
@@ -337,13 +330,46 @@ export function useHiringSignals(
           };
         }
 
-        setResolvedCompanyUuids(fetchSnapshot.companyUuids);
+        setResolvedCompanyUuids(undefined);
 
         const res = await fetchHiringSignalJobs(fetchSnapshot);
         if (gen !== hireSignalLoadGenRef.current) {
           return;
         }
         const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
+        if (gen !== hireSignalLoadGenRef.current) {
+          return;
+        }
+        // #region agent log
+        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "7dc299",
+          },
+          body: JSON.stringify({
+            sessionId: "7dc299",
+            runId: "post-fix",
+            hypothesisId: "H8",
+            location: "useHiringSignals.ts:jobFetchResult",
+            message: "job list total after fetch",
+            data: {
+              listTotal: parsed.total,
+              rowCount: parsed.data.length,
+              fetchSuccess: parsed.success,
+              loadGen: gen,
+              currentGen: hireSignalLoadGenRef.current,
+              loadGenStale: gen !== hireSignalLoadGenRef.current,
+              fetchIndustryCount:
+                fetchSnapshot.companyIndustries?.length ?? 0,
+              fetchIndustries: fetchSnapshot.companyIndustries,
+              fetchEmployeeSizeCount:
+                fetchSnapshot.companyEmployeeSizes?.length ?? 0,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         if (!parsed.success) {
           setError(
             parsed.data.length > 0
@@ -415,8 +441,20 @@ export function useHiringSignals(
         if (sortKeyEff === "posted_at") {
           merged = sortJobRowsByPostedAt(merged, sortOrderEff);
         }
+        if (gen !== hireSignalLoadGenRef.current) {
+          return;
+        }
         setJobs(merged);
         setTotal(listTotal);
+        if (
+          listTotal === 0 &&
+          isCompanyCohortActiveExcludingNames(draftForCohort) &&
+          includePostingNames.length === 0
+        ) {
+          setError(
+            "No companies match these company filters. Clear company filters or broaden criteria.",
+          );
+        }
         lastSuccessfulJobListSortRef.current = {
           sortKey: sortKeyEff,
           sortOrder: sortOrderEff,

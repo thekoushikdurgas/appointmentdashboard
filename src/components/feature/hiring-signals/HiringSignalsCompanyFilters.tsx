@@ -7,6 +7,12 @@ import { HiringSignalCompanyEmployeeSizeFacetCombobox } from "@/components/featu
 import { HiringSignalCompanyIndustryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyIndustryFacetCombobox";
 import { HiringSignalCompanyRevenueFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyRevenueFacetCombobox";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import {
+  HS_COMPANY_FILTER_CHIP_PREFIXES,
+  HsFilterChipList,
+  pickHsFilterChipsByKeyPrefix,
+  type HsFilterChipItem,
+} from "@/components/feature/hiring-signals/hsFilterChips";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { isCompanyCohortActive } from "@/lib/hireSignalCompanyCohort";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
@@ -18,6 +24,8 @@ export interface HiringSignalsCompanyFiltersProps {
   companyCohortResolving?: boolean;
   companyCohortMatchTotal?: number | null;
   companyCohortTruncated?: boolean;
+  /** Active company cohort chips (rendered inside each filter section). */
+  companyFilterChips?: HsFilterChipItem[];
 }
 
 export function HiringSignalsCompanyFilters({
@@ -26,6 +34,7 @@ export function HiringSignalsCompanyFilters({
   companyCohortResolving = false,
   companyCohortMatchTotal = null,
   companyCohortTruncated = false,
+  companyFilterChips = [],
 }: HiringSignalsCompanyFiltersProps) {
   const { draft, onDraftField } = useHireSignalFilter();
   const cohortActive = isCompanyCohortActive(draft);
@@ -55,7 +64,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.companyNames).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyNames).length
         }
-        defaultOpen
         onClear={
           draft.companyNames.length > 0 || draft.excludedCompanyNames.length > 0
             ? () => {
@@ -66,6 +74,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.name,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyNameFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
@@ -91,7 +106,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.companyCountries).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyCountries).length
         }
-        defaultOpen
         onClear={
           draft.companyCountries.length > 0 ||
           draft.excludedCompanyCountries.length > 0
@@ -103,6 +117,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.country,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyCountryFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
@@ -132,7 +153,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.companyIndustries).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyIndustries).length
         }
-        defaultOpen
         onClear={
           draft.companyIndustries.length > 0 ||
           draft.excludedCompanyIndustries.length > 0
@@ -144,6 +164,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.industry,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyIndustryFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
@@ -174,7 +201,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.excludedCompanyEmployeeSizes)
             .length
         }
-        defaultOpen
         onClear={
           draft.companyEmployeeSizes.length > 0 ||
           draft.excludedCompanyEmployeeSizes.length > 0
@@ -186,6 +212,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.employeeSize,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyEmployeeSizeFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
@@ -215,7 +248,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.companyRevenue).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyRevenue).length
         }
-        defaultOpen
         onClear={
           draft.companyRevenue.length > 0 ||
           draft.excludedCompanyRevenue.length > 0
@@ -227,6 +259,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.revenue,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyRevenueFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
@@ -252,7 +291,6 @@ export function HiringSignalsCompanyFilters({
           normalizeHiringSignalTokenList(draft.companyFunding).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyFunding).length
         }
-        defaultOpen
         onClear={
           draft.companyFunding.length > 0 ||
           draft.excludedCompanyFunding.length > 0
@@ -264,6 +302,13 @@ export function HiringSignalsCompanyFilters({
         }
       >
         <div className="c360-space-y-3">
+          <HsFilterChipList
+            items={pickHsFilterChipsByKeyPrefix(
+              companyFilterChips,
+              HS_COMPANY_FILTER_CHIP_PREFIXES.funding,
+            )}
+            variant="section"
+          />
           <HiringSignalCompanyFundingFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}

@@ -138,3 +138,5 @@
     --c360-content-max-width: 1400px;
   }
 }
+
+/* Collapsed sidebar quick actions — rail rules live in layout.css (grid stack + 30px buttons) */

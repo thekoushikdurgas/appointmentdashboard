@@ -152,6 +152,16 @@ export default function Sidebar({
                 "c360-sidebar__header-row--with-collapse",
             )}
           >
+            <Link
+              href={ROUTES.DASHBOARD}
+              className="c360-sidebar__brand"
+              onClick={onMobileClose}
+            >
+              <span className="c360-sidebar__brand-mark" aria-hidden>
+                C
+              </span>
+              <span className="c360-sidebar__brand-text">Contact360</span>
+            </Link>
             {showDesktopCollapseToggle && onToggleCollapse ? (
               <button
                 type="button"
@@ -167,16 +177,6 @@ export default function Sidebar({
                 )}
               </button>
             ) : null}
-            <Link
-              href={ROUTES.DASHBOARD}
-              className="c360-sidebar__brand"
-              onClick={onMobileClose}
-            >
-              <span className="c360-sidebar__brand-mark" aria-hidden>
-                C
-              </span>
-              <span className="c360-sidebar__brand-text">Contact360</span>
-            </Link>
           </div>
         </div>
 

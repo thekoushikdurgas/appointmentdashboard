@@ -46,6 +46,7 @@ export function HiringSignalCompanyRevenueFacetCombobox({
         appliedListFilters,
         draft,
         signalTimePreset,
+        { excludeSelfFirmographicDimension: "revenue" },
       );
       const rows = await fetchHireSignalCompanyRevenueFilterOptions(base, {
         q: searchText,

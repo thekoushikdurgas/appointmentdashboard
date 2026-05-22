@@ -10,7 +10,7 @@ export interface HiringSignalAsideDrawerProps {
   onClose: () => void;
   /** Must match the `id` of the visible title inside `children` (e.g. on `h2`). */
   ariaLabelledBy: string;
-  /** Inside `aside`: `header.c360-hs-drawer__header`, `div.c360-hs-drawer__body`, optional `footer.c360-hs-drawer__footer`. */
+  /** Inside `aside`: `header.c360-hs-drawer__header`, `div.c360-hs-drawer__body`. */
   children: ReactNode;
 }
 

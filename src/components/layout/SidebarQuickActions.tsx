@@ -31,20 +31,22 @@ export function SidebarQuickActions({
         "c360-sidebar__quick-actions",
         railCollapsed && "c360-sidebar__quick-actions--rail",
       )}
+      data-rail-collapsed={railCollapsed ? "true" : "false"}
       role="toolbar"
       aria-label="Quick actions"
+      {...(railCollapsed ? { "aria-orientation": "vertical" as const } : {})}
     >
       <button
         type="button"
         className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn"
-        title="Job tickets"
-        aria-label="Open job tickets"
+        title="Review tickets"
+        aria-label="Open review tickets"
         onClick={() => {
           openReviewDrawer();
           wrap();
         }}
       >
-        <MessageSquare size={18} aria-hidden />
+        <MessageSquare size={railCollapsed ? 16 : 18} aria-hidden />
       </button>
       <button
         type="button"
@@ -61,7 +63,7 @@ export function SidebarQuickActions({
         }}
       >
         <span className="c360-topbar-notif-wrap">
-          <Bell size={18} aria-hidden />
+          <Bell size={railCollapsed ? 16 : 18} aria-hidden />
           {unreadCount > 0 ? (
             <Badge color="red" className="c360-topbar-notif-badge" aria-hidden>
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -79,7 +81,7 @@ export function SidebarQuickActions({
           wrap();
         }}
       >
-        <Briefcase size={18} aria-hidden />
+        <Briefcase size={railCollapsed ? 16 : 18} aria-hidden />
       </button>
       <button
         type="button"
@@ -91,7 +93,7 @@ export function SidebarQuickActions({
           wrap();
         }}
       >
-        <FolderOpen size={18} aria-hidden />
+        <FolderOpen size={railCollapsed ? 16 : 18} aria-hidden />
       </button>
     </div>
   );

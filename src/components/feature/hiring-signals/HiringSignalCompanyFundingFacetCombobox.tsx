@@ -46,6 +46,7 @@ export function HiringSignalCompanyFundingFacetCombobox({
         appliedListFilters,
         draft,
         signalTimePreset,
+        { excludeSelfFirmographicDimension: "funding" },
       );
       const rows = await fetchHireSignalCompanyFundingFilterOptions(base, {
         q: searchText,

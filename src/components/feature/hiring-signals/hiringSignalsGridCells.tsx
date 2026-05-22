@@ -17,6 +17,7 @@ import {
   employmentTypeBadgeColor,
   hiringSignalInitials,
   formatHireSignalPostedDate,
+  isHireSignalPostedDateOnly,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
@@ -168,12 +169,23 @@ export function HiringSignalsJobTypeBadgesCell({
 }
 
 export function HiringSignalsJobPostedCell({ row }: { row: LinkedInJobRow }) {
+  const raw = row.postedAt?.trim() ?? "";
+  const dateOnly = isHireSignalPostedDateOnly(raw);
+  const label = formatHireSignalPostedDate(raw, {
+    withTime: true,
+    emptyAsDash: true,
+  });
+  const title = raw
+    ? dateOnly
+      ? `Posted date: ${raw} (no time stored in index)`
+      : raw
+    : undefined;
   return (
-    <span className="c360-hs-grid-meta-text">
-      {formatHireSignalPostedDate(row.postedAt, {
-        withTime: false,
-        emptyAsDash: true,
-      })}
+    <span
+      className="c360-hs-grid-meta-text c360-whitespace-nowrap"
+      title={title}
+    >
+      {label}
     </span>
   );
 }
@@ -355,7 +367,7 @@ export function HiringSignalsContactInitialsCell({ name }: { name: string }) {
   );
 }
 
-/** Connectra drawer contacts: reveal email or run finder after click. */
+/** Connectra drawer contacts: always run email finder on click (stored row email is not shown). */
 export function HiringSignalDrawerContactEmailCell({
   isRevealed,
   resolvedEmail,

@@ -601,12 +601,6 @@ export function JobConnectraModal({
           </div>
         ) : null}
       </div>
-
-      <footer className="c360-hs-drawer__footer">
-        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </footer>
     </HiringSignalAsideDrawer>
   );
 }

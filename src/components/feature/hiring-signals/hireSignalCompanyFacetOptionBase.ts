@@ -4,13 +4,22 @@ import {
   type HiringSignalFilterDraft,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { effectivePostedAfter } from "@/hooks/useHiringSignals";
-import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+import {
+  hireSignalFirmographicListFiltersFromDraft,
+  omitFirmographicDimensionFromJobListFilters,
+  type HireSignalFirmographicFacetDimension,
+  type JobListFilters,
+} from "@/services/graphql/hiringSignalService";
 
 /** Scope for company cohort facet option queries (exclude resolved UUID lists). */
 export function buildHireSignalCompanyFacetOptionBase(
   applied: JobListFilters,
   draft: HiringSignalFilterDraft,
   preset: "all" | "new_7d",
+  options?: {
+    /** Omit this dimension from base so bucket counts are not all zero except the selection. */
+    excludeSelfFirmographicDimension?: HireSignalFirmographicFacetDimension;
+  },
 ): JobListFilters {
   const seniority =
     draft.seniorityCustom.trim() || draft.seniorityPreset.trim() || undefined;
@@ -51,8 +60,16 @@ export function buildHireSignalCompanyFacetOptionBase(
       ? clearanceRaw
       : undefined;
 
-  return {
-    ...applied,
+  let scopedApplied = applied;
+  if (options?.excludeSelfFirmographicDimension) {
+    scopedApplied = omitFirmographicDimensionFromJobListFilters(
+      applied,
+      options.excludeSelfFirmographicDimension,
+    );
+  }
+
+  let result: JobListFilters = {
+    ...scopedApplied,
     companyUuids: undefined,
     excludedCompanyUuids: undefined,
     limit: applied.limit,
@@ -88,5 +105,13 @@ export function buildHireSignalCompanyFacetOptionBase(
     ),
     postedBefore:
       draft.postedBefore.trim() || applied.postedBefore || undefined,
+    ...hireSignalFirmographicListFiltersFromDraft(draft),
   };
+  if (options?.excludeSelfFirmographicDimension) {
+    result = omitFirmographicDimensionFromJobListFilters(
+      result,
+      options.excludeSelfFirmographicDimension,
+    );
+  }
+  return result;
 }

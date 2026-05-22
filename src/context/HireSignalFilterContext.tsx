@@ -14,6 +14,7 @@ import {
 import {
   DEFAULT_JOB_SORT_KEY,
   DEFAULT_JOB_SORT_ORDER,
+  applyFirmographicFiltersFromDraft,
   type JobListFilters,
 } from "@/services/graphql/hiringSignalService";
 import {
@@ -181,7 +182,9 @@ export function HireSignalFilterProvider({
         ? clearanceRaw
         : undefined;
 
-    setFilters((f) => ({
+    setFilters((f) =>
+      applyFirmographicFiltersFromDraft(
+        {
       ...f,
       titles: titles.length ? titles : undefined,
       companies: companies.length ? companies : undefined,
@@ -224,8 +227,13 @@ export function HireSignalFilterProvider({
         draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
       postedAfter: draft.postedAfter.trim() || undefined,
       postedBefore: draft.postedBefore.trim() || undefined,
+      companyUuids: undefined,
+      excludedCompanyUuids: undefined,
       offset: 0,
-    }));
+        },
+        draft,
+      ),
+    );
   }, [draft, setFilters]);
 
   const applyFiltersRef = useRef(applyFilters);
@@ -302,6 +310,16 @@ export function HireSignalFilterProvider({
       applyMethod: undefined,
       companyUuids: undefined,
       excludedCompanyUuids: undefined,
+      companyEmployeeSizes: undefined,
+      excludedCompanyEmployeeSizes: undefined,
+      companyFunding: undefined,
+      excludedCompanyFunding: undefined,
+      companyRevenue: undefined,
+      excludedCompanyRevenue: undefined,
+      companyCountries: undefined,
+      excludedCompanyCountries: undefined,
+      companyIndustries: undefined,
+      excludedCompanyIndustries: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
