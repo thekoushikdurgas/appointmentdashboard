@@ -28,8 +28,23 @@ import {
   type LinkedInJobRow,
 } from "@/lib/jobs/hiringSignalJobRows";
 import { resolveCompanyCohortUuids } from "@/lib/resolveCompanyCohortUuids";
+import { isCompanyCohortActiveExcludingNames } from "@/lib/hireSignalCompanyCohort";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-import { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import {
+  EMPTY_HIRING_SIGNAL_DRAFT,
+  normalizeHiringSignalTokenList,
+} from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+
+function mergeJobListTokens(
+  existing: string[] | undefined,
+  extra: string[],
+): string[] | undefined {
+  const merged = normalizeHiringSignalTokenList([
+    ...(existing ?? []),
+    ...extra,
+  ]);
+  return merged.length ? merged : undefined;
+}
 
 /** Upper bound when merging all pages of a filter match in the browser (memory). */
 const HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP = 100_000;
@@ -254,13 +269,29 @@ export function useHiringSignals(
         if (gen !== hireSignalLoadGenRef.current) {
           return;
         }
+
+        const includePostingNames = normalizeHiringSignalTokenList(
+          draftForCohort.companyNames,
+        );
+        const excludePostingNames = normalizeHiringSignalTokenList(
+          draftForCohort.excludedCompanyNames,
+        );
+
         if (cohort != null) {
           setCompanyCohortMatchTotal(cohort.total);
           setCompanyCohortTruncated(cohort.truncated);
           const hasExcludeOnly =
             cohort.uuids.length === 0 &&
             (cohort.excludedUuids?.length ?? 0) > 0;
-          if (cohort.uuids.length === 0 && !hasExcludeOnly) {
+          const hasFirmographicInclude = isCompanyCohortActiveExcludingNames(
+            draftForCohort,
+          );
+          if (
+            cohort.uuids.length === 0 &&
+            !hasExcludeOnly &&
+            hasFirmographicInclude &&
+            includePostingNames.length === 0
+          ) {
             setJobs([]);
             setTotal(0);
             setError(
@@ -284,6 +315,25 @@ export function useHiringSignals(
             ...fetchSnapshot,
             companyUuids: undefined,
             excludedCompanyUuids: undefined,
+          };
+        }
+
+        if (includePostingNames.length > 0) {
+          fetchSnapshot = {
+            ...fetchSnapshot,
+            companies: mergeJobListTokens(
+              fetchSnapshot.companies,
+              includePostingNames,
+            ),
+          };
+        }
+        if (excludePostingNames.length > 0) {
+          fetchSnapshot = {
+            ...fetchSnapshot,
+            excludedCompanies: mergeJobListTokens(
+              fetchSnapshot.excludedCompanies,
+              excludePostingNames,
+            ),
           };
         }
 

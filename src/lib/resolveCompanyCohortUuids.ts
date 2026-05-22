@@ -1,7 +1,7 @@
 import { buildCompanyListVql } from "@/lib/companyListVql";
 import {
-  companyCohortExcludeFiltersFromDraft,
-  companyCohortIncludeFiltersFromDraft,
+  companyCohortExcludeFiltersExcludingNamesFromDraft,
+  companyCohortIncludeFiltersExcludingNamesFromDraft,
   HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE,
   HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP,
   isCompanyCohortActive,
@@ -56,8 +56,11 @@ async function paginateCompanyUuidsFromFilter(
 }
 
 /**
- * Resolve Connectra company UUIDs for hiring-signals company cohort filters.
- * Returns `null` when no company cohort filters are active.
+ * Resolve Connectra company UUIDs for firmographic cohort filters only.
+ * Posting employer names (`companyNames` / `excludedCompanyNames`) are applied on the
+ * job index via `companies` / `excludedCompanies` in `useHiringSignals` — they rarely
+ * match Connectra `name` exactly (e.g. facet shows "Jobs via Dice (428)" but Connectra
+ * returns 0 UUIDs).
  */
 export async function resolveCompanyCohortUuids(
   draft: HiringSignalFilterDraft,
@@ -66,8 +69,8 @@ export async function resolveCompanyCohortUuids(
     return null;
   }
 
-  const includeFilter = companyCohortIncludeFiltersFromDraft(draft);
-  const excludeFilter = companyCohortExcludeFiltersFromDraft(draft);
+  const includeFilter = companyCohortIncludeFiltersExcludingNamesFromDraft(draft);
+  const excludeFilter = companyCohortExcludeFiltersExcludingNamesFromDraft(draft);
 
   let uuids: string[] = [];
   let total = 0;
