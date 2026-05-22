@@ -134,6 +134,8 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
   const top = pickStr(
     o.posted_at ??
       o.postedAt ??
+      o.time_posted ??
+      o.timePosted ??
       o.created_at ??
       o.createdAt ??
       o.listed_at ??
@@ -142,7 +144,12 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
       o.datePosted ??
       "",
   ).trim();
-  if (top) return top;
+  if (top) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(top)) {
+      return `${top}T00:00:00.000Z`;
+    }
+    return top;
+  }
   const raw = asRecord(o.raw_payload ?? o.rawPayload);
   if (raw) {
     const fromRaw = pickStr(
