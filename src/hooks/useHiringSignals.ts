@@ -26,6 +26,8 @@ import {
   sortJobRowsByPostedAt,
   type LinkedInJobRow,
 } from "@/lib/jobs/hiringSignalJobRows";
+import { isCompanyCohortActive } from "@/lib/companyCohortVql";
+import { resolveCompanyCohortUuids } from "@/lib/resolveCompanyCohortUuids";
 
 /** Upper bound when merging all pages of a filter match in the browser (memory). */
 const HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP = 100_000;
@@ -141,6 +143,11 @@ export type UseHiringSignalsResult = {
    * (hard cap), this is the cap row count; otherwise null.
    */
   analyticsMatchCappedAt: number | null;
+  /** True while Connectra company cohort → UUID resolution runs. */
+  companyCohortResolving: boolean;
+  /** Last resolved Connectra match count (when cohort active). */
+  companyCohortMatchTotal: number | null;
+  companyCohortTruncated: boolean;
 };
 
 /**
@@ -173,6 +180,11 @@ export function useHiringSignals(
   const [loading, setLoading] = useState(() => enabled);
   const [statsLoading, setStatsLoading] = useState(() => enabled);
   const [error, setError] = useState<string | null>(null);
+  const [companyCohortResolving, setCompanyCohortResolving] = useState(false);
+  const [companyCohortMatchTotal, setCompanyCohortMatchTotal] = useState<
+    number | null
+  >(null);
+  const [companyCohortTruncated, setCompanyCohortTruncated] = useState(false);
   const [stats, setStats] = useState<HiringSignalIndexStats>({
     totalJobs: 0,
     jobsWithCompany: 0,
@@ -206,7 +218,7 @@ export function useHiringSignals(
   const runLoad = useCallback(
     async (filtersToFetch: JobListFilters) => {
       const gen = ++hireSignalLoadGenRef.current;
-      const snapshot: JobListFilters = { ...filtersToFetch };
+      let snapshot: JobListFilters = { ...filtersToFetch };
       const snapSortKey = snapshot.sortKey ?? DEFAULT_JOB_SORT_KEY;
       const snapSortOrder: JobListSortOrder =
         snapshot.sortOrder === "asc" ? "asc" : DEFAULT_JOB_SORT_ORDER;
@@ -221,6 +233,53 @@ export function useHiringSignals(
       setLoading(true);
       setError(null);
       setAnalyticsMatchCappedAt(null);
+
+      const cohortActive = isCompanyCohortActive(
+        snapshot.companyNameSearch,
+        snapshot.companyFacetValues,
+      );
+      if (cohortActive) {
+        setCompanyCohortResolving(true);
+        try {
+          const resolved = await resolveCompanyCohortUuids(
+            snapshot.companyNameSearch ?? "",
+            snapshot.companyFacetValues ?? {},
+          );
+          if (gen !== hireSignalLoadGenRef.current) return;
+          setCompanyCohortMatchTotal(resolved.totalCompanies);
+          setCompanyCohortTruncated(resolved.truncated);
+          if (resolved.uuids.length === 0) {
+            setJobs([]);
+            setTotal(0);
+            setError(
+              "No companies match these company filters. Try broadening country, industry, or name.",
+            );
+            lastSuccessfulJobListSortRef.current = null;
+            return;
+          }
+          snapshot = { ...snapshot, companyUuids: resolved.uuids };
+        } catch (e) {
+          if (gen !== hireSignalLoadGenRef.current) return;
+          setJobs([]);
+          setTotal(0);
+          setError(
+            e instanceof Error
+              ? e.message
+              : "Failed to resolve company filters from Connectra.",
+          );
+          lastSuccessfulJobListSortRef.current = null;
+          return;
+        } finally {
+          if (gen === hireSignalLoadGenRef.current) {
+            setCompanyCohortResolving(false);
+          }
+        }
+      } else {
+        setCompanyCohortMatchTotal(null);
+        setCompanyCohortTruncated(false);
+        snapshot = { ...snapshot, companyUuids: undefined };
+      }
+
       try {
         const res = await fetchHiringSignalJobs(snapshot);
         if (gen !== hireSignalLoadGenRef.current) {
@@ -415,6 +474,9 @@ export function useHiringSignals(
     currentPage,
     stats,
     analyticsMatchCappedAt,
+    companyCohortResolving,
+    companyCohortMatchTotal,
+    companyCohortTruncated,
   };
 }
 

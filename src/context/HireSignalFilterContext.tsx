@@ -17,11 +17,13 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import {
   EMPTY_HIRING_SIGNAL_DRAFT,
+  listFiltersToHiringSignalDraft,
   normalizeHiringSignalTokenList,
   resolveSalaryBoundsFromDraft,
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { isCompanyCohortActive } from "@/lib/companyCohortVql";
 
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
@@ -57,6 +59,16 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
     ) {
       return;
     }
+    if (k === "companyFacetValues") {
+      if (
+        Object.values(d.companyFacetValues).some(
+          (arr) => Array.isArray(arr) && arr.some((v) => String(v).trim()),
+        )
+      ) {
+        n += 1;
+      }
+      return;
+    }
     const v = d[k];
     if (Array.isArray(v)) {
       if (normalizeHiringSignalTokenList(v).length > 0) n += 1;
@@ -90,6 +102,9 @@ export interface HireSignalFilterContextValue {
     ext: Record<string, unknown>,
   ) => void;
   activeDraftCount: number;
+  onCompanyFacetChange: (key: string, values: string[]) => void;
+  onCompanyNameSearchChange: (value: string) => void;
+  syncDraftFromListFilters: (f: JobListFilters) => void;
 }
 
 const HireSignalFilterContext =
@@ -143,6 +158,13 @@ export function HireSignalFilterProvider({
 
     const countries = normalizeHiringSignalTokenList(draft.countries);
 
+    const companyNameSearch = draft.companyNameSearch.trim();
+    const companyFacetValues = { ...draft.companyFacetValues };
+    const cohortActive = isCompanyCohortActive(
+      companyNameSearch,
+      companyFacetValues,
+    );
+
     const clearanceRaw = draft.clearanceMode.trim().toLowerCase();
     const clearanceMode: undefined | "" | "allow" | "hide" | "only" =
       clearanceRaw === "hide" || clearanceRaw === "only"
@@ -192,6 +214,9 @@ export function HireSignalFilterProvider({
         draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
       postedAfter: draft.postedAfter.trim() || undefined,
       postedBefore: draft.postedBefore.trim() || undefined,
+      companyNameSearch: cohortActive ? companyNameSearch : undefined,
+      companyFacetValues: cohortActive ? companyFacetValues : undefined,
+      companyUuids: undefined,
       offset: 0,
     }));
   }, [draft, setFilters]);
@@ -261,11 +286,29 @@ export function HireSignalFilterProvider({
       hideApplied: false,
       countries: undefined,
       applyMethod: undefined,
+      companyNameSearch: undefined,
+      companyFacetValues: undefined,
+      companyUuids: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
     }));
   }, [setFilters]);
+
+  const onCompanyFacetChange = useCallback((key: string, values: string[]) => {
+    setDraft((d) => ({
+      ...d,
+      companyFacetValues: { ...d.companyFacetValues, [key]: values },
+    }));
+  }, []);
+
+  const onCompanyNameSearchChange = useCallback((value: string) => {
+    setDraft((d) => ({ ...d, companyNameSearch: value }));
+  }, []);
+
+  const syncDraftFromListFilters = useCallback((f: JobListFilters) => {
+    setDraft(listFiltersToHiringSignalDraft(f));
+  }, []);
 
   const onDraftField = useCallback(
     (field: HiringSignalDraftField, value: string | string[] | boolean) => {
@@ -333,6 +376,9 @@ export function HireSignalFilterProvider({
       resetFilters,
       mergeResumeSuggestions,
       activeDraftCount,
+      onCompanyFacetChange,
+      onCompanyNameSearchChange,
+      syncDraftFromListFilters,
     }),
     [
       draft,
@@ -342,6 +388,9 @@ export function HireSignalFilterProvider({
       resetFilters,
       mergeResumeSuggestions,
       activeDraftCount,
+      onCompanyFacetChange,
+      onCompanyNameSearchChange,
+      syncDraftFromListFilters,
     ],
   );
 

@@ -19,6 +19,8 @@ import {
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
+import { HiringSignalsCompanyFilterSection } from "@/components/feature/hiring-signals/HiringSignalsCompanyFilterSection";
+import { COMPANY_COHORT_FACET_KEYS } from "@/lib/companyCohortVql";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
@@ -285,6 +287,7 @@ export type HsFilterChipItem = {
 };
 
 export type HsChipBucketKey =
+  | "companyCohort"
   | "title"
   | "company"
   | "location"
@@ -305,6 +308,7 @@ function emptyHiringSignalChipBuckets(): Record<
   HsFilterChipItem[]
 > {
   return {
+    companyCohort: [],
     title: [],
     company: [],
     location: [],
@@ -328,6 +332,8 @@ function buildHiringSignalChipBuckets(
     field: HiringSignalDraftField,
     value: string | string[] | boolean,
   ) => void,
+  onCompanyFacetChange: (key: string, values: string[]) => void,
+  onCompanyNameSearchChange: (value: string) => void,
 ): Record<HsChipBucketKey, HsFilterChipItem[]> {
   const b = emptyHiringSignalChipBuckets();
   const add = (section: HsChipBucketKey, item: HsFilterChipItem) => {
@@ -357,8 +363,40 @@ function buildHiringSignalChipBuckets(
     });
   };
 
+  if (draft.companyNameSearch.trim()) {
+    add("companyCohort", {
+      key: "co-name",
+      label: `Company name: ${draft.companyNameSearch.trim()}`,
+      onRemove: () => onCompanyNameSearchChange(""),
+    });
+  }
+  for (const [key, vals] of Object.entries(draft.companyFacetValues)) {
+    if (!COMPANY_COHORT_FACET_KEYS.has(key)) continue;
+    vals.forEach((raw, i) => {
+      const t = raw.trim();
+      if (!t) return;
+      add("companyCohort", {
+        key: `co-facet-${key}-${i}-${t}`,
+        label: `${key}: ${t}`,
+        onRemove: () => {
+          const cur = draft.companyFacetValues[key] ?? [];
+          onCompanyFacetChange(
+            key,
+            cur.filter((_, j) => j !== i),
+          );
+        },
+      });
+    });
+  }
+
   addTokenChips("title", "title", draft.titles, "Title", "titles");
-  addTokenChips("company", "co", draft.companies, "Company", "companies");
+  addTokenChips(
+    "company",
+    "co",
+    draft.companies,
+    "Employer",
+    "companies",
+  );
   addTokenChips("location", "loc", draft.locations, "Location", "locations");
   addTokenChips(
     "title",
@@ -602,6 +640,9 @@ export interface HiringSignalsFilterSidebarProps {
   /** Table row density — mirrors the toolbar view-mode select. */
   tableDensity?: "comfortable" | "compact";
   onTableDensityChange?: (density: "comfortable" | "compact") => void;
+  companyCohortResolving?: boolean;
+  companyCohortMatchTotal?: number | null;
+  companyCohortTruncated?: boolean;
 }
 
 export function HiringSignalsFilterSidebar({
@@ -614,8 +655,18 @@ export function HiringSignalsFilterSidebar({
   drawerTitleId = "c360-hs-filter-drawer-title",
   tableDensity = "comfortable",
   onTableDensityChange,
+  companyCohortResolving = false,
+  companyCohortMatchTotal = null,
+  companyCohortTruncated = false,
 }: HiringSignalsFilterSidebarProps) {
-  const { draft, onDraftField, resetFilters, setDraft } = useHireSignalFilter();
+  const {
+    draft,
+    onDraftField,
+    resetFilters,
+    setDraft,
+    onCompanyFacetChange,
+    onCompanyNameSearchChange,
+  } = useHireSignalFilter();
 
   const appendCountryCode = (code: string) => {
     const v = code.trim();
@@ -634,8 +685,14 @@ export function HiringSignalsFilterSidebar({
   };
 
   const chipBuckets = useMemo(
-    () => buildHiringSignalChipBuckets(draft, onDraftField),
-    [draft, onDraftField],
+    () =>
+      buildHiringSignalChipBuckets(
+        draft,
+        onDraftField,
+        onCompanyFacetChange,
+        onCompanyNameSearchChange,
+      ),
+    [draft, onDraftField, onCompanyFacetChange, onCompanyNameSearchChange],
   );
 
   const draftChipCount = useMemo(
@@ -859,7 +916,7 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Company"
+          title="Employer on posting"
           count={companyValues.length + exCoCount}
           defaultOpen
           onClear={() => {
@@ -871,7 +928,7 @@ export function HiringSignalsFilterSidebar({
             <HsFilterChipList items={chipBuckets.company} variant="section" />
             <HiringSignalTextFacetCombobox
               field="company"
-              label="Include company names"
+              label="Include employer names"
               draft={draft}
               appliedListFilters={appliedListFilters}
               signalTimePreset={signalTimePreset}
@@ -880,7 +937,7 @@ export function HiringSignalsFilterSidebar({
             />
             <HiringSignalTextFacetCombobox
               field="company"
-              label="Exclude company names"
+              label="Exclude employer names"
               draft={draft}
               appliedListFilters={appliedListFilters}
               signalTimePreset={signalTimePreset}

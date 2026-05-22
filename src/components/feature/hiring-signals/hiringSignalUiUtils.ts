@@ -306,6 +306,42 @@ export function sanitizeJobDescriptionHtml(html: string): string {
     .replace(/javascript:/gi, "");
 }
 
+/** Departments from Connectra contact row (keyword array). */
+export function pickContactDepartments(row: unknown): string[] {
+  const o = asRecord(row);
+  if (!o) return [];
+  const nested =
+    asRecord(o.pg_contact) ?? asRecord(o.pgContact) ?? asRecord(o.contact) ?? o;
+  const raw = nested.departments;
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const x of raw) {
+    const t = String(x ?? "").trim();
+    if (!t || seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
+
+/** Union of department labels from contact rows (for drawer filter options). */
+export function collectDepartmentOptionsFromContacts(
+  contacts: unknown[],
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const row of contacts) {
+    for (const d of pickContactDepartments(row)) {
+      if (seen.has(d)) continue;
+      seen.add(d);
+      out.push(d);
+    }
+  }
+  out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return out;
+}
+
 /** Normalize Connectra / job-server contact payloads for display. */
 export function pickContactDisplay(row: unknown): {
   name: string;

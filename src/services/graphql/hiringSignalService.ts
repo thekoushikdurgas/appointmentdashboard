@@ -80,6 +80,7 @@ const HIRE_SIGNAL_JOBS = gql`
     $postedBefore: String
     $runId: String
     $extendedJobFilters: JSON
+    $companyUuids: [String!]
     $hideApplied: Boolean
   ) {
     hireSignal {
@@ -96,6 +97,7 @@ const HIRE_SIGNAL_JOBS = gql`
         postedBefore: $postedBefore
         runId: $runId
         extendedJobFilters: $extendedJobFilters
+        companyUuids: $companyUuids
         hideApplied: $hideApplied
       )
     }
@@ -118,6 +120,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
     $postedBefore: String
     $runId: String
     $extendedJobFilters: JSON
+    $companyUuids: [String!]
     $hideApplied: Boolean
   ) {
     hireSignal {
@@ -136,6 +139,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
         postedBefore: $postedBefore
         runId: $runId
         extendedJobFilters: $extendedJobFilters
+        companyUuids: $companyUuids
         hideApplied: $hideApplied
       )
     }
@@ -301,6 +305,8 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
     $limit: Int
     $populateCompany: Boolean
     $includePoster: Boolean
+    $title: String
+    $departments: [String!]
   ) {
     hireSignal {
       jobConnectraContacts(
@@ -309,6 +315,8 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
         limit: $limit
         populateCompany: $populateCompany
         includePoster: $includePoster
+        title: $title
+        departments: $departments
       )
     }
   }
@@ -328,6 +336,8 @@ const HIRE_SIGNAL_CONNECTRA_CONTACTS_FOR_COMPANY = gql`
     $page: Int
     $limit: Int
     $populateCompany: Boolean
+    $title: String
+    $departments: [String!]
   ) {
     hireSignal {
       connectraContactsForCompany(
@@ -335,6 +345,8 @@ const HIRE_SIGNAL_CONNECTRA_CONTACTS_FOR_COMPANY = gql`
         page: $page
         limit: $limit
         populateCompany: $populateCompany
+        title: $title
+        departments: $departments
       )
     }
   }
@@ -470,6 +482,11 @@ export interface JobListFilters {
   countries?: string[];
   /** Substring match on apply_method (e.g. SimpleOnsiteApply). */
   applyMethod?: string;
+  /** Connectra company cohort — resolved to `companyUuids` before fetch. */
+  companyNameSearch?: string;
+  companyFacetValues?: Record<string, string[]>;
+  /** Set by `useHiringSignals` after Connectra `companyQuery` (job.server `company_uuid[]`). */
+  companyUuids?: string[];
   /** Column sort — extendedJobFilters.sortField / sortOrder → job.server query params. */
   sortKey?: JobListSortKey;
   sortOrder?: JobListSortOrder;
@@ -547,6 +564,10 @@ function hireSignalJobListFilterVars(filters: JobListFilters) {
     postedBefore: filters.postedBefore || null,
     runId: filters.runId?.trim() || null,
     extendedJobFilters: ext,
+    companyUuids:
+      filters.companyUuids?.length && filters.companyUuids.length > 0
+        ? filters.companyUuids
+        : null,
     hideApplied: filters.hideApplied ?? false,
   };
 }
@@ -753,8 +774,14 @@ export async function fetchJobConnectraContacts(
     limit?: number;
     populateCompany?: boolean;
     includePoster?: boolean;
+    title?: string;
+    departments?: string[];
   },
 ) {
+  const title = options?.title?.trim() || null;
+  const departments = options?.departments?.length
+    ? options.departments.map((d) => d.trim()).filter(Boolean)
+    : null;
   return graphqlQuery<{
     hireSignal: { jobConnectraContacts: HireSignalApiJson };
   }>(
@@ -765,6 +792,8 @@ export async function fetchJobConnectraContacts(
       limit: options?.limit ?? 25,
       populateCompany: options?.populateCompany ?? true,
       includePoster: options?.includePoster ?? true,
+      title,
+      departments,
     },
     HS_GQL,
   );
@@ -778,8 +807,18 @@ export async function fetchConnectraCompany(companyUuid: string) {
 
 export async function fetchConnectraContactsForCompany(
   companyUuid: string,
-  options?: { page?: number; limit?: number; populateCompany?: boolean },
+  options?: {
+    page?: number;
+    limit?: number;
+    populateCompany?: boolean;
+    title?: string;
+    departments?: string[];
+  },
 ) {
+  const title = options?.title?.trim() || null;
+  const departments = options?.departments?.length
+    ? options.departments.map((d) => d.trim()).filter(Boolean)
+    : null;
   return graphqlQuery<{
     hireSignal: { connectraContactsForCompany: HireSignalApiJson };
   }>(
@@ -789,6 +828,8 @@ export async function fetchConnectraContactsForCompany(
       page: options?.page ?? 1,
       limit: options?.limit ?? 25,
       populateCompany: options?.populateCompany ?? true,
+      title,
+      departments,
     },
     HS_GQL,
   );

@@ -1996,9 +1996,11 @@ export type HireSignalQueryConnectraCompanyArgs = {
 
 export type HireSignalQueryConnectraContactsForCompanyArgs = {
   companyUuid: Scalars["String"]["input"];
+  departments?: InputMaybe<Array<Scalars["String"]["input"]>>;
   limit?: Scalars["Int"]["input"];
   page?: Scalars["Int"]["input"];
   populateCompany?: Scalars["Boolean"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryExportDownloadUrlArgs = {
@@ -2024,11 +2026,13 @@ export type HireSignalQueryJobConnectraCompanyArgs = {
 };
 
 export type HireSignalQueryJobConnectraContactsArgs = {
+  departments?: InputMaybe<Array<Scalars["String"]["input"]>>;
   includePoster?: Scalars["Boolean"]["input"];
   limit?: Scalars["Int"]["input"];
   linkedinJobId: Scalars["String"]["input"];
   page?: Scalars["Int"]["input"];
   populateCompany?: Scalars["Boolean"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryJobFilterOptionsArgs = {

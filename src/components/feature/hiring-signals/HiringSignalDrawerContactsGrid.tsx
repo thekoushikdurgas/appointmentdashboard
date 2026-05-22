@@ -19,6 +19,7 @@ import {
 } from "@/components/feature/hiring-signals/hiringSignalsGridCells";
 import {
   connectraContactStableKey,
+  pickContactDepartments,
   pickContactDisplay,
   pickContactFinderNames,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
@@ -40,6 +41,7 @@ export type HiringSignalContactGridRow = {
   id: string;
   name: string;
   title: string;
+  departmentsLabel: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -86,10 +88,12 @@ export function HiringSignalDrawerContactsGrid({
       contacts.map((row, i) => {
         const p = pickContactDisplay(row);
         const n = pickContactFinderNames(row);
+        const deps = pickContactDepartments(row);
         return {
           id: connectraContactStableKey(row, i),
           name: p.name,
           title: p.title,
+          departmentsLabel: deps.length ? deps.join(", ") : "",
           email: p.email,
           firstName: n.firstName,
           lastName: n.lastName,
@@ -218,6 +222,26 @@ export function HiringSignalDrawerContactsGrid({
             title={params.row.title || undefined}
           >
             {params.row.title?.trim() ? params.row.title : "—"}
+          </span>
+        ),
+        cellClassName: "c360-hs-grid-cell--center",
+      },
+      {
+        field: "departmentsLabel",
+        headerName: "Department",
+        flex: 1,
+        minWidth: 88,
+        sortable: true,
+        renderCell: (
+          params: GridRenderCellParams<HiringSignalContactGridRow>,
+        ) => (
+          <span
+            className="c360-line-clamp-2 c360-text-2xs c360-text-ink-muted"
+            title={params.row.departmentsLabel || undefined}
+          >
+            {params.row.departmentsLabel?.trim()
+              ? params.row.departmentsLabel
+              : "—"}
           </span>
         ),
         cellClassName: "c360-hs-grid-cell--center",

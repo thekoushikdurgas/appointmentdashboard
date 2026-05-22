@@ -1,3 +1,5 @@
+import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+
 /** LinkedIn-style quick date window — maps to `postedAfter` (RFC3339). Preset `24h` uses a rolling 4×24h bound; `7d`/`30d` use UTC calendar days from midnight today. */
 export type DatePostedPreset = "any" | "24h" | "7d" | "30d" | "custom";
 
@@ -50,6 +52,11 @@ export type HiringSignalFilterDraft = {
   /** LinkedIn-style apply method token (substring match on apply_method). */
   applyMethod: string;
 
+  /** Connectra company name search (company cohort). */
+  companyNameSearch: string;
+  /** Connectra company-index facets (country, industries, revenue, etc.). */
+  companyFacetValues: Record<string, string[]>;
+
   /** Quick date filter row — drives `postedAfter` unless `custom`. */
   datePostedPreset: DatePostedPreset;
 };
@@ -83,6 +90,8 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   postedBefore: "",
   countries: [],
   applyMethod: "",
+  companyNameSearch: "",
+  companyFacetValues: {},
   datePostedPreset: "any",
 };
 
@@ -162,6 +171,57 @@ export function formatSalaryUsdLabel(n: number): string {
     return `$${n / 1000}k`;
   }
   return `$${n.toLocaleString("en-US")}`;
+}
+
+/** Restore sidebar draft from applied list filters (saved searches, deep links). */
+export function listFiltersToHiringSignalDraft(
+  f: JobListFilters,
+): HiringSignalFilterDraft {
+  const salaryMinStr =
+    f.salaryMin != null && f.salaryMin > 0 ? String(f.salaryMin) : "";
+  const salaryMaxStr =
+    f.salaryMax != null && f.salaryMax > 0 ? String(f.salaryMax) : "";
+  const salaryPreset =
+    salaryMinStr && !salaryMaxStr
+      ? salaryMinStr
+      : salaryMinStr || salaryMaxStr
+        ? "custom"
+        : "";
+
+  return {
+    ...EMPTY_HIRING_SIGNAL_DRAFT,
+    titles: [...(f.titles ?? [])],
+    companies: [...(f.companies ?? [])],
+    locations: [...(f.locations ?? [])],
+    employmentType: f.employmentTypes?.[0] ?? f.employmentType ?? "",
+    employmentTypes: [...(f.employmentTypes ?? [])],
+    workplaceTypes: [...(f.workplaceTypes ?? [])],
+    industries: [...(f.industries ?? [])],
+    excludedIndustries: [...(f.excludedIndustries ?? [])],
+    excludedTitles: [...(f.excludedTitles ?? [])],
+    excludedCompanies: [...(f.excludedCompanies ?? [])],
+    excludedLocations: [...(f.excludedLocations ?? [])],
+    salaryPreset,
+    salaryMin: salaryMinStr,
+    salaryMax: salaryMaxStr,
+    experienceBuckets: [...(f.experienceBuckets ?? [])],
+    roleTracks: [...(f.roleTracks ?? [])],
+    educationLevelMins: [...(f.educationLevelMins ?? [])],
+    skillsAll: [...(f.skillsAll ?? [])],
+    clearanceMode: f.clearanceMode ?? "",
+    h1bOnly: f.h1bOnly ?? false,
+    seniorityPreset: "",
+    seniorityCustom: f.seniority ?? "",
+    functionPreset: "",
+    functionCustom: f.functionCategory ?? "",
+    postedAfter: f.postedAfter ?? "",
+    postedBefore: f.postedBefore ?? "",
+    countries: [...(f.countries ?? [])],
+    applyMethod: f.applyMethod ?? "",
+    companyNameSearch: f.companyNameSearch ?? "",
+    companyFacetValues: { ...(f.companyFacetValues ?? {}) },
+    datePostedPreset: f.postedAfter?.trim() ? "custom" : "any",
+  };
 }
 
 export function normalizeHiringSignalTokenList(arr: string[]): string[] {

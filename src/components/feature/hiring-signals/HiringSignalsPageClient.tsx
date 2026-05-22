@@ -105,9 +105,12 @@ function HiringSignalsPageBody({
     setPageSize,
     refetch,
     currentPage,
+    companyCohortResolving,
+    companyCohortMatchTotal,
+    companyCohortTruncated,
   } = hiring;
 
-  const { activeDraftCount } = useHireSignalFilter();
+  const { activeDraftCount, syncDraftFromListFilters } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -190,13 +193,16 @@ function HiringSignalsPageBody({
       const lf = p.listFilters as JobListFilters & {
         listSort?: "recent" | "oldest";
       };
-      setFilters({
+      const merged = {
         ...lf,
         ...coerceJobListSortFields(lf),
         offset: 0,
-      });
+        companyUuids: undefined,
+      };
+      setFilters(merged);
+      syncDraftFromListFilters(merged);
     },
-    [setFilters, setSignalTimePreset],
+    [setFilters, setSignalTimePreset, syncDraftFromListFilters],
   );
 
   const hireSignalSavedSearchesMenu = useMemo(
@@ -556,6 +562,9 @@ function HiringSignalsPageBody({
                   onClearRunId={clearRunFilter}
                   tableDensity={tableDensity}
                   onTableDensityChange={setTableDensity}
+                  companyCohortResolving={companyCohortResolving}
+                  companyCohortMatchTotal={companyCohortMatchTotal}
+                  companyCohortTruncated={companyCohortTruncated}
                 />
               </>
             }
