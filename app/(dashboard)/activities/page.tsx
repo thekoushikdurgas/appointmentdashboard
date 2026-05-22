@@ -25,6 +25,7 @@ import { Alert } from "@/components/ui/Alert";
 import { type CalendarEvent } from "@/components/shared/CalendarView";
 import { jobsService } from "@/services/graphql/jobsService";
 import { jobBucketCounts } from "@/lib/jobs/jobBucketCounts";
+import { swallowBestEffortAsync } from "@/lib/bestEffort";
 import type { Activity as ActivityRow } from "@/services/graphql/activitiesService";
 import { useActivities } from "@/hooks/useActivities";
 import {
@@ -369,7 +370,7 @@ export default function ActivitiesPage() {
   useEffect(() => {
     if (activeTab !== "jobs") return;
     const poll = async () => {
-      try {
+      await swallowBestEffortAsync("activities.jobStatsPoll", async () => {
         const data = await jobsService.list({ limit: 100 });
         const { running, completed, failed } = jobBucketCounts(data.jobs);
         setJobStats((prev) => [
@@ -385,9 +386,7 @@ export default function ActivitiesPage() {
             failed,
           },
         ]);
-      } catch {
-        // ignore polling errors
-      }
+      });
     };
     poll();
     const timer = setInterval(poll, 10000);

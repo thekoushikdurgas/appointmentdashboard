@@ -17,6 +17,10 @@ import {
 } from "@/context/DataFiltersPeekContext";
 import { FilterPeekPinButton } from "@/components/layouts/FilterPeekPinButton";
 import { Filter } from "lucide-react";
+import {
+  tryLocalStorageGet,
+  tryLocalStorageSet,
+} from "@/lib/safeLocalStorage";
 
 export interface DataPageLayoutProps {
   filters?: ReactNode;
@@ -106,28 +110,20 @@ export default function DataPageLayout({
 
   useEffect(() => {
     if (!peekWithPin || !filtersPeekScope) return;
-    try {
-      const v = localStorage.getItem(
-        dataFiltersPeekPinnedStorageKey(filtersPeekScope),
-      );
-      setFiltersPeekPinned(v === "true");
-    } catch {
-      /* ignore */
-    }
+    const v = tryLocalStorageGet(
+      dataFiltersPeekPinnedStorageKey(filtersPeekScope),
+    );
+    setFiltersPeekPinned(v === "true");
   }, [peekWithPin, filtersPeekScope]);
 
   const toggleFiltersPeekPinned = useCallback(() => {
     setFiltersPeekPinned((prev) => {
       const next = !prev;
-      if (filtersPeekScope && typeof window !== "undefined") {
-        try {
-          localStorage.setItem(
-            dataFiltersPeekPinnedStorageKey(filtersPeekScope),
-            next ? "true" : "false",
-          );
-        } catch {
-          /* ignore */
-        }
+      if (filtersPeekScope) {
+        tryLocalStorageSet(
+          dataFiltersPeekPinnedStorageKey(filtersPeekScope),
+          next ? "true" : "false",
+        );
       }
       return next;
     });

@@ -55,7 +55,7 @@ export function buildCompanyListVql(
   }
 
   const {
-    searchAfter: _ignore,
+    searchAfter: _searchAfter,
     orderBy: extraOrderBy,
     ...rest
   } = extra as VqlQueryInput;

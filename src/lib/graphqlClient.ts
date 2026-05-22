@@ -13,6 +13,11 @@ import {
   isTokenExpired,
 } from "./tokenManager";
 import { GRAPHQL_URL } from "./config";
+import {
+  tryLocalStorageGet,
+  tryLocalStorageRemove,
+  tryLocalStorageSet,
+} from "./safeLocalStorage";
 import { toast } from "sonner";
 import { AUTH_REFRESH_MUTATION } from "@/graphql/authOperations";
 import type { GatewayAuthPayload } from "@/types/graphql-gateway";
@@ -321,13 +326,12 @@ interface CacheEntry<T> {
 }
 
 function cacheGet<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
+  const raw = tryLocalStorageGet(CACHE_PREFIX + key);
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(CACHE_PREFIX + key);
-    if (!raw) return null;
     const entry: CacheEntry<T> = JSON.parse(raw);
     if (Date.now() > entry.expiresAt) {
-      localStorage.removeItem(CACHE_PREFIX + key);
+      tryLocalStorageRemove(CACHE_PREFIX + key);
       return null;
     }
     return entry.data;
@@ -337,12 +341,11 @@ function cacheGet<T>(key: string): T | null {
 }
 
 function cacheSet<T>(key: string, data: T, ttlMs: number): void {
-  if (typeof window === "undefined") return;
   try {
     const entry: CacheEntry<T> = { data, expiresAt: Date.now() + ttlMs };
-    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
+    tryLocalStorageSet(CACHE_PREFIX + key, JSON.stringify(entry));
   } catch {
-    // quota exceeded or SSR — ignore
+    // Serialization failure
   }
 }
 

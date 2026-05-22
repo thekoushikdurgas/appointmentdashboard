@@ -110,7 +110,7 @@ function HiringSignalsPageBody({
     companyCohortTruncated,
   } = hiring;
 
-  const { activeDraftCount, syncDraftFromListFilters } = useHireSignalFilter();
+  const { activeDraftCount } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -193,16 +193,13 @@ function HiringSignalsPageBody({
       const lf = p.listFilters as JobListFilters & {
         listSort?: "recent" | "oldest";
       };
-      const merged = {
+      setFilters({
         ...lf,
         ...coerceJobListSortFields(lf),
         offset: 0,
-        companyUuids: undefined,
-      };
-      setFilters(merged);
-      syncDraftFromListFilters(merged);
+      });
     },
-    [setFilters, setSignalTimePreset, syncDraftFromListFilters],
+    [setFilters, setSignalTimePreset],
   );
 
   const hireSignalSavedSearchesMenu = useMemo(

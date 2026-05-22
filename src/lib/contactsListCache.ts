@@ -5,6 +5,13 @@
 
 import type { VqlQueryInput } from "@/graphql/generated/types";
 import type { Contact } from "@/services/graphql/contactsService";
+import {
+  listLocalStorageKeysWithPrefix,
+  tryLocalStorageGet,
+  tryLocalStorageRemove,
+  tryLocalStorageSet,
+  tryLocalStorageSetJSON,
+} from "@/lib/safeLocalStorage";
 
 export const CONTACTS_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -41,10 +48,9 @@ export function readContactsListCache(
   key: string,
   ttlMs: number = CONTACTS_LIST_CACHE_TTL_MS,
 ): ContactsListCachedPayload | null {
-  if (typeof window === "undefined") return null;
+  const raw = tryLocalStorageGet(key);
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as ContactsListCachedPayload;
     if (
       !parsed ||
@@ -52,20 +58,16 @@ export function readContactsListCache(
       !Array.isArray(parsed.items) ||
       typeof parsed.total !== "number"
     ) {
-      localStorage.removeItem(key);
+      tryLocalStorageRemove(key);
       return null;
     }
     if (Date.now() - parsed.savedAt > ttlMs) {
-      localStorage.removeItem(key);
+      tryLocalStorageRemove(key);
       return null;
     }
     return parsed;
   } catch {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
+    tryLocalStorageRemove(key);
     return null;
   }
 }
@@ -75,97 +77,58 @@ export function writeContactsListCache(
   items: Contact[],
   total: number,
 ): void {
-  if (typeof window === "undefined") return;
-  try {
-    const payload: ContactsListCachedPayload = {
-      items,
-      total,
-      savedAt: Date.now(),
-    };
-    localStorage.setItem(key, JSON.stringify(payload));
-  } catch {
-    /* quota / private mode */
-  }
+  const payload: ContactsListCachedPayload = {
+    items,
+    total,
+    savedAt: Date.now(),
+  };
+  tryLocalStorageSetJSON(key, payload);
 }
 
 /** Remove expired list entries under our prefix (keeps localStorage bounded). */
 export function pruneExpiredContactsListCaches(
   ttlMs: number = CONTACTS_LIST_CACHE_TTL_MS,
 ): void {
-  if (typeof window === "undefined") return;
   const now = Date.now();
-  const keys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k?.startsWith(STORAGE_PREFIX)) keys.push(k);
-  }
+  const keys = listLocalStorageKeysWithPrefix(STORAGE_PREFIX);
   for (const k of keys) {
     try {
-      const raw = localStorage.getItem(k);
+      const raw = tryLocalStorageGet(k);
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { savedAt?: number };
       if (typeof parsed.savedAt !== "number" || now - parsed.savedAt > ttlMs) {
-        localStorage.removeItem(k);
+        tryLocalStorageRemove(k);
       }
     } catch {
-      localStorage.removeItem(k);
+      tryLocalStorageRemove(k);
     }
   }
 }
 
 /** Invalidate all cached list pages (e.g. after import or forced refresh). */
 export function clearAllContactsListCaches(): void {
-  if (typeof window === "undefined") return;
-  const keys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k?.startsWith(STORAGE_PREFIX)) keys.push(k);
-  }
+  const keys = listLocalStorageKeysWithPrefix(STORAGE_PREFIX);
   for (const k of keys) {
-    try {
-      localStorage.removeItem(k);
-    } catch {
-      /* ignore */
-    }
+    tryLocalStorageRemove(k);
   }
 }
 
 export function readContactsSortPreference(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem(SORT_PREF_KEY);
-  } catch {
-    return null;
-  }
+  return tryLocalStorageGet(SORT_PREF_KEY);
 }
 
 export function writeContactsSortPreference(sortBy: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(SORT_PREF_KEY, sortBy);
-  } catch {
-    /* ignore */
-  }
+  tryLocalStorageSet(SORT_PREF_KEY, sortBy);
 }
 
 export function readContactsPageSizePreference(): number {
-  if (typeof window === "undefined") return DEFAULT_CONTACTS_PAGE_SIZE;
-  try {
-    const raw = localStorage.getItem(PAGE_SIZE_PREF_KEY);
-    if (!raw) return DEFAULT_CONTACTS_PAGE_SIZE;
-    const n = Number.parseInt(raw, 10);
-    if (!Number.isFinite(n)) return DEFAULT_CONTACTS_PAGE_SIZE;
-    return Math.min(MAX_CONTACTS_PAGE, Math.max(MIN_CONTACTS_PAGE, n));
-  } catch {
-    return DEFAULT_CONTACTS_PAGE_SIZE;
-  }
+  const raw = tryLocalStorageGet(PAGE_SIZE_PREF_KEY);
+  if (!raw) return DEFAULT_CONTACTS_PAGE_SIZE;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) return DEFAULT_CONTACTS_PAGE_SIZE;
+  return Math.min(MAX_CONTACTS_PAGE, Math.max(MIN_CONTACTS_PAGE, n));
 }
 
 export function writeContactsPageSizePreference(n: number): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(PAGE_SIZE_PREF_KEY, String(n));
-  } catch {
-    /* ignore */
-  }
+  tryLocalStorageSet(PAGE_SIZE_PREF_KEY, String(n));
 }

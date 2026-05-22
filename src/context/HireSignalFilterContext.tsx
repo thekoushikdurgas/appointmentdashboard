@@ -17,13 +17,16 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import {
   EMPTY_HIRING_SIGNAL_DRAFT,
-  listFiltersToHiringSignalDraft,
   normalizeHiringSignalTokenList,
   resolveSalaryBoundsFromDraft,
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-import { isCompanyCohortActive } from "@/lib/companyCohortVql";
+
+/** Latest sidebar draft for hooks outside this provider (e.g. cohort resolve in `useHiringSignals`). */
+export const hireSignalFilterDraftRef: { current: HiringSignalFilterDraft } = {
+  current: EMPTY_HIRING_SIGNAL_DRAFT,
+};
 
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
@@ -60,13 +63,10 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
       return;
     }
     if (k === "companyFacetValues") {
-      if (
-        Object.values(d.companyFacetValues).some(
-          (arr) => Array.isArray(arr) && arr.some((v) => String(v).trim()),
-        )
-      ) {
-        n += 1;
-      }
+      const hasFacet = Object.values(d.companyFacetValues).some((vals) =>
+        vals.some((v) => String(v).trim()),
+      );
+      if (hasFacet) n += 1;
       return;
     }
     const v = d[k];
@@ -101,10 +101,9 @@ export interface HireSignalFilterContextValue {
     locations: string[],
     ext: Record<string, unknown>,
   ) => void;
-  activeDraftCount: number;
-  onCompanyFacetChange: (key: string, values: string[]) => void;
   onCompanyNameSearchChange: (value: string) => void;
-  syncDraftFromListFilters: (f: JobListFilters) => void;
+  onCompanyFacetChange: (key: string, values: string[]) => void;
+  activeDraftCount: number;
 }
 
 const HireSignalFilterContext =
@@ -120,6 +119,21 @@ export function HireSignalFilterProvider({
   const [draft, setDraft] = useState<HiringSignalFilterDraft>(
     EMPTY_HIRING_SIGNAL_DRAFT,
   );
+
+  useEffect(() => {
+    hireSignalFilterDraftRef.current = draft;
+  }, [draft]);
+
+  const onCompanyNameSearchChange = useCallback((value: string) => {
+    setDraft((d) => ({ ...d, companyNameSearch: value }));
+  }, []);
+
+  const onCompanyFacetChange = useCallback((key: string, values: string[]) => {
+    setDraft((d) => ({
+      ...d,
+      companyFacetValues: { ...d.companyFacetValues, [key]: values },
+    }));
+  }, []);
 
   const applyFilters = useCallback(() => {
     const titles = normalizeHiringSignalTokenList(draft.titles);
@@ -157,13 +171,6 @@ export function HireSignalFilterProvider({
     const skillsAll = normalizeHiringSignalTokenList(draft.skillsAll);
 
     const countries = normalizeHiringSignalTokenList(draft.countries);
-
-    const companyNameSearch = draft.companyNameSearch.trim();
-    const companyFacetValues = { ...draft.companyFacetValues };
-    const cohortActive = isCompanyCohortActive(
-      companyNameSearch,
-      companyFacetValues,
-    );
 
     const clearanceRaw = draft.clearanceMode.trim().toLowerCase();
     const clearanceMode: undefined | "" | "allow" | "hide" | "only" =
@@ -214,9 +221,6 @@ export function HireSignalFilterProvider({
         draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
       postedAfter: draft.postedAfter.trim() || undefined,
       postedBefore: draft.postedBefore.trim() || undefined,
-      companyNameSearch: cohortActive ? companyNameSearch : undefined,
-      companyFacetValues: cohortActive ? companyFacetValues : undefined,
-      companyUuids: undefined,
       offset: 0,
     }));
   }, [draft, setFilters]);
@@ -257,6 +261,7 @@ export function HireSignalFilterProvider({
 
   const resetFilters = useCallback(() => {
     setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
+    hireSignalFilterDraftRef.current = EMPTY_HIRING_SIGNAL_DRAFT;
     setFilters((f) => ({
       ...f,
       titles: undefined,
@@ -286,29 +291,12 @@ export function HireSignalFilterProvider({
       hideApplied: false,
       countries: undefined,
       applyMethod: undefined,
-      companyNameSearch: undefined,
-      companyFacetValues: undefined,
-      companyUuids: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
+      companyUuids: undefined,
     }));
   }, [setFilters]);
-
-  const onCompanyFacetChange = useCallback((key: string, values: string[]) => {
-    setDraft((d) => ({
-      ...d,
-      companyFacetValues: { ...d.companyFacetValues, [key]: values },
-    }));
-  }, []);
-
-  const onCompanyNameSearchChange = useCallback((value: string) => {
-    setDraft((d) => ({ ...d, companyNameSearch: value }));
-  }, []);
-
-  const syncDraftFromListFilters = useCallback((f: JobListFilters) => {
-    setDraft(listFiltersToHiringSignalDraft(f));
-  }, []);
 
   const onDraftField = useCallback(
     (field: HiringSignalDraftField, value: string | string[] | boolean) => {
@@ -375,10 +363,9 @@ export function HireSignalFilterProvider({
       applyFilters,
       resetFilters,
       mergeResumeSuggestions,
-      activeDraftCount,
-      onCompanyFacetChange,
       onCompanyNameSearchChange,
-      syncDraftFromListFilters,
+      onCompanyFacetChange,
+      activeDraftCount,
     }),
     [
       draft,
@@ -387,10 +374,9 @@ export function HireSignalFilterProvider({
       applyFilters,
       resetFilters,
       mergeResumeSuggestions,
-      activeDraftCount,
-      onCompanyFacetChange,
       onCompanyNameSearchChange,
-      syncDraftFromListFilters,
+      onCompanyFacetChange,
+      activeDraftCount,
     ],
   );
 

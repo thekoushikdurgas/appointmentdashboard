@@ -59,6 +59,10 @@ import type {
 import { toast } from "sonner";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { Skeleton } from "@/components/shared/Skeleton";
+import {
+  tryLocalStorageGet,
+  tryLocalStorageSetJSON,
+} from "@/lib/safeLocalStorage";
 
 type ViewMode = "list" | "card";
 
@@ -72,10 +76,9 @@ const SORT_LABELS: Record<string, string> = {
 const VISIBLE_COLUMNS_STORAGE_KEY = "c360:companies:visibleColumns:v1";
 
 function loadVisibleColumns(): CompaniesDataTableColumnId[] {
-  if (typeof window === "undefined") return [...COMPANIES_DT_DEFAULT_COLUMNS];
+  const raw = tryLocalStorageGet(VISIBLE_COLUMNS_STORAGE_KEY);
+  if (!raw) return [...COMPANIES_DT_DEFAULT_COLUMNS];
   try {
-    const raw = localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
-    if (!raw) return [...COMPANIES_DT_DEFAULT_COLUMNS];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...COMPANIES_DT_DEFAULT_COLUMNS];
     const ordered = COMPANIES_DT_COLUMN_IDS.filter((id) => parsed.includes(id));
@@ -295,14 +298,7 @@ export default function CompaniesPage() {
       const ordered = COMPANIES_DT_COLUMN_IDS.filter((col) =>
         next.includes(col),
       );
-      try {
-        localStorage.setItem(
-          VISIBLE_COLUMNS_STORAGE_KEY,
-          JSON.stringify(ordered),
-        );
-      } catch {
-        /* ignore */
-      }
+      tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, ordered);
       return ordered;
     });
   }, []);
@@ -310,21 +306,13 @@ export default function CompaniesPage() {
   const resetVisibleColumns = useCallback(() => {
     const next = [...COMPANIES_DT_DEFAULT_COLUMNS];
     setVisibleColumns(next);
-    try {
-      localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
+    tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, next);
   }, []);
 
   const handleVisibleColumnsResolved = useCallback(
     (next: CompaniesDataTableColumnId[]) => {
       setVisibleColumns(next);
-      try {
-        localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
+      tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, next);
     },
     [],
   );

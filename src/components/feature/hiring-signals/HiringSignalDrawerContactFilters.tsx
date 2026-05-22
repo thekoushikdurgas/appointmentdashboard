@@ -49,8 +49,8 @@ export function HiringSignalDrawerContactFilters({
   }, [onClear]);
 
   return (
-    <div className="c360-mb-3 c360-space-y-2">
-      <div className="c360-grid c360-gap-2 sm:c360-grid-cols-2">
+    <div className="c360-hs-drawer-contact-filters c360-space-y-2">
+      <div className="c360-hs-drawer-contact-filters__grid c360-grid c360-gap-2 sm:c360-grid-cols-2">
         <div>
           <label
             htmlFor="hs-drawer-contact-title"
@@ -91,7 +91,7 @@ export function HiringSignalDrawerContactFilters({
         </p>
       ) : null}
       {hasActiveFilters ? (
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+        <div className="c360-flex c360-hs-drawer-contact-filters__chips c360-items-center">
           {titleFilter.trim() ? (
             <span className="c360-inline-flex c360-items-center c360-gap-1 c360-rounded-full c360-border c360-border-ink-8 c360-bg-ink-1 c360-px-2 c360-py-0.5 c360-text-2xs">
               Title: {titleFilter.trim()}

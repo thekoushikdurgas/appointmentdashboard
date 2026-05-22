@@ -35,6 +35,11 @@ import {
   readContactsSortPreference,
   writeContactsSortPreference,
 } from "@/lib/contactsListCache";
+import { swallowBestEffortAsync } from "@/lib/bestEffort";
+import {
+  tryLocalStorageGet,
+  tryLocalStorageSetJSON,
+} from "@/lib/safeLocalStorage";
 import {
   countDraftConditions,
   draftToVqlQueryInput,
@@ -145,10 +150,9 @@ function sidebarCompanyFacetCond(
 const VISIBLE_COLUMNS_STORAGE_KEY = "c360:contacts:visibleColumns:v1";
 
 function loadVisibleColumns(): ContactsDataTableColumnId[] {
-  if (typeof window === "undefined") return [...CONTACTS_DT_DEFAULT_COLUMNS];
+  const raw = tryLocalStorageGet(VISIBLE_COLUMNS_STORAGE_KEY);
+  if (!raw) return [...CONTACTS_DT_DEFAULT_COLUMNS];
   try {
-    const raw = localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
-    if (!raw) return [...CONTACTS_DT_DEFAULT_COLUMNS];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...CONTACTS_DT_DEFAULT_COLUMNS];
     const ordered = CONTACTS_DT_COLUMN_IDS.filter((id) => parsed.includes(id));
@@ -297,14 +301,7 @@ export default function ContactsPageClient() {
       const ordered = CONTACTS_DT_COLUMN_IDS.filter((col) =>
         next.includes(col),
       );
-      try {
-        localStorage.setItem(
-          VISIBLE_COLUMNS_STORAGE_KEY,
-          JSON.stringify(ordered),
-        );
-      } catch {
-        /* ignore */
-      }
+      tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, ordered);
       return ordered;
     });
   }, []);
@@ -324,21 +321,13 @@ export default function ContactsPageClient() {
   const resetVisibleColumns = useCallback(() => {
     const next = [...CONTACTS_DT_DEFAULT_COLUMNS];
     setVisibleColumns(next);
-    try {
-      localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
+    tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, next);
   }, []);
 
   const handleVisibleColumnsResolved = useCallback(
     (next: ContactsDataTableColumnId[]) => {
       setVisibleColumns(next);
-      try {
-        localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
+      tryLocalStorageSetJSON(VISIBLE_COLUMNS_STORAGE_KEY, next);
     },
     [],
   );
@@ -560,7 +549,7 @@ export default function ContactsPageClient() {
         const lastName =
           c.lastName ?? c.name.split(" ").slice(1).join(" ") ?? "";
         if (!firstName.trim()) continue;
-        try {
+        await swallowBestEffortAsync("contacts.bulkFindEmail", async () => {
           const result = await emailService.findEmails({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -568,9 +557,7 @@ export default function ContactsPageClient() {
           });
           const emails = result.email?.findEmails?.emails ?? [];
           if (emails.length > 0) foundCount += 1;
-        } catch {
-          /* skip row */
-        }
+        });
       }
       toast.success(
         foundCount > 0

@@ -5,6 +5,7 @@ import { onCLS, onFCP, onINP, onLCP, onTTFB } from "web-vitals";
 import type { Metric } from "web-vitals";
 import { useAuth } from "@/context/AuthContext";
 import { analyticsService } from "@/services/graphql/analyticsService";
+import { swallowBestEffort } from "@/lib/bestEffort";
 
 /** Map browser-reported units to API storage (LCP stored as seconds). */
 function metricValueForApi(name: string, value: number): number {
@@ -25,8 +26,8 @@ export function WebVitalsReporter() {
     const send = (metric: Metric) => {
       const path =
         typeof window !== "undefined" ? window.location.pathname : "";
-      void analyticsService
-        .submitPerformanceMetric(
+      swallowBestEffort("webVitals.submit", () => {
+        void analyticsService.submitPerformanceMetric(
           {
             name: metric.name,
             value: metricValueForApi(metric.name, metric.value),
@@ -38,8 +39,8 @@ export function WebVitalsReporter() {
             },
           },
           { showToastOnError: false },
-        )
-        .catch(() => {});
+        );
+      });
     };
 
     onCLS(send);

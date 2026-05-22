@@ -1,47 +1,41 @@
-import { companiesService } from "@/services/graphql/companiesService";
+import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import {
-  buildCompanyCohortListQuery,
-  MAX_COMPANY_COHORT_UUIDS,
-  COMPANY_COHORT_PAGE_SIZE,
-} from "@/lib/companyCohortVql";
+  buildCompanyCohortRequest,
+  isCompanyCohortActive,
+} from "@/lib/hireSignalCompanyCohortVql";
+import {
+  asRecord,
+  fetchHireSignalCompanyCohortUuids,
+} from "@/services/graphql/hiringSignalService";
 
-export type ResolveCompanyCohortResult = {
+export type CompanyCohortResolveResult = {
   uuids: string[];
-  totalCompanies: number;
+  total: number;
   truncated: boolean;
 };
 
-/**
- * Resolve Connectra company UUIDs for hiring-signals company cohort filters.
- */
+export { isCompanyCohortActive };
+
 export async function resolveCompanyCohortUuids(
-  nameSearch: string,
-  facetValues: Record<string, string[]>,
-): Promise<ResolveCompanyCohortResult> {
-  const uuids: string[] = [];
-  const seen = new Set<string>();
-  let totalCompanies = 0;
-  let page = 1;
-
-  while (uuids.length < MAX_COMPANY_COHORT_UUIDS) {
-    const query = buildCompanyCohortListQuery(nameSearch, facetValues, page);
-    const res = await companiesService.companyQuery(query);
-    totalCompanies = res.total;
-    for (const item of res.items) {
-      const id = item.id?.trim();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      uuids.push(id);
-      if (uuids.length >= MAX_COMPANY_COHORT_UUIDS) break;
-    }
-    if (res.items.length < COMPANY_COHORT_PAGE_SIZE) break;
-    if (page * COMPANY_COHORT_PAGE_SIZE >= res.total) break;
-    page += 1;
+  draft: HiringSignalFilterDraft,
+): Promise<CompanyCohortResolveResult | null> {
+  if (!isCompanyCohortActive(draft)) {
+    return null;
   }
-
-  return {
-    uuids,
-    totalCompanies,
-    truncated: totalCompanies > uuids.length,
-  };
+  const req = buildCompanyCohortRequest(draft);
+  const raw = await fetchHireSignalCompanyCohortUuids(req);
+  const env = asRecord(raw.hireSignal?.companyCohortUuids);
+  const data = asRecord(env?.data) ?? env;
+  const uuidsRaw = data?.uuids;
+  const uuids = Array.isArray(uuidsRaw)
+    ? uuidsRaw
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+    : [];
+  const total =
+    typeof data?.total === "number" && Number.isFinite(data.total)
+      ? Math.max(0, Math.floor(data.total))
+      : uuids.length;
+  const truncated = Boolean(data?.truncated);
+  return { uuids, total, truncated };
 }

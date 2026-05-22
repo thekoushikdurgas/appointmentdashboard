@@ -231,7 +231,11 @@ export function JobConnectraModal({
   }, [isOpen, job.linkedinJobId, parseContactsPayload]);
 
   useEffect(() => {
-    if (!isOpen || !job.linkedinJobId.trim() || !initialContactsLoadedRef.current)
+    if (
+      !isOpen ||
+      !job.linkedinJobId.trim() ||
+      !initialContactsLoadedRef.current
+    )
       return;
     let cancelled = false;
     (async () => {
@@ -247,7 +251,9 @@ export function JobConnectraModal({
               : undefined,
         });
         if (cancelled) return;
-        const parsed = parseContactsPayload(ct.hireSignal?.jobConnectraContacts);
+        const parsed = parseContactsPayload(
+          ct.hireSignal?.jobConnectraContacts,
+        );
         if (!parsed.ok) {
           toast.error("Contacts filter", { description: parsed.message });
           return;
@@ -604,12 +610,6 @@ export function JobConnectraModal({
           </div>
         ) : null}
       </div>
-
-      <footer className="c360-hs-drawer__footer">
-        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </footer>
     </HiringSignalAsideDrawer>
   );
 }

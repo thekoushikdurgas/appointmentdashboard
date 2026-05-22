@@ -1959,6 +1959,7 @@ export type HireSignalMutationTriggerScrapeAndTrackArgs = {
 };
 
 export type HireSignalQuery = {
+  companyCohortUuids: Scalars["JSON"]["output"];
   companies: Scalars["JSON"]["output"];
   companyJobs: Scalars["JSON"]["output"];
   connectraCompany: Scalars["JSON"]["output"];
@@ -1979,6 +1980,11 @@ export type HireSignalQuery = {
   runs: Scalars["JSON"]["output"];
   scrapeJobJobs: Scalars["JSON"]["output"];
   stats: Scalars["JSON"]["output"];
+};
+
+export type HireSignalQueryCompanyCohortUuidsArgs = {
+  companyFacetFilters?: InputMaybe<Scalars["JSON"]["input"]>;
+  companyNameSearch?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryCompaniesArgs = {
@@ -2038,6 +2044,7 @@ export type HireSignalQueryJobConnectraContactsArgs = {
 export type HireSignalQueryJobFilterOptionsArgs = {
   companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
   company?: InputMaybe<Scalars["String"]["input"]>;
+  companyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
   extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   field: Scalars["String"]["input"];
@@ -2059,6 +2066,7 @@ export type HireSignalQueryJobFilterOptionsArgs = {
 export type HireSignalQueryJobsArgs = {
   companies?: InputMaybe<Array<Scalars["String"]["input"]>>;
   company?: InputMaybe<Scalars["String"]["input"]>;
+  companyUuids?: InputMaybe<Array<Scalars["String"]["input"]>>;
   employmentType?: InputMaybe<Scalars["String"]["input"]>;
   extendedJobFilters?: InputMaybe<Scalars["JSON"]["input"]>;
   functionCategory?: InputMaybe<Scalars["String"]["input"]>;
