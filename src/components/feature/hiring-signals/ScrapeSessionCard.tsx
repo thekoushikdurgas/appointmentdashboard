@@ -71,8 +71,7 @@ export function ScrapeSessionCard({
     itemCount != null && Number.isFinite(itemCount)
       ? Math.max(0, Math.floor(itemCount))
       : 0;
-  const target =
-    req.maxJobs != null && req.maxJobs > 0 ? req.maxJobs : null;
+  const target = req.maxJobs != null && req.maxJobs > 0 ? req.maxJobs : null;
   const progressColor =
     st === "failed"
       ? "danger"

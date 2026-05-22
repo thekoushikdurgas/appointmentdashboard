@@ -1,31 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
-import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { HiringSignalCompanyNameFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyNameFacetCombobox";
 import { HiringSignalCompanyCountryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyCountryFacetCombobox";
 import { HiringSignalCompanyFundingFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyFundingFacetCombobox";
 import { HiringSignalCompanyEmployeeSizeFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyEmployeeSizeFacetCombobox";
 import { HiringSignalCompanyIndustryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyIndustryFacetCombobox";
+import { HiringSignalCompanyRevenueFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyRevenueFacetCombobox";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import { useCompanyFilters } from "@/hooks/useCompanyFilters";
-import { useCompanyFilterOptions } from "@/hooks/useCompanyFilterOptions";
-import {
-  HIRE_SIGNAL_COMPANY_COHORT_SECTIONS,
-  isCompanyCohortActive,
-} from "@/lib/hireSignalCompanyCohort";
+import { isCompanyCohortActive } from "@/lib/hireSignalCompanyCohort";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
-
-function companyFilterHasMore(st: {
-  loading: boolean;
-  loadingMore: boolean;
-  canLoadMore: boolean;
-}): boolean {
-  if (st.loading || st.loadingMore) return false;
-  return st.canLoadMore;
-}
 
 export interface HiringSignalsCompanyFiltersProps {
   appliedListFilters: JobListFilters;
@@ -42,32 +27,8 @@ export function HiringSignalsCompanyFilters({
   companyCohortMatchTotal = null,
   companyCohortTruncated = false,
 }: HiringSignalsCompanyFiltersProps) {
-  const { draft, onDraftField, onCompanyFacetChange } = useHireSignalFilter();
-  const {
-    filtersLoading,
-    loadFilterData,
-    loadMoreFilterData,
-    setFilterSearch,
-  } = useCompanyFilters();
-  const { getState } = useCompanyFilterOptions();
-
+  const { draft, onDraftField } = useHireSignalFilter();
   const cohortActive = isCompanyCohortActive(draft);
-
-  const facetSections = useMemo(
-    () =>
-      HIRE_SIGNAL_COMPANY_COHORT_SECTIONS.map((def) => {
-        const st = getState(def.filterKey);
-        return {
-          ...def,
-          options: st.items,
-          loading: st.loading,
-          loadingMore: st.loadingMore,
-          hasMore: companyFilterHasMore(st),
-          searchText: st.searchText,
-        };
-      }),
-    [getState],
-  );
 
   return (
     <>
@@ -122,11 +83,6 @@ export function HiringSignalsCompanyFilters({
             onSelectionChange={(v) => onDraftField("excludedCompanyNames", v)}
           />
         </div>
-        <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-          Options show how many jobs list each employer name in the index.
-          Includes resolve to Connectra companies; excludes drop matching
-          company UUIDs from results.
-        </p>
       </ContactsCollapsibleFilterSection>
 
       <ContactsCollapsibleFilterSection
@@ -168,10 +124,6 @@ export function HiringSignalsCompanyFilters({
             }
           />
         </div>
-        <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-          Countries from Connectra companies with job counts per country
-          (job.server company_country).
-        </p>
       </ContactsCollapsibleFilterSection>
 
       <ContactsCollapsibleFilterSection
@@ -213,10 +165,6 @@ export function HiringSignalsCompanyFilters({
             }
           />
         </div>
-        <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-          Industries from Connectra companies with job counts per industry
-          (job.server company_industry).
-        </p>
       </ContactsCollapsibleFilterSection>
 
       <ContactsCollapsibleFilterSection
@@ -259,10 +207,43 @@ export function HiringSignalsCompanyFilters({
             }
           />
         </div>
-        <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-          Fixed ranges on Connectra company headcount with job counts per bucket
-          (job.server company_employee_size).
-        </p>
+      </ContactsCollapsibleFilterSection>
+
+      <ContactsCollapsibleFilterSection
+        title="Revenue"
+        count={
+          normalizeHiringSignalTokenList(draft.companyRevenue).length +
+          normalizeHiringSignalTokenList(draft.excludedCompanyRevenue).length
+        }
+        defaultOpen
+        onClear={
+          draft.companyRevenue.length > 0 ||
+          draft.excludedCompanyRevenue.length > 0
+            ? () => {
+                onDraftField("companyRevenue", []);
+                onDraftField("excludedCompanyRevenue", []);
+              }
+            : undefined
+        }
+      >
+        <div className="c360-space-y-3">
+          <HiringSignalCompanyRevenueFacetCombobox
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Include revenue"
+            selectedValues={normalizeHiringSignalTokenList(draft.companyRevenue)}
+            onSelectionChange={(v) => onDraftField("companyRevenue", v)}
+          />
+          <HiringSignalCompanyRevenueFacetCombobox
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Exclude revenue"
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.excludedCompanyRevenue,
+            )}
+            onSelectionChange={(v) => onDraftField("excludedCompanyRevenue", v)}
+          />
+        </div>
       </ContactsCollapsibleFilterSection>
 
       <ContactsCollapsibleFilterSection
@@ -302,53 +283,7 @@ export function HiringSignalsCompanyFilters({
             onSelectionChange={(v) => onDraftField("excludedCompanyFunding", v)}
           />
         </div>
-        <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-          Fixed funding ranges on Connectra company total_funding with job counts
-          per bucket (job.server company_funding).
-        </p>
       </ContactsCollapsibleFilterSection>
-
-      {filtersLoading ? (
-        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-          Loading filter options…
-        </p>
-      ) : null}
-
-      {facetSections.map((section) => {
-        const vals = draft.companyFacetValues[section.filterKey] ?? [];
-        const has = vals.length > 0;
-        return (
-          <ContactsCollapsibleFilterSection
-            key={section.filterKey}
-            title={section.title}
-            count={has ? vals.length : 0}
-            defaultOpen={has}
-            onClear={
-              has
-                ? () => onCompanyFacetChange(section.filterKey, [])
-                : undefined
-            }
-          >
-            <FilterCombobox
-              label={section.title}
-              options={section.options}
-              selectedValues={vals}
-              onSelectionChange={(next) =>
-                onCompanyFacetChange(section.filterKey, next)
-              }
-              loading={section.loading}
-              loadingMore={section.loadingMore}
-              hasMore={section.hasMore}
-              onOpen={() => loadFilterData(section.filterKey)}
-              onLoadMore={() => loadMoreFilterData(section.filterKey)}
-              searchText={section.searchText}
-              onSearchChange={(text) =>
-                setFilterSearch(section.filterKey, text)
-              }
-            />
-          </ContactsCollapsibleFilterSection>
-        );
-      })}
     </>
   );
 }

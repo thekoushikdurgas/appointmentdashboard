@@ -64,7 +64,9 @@ export function buildHireSignalCompanyFacetOptionBase(
     employmentTypes,
     workplaceTypes: workplaceTypes.length ? workplaceTypes : undefined,
     industries: industries.length ? industries : undefined,
-    excludedIndustries: excludedIndustries.length ? excludedIndustries : undefined,
+    excludedIndustries: excludedIndustries.length
+      ? excludedIndustries
+      : undefined,
     excludedTitles: excludedTitles.length ? excludedTitles : undefined,
     excludedCompanies: excludedCompanies.length ? excludedCompanies : undefined,
     excludedLocations: excludedLocations.length ? excludedLocations : undefined,

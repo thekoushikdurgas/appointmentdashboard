@@ -17,14 +17,17 @@ export const HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_BUCKETS = [
 export type HireSignalCompanyEmployeeSizeBucketId =
   (typeof HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_BUCKETS)[number]["id"];
 
-export const HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD = "employees_count" as const;
+export const HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD =
+  "employees_count" as const;
 
 const BUCKET_BY_ID = new Map(
   HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_BUCKETS.map((b) => [b.id, b]),
 );
 
 export function formatCompanyEmployeeSizeBucketLabel(id: string): string {
-  return BUCKET_BY_ID.get(id as HireSignalCompanyEmployeeSizeBucketId)?.label ?? id;
+  return (
+    BUCKET_BY_ID.get(id as HireSignalCompanyEmployeeSizeBucketId)?.label ?? id
+  );
 }
 
 export function isKnownEmployeeSizeBucketId(

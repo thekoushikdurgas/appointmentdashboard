@@ -635,7 +635,8 @@ export async function fetchHireSignalJobFilterOptions(
     | "company_funding"
     | "company_country"
     | "company_industry"
-    | "company_employee_size",
+    | "company_employee_size"
+    | "company_revenue",
   filters: JobListFilters,
   options?: { q?: string; limit?: number; offset?: number },
 ) {
@@ -661,7 +662,8 @@ function isStaleCompanyCohortFieldError(
     | "company_funding"
     | "company_country"
     | "company_industry"
-    | "company_employee_size",
+    | "company_employee_size"
+    | "company_revenue",
 ): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return (
@@ -754,6 +756,28 @@ export async function fetchHireSignalCompanyEmployeeSizeFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_employee_size")) {
       throw new Error(
         "Employee size filter requires a restarted GraphQL API (company_employee_size). " +
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+      );
+    }
+    throw err;
+  }
+}
+
+/** Revenue bucket facet options via `hireSignal.jobFilterOptions` (job.server). */
+export async function fetchHireSignalCompanyRevenueFilterOptions(
+  filters: JobListFilters,
+  options?: { q?: string; limit?: number; offset?: number },
+): Promise<HireSignalJobFilterOptionRow[]> {
+  try {
+    return await fetchHireSignalJobFilterOptions(
+      "company_revenue",
+      filters,
+      options,
+    );
+  } catch (err) {
+    if (isStaleCompanyCohortFieldError(err, "company_revenue")) {
+      throw new Error(
+        "Revenue filter requires a restarted GraphQL API (company_revenue). " +
           "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }

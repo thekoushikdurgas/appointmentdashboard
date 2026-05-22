@@ -6,11 +6,11 @@ import type { ContactFilterData } from "@/graphql/generated/types";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { buildHireSignalCompanyFacetOptionBase } from "@/components/feature/hiring-signals/hireSignalCompanyFacetOptionBase";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-import { formatCompanyEmployeeSizeBucketLabel } from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
+import { formatCompanyRevenueBucketLabel } from "@/lib/hireSignalCompanyRevenueBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
-import { fetchHireSignalCompanyEmployeeSizeFilterOptions } from "@/services/graphql/hiringSignalService";
+import { fetchHireSignalCompanyRevenueFilterOptions } from "@/services/graphql/hiringSignalService";
 
-export interface HiringSignalCompanyEmployeeSizeFacetComboboxProps {
+export interface HiringSignalCompanyRevenueFacetComboboxProps {
   appliedListFilters: JobListFilters;
   signalTimePreset: "all" | "new_7d";
   label: string;
@@ -20,16 +20,16 @@ export interface HiringSignalCompanyEmployeeSizeFacetComboboxProps {
 }
 
 /**
- * Fixed employee-size ranges on Connectra `employees_count` with job counts (job.server).
+ * Fixed annual_revenue ranges on Connectra companies with job counts (job.server).
  */
-export function HiringSignalCompanyEmployeeSizeFacetCombobox({
+export function HiringSignalCompanyRevenueFacetCombobox({
   appliedListFilters,
   signalTimePreset,
   label,
   selectedValues,
   onSelectionChange,
   disabled = false,
-}: HiringSignalCompanyEmployeeSizeFacetComboboxProps) {
+}: HiringSignalCompanyRevenueFacetComboboxProps) {
   const { draft } = useHireSignalFilter();
   const [searchText, setSearchText] = useState("");
   const [options, setOptions] = useState<ContactFilterData[]>([]);
@@ -47,7 +47,7 @@ export function HiringSignalCompanyEmployeeSizeFacetCombobox({
         draft,
         signalTimePreset,
       );
-      const rows = await fetchHireSignalCompanyEmployeeSizeFilterOptions(base, {
+      const rows = await fetchHireSignalCompanyRevenueFilterOptions(base, {
         q: searchText,
         limit: 20,
         offset: 0,
@@ -55,16 +55,14 @@ export function HiringSignalCompanyEmployeeSizeFacetCombobox({
       if (req !== loadReqRef.current) return;
       const mapped: ContactFilterData[] = rows.map((r) => ({
         value: r.value,
-        displayValue: formatCompanyEmployeeSizeBucketLabel(r.value),
+        displayValue: formatCompanyRevenueBucketLabel(r.value),
         count: typeof r.count === "number" ? r.count : undefined,
       }));
       setOptions(mapped);
     } catch (e) {
       if (req === loadReqRef.current) {
         const msg =
-          e instanceof Error
-            ? e.message
-            : "Failed to load employee size options";
+          e instanceof Error ? e.message : "Failed to load revenue options";
         setLoadError(msg);
         setOptions([]);
       }
@@ -107,8 +105,8 @@ export function HiringSignalCompanyEmployeeSizeFacetCombobox({
       ) : null}
       {!loadError && !loading && options.length === 0 ? (
         <p className="c360-text-2xs c360-text-ink-muted">
-          No employee size buckets loaded. Redeploy job.server with
-          company_employee_size support.
+          No revenue buckets loaded. Redeploy job.server with company_revenue
+          bucket support.
         </p>
       ) : null}
     </div>

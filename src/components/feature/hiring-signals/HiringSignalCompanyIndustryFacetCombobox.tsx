@@ -160,7 +160,8 @@ export function HiringSignalCompanyIndustryFacetCombobox({
       ) : null}
       {!loadError && !loading && options.length === 0 ? (
         <p className="c360-text-2xs c360-text-ink-muted">
-          No industries loaded. Redeploy job.server with company_industry support.
+          No industries loaded. Redeploy job.server with company_industry
+          support.
         </p>
       ) : null}
     </div>

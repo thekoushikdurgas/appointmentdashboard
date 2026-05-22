@@ -76,7 +76,11 @@ export type HiringSignalFilterDraft = {
   companyEmployeeSizes: string[];
   /** Employee-size bucket ids (exclude). */
   excludedCompanyEmployeeSizes: string[];
-  /** Connectra company-index facets (revenue, etc.). */
+  /** Revenue bucket ids (include), e.g. `1000000-10000000`. */
+  companyRevenue: string[];
+  /** Revenue bucket ids (exclude). */
+  excludedCompanyRevenue: string[];
+  /** Legacy Connectra facet values (unused — firmographics use dedicated fields). */
   companyFacetValues: Record<string, string[]>;
 };
 
@@ -120,6 +124,8 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   excludedCompanyIndustries: [],
   companyEmployeeSizes: [],
   excludedCompanyEmployeeSizes: [],
+  companyRevenue: [],
+  excludedCompanyRevenue: [],
   companyFacetValues: {},
 };
 

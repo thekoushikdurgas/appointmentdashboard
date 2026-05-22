@@ -253,10 +253,7 @@ export function satelliteJobsCountSummary(
   const st = satelliteStatusFromRow(row);
   if (cap != null && cap > 0) {
     const base = `${n.toLocaleString()} / ${cap.toLocaleString()} jobs`;
-    if (
-      (st === "done" || st === "failed" || st === "cancelled") &&
-      n < cap
-    ) {
+    if ((st === "done" || st === "failed" || st === "cancelled") && n < cap) {
       const pct = Math.round((n / cap) * 100);
       return `${base} (${pct}% of target)`;
     }

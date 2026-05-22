@@ -26,6 +26,7 @@ import {
 } from "@/lib/hireSignalCompanyCohort";
 import { formatCompanyEmployeeSizeBucketLabel } from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
 import { formatCompanyFundingBucketLabel } from "@/lib/hireSignalCompanyFundingBuckets";
+import { formatCompanyRevenueBucketLabel } from "@/lib/hireSignalCompanyRevenueBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
@@ -380,6 +381,34 @@ function buildHiringSignalChipBuckets(
     "Exclude company",
     "excludedCompanyNames",
   );
+  draft.companyRevenue.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    add("companyCohort", {
+      key: `co-rev-${i}-${t}`,
+      label: `Include revenue: ${formatCompanyRevenueBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "companyRevenue",
+          draft.companyRevenue.filter((_, j) => j !== i),
+        );
+      },
+    });
+  });
+  draft.excludedCompanyRevenue.forEach((raw, i) => {
+    const t = raw.trim();
+    if (!t) return;
+    add("companyCohort", {
+      key: `co-rev-ex-${i}-${t}`,
+      label: `Exclude revenue: ${formatCompanyRevenueBucketLabel(t)}`,
+      onRemove: () => {
+        onDraftField(
+          "excludedCompanyRevenue",
+          draft.excludedCompanyRevenue.filter((_, j) => j !== i),
+        );
+      },
+    });
+  });
   draft.companyFunding.forEach((raw, i) => {
     const t = raw.trim();
     if (!t) return;

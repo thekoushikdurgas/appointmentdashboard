@@ -37,6 +37,8 @@ const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "excludedCompanyIndustries",
   "companyEmployeeSizes",
   "excludedCompanyEmployeeSizes",
+  "companyRevenue",
+  "excludedCompanyRevenue",
   "locations",
   "employmentTypes",
   "workplaceTypes",

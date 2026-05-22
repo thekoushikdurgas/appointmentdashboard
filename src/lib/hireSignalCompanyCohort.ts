@@ -7,27 +7,28 @@ import {
   companyEmployeeSizeTokensToVqlFilter,
   HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD,
 } from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
-import { companyFundingTokensToVqlFilter } from "@/lib/hireSignalCompanyFundingBuckets";
+import {
+  companyFundingTokensToVqlFilter,
+  HIRE_SIGNAL_COMPANY_FUNDING_FIELD,
+} from "@/lib/hireSignalCompanyFundingBuckets";
+import {
+  companyRevenueTokensToVqlFilter,
+  HIRE_SIGNAL_COMPANY_REVENUE_FIELD,
+} from "@/lib/hireSignalCompanyRevenueBuckets";
 
-export { HIRE_SIGNAL_COMPANY_FUNDING_FIELD } from "@/lib/hireSignalCompanyFundingBuckets";
+export { HIRE_SIGNAL_COMPANY_FUNDING_FIELD };
+export { HIRE_SIGNAL_COMPANY_REVENUE_FIELD };
 
-/** Facet filter keys (Connectra company index) — excludes name (toolbar search uses VQL `name`). */
-export const HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS = ["annual_revenue"] as const;
-
-/** Connectra company index field for country (dedicated include/exclude UI). */
-export const HIRE_SIGNAL_COMPANY_COUNTRY_FIELD = "country" as const;
-
-/** Connectra company index field for industry (dedicated include/exclude UI). */
-export const HIRE_SIGNAL_COMPANY_INDUSTRY_FIELD = "industries" as const;
+/** Legacy Connectra facet keys (none — all firmographics use dedicated UI). */
+export const HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS = [] as const;
 
 export type HireSignalCompanyCohortFacetKey =
   (typeof HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS)[number];
 
-/** Sidebar order and labels (always shown). */
 export const HIRE_SIGNAL_COMPANY_COHORT_SECTIONS: ReadonlyArray<{
   filterKey: HireSignalCompanyCohortFacetKey;
   title: string;
-}> = [{ filterKey: "annual_revenue", title: "Revenue" }];
+}> = [];
 
 export const HIRE_SIGNAL_COMPANY_COHORT_KEYS = new Set<string>([
   ...HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS,
@@ -36,9 +37,13 @@ export const HIRE_SIGNAL_COMPANY_COHORT_KEYS = new Set<string>([
 export const HIRE_SIGNAL_COMPANY_COHORT_LABELS: Record<
   HireSignalCompanyCohortFacetKey,
   string
-> = {
-  annual_revenue: "Revenue",
-};
+> = {} as Record<HireSignalCompanyCohortFacetKey, string>;
+
+/** Connectra company index field for country (dedicated include/exclude UI). */
+export const HIRE_SIGNAL_COMPANY_COUNTRY_FIELD = "country" as const;
+
+/** Connectra company index field for industry (dedicated include/exclude UI). */
+export const HIRE_SIGNAL_COMPANY_INDUSTRY_FIELD = "industries" as const;
 
 export const HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE = 500;
 export const HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP = 2000;
@@ -72,15 +77,20 @@ export function isCompanyCohortActive(draft: HiringSignalFilterDraft): boolean {
   if (draft.excludedCompanyNames.some((n) => String(n).trim())) return true;
   if (draft.companyFunding.some((n) => String(n).trim())) return true;
   if (draft.excludedCompanyFunding.some((n) => String(n).trim())) return true;
+  if (draft.companyRevenue.some((n) => String(n).trim())) return true;
+  if (draft.excludedCompanyRevenue.some((n) => String(n).trim())) return true;
   if (draft.companyCountries.some((n) => String(n).trim())) return true;
   if (draft.excludedCompanyCountries.some((n) => String(n).trim())) return true;
   if (draft.companyIndustries.some((n) => String(n).trim())) return true;
-  if (draft.excludedCompanyIndustries.some((n) => String(n).trim())) return true;
+  if (draft.excludedCompanyIndustries.some((n) => String(n).trim()))
+    return true;
   if (draft.companyEmployeeSizes.some((n) => String(n).trim())) return true;
-  if (draft.excludedCompanyEmployeeSizes.some((n) => String(n).trim())) return true;
+  if (draft.excludedCompanyEmployeeSizes.some((n) => String(n).trim()))
+    return true;
   for (const [key, vals] of Object.entries(draft.companyFacetValues)) {
     if (!HIRE_SIGNAL_COMPANY_COHORT_KEYS.has(key)) continue;
     if (key === HIRE_SIGNAL_COMPANY_FUNDING_FIELD) continue;
+    if (key === HIRE_SIGNAL_COMPANY_REVENUE_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_COUNTRY_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_INDUSTRY_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD) continue;
@@ -89,7 +99,7 @@ export function isCompanyCohortActive(draft: HiringSignalFilterDraft): boolean {
   return false;
 }
 
-/** Build Connectra `filters` from hiring-signals company cohort draft (facets only). */
+/** Build Connectra `filters` from legacy `companyFacetValues` only. */
 export function companyFacetFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -97,6 +107,7 @@ export function companyFacetFilterFromDraft(
   for (const [key, vals] of Object.entries(draft.companyFacetValues)) {
     if (!HIRE_SIGNAL_COMPANY_COHORT_KEYS.has(key)) continue;
     if (key === HIRE_SIGNAL_COMPANY_FUNDING_FIELD) continue;
+    if (key === HIRE_SIGNAL_COMPANY_REVENUE_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_COUNTRY_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_INDUSTRY_FIELD) continue;
     if (key === HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD) continue;
@@ -120,7 +131,6 @@ export function companyFacetFilterFromDraft(
   return { conditions };
 }
 
-/** Exact company names from job postings → Connectra `name` field (eq / in). */
 export function companyNameFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -129,14 +139,18 @@ export function companyNameFilterFromDraft(
   return { conditions };
 }
 
-/** Included funding buckets → Connectra `total_funding` range (OR across buckets). */
 export function companyFundingFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   return companyFundingTokensToVqlFilter(draft.companyFunding);
 }
 
-/** Include-only Connectra cohort filters (firmographics + included company names). */
+export function companyRevenueFilterFromDraft(
+  draft: HiringSignalFilterDraft,
+): VqlFilterInput | undefined {
+  return companyRevenueTokensToVqlFilter(draft.companyRevenue);
+}
+
 export function companyCohortIncludeFiltersFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -144,12 +158,14 @@ export function companyCohortIncludeFiltersFromDraft(
   const facet = companyFacetFilterFromDraft(draft);
   const names = companyNameFilterFromDraft(draft);
   const funding = companyFundingFilterFromDraft(draft);
+  const revenue = companyRevenueFilterFromDraft(draft);
   const countries = companyCountryFilterFromDraft(draft);
   const industries = companyIndustryFilterFromDraft(draft);
   const employeeSizes = companyEmployeeSizeFilterFromDraft(draft);
   if (facet) parts.push(facet);
   if (names) parts.push(names);
   if (funding) parts.push(funding);
+  if (revenue) parts.push(revenue);
   if (countries) parts.push(countries);
   if (industries) parts.push(industries);
   if (employeeSizes) parts.push(employeeSizes);
@@ -162,7 +178,6 @@ export function companyCohortIncludeFiltersFromDraft(
 export const companyCohortFiltersFromDraft =
   companyCohortIncludeFiltersFromDraft;
 
-/** Excluded company names → Connectra `name` eq/in (resolved separately from include). */
 export function companyNameExcludeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -171,7 +186,6 @@ export function companyNameExcludeFilterFromDraft(
   return { conditions };
 }
 
-/** Included countries → Connectra `country` eq/in. */
 export function companyCountryFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -183,14 +197,18 @@ export function companyCountryFilterFromDraft(
   return { conditions };
 }
 
-/** Excluded funding buckets → Connectra `total_funding` range (OR). */
 export function companyFundingExcludeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   return companyFundingTokensToVqlFilter(draft.excludedCompanyFunding);
 }
 
-/** Excluded countries → Connectra `country` eq/in. */
+export function companyRevenueExcludeFilterFromDraft(
+  draft: HiringSignalFilterDraft,
+): VqlFilterInput | undefined {
+  return companyRevenueTokensToVqlFilter(draft.excludedCompanyRevenue);
+}
+
 export function companyCountryExcludeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -202,7 +220,6 @@ export function companyCountryExcludeFilterFromDraft(
   return { conditions };
 }
 
-/** Included industries → Connectra `industries` eq/in. */
 export function companyIndustryFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -214,7 +231,6 @@ export function companyIndustryFilterFromDraft(
   return { conditions };
 }
 
-/** Excluded industries → Connectra `industries` eq/in. */
 export function companyIndustryExcludeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -226,14 +242,12 @@ export function companyIndustryExcludeFilterFromDraft(
   return { conditions };
 }
 
-/** Included employee-size buckets → Connectra `employees_count` range (OR across buckets). */
 export function companyEmployeeSizeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   return companyEmployeeSizeTokensToVqlFilter(draft.companyEmployeeSizes);
 }
 
-/** Excluded employee-size buckets → Connectra `employees_count` range (OR). */
 export function companyEmployeeSizeExcludeFilterFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
@@ -242,18 +256,19 @@ export function companyEmployeeSizeExcludeFilterFromDraft(
   );
 }
 
-/** All exclude cohort dimensions merged for UUID resolution. */
 export function companyCohortExcludeFiltersFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   const parts: VqlFilterInput[] = [];
   const names = companyNameExcludeFilterFromDraft(draft);
   const funding = companyFundingExcludeFilterFromDraft(draft);
+  const revenue = companyRevenueExcludeFilterFromDraft(draft);
   const countries = companyCountryExcludeFilterFromDraft(draft);
   const industries = companyIndustryExcludeFilterFromDraft(draft);
   const employeeSizes = companyEmployeeSizeExcludeFilterFromDraft(draft);
   if (names) parts.push(names);
   if (funding) parts.push(funding);
+  if (revenue) parts.push(revenue);
   if (countries) parts.push(countries);
   if (industries) parts.push(industries);
   if (employeeSizes) parts.push(employeeSizes);

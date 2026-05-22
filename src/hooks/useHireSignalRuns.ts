@@ -62,11 +62,7 @@ export function useHireSignalRuns(
   mainTab: "overview" | "signals" | "runs",
   opts: UseHireSignalRunsOpts,
 ) {
-  const {
-    satellitePage,
-    runsPageSize,
-    satelliteFilter = "active",
-  } = opts;
+  const { satellitePage, runsPageSize, satelliteFilter = "active" } = opts;
 
   const [runsLoading, setRunsLoading] = useState(false);
   const [metrics, setMetrics] = useState<Record<string, unknown> | null>(null);
@@ -84,8 +80,7 @@ export function useHireSignalRuns(
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
     try {
-      const runsAllServerPage =
-        mainTab === "runs" && satelliteFilter === "all";
+      const runsAllServerPage = mainTab === "runs" && satelliteFilter === "all";
       const limit = runsAllServerPage
         ? runsPageSize
         : mainTab === "runs"
