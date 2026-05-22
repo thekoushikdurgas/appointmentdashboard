@@ -780,9 +780,30 @@ export function HiringSignalsFilterSidebar({
       return;
     }
     if (v === "24h" || v === "7d" || v === "30d") {
+      const iso = postedAfterISOFromPreset(v);
       onDraftField("datePostedPreset", v);
-      onDraftField("postedAfter", postedAfterISOFromPreset(v));
+      onDraftField("postedAfter", iso);
       onDraftField("postedBefore", "");
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "73e9c1",
+          },
+          body: JSON.stringify({
+            sessionId: "73e9c1",
+            hypothesisId: "A",
+            location: "HiringSignalsFilterSidebar.tsx:onDatePostedPresetChange",
+            message: "date posted preset selected",
+            data: { preset: v, postedAfterIso: iso },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
     }
   };
 

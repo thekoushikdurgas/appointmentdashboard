@@ -150,6 +150,33 @@ export function HireSignalFilterProvider({
         ? clearanceRaw
         : undefined;
 
+    // #region agent log
+    fetch(
+      "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "73e9c1",
+        },
+        body: JSON.stringify({
+          sessionId: "73e9c1",
+          hypothesisId: "A,B",
+          location: "HireSignalFilterContext.tsx:applyFilters",
+          message: "applied hire signal filters",
+          data: {
+            datePostedPreset: draft.datePostedPreset,
+            postedAfter: draft.postedAfter.trim() || null,
+            postedBefore: draft.postedBefore.trim() || null,
+            postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
+              draft.postedAfter.trim(),
+            ),
+          },
+          timestamp: Date.now(),
+        }),
+      },
+    ).catch(() => {});
+    // #endregion
     setFilters((f) => ({
       ...f,
       titles: titles.length ? titles : undefined,

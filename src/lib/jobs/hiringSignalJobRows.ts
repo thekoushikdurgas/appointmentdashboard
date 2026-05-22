@@ -8,6 +8,9 @@ import {
   hireSignalJobsListFromJson,
   type HireSignalApiJson,
 } from "@/services/graphql/hiringSignalService";
+import { isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
+
+export { hiringSignalRowKey, isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
 
 /** Parse `postedAt` ISO for stable client-side ordering (ties broken by LinkedIn job id). */
 function postedAtSortMs(iso: string): number {
@@ -210,7 +213,10 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
   const linkedinJobId = pickStr(
     o.linkedin_job_id ?? o.linkedinJobId ?? o.linkedin_jobId,
   );
-  const id = pickStr(o._id ?? o.id ?? linkedinJobId);
+  const rawId = pickStr(o._id ?? o.id ?? "");
+  const id = isPlaceholderDocumentId(rawId)
+    ? linkedinJobId
+    : rawId || linkedinJobId;
   const runId = pickStr(o.run_id ?? o.runId);
   const functionCategory = pickStr(
     o.function_category_v2 ??

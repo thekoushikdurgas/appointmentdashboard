@@ -2,6 +2,7 @@ import type { BadgeColor, BadgeProps } from "@/components/ui/Badge";
 import type { ProgressProps } from "@/components/ui/Progress";
 import { asRecord } from "@/services/graphql/hiringSignalService";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+export { hiringSignalRowKey } from "@/lib/jobs/hiringSignalRowKeys";
 
 /**
  * Format job `postedAt` / ISO strings from job.server for the hiring-signals UI.
@@ -488,7 +489,3 @@ export function downloadTextFile(
   URL.revokeObjectURL(url);
 }
 
-/** Stable table/selection key for a job row (list + checkboxes). */
-export function hiringSignalRowKey(row: LinkedInJobRow): string {
-  return row.id || `${row.linkedinJobId}-${row.apifyItemId}`;
-}
