@@ -227,54 +227,6 @@ export function useHiringSignals(
           return;
         }
         const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
-        // #region agent log
-        const samplePosted = parsed.data.slice(0, 5).map((r) => r.postedAt);
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "73e9c1",
-            },
-            body: JSON.stringify({
-              sessionId: "73e9c1",
-              runId: "skills-fix-v2",
-              hypothesisId: "S1,S2,S3",
-              location: "useHiringSignals.ts:runLoad",
-              message: "hireSignal jobs fetch result",
-              data: {
-                titles: snapshot.titles ?? null,
-                companies: snapshot.companies ?? null,
-                locations: snapshot.locations ?? null,
-                experienceBuckets: snapshot.experienceBuckets ?? null,
-                workplaceTypes: snapshot.workplaceTypes ?? null,
-                applyMethod: snapshot.applyMethod ?? null,
-                industries: snapshot.industries ?? null,
-                excludedIndustries: snapshot.excludedIndustries ?? null,
-                educationLevelMins: snapshot.educationLevelMins ?? null,
-                skillsAll: snapshot.skillsAll ?? null,
-                salaryMin: snapshot.salaryMin ?? null,
-                salaryMax: snapshot.salaryMax ?? null,
-                signalTimePreset,
-                postedAfter: snapshot.postedAfter ?? null,
-                postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
-                  (snapshot.postedAfter ?? "").trim(),
-                ),
-                parsedTotal: parsed.total,
-                parsedRowCount: parsed.data.length,
-                samplePosted,
-                oldestSampleMs: samplePosted.length
-                  ? Math.min(
-                      ...samplePosted.map((s) => Date.parse(s) || Infinity),
-                    )
-                  : null,
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         if (!parsed.success) {
           setError(
             parsed.data.length > 0
