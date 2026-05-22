@@ -53,9 +53,9 @@ export type HiringSignalFilterDraft = {
   /** Quick date filter row — drives `postedAfter` unless `custom`. */
   datePostedPreset: DatePostedPreset;
 
-  /** Connectra company name search (cohort → job `company_uuid`). */
+  /** Connectra company name search (merged into companies.companyQuery VQL). */
   companyNameSearch: string;
-  /** Connectra company facet picks (country, industries, size, revenue, funding). */
+  /** Connectra company-index facets (country, industries, revenue, etc.). */
   companyFacetValues: Record<string, string[]>;
 };
 

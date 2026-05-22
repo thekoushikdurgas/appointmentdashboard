@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { useSearchParams } from "next/navigation";
 import { History, RefreshCw, Play, Zap, Download } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
@@ -108,6 +110,7 @@ function HiringSignalsPageBody({
     companyCohortResolving,
     companyCohortMatchTotal,
     companyCohortTruncated,
+    resolvedCompanyUuids,
   } = hiring;
 
   const { activeDraftCount } = useHireSignalFilter();
@@ -217,8 +220,9 @@ function HiringSignalsPageBody({
     () => ({
       ...filters,
       postedAfter: effectivePostedAfter(signalTimePreset, filters.postedAfter),
+      companyUuids: resolvedCompanyUuids ?? filters.companyUuids,
     }),
-    [filters, signalTimePreset],
+    [filters, signalTimePreset, resolvedCompanyUuids],
   );
 
   const hireSignalExportIdCap = useMemo(
@@ -552,7 +556,7 @@ function HiringSignalsPageBody({
                 ) : null}
                 <HiringSignalsFilterSidebar
                   drawerTitleId="c360-hs-filter-drawer-title"
-                  appliedListFilters={filters}
+                  appliedListFilters={effectiveJobListFilters}
                   signalTimePreset={signalTimePreset}
                   appliedRunId={filters.runId}
                   runScopedJobTotal={filters.runId?.trim() ? total : undefined}
@@ -700,10 +704,19 @@ export default function HiringSignalsPageClient() {
   const [signalTimePreset, setSignalTimePreset] = useState<"all" | "new_7d">(
     "all",
   );
-  const hiring = useHiringSignals({}, { signalTimePreset });
+  const companyCohortDraftRef = useRef<HiringSignalFilterDraft>(
+    EMPTY_HIRING_SIGNAL_DRAFT,
+  );
+  const hiring = useHiringSignals(
+    {},
+    { signalTimePreset, companyCohortDraftRef },
+  );
 
   return (
-    <HireSignalFilterProvider setFilters={hiring.setFilters}>
+    <HireSignalFilterProvider
+      setFilters={hiring.setFilters}
+      draftRef={companyCohortDraftRef}
+    >
       <HiringSignalsPageBody
         hiring={hiring}
         signalTimePreset={signalTimePreset}

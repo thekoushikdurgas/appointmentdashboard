@@ -104,20 +104,6 @@ const HIRE_SIGNAL_JOBS = gql`
   }
 `;
 
-const HIRE_SIGNAL_COMPANY_COHORT_UUIDS = gql`
-  query HireSignalCompanyCohortUuids(
-    $companyNameSearch: String
-    $companyFacetFilters: JSON
-  ) {
-    hireSignal {
-      companyCohortUuids(
-        companyNameSearch: $companyNameSearch
-        companyFacetFilters: $companyFacetFilters
-      )
-    }
-  }
-`;
-
 const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
   query HireSignalJobFilterOptions(
     $field: String!
@@ -135,6 +121,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
     $runId: String
     $extendedJobFilters: JSON
     $hideApplied: Boolean
+    $companyUuids: [String!]
   ) {
     hireSignal {
       jobFilterOptions(
@@ -153,6 +140,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
         runId: $runId
         extendedJobFilters: $extendedJobFilters
         hideApplied: $hideApplied
+        companyUuids: $companyUuids
       )
     }
   }
@@ -317,8 +305,6 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
     $limit: Int
     $populateCompany: Boolean
     $includePoster: Boolean
-    $title: String
-    $departments: [String!]
   ) {
     hireSignal {
       jobConnectraContacts(
@@ -327,8 +313,6 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
         limit: $limit
         populateCompany: $populateCompany
         includePoster: $includePoster
-        title: $title
-        departments: $departments
       )
     }
   }
@@ -493,7 +477,7 @@ export interface JobListFilters {
   /** Column sort — extendedJobFilters.sortField / sortOrder → job.server query params. */
   sortKey?: JobListSortKey;
   sortOrder?: JobListSortOrder;
-  /** Resolved Connectra company UUIDs (company cohort filters). */
+  /** Connectra company cohort — job.server `company_uuid` terms filter. */
   companyUuids?: string[];
   limit: number;
   offset: number;
@@ -570,31 +554,11 @@ function hireSignalJobListFilterVars(filters: JobListFilters) {
     runId: filters.runId?.trim() || null,
     extendedJobFilters: ext,
     hideApplied: filters.hideApplied ?? false,
-    companyUuids: filters.companyUuids?.length ? filters.companyUuids : null,
+    companyUuids:
+      filters.companyUuids?.length && filters.companyUuids.length > 0
+        ? filters.companyUuids
+        : null,
   };
-}
-
-export async function fetchHireSignalCompanyCohortUuids(params: {
-  companyNameSearch: string | null;
-  companyFacetFilters: Record<string, string[]> | null;
-}) {
-  const hasName = Boolean(params.companyNameSearch?.trim());
-  const hasFacets =
-    params.companyFacetFilters &&
-    Object.keys(params.companyFacetFilters).length > 0;
-  if (!hasName && !hasFacets) {
-    return { hireSignal: { companyCohortUuids: null } };
-  }
-  return graphqlQuery<{
-    hireSignal: { companyCohortUuids: HireSignalApiJson };
-  }>(
-    HIRE_SIGNAL_COMPANY_COHORT_UUIDS,
-    {
-      companyNameSearch: params.companyNameSearch,
-      companyFacetFilters: hasFacets ? params.companyFacetFilters : null,
-    },
-    { ...HS_GQL, cacheTtlMs: 0 },
-  );
 }
 
 export function parseJobFilterOptionsPayload(
@@ -799,8 +763,6 @@ export async function fetchJobConnectraContacts(
     limit?: number;
     populateCompany?: boolean;
     includePoster?: boolean;
-    title?: string;
-    departments?: string[];
   },
 ) {
   return graphqlQuery<{
@@ -813,11 +775,6 @@ export async function fetchJobConnectraContacts(
       limit: options?.limit ?? 25,
       populateCompany: options?.populateCompany ?? true,
       includePoster: options?.includePoster ?? true,
-      title: options?.title?.trim() || null,
-      departments:
-        options?.departments && options.departments.length > 0
-          ? options.departments
-          : null,
     },
     HS_GQL,
   );

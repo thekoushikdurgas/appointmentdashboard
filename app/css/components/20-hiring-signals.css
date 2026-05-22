@@ -858,6 +858,17 @@
   flex: 1;
 }
 
+.c360-hs-filters__group-header {
+  margin: 0 0 6px;
+  padding: 10px 0 4px;
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c360-text-ink-muted);
+  border-bottom: 1px solid var(--c360-border-ink-8);
+}
+
 .c360-hs-filters__sections {
   display: flex;
   flex-direction: column;

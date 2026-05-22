@@ -17,10 +17,7 @@ import {
 } from "@/context/DataFiltersPeekContext";
 import { FilterPeekPinButton } from "@/components/layouts/FilterPeekPinButton";
 import { Filter } from "lucide-react";
-import {
-  tryLocalStorageGet,
-  tryLocalStorageSet,
-} from "@/lib/safeLocalStorage";
+import { tryLocalStorageGet, tryLocalStorageSet } from "@/lib/safeLocalStorage";
 
 export interface DataPageLayoutProps {
   filters?: ReactNode;

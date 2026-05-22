@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MutableRefObject,
   type ReactNode,
 } from "react";
 import {
@@ -22,11 +23,6 @@ import {
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-
-/** Latest sidebar draft for hooks outside this provider (e.g. cohort resolve in `useHiringSignals`). */
-export const hireSignalFilterDraftRef: { current: HiringSignalFilterDraft } = {
-  current: EMPTY_HIRING_SIGNAL_DRAFT,
-};
 
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
@@ -63,10 +59,14 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
       return;
     }
     if (k === "companyFacetValues") {
-      const hasFacet = Object.values(d.companyFacetValues).some((vals) =>
-        vals.some((v) => String(v).trim()),
-      );
-      if (hasFacet) n += 1;
+      const facets = d.companyFacetValues;
+      if (
+        Object.values(facets).some(
+          (arr) => Array.isArray(arr) && arr.some((x) => String(x).trim()),
+        )
+      ) {
+        n += 1;
+      }
       return;
     }
     const v = d[k];
@@ -76,6 +76,7 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
       if (v) n += 1;
     } else if (String(v).trim()) n += 1;
   });
+  if (d.companyNameSearch.trim()) n += 1;
   return n;
 }
 
@@ -91,7 +92,7 @@ export interface HireSignalFilterContextValue {
   setDraft: React.Dispatch<React.SetStateAction<HiringSignalFilterDraft>>;
   onDraftField: (
     field: HiringSignalDraftField,
-    value: string | string[] | boolean,
+    value: string | string[] | boolean | Record<string, string[]>,
   ) => void;
   applyFilters: () => void;
   resetFilters: () => void;
@@ -101,9 +102,10 @@ export interface HireSignalFilterContextValue {
     locations: string[],
     ext: Record<string, unknown>,
   ) => void;
-  onCompanyNameSearchChange: (value: string) => void;
-  onCompanyFacetChange: (key: string, values: string[]) => void;
   activeDraftCount: number;
+  onCompanyFacetChange: (key: string, values: string[]) => void;
+  /** Always-current draft for async company cohort resolution in `useHiringSignals`. */
+  draftRef: MutableRefObject<HiringSignalFilterDraft>;
 }
 
 const HireSignalFilterContext =
@@ -112,28 +114,18 @@ const HireSignalFilterContext =
 export function HireSignalFilterProvider({
   children,
   setFilters,
+  draftRef: draftRefProp,
 }: {
   children: ReactNode;
   setFilters: React.Dispatch<React.SetStateAction<JobListFilters>>;
+  draftRef?: MutableRefObject<HiringSignalFilterDraft>;
 }) {
   const [draft, setDraft] = useState<HiringSignalFilterDraft>(
     EMPTY_HIRING_SIGNAL_DRAFT,
   );
-
-  useEffect(() => {
-    hireSignalFilterDraftRef.current = draft;
-  }, [draft]);
-
-  const onCompanyNameSearchChange = useCallback((value: string) => {
-    setDraft((d) => ({ ...d, companyNameSearch: value }));
-  }, []);
-
-  const onCompanyFacetChange = useCallback((key: string, values: string[]) => {
-    setDraft((d) => ({
-      ...d,
-      companyFacetValues: { ...d.companyFacetValues, [key]: values },
-    }));
-  }, []);
+  const internalDraftRef = useRef(draft);
+  const draftRef = draftRefProp ?? internalDraftRef;
+  draftRef.current = draft;
 
   const applyFilters = useCallback(() => {
     const titles = normalizeHiringSignalTokenList(draft.titles);
@@ -259,9 +251,15 @@ export function HireSignalFilterProvider({
     return () => window.clearTimeout(timer);
   }, [draft]);
 
+  const onCompanyFacetChange = useCallback((key: string, values: string[]) => {
+    setDraft((d) => ({
+      ...d,
+      companyFacetValues: { ...d.companyFacetValues, [key]: values },
+    }));
+  }, []);
+
   const resetFilters = useCallback(() => {
     setDraft(EMPTY_HIRING_SIGNAL_DRAFT);
-    hireSignalFilterDraftRef.current = EMPTY_HIRING_SIGNAL_DRAFT;
     setFilters((f) => ({
       ...f,
       titles: undefined,
@@ -291,16 +289,25 @@ export function HireSignalFilterProvider({
       hideApplied: false,
       countries: undefined,
       applyMethod: undefined,
+      companyUuids: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
-      companyUuids: undefined,
     }));
   }, [setFilters]);
 
   const onDraftField = useCallback(
-    (field: HiringSignalDraftField, value: string | string[] | boolean) => {
+    (
+      field: HiringSignalDraftField,
+      value: string | string[] | boolean | Record<string, string[]>,
+    ) => {
       setDraft((d) => {
+        if (field === "companyFacetValues" && value && typeof value === "object" && !Array.isArray(value)) {
+          return {
+            ...d,
+            companyFacetValues: value as Record<string, string[]>,
+          };
+        }
         if (field === "h1bOnly" && typeof value === "boolean") {
           return { ...d, h1bOnly: value };
         }
@@ -363,9 +370,9 @@ export function HireSignalFilterProvider({
       applyFilters,
       resetFilters,
       mergeResumeSuggestions,
-      onCompanyNameSearchChange,
-      onCompanyFacetChange,
       activeDraftCount,
+      onCompanyFacetChange,
+      draftRef,
     }),
     [
       draft,
@@ -374,9 +381,9 @@ export function HireSignalFilterProvider({
       applyFilters,
       resetFilters,
       mergeResumeSuggestions,
-      onCompanyNameSearchChange,
-      onCompanyFacetChange,
       activeDraftCount,
+      onCompanyFacetChange,
+      draftRef,
     ],
   );
 

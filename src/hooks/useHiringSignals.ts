@@ -7,10 +7,9 @@ import {
   useRef,
   useState,
   type Dispatch,
+  type MutableRefObject,
   type SetStateAction,
 } from "react";
-import { hireSignalFilterDraftRef } from "@/context/HireSignalFilterContext";
-import { resolveCompanyCohortUuids } from "@/lib/resolveCompanyCohortUuids";
 import {
   asRecord,
   DEFAULT_JOB_SORT_KEY,
@@ -28,6 +27,9 @@ import {
   sortJobRowsByPostedAt,
   type LinkedInJobRow,
 } from "@/lib/jobs/hiringSignalJobRows";
+import { resolveCompanyCohortUuids } from "@/lib/resolveCompanyCohortUuids";
+import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 
 /** Upper bound when merging all pages of a filter match in the browser (memory). */
 const HIRE_SIGNAL_CLIENT_FETCH_HARD_CAP = 100_000;
@@ -123,6 +125,8 @@ export type UseHiringSignalsOptions = {
    * When false, skips job list + stats network calls (e.g. dashboard for non–hiring-signal roles).
    */
   enabled?: boolean;
+  /** Latest hiring-signals filter draft (for Connectra company cohort UUID resolution). */
+  companyCohortDraftRef?: MutableRefObject<HiringSignalFilterDraft>;
 };
 
 export type UseHiringSignalsResult = {
@@ -146,6 +150,8 @@ export type UseHiringSignalsResult = {
   companyCohortResolving: boolean;
   companyCohortMatchTotal: number | null;
   companyCohortTruncated: boolean;
+  /** Last Connectra cohort UUID list applied to job list / facet scoping. */
+  resolvedCompanyUuids?: string[];
 };
 
 /**
@@ -159,7 +165,9 @@ export function useHiringSignals(
     signalTimePreset,
     fetchFullMatchPages = false,
     enabled: enabledOption = true,
+    companyCohortDraftRef,
   } = options;
+  const cohortDraftRef = companyCohortDraftRef;
   const enabled = enabledOption !== false;
 
   const [filters, setFilters] = useState<JobListFilters>(() => ({
@@ -183,7 +191,9 @@ export function useHiringSignals(
     number | null
   >(null);
   const [companyCohortTruncated, setCompanyCohortTruncated] = useState(false);
-
+  const [resolvedCompanyUuids, setResolvedCompanyUuids] = useState<
+    string[] | undefined
+  >(undefined);
   const [stats, setStats] = useState<HiringSignalIndexStats>({
     totalJobs: 0,
     jobsWithCompany: 0,
@@ -232,15 +242,14 @@ export function useHiringSignals(
       setLoading(true);
       setError(null);
       setAnalyticsMatchCappedAt(null);
-      setCompanyCohortResolving(false);
       setCompanyCohortMatchTotal(null);
       setCompanyCohortTruncated(false);
       try {
         let fetchSnapshot: JobListFilters = { ...snapshot };
+        const draftForCohort =
+          cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
         setCompanyCohortResolving(true);
-        const cohort = await resolveCompanyCohortUuids(
-          hireSignalFilterDraftRef.current,
-        );
+        const cohort = await resolveCompanyCohortUuids(draftForCohort);
         setCompanyCohortResolving(false);
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -251,7 +260,9 @@ export function useHiringSignals(
           if (cohort.uuids.length === 0) {
             setJobs([]);
             setTotal(0);
-            setLoading(false);
+            setError(
+              "No companies match these company filters. Clear company filters or broaden criteria.",
+            );
             lastSuccessfulJobListSortRef.current = {
               sortKey: snapSortKey,
               sortOrder: snapSortOrder,
@@ -265,6 +276,8 @@ export function useHiringSignals(
         } else {
           fetchSnapshot = { ...fetchSnapshot, companyUuids: undefined };
         }
+
+        setResolvedCompanyUuids(fetchSnapshot.companyUuids);
 
         const res = await fetchHiringSignalJobs(fetchSnapshot);
         if (gen !== hireSignalLoadGenRef.current) {
@@ -350,6 +363,7 @@ export function useHiringSignals(
         };
       } catch (e) {
         if (gen !== hireSignalLoadGenRef.current) return;
+        setCompanyCohortResolving(false);
         setError(e instanceof Error ? e.message : "Failed to load jobs");
         setJobs([]);
         setTotal(0);
@@ -357,11 +371,12 @@ export function useHiringSignals(
         lastSuccessfulJobListSortRef.current = null;
       } finally {
         if (gen === hireSignalLoadGenRef.current) {
+          setCompanyCohortResolving(false);
           setLoading(false);
         }
       }
     },
-    [fetchFullMatchPages, signalTimePreset],
+    [fetchFullMatchPages, cohortDraftRef],
   );
 
   const loadStats = useCallback(async () => {
@@ -404,6 +419,7 @@ export function useHiringSignals(
       setAnalyticsMatchCappedAt(null);
       setError(null);
       setLoading(false);
+      setResolvedCompanyUuids(undefined);
       lastSuccessfulJobListSortRef.current = null;
       return;
     }
@@ -462,6 +478,7 @@ export function useHiringSignals(
     companyCohortResolving,
     companyCohortMatchTotal,
     companyCohortTruncated,
+    resolvedCompanyUuids,
   };
 }
 

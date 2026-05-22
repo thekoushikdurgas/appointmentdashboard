@@ -1,7 +1,4 @@
-import {
-  tryLocalStorageGet,
-  tryLocalStorageSet,
-} from "@/lib/safeLocalStorage";
+import { tryLocalStorageGet, tryLocalStorageSet } from "@/lib/safeLocalStorage";
 
 const PAGE_SIZE_KEY = "c360:companies:pageSize:v1";
 const DEFAULT_PAGE_SIZE = 25;

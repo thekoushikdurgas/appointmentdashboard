@@ -17,10 +17,16 @@ export function swallowBestEffortSync(label: string, fn: () => void): void {
 }
 
 /** Fire-and-forget async work; rejections are swallowed (dev: console.debug). */
-export function swallowBestEffort(label: string, fn: () => void | Promise<void>): void {
+export function swallowBestEffort(
+  label: string,
+  fn: () => void | Promise<void>,
+): void {
   try {
     const result = fn();
-    if (result != null && typeof (result as Promise<void>).then === "function") {
+    if (
+      result != null &&
+      typeof (result as Promise<void>).then === "function"
+    ) {
       void (result as Promise<void>).catch((error) => {
         logBestEffortFailure(label, error);
       });

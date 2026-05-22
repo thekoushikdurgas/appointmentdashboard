@@ -1,12 +1,12 @@
-import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { buildCompanyListVql } from "@/lib/companyListVql";
 import {
-  buildCompanyCohortRequest,
+  companyFacetFilterFromDraft,
+  HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE,
+  HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP,
   isCompanyCohortActive,
-} from "@/lib/hireSignalCompanyCohortVql";
-import {
-  asRecord,
-  fetchHireSignalCompanyCohortUuids,
-} from "@/services/graphql/hiringSignalService";
+} from "@/lib/hireSignalCompanyCohort";
+import { companiesService } from "@/services/graphql/companiesService";
+import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 
 export type CompanyCohortResolveResult = {
   uuids: string[];
@@ -14,28 +14,50 @@ export type CompanyCohortResolveResult = {
   truncated: boolean;
 };
 
-export { isCompanyCohortActive };
-
+/**
+ * Resolve Connectra company UUIDs for hiring-signals company cohort filters.
+ * Returns `null` when no company cohort filters are active.
+ */
 export async function resolveCompanyCohortUuids(
   draft: HiringSignalFilterDraft,
 ): Promise<CompanyCohortResolveResult | null> {
   if (!isCompanyCohortActive(draft)) {
     return null;
   }
-  const req = buildCompanyCohortRequest(draft);
-  const raw = await fetchHireSignalCompanyCohortUuids(req);
-  const env = asRecord(raw.hireSignal?.companyCohortUuids);
-  const data = asRecord(env?.data) ?? env;
-  const uuidsRaw = data?.uuids;
-  const uuids = Array.isArray(uuidsRaw)
-    ? uuidsRaw
-        .map((x) => String(x).trim())
-        .filter(Boolean)
-    : [];
-  const total =
-    typeof data?.total === "number" && Number.isFinite(data.total)
-      ? Math.max(0, Math.floor(data.total))
-      : uuids.length;
-  const truncated = Boolean(data?.truncated);
+
+  const facetFilter = companyFacetFilterFromDraft(draft);
+  const filters = facetFilter ? { filters: facetFilter } : {};
+  const pageSize = HIRE_SIGNAL_COMPANY_COHORT_PAGE_SIZE;
+  const uuids: string[] = [];
+  let total = 0;
+  let page = 1;
+
+  while (uuids.length < HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP) {
+    const query = buildCompanyListVql(
+      page,
+      pageSize,
+      draft.companyNameSearch,
+      {
+        ...filters,
+        selectColumns: ["uuid"],
+      },
+      { sortBy: "newest" },
+    );
+    const res = await companiesService.companyQuery(query);
+    total = res.total;
+    for (const row of res.items) {
+      const id = row.id?.trim();
+      if (!id) continue;
+      uuids.push(id);
+      if (uuids.length >= HIRE_SIGNAL_COMPANY_COHORT_UUID_CAP) {
+        break;
+      }
+    }
+    if (res.items.length < pageSize) break;
+    if (page * pageSize >= total) break;
+    page += 1;
+  }
+
+  const truncated = total > uuids.length;
   return { uuids, total, truncated };
 }

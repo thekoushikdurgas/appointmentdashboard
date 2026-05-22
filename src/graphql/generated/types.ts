@@ -1959,7 +1959,6 @@ export type HireSignalMutationTriggerScrapeAndTrackArgs = {
 };
 
 export type HireSignalQuery = {
-  companyCohortUuids: Scalars["JSON"]["output"];
   companies: Scalars["JSON"]["output"];
   companyJobs: Scalars["JSON"]["output"];
   connectraCompany: Scalars["JSON"]["output"];
@@ -1980,11 +1979,6 @@ export type HireSignalQuery = {
   runs: Scalars["JSON"]["output"];
   scrapeJobJobs: Scalars["JSON"]["output"];
   stats: Scalars["JSON"]["output"];
-};
-
-export type HireSignalQueryCompanyCohortUuidsArgs = {
-  companyFacetFilters?: InputMaybe<Scalars["JSON"]["input"]>;
-  companyNameSearch?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type HireSignalQueryCompaniesArgs = {
