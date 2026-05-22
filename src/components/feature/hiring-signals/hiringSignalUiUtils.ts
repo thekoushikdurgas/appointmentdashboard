@@ -1,7 +1,6 @@
 import type { BadgeColor, BadgeProps } from "@/components/ui/Badge";
 import type { ProgressProps } from "@/components/ui/Progress";
 import { asRecord } from "@/services/graphql/hiringSignalService";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 export { hiringSignalRowKey } from "@/lib/jobs/hiringSignalRowKeys";
 
 /**
@@ -488,4 +487,3 @@ export function downloadTextFile(
   a.remove();
   URL.revokeObjectURL(url);
 }
-

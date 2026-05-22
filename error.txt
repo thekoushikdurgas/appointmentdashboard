@@ -1,25 +1,22 @@
-Console Error
+
+E:\ayan\contact360\contact360.io\app\src\hooks\useHiringSignals.ts
+  368:5  warning  React Hook useCallback has a missing dependency: 'signalTimePreset'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).
+  X Linting errors found
+
+> contact360-app@0.1.0 lint:fix
+> eslint . --ext .ts,.tsx --fix
 
 
+E:\ayan\contact360\contact360.io\app\src\hooks\useHiringSignals.ts
+  368:5  warning  React Hook useCallback has a missing dependency: 'signalTimePreset'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
-Encountered two children with the same key, `000000000000000000000000`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
-src/components/feature/hiring-signals/HiringSignalsDataTable.tsx (451:13) @ HiringSignalsDataTable
+✖ 1 problem (0 errors, 1 warning)
 
 
-  449 |             )}
-  450 |           >
-> 451 |             <DataGrid
-      |             ^
-  452 |               rows={rows}
-  453 |               columns={columns}
-  454 |               getRowId={(row) => hiringSignalRowKey(row)}
-Call Stack
-39
+> contact360-app@0.1.0 lint
+> eslint . --ext .ts,.tsx --max-warnings 0
 
-Show 36 ignore-listed frame(s)
-HiringSignalsDataTable
-src/components/feature/hiring-signals/HiringSignalsDataTable.tsx (451:13)
-HiringSignalsPageBody
-src/components/feature/hiring-signals/HiringSignalsPageClient.tsx (620:13)
-HiringSignalsPageClient
-src/components/feature/hiring-signals/HiringSignalsPageClient.tsx (701:7)

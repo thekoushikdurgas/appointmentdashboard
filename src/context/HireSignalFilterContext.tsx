@@ -18,6 +18,7 @@ import {
 import {
   EMPTY_HIRING_SIGNAL_DRAFT,
   normalizeHiringSignalTokenList,
+  resolveSalaryBoundsFromDraft,
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
@@ -45,6 +46,10 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
   let n = 0;
   (Object.keys(d) as HiringSignalDraftField[]).forEach((k) => {
     if (k === "datePostedPreset" && d.datePostedPreset === "any") return;
+    if (k === "salaryMin" || k === "salaryMax") {
+      if (d.salaryPreset !== "custom") return;
+    }
+    if (k === "salaryPreset" && !d.salaryPreset.trim()) return;
     if (
       k === "postedAfter" &&
       d.datePostedPreset !== "any" &&
@@ -111,13 +116,7 @@ export function HireSignalFilterProvider({
     const employmentTypes =
       empMulti.length > 0 ? empMulti : empLegacy ? [empLegacy] : undefined;
 
-    const salaryRaw = draft.salaryMin.trim();
-    const salaryParsed =
-      salaryRaw.length > 0 ? Math.floor(Number(salaryRaw)) : NaN;
-    const salaryMin =
-      Number.isFinite(salaryParsed) && salaryParsed > 0
-        ? salaryParsed
-        : undefined;
+    const { salaryMin, salaryMax } = resolveSalaryBoundsFromDraft(draft);
 
     const workplaceTypes = normalizeHiringSignalTokenList(draft.workplaceTypes);
     const industries = normalizeHiringSignalTokenList(draft.industries);
@@ -151,35 +150,41 @@ export function HireSignalFilterProvider({
         : undefined;
 
     // #region agent log
-    fetch(
-      "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "73e9c1",
-        },
-        body: JSON.stringify({
-          sessionId: "73e9c1",
-          hypothesisId: "A,B",
-          location: "HireSignalFilterContext.tsx:applyFilters",
-          message: "applied hire signal filters",
-          data: {
-            titles,
-            companies,
-            locations,
-            experienceBuckets,
-            datePostedPreset: draft.datePostedPreset,
-            postedAfter: draft.postedAfter.trim() || null,
-            postedBefore: draft.postedBefore.trim() || null,
-            postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
-              draft.postedAfter.trim(),
-            ),
-          },
-          timestamp: Date.now(),
-        }),
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "73e9c1",
       },
-    ).catch(() => {});
+      body: JSON.stringify({
+        sessionId: "73e9c1",
+        hypothesisId: "A,B",
+        location: "HireSignalFilterContext.tsx:applyFilters",
+        message: "applied hire signal filters",
+        data: {
+          titles,
+          companies,
+          locations,
+          experienceBuckets,
+          workplaceTypes: draft.workplaceTypes,
+          applyMethod: draft.applyMethod.trim() || null,
+          industries: draft.industries,
+          excludedIndustries: draft.excludedIndustries,
+          educationLevelMins: draft.educationLevelMins,
+          skillsAll: draft.skillsAll,
+          salaryPreset: draft.salaryPreset || null,
+          salaryMin: salaryMin ?? null,
+          salaryMax: salaryMax ?? null,
+          datePostedPreset: draft.datePostedPreset,
+          postedAfter: draft.postedAfter.trim() || null,
+          postedBefore: draft.postedBefore.trim() || null,
+          postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
+            draft.postedAfter.trim(),
+          ),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
     setFilters((f) => ({
       ...f,
@@ -203,6 +208,7 @@ export function HireSignalFilterProvider({
         ? excludedLocationsFull
         : undefined,
       salaryMin,
+      salaryMax,
       experienceBuckets: experienceBuckets.length
         ? experienceBuckets
         : undefined,
@@ -282,6 +288,7 @@ export function HireSignalFilterProvider({
       excludedCompanies: undefined,
       excludedLocations: undefined,
       salaryMin: undefined,
+      salaryMax: undefined,
       experienceBuckets: undefined,
       roleTracks: undefined,
       educationLevelMins: undefined,

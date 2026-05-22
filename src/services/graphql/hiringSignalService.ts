@@ -457,6 +457,7 @@ export interface JobListFilters {
   excludedCompanies?: string[];
   excludedLocations?: string[];
   salaryMin?: number;
+  salaryMax?: number;
   experienceBuckets?: string[];
   roleTracks?: string[];
   educationLevelMins?: string[];
@@ -505,6 +506,9 @@ function buildExtendedJobFilters(
     x.excludedLocations = filters.excludedLocations;
   if (filters.salaryMin != null && filters.salaryMin > 0) {
     x.salaryMin = Math.floor(filters.salaryMin);
+  }
+  if (filters.salaryMax != null && filters.salaryMax > 0) {
+    x.salaryMax = Math.floor(filters.salaryMax);
   }
   if (filters.experienceBuckets?.length)
     x.experienceBuckets = filters.experienceBuckets;

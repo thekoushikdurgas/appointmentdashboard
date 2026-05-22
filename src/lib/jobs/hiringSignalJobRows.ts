@@ -10,7 +10,10 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import { isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
 
-export { hiringSignalRowKey, isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
+export {
+  hiringSignalRowKey,
+  isPlaceholderDocumentId,
+} from "@/lib/jobs/hiringSignalRowKeys";
 
 /** Parse `postedAt` ISO for stable client-side ordering (ties broken by LinkedIn job id). */
 function postedAtSortMs(iso: string): number {
@@ -257,8 +260,18 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     ),
     functionCategory,
     workplaceTypes: pickStrList(o.workplace_types ?? o.workplaceTypes),
-    remoteAllowed: pickStr(o.remote_allowed ?? o.remoteAllowed),
-    workRemote: pickBool(o.work_remote ?? o.workRemote),
+    remoteAllowed: pickStr(
+      o.remote_allowed ??
+        o.remoteAllowed ??
+        o.work_remote_allowed ??
+        o.workRemoteAllowed,
+    ),
+    workRemote: pickBool(
+      o.work_remote ??
+        o.workRemote ??
+        o.work_remote_allowed ??
+        o.workRemoteAllowed,
+    ),
     jobUrl: pickStr(
       o.job_url ?? o.jobUrl ?? o.url ?? o.link ?? o.job_link ?? o.jobLink,
     ),

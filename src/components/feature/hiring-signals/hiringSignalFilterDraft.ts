@@ -15,14 +15,18 @@ export type HiringSignalFilterDraft = {
   employmentTypes: string[];
   /** Workplace: Remote / Hybrid / On-site — matches job.server `workplace_types`. Sidebar uses one dropdown (stored as 0 or 1 entry). */
   workplaceTypes: string[];
-  /** Substring on job `industries` text; sidebar uses 0 or 1 curated token via select. */
+  /** Category (topic) — substring on job `industries`; sidebar uses 0 or 1 curated token via select. */
   industries: string[];
   excludedIndustries: string[];
   excludedTitles: string[];
   excludedCompanies: string[];
   excludedLocations: string[];
-  /** Minimum salary (USD), plain number string — applied as `salaryMin` when parseable. */
+  /** "" = any; preset min USD string (e.g. "80000"); "custom" = use salaryMin/salaryMax inputs. */
+  salaryPreset: string;
+  /** Custom range min (USD/year). */
   salaryMin: string;
+  /** Custom range max (USD/year). */
+  salaryMax: string;
   /** Ingest enum; sidebar stores 0 or 1 bucket via single select. */
   experienceBuckets: string[];
   /** IC vs manager track; sidebar stores 0 or 1 via single select. */
@@ -62,7 +66,9 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   excludedTitles: [],
   excludedCompanies: [],
   excludedLocations: [],
+  salaryPreset: "",
   salaryMin: "",
+  salaryMax: "",
   experienceBuckets: [],
   roleTracks: [],
   educationLevelMins: [],
@@ -122,6 +128,42 @@ export function postedAtBoundToDateInputValue(raw: string): string {
 }
 
 /** Trim, drop empty, dedupe (preserve order). */
+export function parseSalaryUsdInput(raw: string): number | undefined {
+  const n = Math.floor(Number(String(raw).trim()));
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+/** Resolve salary bounds from preset dropdown and/or custom min/max fields. */
+export function resolveSalaryBoundsFromDraft(draft: HiringSignalFilterDraft): {
+  salaryMin?: number;
+  salaryMax?: number;
+} {
+  const preset = draft.salaryPreset.trim();
+  if (preset === "custom") {
+    return {
+      salaryMin: parseSalaryUsdInput(draft.salaryMin),
+      salaryMax: parseSalaryUsdInput(draft.salaryMax),
+    };
+  }
+  if (preset !== "") {
+    const n = parseSalaryUsdInput(preset);
+    if (n != null) {
+      return { salaryMin: n };
+    }
+  }
+  return {
+    salaryMin: parseSalaryUsdInput(draft.salaryMin),
+    salaryMax: parseSalaryUsdInput(draft.salaryMax),
+  };
+}
+
+export function formatSalaryUsdLabel(n: number): string {
+  if (n >= 1000 && n % 1000 === 0) {
+    return `$${n / 1000}k`;
+  }
+  return `$${n.toLocaleString("en-US")}`;
+}
+
 export function normalizeHiringSignalTokenList(arr: string[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();

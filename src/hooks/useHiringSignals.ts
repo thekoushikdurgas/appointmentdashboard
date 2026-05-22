@@ -239,8 +239,8 @@ export function useHiringSignals(
             },
             body: JSON.stringify({
               sessionId: "73e9c1",
-              runId: "exp-bucket-fix",
-              hypothesisId: "E1,E2",
+              runId: "skills-fix-v2",
+              hypothesisId: "S1,S2,S3",
               location: "useHiringSignals.ts:runLoad",
               message: "hireSignal jobs fetch result",
               data: {
@@ -248,6 +248,14 @@ export function useHiringSignals(
                 companies: snapshot.companies ?? null,
                 locations: snapshot.locations ?? null,
                 experienceBuckets: snapshot.experienceBuckets ?? null,
+                workplaceTypes: snapshot.workplaceTypes ?? null,
+                applyMethod: snapshot.applyMethod ?? null,
+                industries: snapshot.industries ?? null,
+                excludedIndustries: snapshot.excludedIndustries ?? null,
+                educationLevelMins: snapshot.educationLevelMins ?? null,
+                skillsAll: snapshot.skillsAll ?? null,
+                salaryMin: snapshot.salaryMin ?? null,
+                salaryMax: snapshot.salaryMax ?? null,
                 signalTimePreset,
                 postedAfter: snapshot.postedAfter ?? null,
                 postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
@@ -286,6 +294,10 @@ export function useHiringSignals(
               sortKey: snapSortKey,
               sortOrder: snapSortOrder,
             };
+          } else {
+            setJobs([]);
+            setTotal(0);
+            lastSuccessfulJobListSortRef.current = null;
           }
           return;
         }
@@ -353,7 +365,7 @@ export function useHiringSignals(
         }
       }
     },
-    [fetchFullMatchPages],
+    [fetchFullMatchPages, signalTimePreset],
   );
 
   const loadStats = useCallback(async () => {

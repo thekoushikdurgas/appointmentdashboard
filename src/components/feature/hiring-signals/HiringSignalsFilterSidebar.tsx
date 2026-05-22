@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import {
+  formatSalaryUsdLabel,
   normalizeHiringSignalTokenList,
   postedAfterISOFromPreset,
   postedAtBoundToDateInputValue,
+  resolveSalaryBoundsFromDraft,
   type DatePostedPreset,
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
@@ -63,19 +65,9 @@ const EXPERIENCE_BUCKET_OPTIONS = [
   { value: "director_exec", label: "Director / executive" },
 ];
 
-const ROLE_TRACK_OPTIONS = [
-  { value: "ic", label: "Individual contributor" },
-  { value: "manager", label: "Manager / leadership title" },
-];
-
 const EXPERIENCE_BUCKET_SELECT_OPTIONS = [
   { value: "", label: "Any" },
   ...EXPERIENCE_BUCKET_OPTIONS,
-];
-
-const ROLE_TRACK_SELECT_OPTIONS = [
-  { value: "", label: "Any" },
-  ...ROLE_TRACK_OPTIONS,
 ];
 
 const EDUCATION_MIN_OPTIONS = [
@@ -92,7 +84,7 @@ const EDUCATION_MIN_SELECT_OPTIONS = [
   ...EDUCATION_MIN_OPTIONS,
 ];
 
-/** Substring match on job `industries` text (denormalized from ingest). */
+/** Substring match on job `industries` / category topic (denormalized from ingest). */
 const INDUSTRY_FILTER_OPTIONS = [
   { value: "Software", label: "Software" },
   { value: "Technology", label: "Technology" },
@@ -208,6 +200,17 @@ const SKILL_TAG_FILTER_OPTIONS = [
   { value: "tensorflow", label: "TensorFlow" },
   { value: "pytorch", label: "PyTorch" },
   { value: "data science", label: "Data science" },
+];
+
+const SALARY_RANGE_PRESET_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "50000", label: "$50k+" },
+  { value: "80000", label: "$80k+" },
+  { value: "100000", label: "$100k+" },
+  { value: "120000", label: "$120k+" },
+  { value: "150000", label: "$150k+" },
+  { value: "200000", label: "$200k+" },
+  { value: "custom", label: "Custom range…" },
 ];
 
 const SKILL_TAG_ADD_SELECT_OPTIONS = [
@@ -404,14 +407,14 @@ function buildHiringSignalChipBuckets(
     "industries",
     "ind",
     draft.industries,
-    "Industry",
+    "Category",
     "industries",
   );
   addTokenChips(
     "industries",
     "exind",
     draft.excludedIndustries,
-    "Excl. industry",
+    "Excl. category",
     "excludedIndustries",
   );
   addTokenChips(
@@ -420,13 +423,6 @@ function buildHiringSignalChipBuckets(
     draft.experienceBuckets,
     "Experience",
     "experienceBuckets",
-  );
-  addTokenChips(
-    "roleEducation",
-    "rt",
-    draft.roleTracks,
-    "Role track",
-    "roleTracks",
   );
   addTokenChips(
     "roleEducation",
@@ -451,12 +447,25 @@ function buildHiringSignalChipBuckets(
     });
   }
 
-  if (draft.salaryMin.trim()) {
-    add("compensation", {
-      key: "salary",
-      label: `Min salary: $${draft.salaryMin.trim()}`,
-      onRemove: () => onDraftField("salaryMin", ""),
-    });
+  {
+    const { salaryMin, salaryMax } = resolveSalaryBoundsFromDraft(draft);
+    if (salaryMin != null || salaryMax != null) {
+      const label =
+        salaryMin != null && salaryMax != null
+          ? `Salary: ${formatSalaryUsdLabel(salaryMin)} – ${formatSalaryUsdLabel(salaryMax)}`
+          : salaryMin != null
+            ? `Salary: ${formatSalaryUsdLabel(salaryMin)}+`
+            : `Salary: up to ${formatSalaryUsdLabel(salaryMax!)}`;
+      add("compensation", {
+        key: "salary",
+        label,
+        onRemove: () => {
+          onDraftField("salaryPreset", "");
+          onDraftField("salaryMin", "");
+          onDraftField("salaryMax", "");
+        },
+      });
+    }
   }
 
   if (draft.clearanceMode.trim() === "hide") {
@@ -689,12 +698,6 @@ export function HiringSignalsFilterSidebar({
     )
       ? normalizedExperienceBuckets[0]
       : "";
-  const normalizedRoleTracks = normalizeHiringSignalTokenList(draft.roleTracks);
-  const roleTrackSelectValue =
-    normalizedRoleTracks.length === 1 &&
-    ROLE_TRACK_OPTIONS.some((o) => o.value === normalizedRoleTracks[0])
-      ? normalizedRoleTracks[0]
-      : "";
   const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
     draft.educationLevelMins,
   );
@@ -736,12 +739,15 @@ export function HiringSignalsFilterSidebar({
   const exLocCount = normalizeHiringSignalTokenList(
     draft.excludedLocations,
   ).length;
-  const salaryCount = draft.salaryMin.trim() ? 1 : 0;
+  const salaryBounds = resolveSalaryBoundsFromDraft(draft);
+  const salaryCount =
+    draft.salaryPreset.trim() ||
+    salaryBounds.salaryMin != null ||
+    salaryBounds.salaryMax != null
+      ? 1
+      : 0;
   const expBucketCount = normalizeHiringSignalTokenList(
     draft.experienceBuckets,
-  ).length;
-  const roleTrackCount = normalizeHiringSignalTokenList(
-    draft.roleTracks,
   ).length;
   const eduCount = normalizeHiringSignalTokenList(
     draft.educationLevelMins,
@@ -1193,7 +1199,7 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Industries"
+          title="Category (Topic)"
           count={industriesCount + exIndCount}
           defaultOpen={false}
           onClear={() => {
@@ -1203,7 +1209,7 @@ export function HiringSignalsFilterSidebar({
         >
           <HsFilterChipList items={chipBuckets.industries} variant="section" />
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Include industry (substring match)
+            Include category (topic)
           </p>
           <Select
             id="hsf-industry-include"
@@ -1218,7 +1224,7 @@ export function HiringSignalsFilterSidebar({
             className="c360-mb-3"
           />
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Exclude industry
+            Exclude category (topic)
           </p>
           <Select
             id="hsf-industry-exclude"
@@ -1254,32 +1260,16 @@ export function HiringSignalsFilterSidebar({
         </ContactsCollapsibleFilterSection>
 
         <ContactsCollapsibleFilterSection
-          title="Role & education"
-          count={roleTrackCount + eduCount}
+          title="Education"
+          count={eduCount}
           defaultOpen={false}
           onClear={() => {
             onDraftField("educationLevelMins", []);
-            onDraftField("roleTracks", []);
           }}
         >
           <HsFilterChipList
             items={chipBuckets.roleEducation}
             variant="section"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Role track (from title / description)
-          </p>
-          <Select
-            id="hsf-role-track"
-            value={roleTrackSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("roleTracks", v ? [v] : []);
-            }}
-            options={ROLE_TRACK_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
           />
           <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
             Minimum education (job posting mentions)
@@ -1352,27 +1342,73 @@ export function HiringSignalsFilterSidebar({
           title="Compensation"
           count={salaryCount}
           defaultOpen={false}
-          onClear={() => onDraftField("salaryMin", "")}
+          onClear={() => {
+            onDraftField("salaryPreset", "");
+            onDraftField("salaryMin", "");
+            onDraftField("salaryMax", "");
+          }}
         >
           <HsFilterChipList
             items={chipBuckets.compensation}
             variant="section"
           />
-          <label
-            htmlFor="hsf-salary-min"
-            className="c360-block c360-text-2xs c360-text-ink-muted"
-          >
-            Minimum salary (USD / year, ingested jobs only)
-          </label>
-          <Input
-            id="hsf-salary-min"
-            type="number"
-            min={0}
-            value={draft.salaryMin}
-            onChange={(e) => onDraftField("salaryMin", e.target.value)}
-            placeholder="e.g. 120000"
-            autoComplete="off"
+          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+            Salary range (USD / year)
+          </p>
+          <Select
+            id="hsf-salary-preset"
+            value={draft.salaryPreset}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              onDraftField("salaryPreset", v);
+              if (v !== "custom") {
+                onDraftField("salaryMin", "");
+                onDraftField("salaryMax", "");
+              }
+            }}
+            options={SALARY_RANGE_PRESET_OPTIONS}
+            fullWidth
+            inputSize="md"
+            className="c360-mb-3"
           />
+          {draft.salaryPreset === "custom" ? (
+            <>
+              <label
+                htmlFor="hsf-salary-min"
+                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Custom minimum
+              </label>
+              <Input
+                id="hsf-salary-min"
+                type="number"
+                min={0}
+                value={draft.salaryMin}
+                onChange={(e) => onDraftField("salaryMin", e.target.value)}
+                placeholder="e.g. 80000"
+                autoComplete="off"
+                className="c360-mb-3"
+              />
+              <label
+                htmlFor="hsf-salary-max"
+                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Custom maximum (optional)
+              </label>
+              <Input
+                id="hsf-salary-max"
+                type="number"
+                min={0}
+                value={draft.salaryMax}
+                onChange={(e) => onDraftField("salaryMax", e.target.value)}
+                placeholder="e.g. 150000"
+                autoComplete="off"
+              />
+            </>
+          ) : null}
+          <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
+            Matches parsed salary fields and salary text in postings.
+          </p>
         </ContactsCollapsibleFilterSection>
       </div>
     </div>

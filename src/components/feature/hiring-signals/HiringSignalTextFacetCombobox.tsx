@@ -5,6 +5,7 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import type { ContactFilterData } from "@/graphql/generated/types";
 import {
   normalizeHiringSignalTokenList,
+  resolveSalaryBoundsFromDraft,
   type HiringSignalFilterDraft,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { effectivePostedAfter } from "@/hooks/useHiringSignals";
@@ -44,13 +45,7 @@ function buildFacetOptionBase(
   const excludedLocations = normalizeHiringSignalTokenList(
     draft.excludedLocations,
   );
-  const salaryRaw = draft.salaryMin.trim();
-  const salaryParsed =
-    salaryRaw.length > 0 ? Math.floor(Number(salaryRaw)) : NaN;
-  const salaryMin =
-    Number.isFinite(salaryParsed) && salaryParsed > 0
-      ? salaryParsed
-      : undefined;
+  const { salaryMin, salaryMax } = resolveSalaryBoundsFromDraft(draft);
   const experienceBuckets = normalizeHiringSignalTokenList(
     draft.experienceBuckets,
   );
@@ -83,6 +78,7 @@ function buildFacetOptionBase(
     excludedCompanies: excludedCompanies.length ? excludedCompanies : undefined,
     excludedLocations: excludedLocations.length ? excludedLocations : undefined,
     salaryMin,
+    salaryMax,
     experienceBuckets: experienceBuckets.length ? experienceBuckets : undefined,
     roleTracks: roleTracks.length ? roleTracks : undefined,
     educationLevelMins: educationLevelMins.length

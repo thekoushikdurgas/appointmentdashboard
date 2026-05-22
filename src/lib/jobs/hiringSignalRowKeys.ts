@@ -13,7 +13,9 @@ export type HiringSignalRowKeyFields = {
 };
 
 /** Mongo/OpenSearch zero ObjectId placeholders must not be used as stable row keys. */
-export function isPlaceholderDocumentId(id: string | undefined | null): boolean {
+export function isPlaceholderDocumentId(
+  id: string | undefined | null,
+): boolean {
   const s = (id ?? "").trim();
   if (!s) return true;
   const hex = s.replace(/[^a-fA-F0-9]/g, "");
