@@ -293,7 +293,6 @@ export type HsChipBucketKey =
   | "industries"
   | "jobFunction"
   | "compensation"
-  | "country"
   | "roleEducation"
   | "skills"
   | "compliance";
@@ -314,7 +313,6 @@ function emptyHiringSignalChipBuckets(): Record<
     industries: [],
     jobFunction: [],
     compensation: [],
-    country: [],
     roleEducation: [],
     skills: [],
     compliance: [],
@@ -438,7 +436,7 @@ function buildHiringSignalChipBuckets(
     "educationLevelMins",
   );
   addTokenChips("skills", "sk", draft.skillsAll, "Required skill", "skillsAll");
-  addTokenChips("country", "ctry", draft.countries, "Country", "countries");
+  addTokenChips("location", "ctry", draft.countries, "Country", "countries");
 
   if (draft.applyMethod.trim()) {
     add("linkedInApply", {
@@ -910,11 +908,12 @@ export function HiringSignalsFilterSidebar({
 
         <ContactsCollapsibleFilterSection
           title="Location"
-          count={locationValues.length + exLocCount}
+          count={locationValues.length + exLocCount + countryCount}
           defaultOpen
           onClear={() => {
             onDraftField("locations", []);
             onDraftField("excludedLocations", []);
+            onDraftField("countries", []);
           }}
         >
           <div className="c360-space-y-3">
@@ -938,6 +937,22 @@ export function HiringSignalsFilterSidebar({
                 draft.excludedLocations,
               )}
               onSelectionChange={(v) => onDraftField("excludedLocations", v)}
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Country (ISO code)
+            </p>
+            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+              Match jobs whose inferred country overlaps any selected ISO code
+              (OR). Choose a country to add it; remove selections with the chips
+              above. Duplicates are ignored.
+            </p>
+            <Select
+              id="hsf-country-add"
+              value=""
+              onChange={(e) => appendCountryCode(e.target.value)}
+              options={COUNTRY_ADD_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
             />
           </div>
         </ContactsCollapsibleFilterSection>
@@ -1233,30 +1248,6 @@ export function HiringSignalsFilterSidebar({
             value={draft.functionPreset}
             onChange={(e) => onDraftField("functionPreset", e.target.value)}
             options={FUNCTION_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Country"
-          count={countryCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("countries", []);
-          }}
-        >
-          <HsFilterChipList items={chipBuckets.country} variant="section" />
-          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            Match jobs whose inferred country overlaps any selected ISO code
-            (OR). Choose a country to add it; remove selections with the chips
-            above. Duplicates are ignored.
-          </p>
-          <Select
-            id="hsf-country-add"
-            value=""
-            onChange={(e) => appendCountryCode(e.target.value)}
-            options={COUNTRY_ADD_SELECT_OPTIONS}
             fullWidth
             inputSize="md"
           />

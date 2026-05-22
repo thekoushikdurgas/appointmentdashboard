@@ -71,7 +71,7 @@ export function QueueMetricsBar({
       : [];
 
   return (
-    <Card className={cn("c360-p-4", className)}>
+    <Card className={cn("c360-hs-queue-metrics-card c360-p-4", className)}>
       <div className="c360-mb-3 c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
         <span className="c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
           Scraper queue &amp; sessions

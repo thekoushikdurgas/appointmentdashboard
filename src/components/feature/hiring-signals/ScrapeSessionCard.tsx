@@ -82,9 +82,9 @@ export function ScrapeSessionCard({
 
   return (
     <>
-      <Card className="c360-flex c360-h-full c360-flex-col c360-gap-3 c360-p-4">
+      <Card className="c360-hs-scrape-session-card c360-flex c360-h-full c360-flex-col c360-gap-3 c360-p-4">
         <div className="c360-flex c360-flex-wrap c360-items-start c360-justify-between c360-gap-2">
-          <div className="c360-min-w-0 c360-space-y-1">
+          <div className="c360-hs-scrape-session-card__header c360-min-w-0">
             <Tooltip content={id || "—"} placement="top">
               <span className="c360-font-mono c360-text-2xs c360-text-ink">
                 {id.length > 14 ? `${id.slice(0, 14)}…` : id || "—"}
@@ -112,7 +112,7 @@ export function ScrapeSessionCard({
           </div>
         </div>
 
-        <div className="c360-space-y-1 c360-text-2xs c360-text-ink">
+        <div className="c360-hs-scrape-session-card__meta c360-text-2xs c360-text-ink">
           {req.keywords ? (
             <p className="c360-m-0">
               <span className="c360-font-medium">Keywords:</span>{" "}
@@ -157,7 +157,7 @@ export function ScrapeSessionCard({
           </Alert>
         ) : null}
 
-        <div className="c360-mt-auto c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
+        <div className="c360-hs-scrape-session-card__actions c360-mt-auto c360-flex c360-flex-wrap c360-items-center c360-justify-end c360-gap-1">
           {runIdVal ? (
             <Button
               type="button"

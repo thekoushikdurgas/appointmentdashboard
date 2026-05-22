@@ -165,6 +165,10 @@ export function HireSignalFilterProvider({
           location: "HireSignalFilterContext.tsx:applyFilters",
           message: "applied hire signal filters",
           data: {
+            titles,
+            companies,
+            locations,
+            experienceBuckets,
             datePostedPreset: draft.datePostedPreset,
             postedAfter: draft.postedAfter.trim() || null,
             postedBefore: draft.postedBefore.trim() || null,

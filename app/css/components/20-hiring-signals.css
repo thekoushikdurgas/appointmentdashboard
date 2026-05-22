@@ -1012,3 +1012,34 @@
 .c360-hs-data-grid .MuiDataGrid-root {
   min-width: 1080px;
 }
+
+/* Runs tab — queue metrics (overrides kit `.c360-card__body { width: 50% }`) */
+.c360-hs-queue-metrics-card .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Runs tab — tracked scrape session cards */
+.c360-hs-scrape-session-card .c360-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-hs-scrape-session-card .c360-hs-scrape-session-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-hs-scrape-session-card .c360-hs-scrape-session-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.c360-hs-scrape-session-card .c360-hs-scrape-session-card__actions {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}

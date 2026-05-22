@@ -239,11 +239,15 @@ export function useHiringSignals(
             },
             body: JSON.stringify({
               sessionId: "73e9c1",
-              runId: "post-fix-4",
-              hypothesisId: "A,C,D",
+              runId: "exp-bucket-fix",
+              hypothesisId: "E1,E2",
               location: "useHiringSignals.ts:runLoad",
               message: "hireSignal jobs fetch result",
               data: {
+                titles: snapshot.titles ?? null,
+                companies: snapshot.companies ?? null,
+                locations: snapshot.locations ?? null,
+                experienceBuckets: snapshot.experienceBuckets ?? null,
                 signalTimePreset,
                 postedAfter: snapshot.postedAfter ?? null,
                 postedAfterIsRfc3339: /^\d{4}-\d{2}-\d{2}T/.test(
