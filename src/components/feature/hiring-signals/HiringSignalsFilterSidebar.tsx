@@ -495,8 +495,7 @@ function buildHiringSignalChipBuckets(
   for (const key of HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS) {
     const vals = draft.companyFacetValues[key] ?? [];
     const labelPrefix =
-      HIRE_SIGNAL_COMPANY_COHORT_LABELS[key] ??
-      String(key).replace(/_/g, " ");
+      HIRE_SIGNAL_COMPANY_COHORT_LABELS[key] ?? String(key).replace(/_/g, " ");
     vals.forEach((raw, i) => {
       const t = raw.trim();
       if (!t) return;

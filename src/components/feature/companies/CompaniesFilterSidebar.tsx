@@ -33,6 +33,7 @@ export interface CompaniesFilterSidebarProps {
   sortBy: string;
   onSortChange: (value: string) => void;
   filterSections: CompanyFilterSection[];
+  filtersLoading?: boolean;
   facetValues: Record<string, string[]>;
   onFacetChange: (key: string, values: string[]) => void;
   onSectionExpand: (key: string) => void;
@@ -62,6 +63,7 @@ export function CompaniesFilterSidebar({
   sortBy,
   onSortChange,
   filterSections,
+  filtersLoading = false,
   facetValues,
   onFacetChange,
   onSectionExpand,
@@ -286,6 +288,17 @@ export function CompaniesFilterSidebar({
       >
         <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
       </ContactsCollapsibleFilterSection>
+
+      {filtersLoading ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+          Loading filter definitions…
+        </p>
+      ) : null}
+      {!filtersLoading && filterSections.length === 0 ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+          No company filters available. Use refresh above or check Connectra.
+        </p>
+      ) : null}
 
       {onViewModeChange ? (
         <ContactsCollapsibleFilterSection

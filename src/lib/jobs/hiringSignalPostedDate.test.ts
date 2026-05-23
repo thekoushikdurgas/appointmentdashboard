@@ -14,9 +14,7 @@ describe("isHireSignalPostedDateOnly", () => {
   });
 
   it("does not treat real timestamps as date-only", () => {
-    expect(
-      isHireSignalPostedDateOnly("2026-05-22T14:18:40.294Z"),
-    ).toBe(false);
+    expect(isHireSignalPostedDateOnly("2026-05-22T14:18:40.294Z")).toBe(false);
   });
 });
 

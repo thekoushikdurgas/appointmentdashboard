@@ -993,17 +993,14 @@ export function parseResolveCompanyCohortPayload(
 ): HireSignalCompanyCohortResolvePayload {
   const r = asRecord(raw);
   const uuids = Array.isArray(r?.uuids)
-    ? (r.uuids as unknown[])
-        .map((x) => String(x).trim())
-        .filter(Boolean)
+    ? (r.uuids as unknown[]).map((x) => String(x).trim()).filter(Boolean)
     : [];
   const excludedUuids = Array.isArray(r?.excludedUuids)
     ? (r.excludedUuids as unknown[])
         .map((x) => String(x).trim())
         .filter(Boolean)
     : [];
-  const total =
-    typeof r?.total === "number" ? r.total : uuids.length;
+  const total = typeof r?.total === "number" ? r.total : uuids.length;
   return {
     uuids,
     excludedUuids,

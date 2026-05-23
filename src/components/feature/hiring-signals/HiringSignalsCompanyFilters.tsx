@@ -270,7 +270,9 @@ export function HiringSignalsCompanyFilters({
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
             label="Include revenue"
-            selectedValues={normalizeHiringSignalTokenList(draft.companyRevenue)}
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.companyRevenue,
+            )}
             onSelectionChange={(v) => onDraftField("companyRevenue", v)}
           />
           <HiringSignalCompanyRevenueFacetCombobox

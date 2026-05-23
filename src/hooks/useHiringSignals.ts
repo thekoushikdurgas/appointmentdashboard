@@ -272,33 +272,36 @@ export function useHiringSignals(
           draftForCohort,
         );
         // #region agent log
-        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "7dc299",
-          },
-          body: JSON.stringify({
-            sessionId: "7dc299",
-            runId: "post-fix",
-            hypothesisId: "H5",
-            location: "useHiringSignals.ts:jobFetch",
-            message: "firmographic from draft (snapshot cleared first)",
-            data: {
-              draftEmployeeSizes: draftForCohort.companyEmployeeSizes,
-              draftEmployeeSizeCount:
-                draftForCohort.companyEmployeeSizes?.length ?? 0,
-              draftIndustries: draftForCohort.companyIndustries,
-              draftIndustryCount:
-                draftForCohort.companyIndustries?.length ?? 0,
-              fetchEmployeeSizes: fetchSnapshot.companyEmployeeSizes,
-              fetchIndustries: fetchSnapshot.companyIndustries,
-              fetchIndustryCount:
-                fetchSnapshot.companyIndustries?.length ?? 0,
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "7dc299",
             },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
+            body: JSON.stringify({
+              sessionId: "7dc299",
+              runId: "post-fix",
+              hypothesisId: "H5",
+              location: "useHiringSignals.ts:jobFetch",
+              message: "firmographic from draft (snapshot cleared first)",
+              data: {
+                draftEmployeeSizes: draftForCohort.companyEmployeeSizes,
+                draftEmployeeSizeCount:
+                  draftForCohort.companyEmployeeSizes?.length ?? 0,
+                draftIndustries: draftForCohort.companyIndustries,
+                draftIndustryCount:
+                  draftForCohort.companyIndustries?.length ?? 0,
+                fetchEmployeeSizes: fetchSnapshot.companyEmployeeSizes,
+                fetchIndustries: fetchSnapshot.companyIndustries,
+                fetchIndustryCount:
+                  fetchSnapshot.companyIndustries?.length ?? 0,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
         // #endregion
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -341,34 +344,37 @@ export function useHiringSignals(
           return;
         }
         // #region agent log
-        fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "7dc299",
-          },
-          body: JSON.stringify({
-            sessionId: "7dc299",
-            runId: "post-fix",
-            hypothesisId: "H8",
-            location: "useHiringSignals.ts:jobFetchResult",
-            message: "job list total after fetch",
-            data: {
-              listTotal: parsed.total,
-              rowCount: parsed.data.length,
-              fetchSuccess: parsed.success,
-              loadGen: gen,
-              currentGen: hireSignalLoadGenRef.current,
-              loadGenStale: gen !== hireSignalLoadGenRef.current,
-              fetchIndustryCount:
-                fetchSnapshot.companyIndustries?.length ?? 0,
-              fetchIndustries: fetchSnapshot.companyIndustries,
-              fetchEmployeeSizeCount:
-                fetchSnapshot.companyEmployeeSizes?.length ?? 0,
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "7dc299",
             },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
+            body: JSON.stringify({
+              sessionId: "7dc299",
+              runId: "post-fix",
+              hypothesisId: "H8",
+              location: "useHiringSignals.ts:jobFetchResult",
+              message: "job list total after fetch",
+              data: {
+                listTotal: parsed.total,
+                rowCount: parsed.data.length,
+                fetchSuccess: parsed.success,
+                loadGen: gen,
+                currentGen: hireSignalLoadGenRef.current,
+                loadGenStale: gen !== hireSignalLoadGenRef.current,
+                fetchIndustryCount:
+                  fetchSnapshot.companyIndustries?.length ?? 0,
+                fetchIndustries: fetchSnapshot.companyIndustries,
+                fetchEmployeeSizeCount:
+                  fetchSnapshot.companyEmployeeSizes?.length ?? 0,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
         // #endregion
         if (!parsed.success) {
           setError(

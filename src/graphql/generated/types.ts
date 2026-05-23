@@ -1975,6 +1975,7 @@ export type HireSignalQuery = {
   jobs: Scalars["JSON"]["output"];
   listScrapeJobs: Scalars["JSON"]["output"];
   refreshHireSignalRun: Scalars["JSON"]["output"];
+  resolveCompanyCohortUuids: Scalars["JSON"]["output"];
   run: Scalars["JSON"]["output"];
   runs: Scalars["JSON"]["output"];
   scrapeJobJobs: Scalars["JSON"]["output"];
@@ -2082,6 +2083,10 @@ export type HireSignalQueryListScrapeJobsArgs = {
 
 export type HireSignalQueryRefreshHireSignalRunArgs = {
   runId: Scalars["String"]["input"];
+};
+
+export type HireSignalQueryResolveCompanyCohortUuidsArgs = {
+  cohortFilters?: InputMaybe<Scalars["JSON"]["input"]>;
 };
 
 export type HireSignalQueryRunArgs = {

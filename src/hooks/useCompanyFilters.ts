@@ -19,6 +19,38 @@ import {
 export const COMPANY_FILTERS_CACHE_KEY = "c360:company:filters:v1";
 const COMPANY_FILTERS_TTL_MS = 30 * 60 * 1000;
 
+/** Non-empty cache only — empty arrays must not block refetch (failed/empty API responses). */
+function readValidCompanyFiltersCache(): CompanyFilter[] | null {
+  const cached = readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY);
+  if (!cached || !Array.isArray(cached) || cached.length === 0) return null;
+  return cached;
+}
+
+// #region agent log
+function agentLogCompanyFilters(
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+  hypothesisId: string,
+): void {
+  fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "d296a1",
+    },
+    body: JSON.stringify({
+      sessionId: "d296a1",
+      location,
+      message,
+      data,
+      timestamp: Date.now(),
+      hypothesisId,
+    }),
+  }).catch(() => {});
+}
+// #endregion
+
 function companyFilterHasMore(st: CompanyFilterOptionsState): boolean {
   if (st.loading || st.loadingMore) return false;
   return st.canLoadMore;
@@ -47,10 +79,10 @@ export interface UseCompanyFiltersReturn {
 
 export function useCompanyFilters(): UseCompanyFiltersReturn {
   const [filters, setFilters] = useState<CompanyFilter[]>(
-    () => readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY) ?? [],
+    () => readValidCompanyFiltersCache() ?? [],
   );
   const [filtersLoading, setFiltersLoading] = useState(
-    () => readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY) == null,
+    () => readValidCompanyFiltersCache() == null,
   );
 
   const {
@@ -62,7 +94,21 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
   } = useCompanyFilterOptions();
 
   useEffect(() => {
-    const cached = readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY);
+    const rawCached = readTTLCache<CompanyFilter[]>(COMPANY_FILTERS_CACHE_KEY);
+    const cached = readValidCompanyFiltersCache();
+    // #region agent log
+    agentLogCompanyFilters(
+      "useCompanyFilters.ts:useEffect",
+      "company filters mount",
+      {
+        rawCachedIsArray: Array.isArray(rawCached),
+        rawCachedLength: Array.isArray(rawCached) ? rawCached.length : null,
+        validCacheHit: cached != null,
+        validCacheLength: cached?.length ?? 0,
+      },
+      "B",
+    );
+    // #endregion
     if (cached) {
       setFilters(cached);
       setFiltersLoading(false);
@@ -75,15 +121,41 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
       .then((res) => {
         if (!cancelled) {
           const items = res.companies.filters.items;
-          setFilters(items);
-          writeTTLCache(
-            COMPANY_FILTERS_CACHE_KEY,
-            items,
-            COMPANY_FILTERS_TTL_MS,
+          // #region agent log
+          agentLogCompanyFilters(
+            "useCompanyFilters.ts:getFilters.then",
+            "company filters API success",
+            {
+              itemCount: items.length,
+              filterKeys: items.slice(0, 12).map((f) => f.filterKey),
+            },
+            "A",
           );
+          // #endregion
+          setFilters(items);
+          if (items.length > 0) {
+            writeTTLCache(
+              COMPANY_FILTERS_CACHE_KEY,
+              items,
+              COMPANY_FILTERS_TTL_MS,
+            );
+          }
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        // #region agent log
+        agentLogCompanyFilters(
+          "useCompanyFilters.ts:getFilters.catch",
+          "company filters API failed",
+          {
+            error:
+              err instanceof Error
+                ? err.message
+                : String(err ?? "unknown"),
+          },
+          "A",
+        );
+        // #endregion
         if (!cancelled) setFilters([]);
       })
       .finally(() => {
@@ -115,23 +187,34 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
     [setSearch],
   );
 
-  const sections: CompanyFilterSection[] = useMemo(
-    () =>
-      filters.map((f) => {
-        const st = getState(f.filterKey);
-        return {
-          filterKey: f.filterKey,
-          displayName: f.displayName,
-          filterType: f.filterType,
-          options: st.items,
-          loading: st.loading,
-          loadingMore: st.loadingMore,
-          hasMore: companyFilterHasMore(st),
-          searchText: st.searchText,
-        };
-      }),
-    [filters, getState],
-  );
+  const sections: CompanyFilterSection[] = useMemo(() => {
+    const mapped = filters.map((f) => {
+      const st = getState(f.filterKey);
+      return {
+        filterKey: f.filterKey,
+        displayName: f.displayName,
+        filterType: f.filterType,
+        options: st.items,
+        loading: st.loading,
+        loadingMore: st.loadingMore,
+        hasMore: companyFilterHasMore(st),
+        searchText: st.searchText,
+      };
+    });
+    // #region agent log
+    agentLogCompanyFilters(
+      "useCompanyFilters.ts:sections",
+      "company filter sections built",
+      {
+        filtersCount: filters.length,
+        sectionsCount: mapped.length,
+        filtersLoading,
+      },
+      "D",
+    );
+    // #endregion
+    return mapped;
+  }, [filters, getState, filtersLoading]);
 
   const refetchFiltersMetadata = useCallback(async () => {
     clearTTLCache(COMPANY_FILTERS_CACHE_KEY);
@@ -141,7 +224,9 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
       const res = await companiesService.getFilters();
       const items = res.companies.filters.items;
       setFilters(items);
-      writeTTLCache(COMPANY_FILTERS_CACHE_KEY, items, COMPANY_FILTERS_TTL_MS);
+      if (items.length > 0) {
+        writeTTLCache(COMPANY_FILTERS_CACHE_KEY, items, COMPANY_FILTERS_TTL_MS);
+      }
     } catch {
       setFilters([]);
     } finally {

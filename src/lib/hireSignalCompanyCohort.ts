@@ -177,7 +177,8 @@ export function companyCohortIncludeFiltersFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   const parts: VqlFilterInput[] = [];
-  const firmographic = companyCohortIncludeFiltersExcludingNamesFromDraft(draft);
+  const firmographic =
+    companyCohortIncludeFiltersExcludingNamesFromDraft(draft);
   const names = companyNameFilterFromDraft(draft);
   if (firmographic) parts.push(firmographic);
   if (names) parts.push(names);
@@ -292,7 +293,8 @@ export function companyCohortExcludeFiltersFromDraft(
   draft: HiringSignalFilterDraft,
 ): VqlFilterInput | undefined {
   const parts: VqlFilterInput[] = [];
-  const firmographic = companyCohortExcludeFiltersExcludingNamesFromDraft(draft);
+  const firmographic =
+    companyCohortExcludeFiltersExcludingNamesFromDraft(draft);
   const names = companyNameExcludeFilterFromDraft(draft);
   if (firmographic) parts.push(firmographic);
   if (names) parts.push(names);

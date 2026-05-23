@@ -185,51 +185,53 @@ export function HireSignalFilterProvider({
     setFilters((f) =>
       applyFirmographicFiltersFromDraft(
         {
-      ...f,
-      titles: titles.length ? titles : undefined,
-      companies: companies.length ? companies : undefined,
-      locations: locations.length ? locations : undefined,
-      employmentType: undefined,
-      employmentTypes,
-      workplaceTypes: workplaceTypes.length ? workplaceTypes : undefined,
-      industries: industries.length ? industries : undefined,
-      excludedIndustries: excludedIndustries.length
-        ? excludedIndustries
-        : undefined,
-      excludedTitles: excludedTitlesFull.length
-        ? excludedTitlesFull
-        : undefined,
-      excludedCompanies: excludedCompaniesFull.length
-        ? excludedCompaniesFull
-        : undefined,
-      excludedLocations: excludedLocationsFull.length
-        ? excludedLocationsFull
-        : undefined,
-      salaryMin,
-      salaryMax,
-      experienceBuckets: experienceBuckets.length
-        ? experienceBuckets
-        : undefined,
-      roleTracks: roleTracks.length ? roleTracks : undefined,
-      educationLevelMins: educationLevelMins.length
-        ? educationLevelMins
-        : undefined,
-      skillsAll: skillsAll.length ? skillsAll : undefined,
-      clearanceMode: clearanceMode || undefined,
-      h1bOnly: draft.h1bOnly ? true : undefined,
-      countries: countries.length ? countries : undefined,
-      applyMethod: draft.applyMethod.trim() || undefined,
-      seniority:
-        draft.seniorityCustom.trim() ||
-        draft.seniorityPreset.trim() ||
-        undefined,
-      functionCategory:
-        draft.functionCustom.trim() || draft.functionPreset.trim() || undefined,
-      postedAfter: draft.postedAfter.trim() || undefined,
-      postedBefore: draft.postedBefore.trim() || undefined,
-      companyUuids: undefined,
-      excludedCompanyUuids: undefined,
-      offset: 0,
+          ...f,
+          titles: titles.length ? titles : undefined,
+          companies: companies.length ? companies : undefined,
+          locations: locations.length ? locations : undefined,
+          employmentType: undefined,
+          employmentTypes,
+          workplaceTypes: workplaceTypes.length ? workplaceTypes : undefined,
+          industries: industries.length ? industries : undefined,
+          excludedIndustries: excludedIndustries.length
+            ? excludedIndustries
+            : undefined,
+          excludedTitles: excludedTitlesFull.length
+            ? excludedTitlesFull
+            : undefined,
+          excludedCompanies: excludedCompaniesFull.length
+            ? excludedCompaniesFull
+            : undefined,
+          excludedLocations: excludedLocationsFull.length
+            ? excludedLocationsFull
+            : undefined,
+          salaryMin,
+          salaryMax,
+          experienceBuckets: experienceBuckets.length
+            ? experienceBuckets
+            : undefined,
+          roleTracks: roleTracks.length ? roleTracks : undefined,
+          educationLevelMins: educationLevelMins.length
+            ? educationLevelMins
+            : undefined,
+          skillsAll: skillsAll.length ? skillsAll : undefined,
+          clearanceMode: clearanceMode || undefined,
+          h1bOnly: draft.h1bOnly ? true : undefined,
+          countries: countries.length ? countries : undefined,
+          applyMethod: draft.applyMethod.trim() || undefined,
+          seniority:
+            draft.seniorityCustom.trim() ||
+            draft.seniorityPreset.trim() ||
+            undefined,
+          functionCategory:
+            draft.functionCustom.trim() ||
+            draft.functionPreset.trim() ||
+            undefined,
+          postedAfter: draft.postedAfter.trim() || undefined,
+          postedBefore: draft.postedBefore.trim() || undefined,
+          companyUuids: undefined,
+          excludedCompanyUuids: undefined,
+          offset: 0,
         },
         draft,
       ),

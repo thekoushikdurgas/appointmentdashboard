@@ -113,7 +113,7 @@ function HiringSignalsPageBody({
     companyCohortTruncated,
   } = hiring;
 
-  const { activeDraftCount, draft, resetFilters } = useHireSignalFilter();
+  const { activeDraftCount, resetFilters } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isSuperAdmin } = useRole();
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
