@@ -39,5 +39,11 @@ export function defaultCompanySelectWhenPopulate(): string[] {
     "employees_count",
     "industries",
     "linkedin_url",
+    "city",
+    "country",
+    "state",
+    "technologies",
+    "annual_revenue",
+    "total_funding",
   ];
 }

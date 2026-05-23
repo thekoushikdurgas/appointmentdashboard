@@ -30,15 +30,15 @@ export function getContactsToolbarActiveCount(params: {
   activeTab: string;
   facetValues: Record<string, string[]>;
   excludedFacetValues?: Record<string, string[]>;
-  companyFacetValues?: Record<string, string[]>;
   search: string;
   advancedVqlRuleCount: number;
   sortBy: string;
   hiddenColumnCount: number;
 }): number {
-  const facetActive =
-    countFacetDimensions(params.facetValues, params.excludedFacetValues) +
-    countFacetDimensions(params.companyFacetValues ?? {});
+  const facetActive = countFacetDimensions(
+    params.facetValues,
+    params.excludedFacetValues,
+  );
   let listScope = 0;
   if (params.activeTab === "net_new" || params.activeTab === "do_not_contact") {
     listScope += 1;

@@ -65,17 +65,29 @@ export const COMPANY_RANGE_BUCKETS = COMPANY_MONEY_RANGE_BUCKETS;
 export const COMPANY_ANNUAL_REVENUE_FIELD = "annual_revenue" as const;
 export const COMPANY_TOTAL_FUNDING_FIELD = "total_funding" as const;
 export const COMPANY_EMPLOYEES_COUNT_FIELD = "employees_count" as const;
+export const CONTACT_COMPANY_ANNUAL_REVENUE_FIELD =
+  "company_annual_revenue" as const;
+export const CONTACT_COMPANY_TOTAL_FUNDING_FIELD =
+  "company_total_funding" as const;
+export const CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD =
+  "company_employees_count" as const;
 
 const BUCKETS_BY_FIELD: Record<string, readonly CompanyRangeBucketDef[]> = {
   [COMPANY_ANNUAL_REVENUE_FIELD]: COMPANY_MONEY_RANGE_BUCKETS,
   [COMPANY_TOTAL_FUNDING_FIELD]: COMPANY_MONEY_RANGE_BUCKETS,
   [COMPANY_EMPLOYEES_COUNT_FIELD]: COMPANY_EMPLOYEES_COUNT_BUCKETS,
+  [CONTACT_COMPANY_ANNUAL_REVENUE_FIELD]: COMPANY_MONEY_RANGE_BUCKETS,
+  [CONTACT_COMPANY_TOTAL_FUNDING_FIELD]: COMPANY_MONEY_RANGE_BUCKETS,
+  [CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD]: COMPANY_EMPLOYEES_COUNT_BUCKETS,
 };
 
 export const COMPANY_RANGE_BUCKET_FILTER_KEYS = [
   COMPANY_ANNUAL_REVENUE_FIELD,
   COMPANY_TOTAL_FUNDING_FIELD,
   COMPANY_EMPLOYEES_COUNT_FIELD,
+  CONTACT_COMPANY_ANNUAL_REVENUE_FIELD,
+  CONTACT_COMPANY_TOTAL_FUNDING_FIELD,
+  CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD,
 ] as const;
 
 export type CompanyRangeBucketFilterKey =
@@ -247,9 +259,20 @@ export function companyRangeBucketComboboxLabels(
         exclude: "Exclude total funding",
       };
     case COMPANY_EMPLOYEES_COUNT_FIELD:
+    case CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD:
       return {
         include: "Include employees count",
         exclude: "Exclude employees count",
+      };
+    case CONTACT_COMPANY_ANNUAL_REVENUE_FIELD:
+      return {
+        include: "Include company annual revenue",
+        exclude: "Exclude company annual revenue",
+      };
+    case CONTACT_COMPANY_TOTAL_FUNDING_FIELD:
+      return {
+        include: "Include company total funding",
+        exclude: "Exclude company total funding",
       };
     default:
       return { include: "Include", exclude: "Exclude" };

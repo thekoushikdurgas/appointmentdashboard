@@ -16,7 +16,7 @@ import {
   computeFilterHasMore,
 } from "@/hooks/useFilterOptions";
 
-export const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v2";
+export const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v3";
 const CONTACT_FILTERS_TTL_MS = 30 * 60 * 1000;
 
 /** Non-empty cache only — empty arrays must not block refetch (failed/empty API responses). */

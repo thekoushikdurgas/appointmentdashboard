@@ -20,6 +20,7 @@ const COMPANY_NATIVE_KEY_TO_CONTACT_FIELD: Record<string, string> = {
   website: "company_website",
   address: "company_address",
   name: "company_name",
+  company_name: "company_name",
 };
 
 /**

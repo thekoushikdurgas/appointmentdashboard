@@ -12,11 +12,16 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import { ContactIncludeExcludeFacetFilter } from "@/components/feature/contacts/ContactIncludeExcludeFacetFilter";
+import { CompanyRangeBucketFacetFilter } from "@/components/feature/companies/CompanyRangeBucketFacetFilter";
 import {
   contactFacetComboboxLabels,
   isContactIncludeExcludeFacet,
 } from "@/lib/contactIncludeExcludeFacets";
-import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
+import {
+  companyRangeBucketComboboxLabels,
+  formatCompanyRangeBucketLabel,
+  isCompanyRangeBucketFacet,
+} from "@/lib/companyRangeBuckets";
 import {
   CONTACTS_DT_COLUMN_IDS,
   CONTACTS_DT_COLUMN_LABELS,
@@ -46,12 +51,6 @@ export interface ContactsFilterSidebarProps {
   onLoadMoreFacet: (key: string) => void;
   /** Debounced search within facet options. */
   setFacetSearch: (key: string, text: string) => void;
-  companyFilterSections?: CompanyFilterSection[];
-  companyFacetValues?: Record<string, string[]>;
-  onCompanyFacetChange?: (key: string, values: string[]) => void;
-  onCompanySectionExpand?: (key: string) => void;
-  onLoadMoreCompanyFacet?: (key: string) => void;
-  setCompanyFacetSearch?: (key: string, text: string) => void;
   activeTab: string;
   onActiveTabChange: (tab: string) => void;
   /** Rules from the advanced VQL modal only (not sidebar/tab/facet). */
@@ -95,12 +94,6 @@ export function ContactsFilterSidebar({
   onSectionExpand,
   onLoadMoreFacet,
   setFacetSearch,
-  companyFilterSections = [],
-  companyFacetValues = {},
-  onCompanyFacetChange,
-  onCompanySectionExpand,
-  onLoadMoreCompanyFacet,
-  setCompanyFacetSearch,
   activeTab,
   onActiveTabChange,
   advancedVqlRuleCount,
@@ -122,14 +115,6 @@ export function ContactsFilterSidebar({
   tableDensity = "comfortable",
   onTableDensityChange,
 }: ContactsFilterSidebarProps) {
-  const companyFacetActiveCount = useMemo(
-    () =>
-      Object.values(companyFacetValues).filter(
-        (arr) => Array.isArray(arr) && arr.length > 0,
-      ).length,
-    [companyFacetValues],
-  );
-
   const facetActiveCount = useMemo(() => {
     const keys = new Set([
       ...Object.keys(facetValues),
@@ -141,8 +126,8 @@ export function ContactsFilterSidebar({
       const exc = excludedFacetValues[k]?.length ?? 0;
       if (inc > 0 || exc > 0) n += 1;
     }
-    return n + companyFacetActiveCount;
-  }, [facetValues, excludedFacetValues, companyFacetActiveCount]);
+    return n;
+  }, [facetValues, excludedFacetValues]);
 
   /** Tab + facets (excludes search / VQL) — email status is a facet via ``email_status``. */
   const listScopeCount = useMemo(() => {
@@ -176,18 +161,7 @@ export function ContactsFilterSidebar({
       onFacetChange(s.filterKey, []);
       onExcludedFacetChange?.(s.filterKey, []);
     }
-    if (onCompanyFacetChange) {
-      for (const s of companyFilterSections) {
-        onCompanyFacetChange(s.filterKey, []);
-      }
-    }
-  }, [
-    filterSections,
-    onFacetChange,
-    onExcludedFacetChange,
-    companyFilterSections,
-    onCompanyFacetChange,
-  ]);
+  }, [filterSections, onFacetChange, onExcludedFacetChange]);
 
   const clearAll = useCallback(() => {
     onSearchChange("");
@@ -223,9 +197,12 @@ export function ContactsFilterSidebar({
         const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
         const prefix = isContactIncludeExcludeFacet(key) ? "Include " : "";
+        const valueLabel = isCompanyRangeBucketFacet(key)
+          ? formatCompanyRangeBucketLabel(key, vals[0])
+          : vals[0];
         const summary =
           vals.length === 1
-            ? `${prefix}${label}: ${vals[0]}`
+            ? `${prefix}${label}: ${valueLabel}`
             : `${prefix}${label}: ${vals.length} selected`;
         out.push({
           key: `facet-include-${key}`,
@@ -238,29 +215,17 @@ export function ContactsFilterSidebar({
       if (vals != null && vals.length > 0) {
         const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
+        const valueLabel = isCompanyRangeBucketFacet(key)
+          ? formatCompanyRangeBucketLabel(key, vals[0])
+          : vals[0];
         const summary =
           vals.length === 1
-            ? `Exclude ${label}: ${vals[0]}`
+            ? `Exclude ${label}: ${valueLabel}`
             : `Exclude ${label}: ${vals.length} selected`;
         out.push({
           key: `facet-exclude-${key}`,
           label: summary,
           onRemove: () => onExcludedFacetChange?.(key, []),
-        });
-      }
-    }
-    for (const [key, vals] of Object.entries(companyFacetValues)) {
-      if (vals != null && vals.length > 0 && onCompanyFacetChange) {
-        const section = companyFilterSections.find((s) => s.filterKey === key);
-        const label = section?.displayName ?? key;
-        const summary =
-          vals.length === 1
-            ? `Company · ${label}: ${vals[0]}`
-            : `Company · ${label}: ${vals.length} selected`;
-        out.push({
-          key: `company-facet-${key}`,
-          label: summary,
-          onRemove: () => onCompanyFacetChange(key, []),
         });
       }
     }
@@ -296,8 +261,6 @@ export function ContactsFilterSidebar({
     excludedFacetValues,
     filterSections,
     onExcludedFacetChange,
-    companyFacetValues,
-    companyFilterSections,
     advancedVqlRuleCount,
     sortChipLabel,
     hiddenColumnCount,
@@ -305,7 +268,6 @@ export function ContactsFilterSidebar({
     onSearchChange,
     onActiveTabChange,
     onFacetChange,
-    onCompanyFacetChange,
     onClearVql,
     onSortChange,
     onResetVisibleColumns,
@@ -484,8 +446,47 @@ export function ContactsFilterSidebar({
 
       {filterSections.map((section) => {
         const key = section.filterKey;
+        const useRangeBuckets =
+          isCompanyRangeBucketFacet(key) && onExcludedFacetChange != null;
         const useIncludeExclude =
           isContactIncludeExcludeFacet(key) && onExcludedFacetChange != null;
+
+        if (useRangeBuckets) {
+          const included = facetValues[key] ?? [];
+          const excluded = excludedFacetValues[key] ?? [];
+          const active = included.length + excluded.length;
+          const { include: includeLabel, exclude: excludeLabel } =
+            companyRangeBucketComboboxLabels(key);
+          return (
+            <ContactsCollapsibleFilterSection
+              key={key}
+              title={section.displayName}
+              count={active}
+              defaultOpen={active > 0}
+              onClear={
+                active > 0
+                  ? () => {
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
+                  : undefined
+              }
+            >
+              <CompanyRangeBucketFacetFilter
+                section={section}
+                includeLabel={includeLabel}
+                excludeLabel={excludeLabel}
+                includedValues={included}
+                excludedValues={excluded}
+                onIncludedChange={(next) => onFacetChange(key, next)}
+                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                onSectionExpand={onSectionExpand}
+                onLoadMoreFacet={onLoadMoreFacet}
+                setFacetSearch={setFacetSearch}
+              />
+            </ContactsCollapsibleFilterSection>
+          );
+        }
 
         if (useIncludeExclude) {
           const included = facetValues[key] ?? [];
@@ -550,48 +551,6 @@ export function ContactsFilterSidebar({
           </ContactsCollapsibleFilterSection>
         );
       })}
-
-      {companyFilterSections.length > 0 &&
-      onCompanyFacetChange &&
-      onCompanySectionExpand &&
-      onLoadMoreCompanyFacet &&
-      setCompanyFacetSearch
-        ? companyFilterSections.map((section) => {
-            const vals = companyFacetValues[section.filterKey] ?? [];
-            const has = vals.length > 0;
-            return (
-              <ContactsCollapsibleFilterSection
-                key={`company-facet-${section.filterKey}`}
-                title={`Company · ${section.displayName}`}
-                count={has ? vals.length : 0}
-                defaultOpen={has}
-                onClear={
-                  has
-                    ? () => onCompanyFacetChange(section.filterKey, [])
-                    : undefined
-                }
-              >
-                <FilterCombobox
-                  label={section.displayName}
-                  options={section.options}
-                  selectedValues={vals}
-                  onSelectionChange={(next) =>
-                    onCompanyFacetChange(section.filterKey, next)
-                  }
-                  loading={section.loading}
-                  loadingMore={section.loadingMore}
-                  hasMore={section.hasMore}
-                  onOpen={() => onCompanySectionExpand(section.filterKey)}
-                  onLoadMore={() => onLoadMoreCompanyFacet(section.filterKey)}
-                  searchText={section.searchText}
-                  onSearchChange={(text) =>
-                    setCompanyFacetSearch(section.filterKey, text)
-                  }
-                />
-              </ContactsCollapsibleFilterSection>
-            );
-          })
-        : null}
 
       <ContactsCollapsibleFilterSection
         title="Columns"

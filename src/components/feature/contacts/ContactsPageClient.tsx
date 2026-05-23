@@ -15,7 +15,6 @@ import { CONTACTS_AI_SEARCH_ENABLED } from "@/lib/config";
 import { parseOperationError } from "@/lib/errorParser";
 import { useContacts } from "@/hooks/useContacts";
 import { useContactFilters } from "@/hooks/useContactFilters";
-import { useCompanyFilters } from "@/hooks/useCompanyFilters";
 import { useCountryAggregates } from "@/hooks/useCountryAggregates";
 import { useRole } from "@/context/RoleContext";
 import {
@@ -71,11 +70,11 @@ import {
   contactFacetExcludeDraftCondition,
   contactFacetIncludeDraftCondition,
 } from "@/lib/contactFacetDraftConditions";
-import {
-  contactVqlFieldForCompanyFacetFilterKey,
-  contactVqlFieldForFacetFilterKey,
-} from "@/lib/contactFacetVql";
+import { contactVqlFieldForFacetFilterKey } from "@/lib/contactFacetVql";
+import { contactRangeBucketSidebarItems } from "@/lib/contactFacetRangeDraftConditions";
 import { isContactIncludeExcludeFacet } from "@/lib/contactIncludeExcludeFacets";
+import { mergeLegacyCompanyFacetValues } from "@/lib/contactLegacyCompanyFacets";
+import { isCompanyRangeBucketFacet } from "@/lib/companyRangeBuckets";
 import {
   LEGACY_EMAIL_STATUS_PILL_TO_TOKEN,
   normalizeEmailStatusFilterValues,
@@ -139,19 +138,6 @@ function sidebarFacetCond(
   return { ...c, field, operator: "in_list", value: vals.join(",") };
 }
 
-/** Company-service facet → contact index field (see `contactVqlFieldForCompanyFacetFilterKey`). */
-function sidebarCompanyFacetCond(
-  key: string,
-  values: string[],
-): DraftCondition | null {
-  const trimmed = values.map((v) => String(v).trim()).filter(Boolean);
-  if (trimmed.length === 0) return null;
-  const field = contactVqlFieldForCompanyFacetFilterKey(key);
-  if (trimmed.length === 1) return sidebarCond(field, "eq", trimmed[0]);
-  const c = emptyDraftCondition();
-  return { ...c, field, operator: "in_list", value: trimmed.join(",") };
-}
-
 const VISIBLE_COLUMNS_STORAGE_KEY = "c360:contacts:visibleColumns:v1";
 
 function loadVisibleColumns(): ContactsDataTableColumnId[] {
@@ -213,9 +199,6 @@ export default function ContactsPageClient() {
   const [excludedFacetValues, setExcludedFacetValues] = useState<
     Record<string, string[]>
   >({});
-  const [companyFacetValues, setCompanyFacetValues] = useState<
-    Record<string, string[]>
-  >({});
   const {
     sections: filterSections,
     filtersLoading,
@@ -226,28 +209,6 @@ export default function ContactsPageClient() {
     refetchFiltersMetadata,
   } = useContactFilters();
 
-  const {
-    sections: companyFilterSectionsRaw,
-    loadFilterData: loadCompanyFilterData,
-    loadMoreFilterData: loadMoreCompanyFilterData,
-    setFilterSearch: setCompanyFacetSearch,
-    refetchFiltersMetadata: refetchCompanyFiltersMetadata,
-  } = useCompanyFilters();
-
-  const contactFacetKeySet = useMemo(
-    () => new Set(filterSections.map((s) => s.filterKey)),
-    [filterSections],
-  );
-
-  /** Company facets that are not already exposed as contact facets (same `filterKey`). */
-  const companyFilterSections = useMemo(
-    () =>
-      companyFilterSectionsRaw.filter(
-        (s) => !contactFacetKeySet.has(s.filterKey),
-      ),
-    [companyFilterSectionsRaw, contactFacetKeySet],
-  );
-
   const handleFacetChange = useCallback((key: string, values: string[]) => {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
   }, []);
@@ -255,13 +216,6 @@ export default function ContactsPageClient() {
   const handleExcludedFacetChange = useCallback(
     (key: string, values: string[]) => {
       setExcludedFacetValues((prev) => ({ ...prev, [key]: values }));
-    },
-    [],
-  );
-
-  const handleCompanyFacetChange = useCallback(
-    (key: string, values: string[]) => {
-      setCompanyFacetValues((prev) => ({ ...prev, [key]: values }));
     },
     [],
   );
@@ -353,7 +307,7 @@ export default function ContactsPageClient() {
     setExpandedRow((prev) => (prev === id ? null : id));
 
   const applyFilters = useCallback(() => {
-    const sidebar: DraftCondition[] = [];
+    const sidebar: Array<DraftCondition | DraftGroup> = [];
     if (activeTab === "net_new") {
       const d = new Date();
       d.setDate(d.getDate() - 7);
@@ -371,6 +325,16 @@ export default function ContactsPageClient() {
     for (const key of facetKeys) {
       const meta = filterSections.find((s) => s.filterKey === key);
       const displayName = meta?.displayName;
+      if (isCompanyRangeBucketFacet(key)) {
+        sidebar.push(
+          ...contactRangeBucketSidebarItems(
+            key,
+            facetValues[key] ?? [],
+            excludedFacetValues[key] ?? [],
+          ),
+        );
+        continue;
+      }
       if (isContactIncludeExcludeFacet(key)) {
         const inc = contactFacetIncludeDraftCondition(
           key,
@@ -390,11 +354,6 @@ export default function ContactsPageClient() {
         const cond = sidebarFacetCond(key, vals, displayName);
         if (cond) sidebar.push(cond);
       }
-    }
-    for (const [key, vals] of Object.entries(companyFacetValues)) {
-      if (!vals?.length) continue;
-      const cond = sidebarCompanyFacetCond(key, vals);
-      if (cond) sidebar.push(cond);
     }
     const rootItems: Array<DraftCondition | DraftGroup> = [...sidebar];
     if (
@@ -432,7 +391,6 @@ export default function ContactsPageClient() {
     activeTab,
     facetValues,
     excludedFacetValues,
-    companyFacetValues,
     filterSections,
     advancedListDraft,
     visibleColumns,
@@ -455,7 +413,6 @@ export default function ContactsPageClient() {
         activeTab,
         facetValues,
         excludedFacetValues,
-        companyFacetValues,
         search,
         advancedVqlRuleCount,
         sortBy,
@@ -465,7 +422,6 @@ export default function ContactsPageClient() {
       activeTab,
       facetValues,
       excludedFacetValues,
-      companyFacetValues,
       search,
       advancedVqlRuleCount,
       sortBy,
@@ -476,14 +432,11 @@ export default function ContactsPageClient() {
   const handleRefreshFilters = useCallback(async () => {
     setFiltersRefreshing(true);
     try {
-      await Promise.all([
-        refetchFiltersMetadata(),
-        refetchCompanyFiltersMetadata(),
-      ]);
+      await refetchFiltersMetadata();
     } finally {
       setFiltersRefreshing(false);
     }
-  }, [refetchFiltersMetadata, refetchCompanyFiltersMetadata]);
+  }, [refetchFiltersMetadata]);
 
   const getContactSavedPayload = useCallback((): ContactSavedSearchPayload => {
     return {
@@ -496,7 +449,6 @@ export default function ContactsPageClient() {
       activeTab,
       facetValues: { ...facetValues },
       excludedFacetValues: { ...excludedFacetValues },
-      companyFacetValues: { ...companyFacetValues },
       advancedListDraft: advancedListDraft
         ? structuredClone(advancedListDraft)
         : null,
@@ -509,7 +461,6 @@ export default function ContactsPageClient() {
     activeTab,
     facetValues,
     excludedFacetValues,
-    companyFacetValues,
     advancedListDraft,
   ]);
 
@@ -519,7 +470,7 @@ export default function ContactsPageClient() {
         setSearch(p.search);
         setSortBy(p.sortBy);
         setActiveTab(p.activeTab);
-        const mergedFacets = { ...p.facetValues };
+        let mergedFacets = { ...p.facetValues };
         const legacySf = p.statusFilter;
         if (
           legacySf &&
@@ -531,9 +482,12 @@ export default function ContactsPageClient() {
             LEGACY_EMAIL_STATUS_PILL_TO_TOKEN[legacySf],
           ];
         }
+        mergedFacets = mergeLegacyCompanyFacetValues(
+          mergedFacets,
+          p.companyFacetValues,
+        );
         setFacetValues(mergedFacets);
         setExcludedFacetValues({ ...(p.excludedFacetValues ?? {}) });
-        setCompanyFacetValues({ ...(p.companyFacetValues ?? {}) });
         setAdvancedListDraft(
           p.advancedListDraft ? structuredClone(p.advancedListDraft) : null,
         );
@@ -551,7 +505,6 @@ export default function ContactsPageClient() {
       setSortBy,
       setActiveTab,
       setFacetValues,
-      setCompanyFacetValues,
       setAdvancedListDraft,
     ],
   );
@@ -636,12 +589,6 @@ export default function ContactsPageClient() {
           onSectionExpand={loadFilterData}
           onLoadMoreFacet={loadMoreFilterData}
           setFacetSearch={setFilterSearch}
-          companyFilterSections={companyFilterSections}
-          companyFacetValues={companyFacetValues}
-          onCompanyFacetChange={handleCompanyFacetChange}
-          onCompanySectionExpand={loadCompanyFilterData}
-          onLoadMoreCompanyFacet={loadMoreCompanyFilterData}
-          setCompanyFacetSearch={setCompanyFacetSearch}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
           advancedVqlRuleCount={advancedVqlRuleCount}
@@ -677,10 +624,7 @@ export default function ContactsPageClient() {
       filtersError,
       facetValues,
       excludedFacetValues,
-      companyFilterSections,
-      companyFacetValues,
       loadFilterData,
-      loadCompanyFilterData,
       activeTab,
       advancedVqlRuleCount,
       visibleColumns,
@@ -696,11 +640,8 @@ export default function ContactsPageClient() {
       aiSearching,
       handleFacetChange,
       handleExcludedFacetChange,
-      handleCompanyFacetChange,
       loadMoreFilterData,
-      loadMoreCompanyFilterData,
       setFilterSearch,
-      setCompanyFacetSearch,
       tableDensity,
       setTableDensity,
     ],
