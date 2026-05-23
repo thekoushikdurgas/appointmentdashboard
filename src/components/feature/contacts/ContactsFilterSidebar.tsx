@@ -10,8 +10,12 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import { EMAIL_STATUS_STATIC_FACET_OPTIONS } from "@/lib/contactEmailStatus";
 import type { FilterSection } from "@/hooks/useContactFilters";
+import { ContactIncludeExcludeFacetFilter } from "@/components/feature/contacts/ContactIncludeExcludeFacetFilter";
+import {
+  contactFacetComboboxLabels,
+  isContactIncludeExcludeFacet,
+} from "@/lib/contactIncludeExcludeFacets";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 import {
   CONTACTS_DT_COLUMN_IDS,
@@ -30,8 +34,12 @@ export interface ContactsFilterSidebarProps {
   sortBy: string;
   onSortChange: (value: string) => void;
   filterSections: FilterSection[];
+  filtersLoading?: boolean;
+  filtersError?: string | null;
   facetValues: Record<string, string[]>;
+  excludedFacetValues?: Record<string, string[]>;
   onFacetChange: (key: string, values: string[]) => void;
+  onExcludedFacetChange?: (key: string, values: string[]) => void;
   /** Load first page of options when a facet combobox opens. */
   onSectionExpand: (key: string) => void;
   /** Append next page when the facet list is scrolled to the end. */
@@ -78,8 +86,12 @@ export function ContactsFilterSidebar({
   sortBy,
   onSortChange,
   filterSections,
+  filtersLoading = false,
+  filtersError = null,
   facetValues,
+  excludedFacetValues = {},
   onFacetChange,
+  onExcludedFacetChange,
   onSectionExpand,
   onLoadMoreFacet,
   setFacetSearch,
@@ -110,26 +122,6 @@ export function ContactsFilterSidebar({
   tableDensity = "comfortable",
   onTableDensityChange,
 }: ContactsFilterSidebarProps) {
-  const facetSectionsWithoutEmailStatus = useMemo(
-    () => filterSections.filter((s) => s.filterKey !== "email_status"),
-    [filterSections],
-  );
-
-  const emailStatusFacetSection = useMemo((): FilterSection => {
-    const fromApi = filterSections.find((s) => s.filterKey === "email_status");
-    if (fromApi) return fromApi;
-    return {
-      filterKey: "email_status",
-      displayName: "Email status",
-      filterType: "keyword",
-      options: EMAIL_STATUS_STATIC_FACET_OPTIONS,
-      loading: false,
-      loadingMore: false,
-      hasMore: false,
-      searchText: "",
-    };
-  }, [filterSections]);
-
   const companyFacetActiveCount = useMemo(
     () =>
       Object.values(companyFacetValues).filter(
@@ -138,13 +130,19 @@ export function ContactsFilterSidebar({
     [companyFacetValues],
   );
 
-  const facetActiveCount = useMemo(
-    () =>
-      Object.values(facetValues).filter(
-        (arr) => Array.isArray(arr) && arr.length > 0,
-      ).length + companyFacetActiveCount,
-    [facetValues, companyFacetActiveCount],
-  );
+  const facetActiveCount = useMemo(() => {
+    const keys = new Set([
+      ...Object.keys(facetValues),
+      ...Object.keys(excludedFacetValues),
+    ]);
+    let n = 0;
+    for (const k of keys) {
+      const inc = facetValues[k]?.length ?? 0;
+      const exc = excludedFacetValues[k]?.length ?? 0;
+      if (inc > 0 || exc > 0) n += 1;
+    }
+    return n + companyFacetActiveCount;
+  }, [facetValues, excludedFacetValues, companyFacetActiveCount]);
 
   /** Tab + facets (excludes search / VQL) — email status is a facet via ``email_status``. */
   const listScopeCount = useMemo(() => {
@@ -176,9 +174,7 @@ export function ContactsFilterSidebar({
   const clearFacets = useCallback(() => {
     for (const s of filterSections) {
       onFacetChange(s.filterKey, []);
-    }
-    if (!filterSections.some((s) => s.filterKey === "email_status")) {
-      onFacetChange("email_status", []);
+      onExcludedFacetChange?.(s.filterKey, []);
     }
     if (onCompanyFacetChange) {
       for (const s of companyFilterSections) {
@@ -188,6 +184,7 @@ export function ContactsFilterSidebar({
   }, [
     filterSections,
     onFacetChange,
+    onExcludedFacetChange,
     companyFilterSections,
     onCompanyFacetChange,
   ]);
@@ -223,18 +220,32 @@ export function ContactsFilterSidebar({
     }
     for (const [key, vals] of Object.entries(facetValues)) {
       if (vals != null && vals.length > 0) {
-        const section =
-          filterSections.find((s) => s.filterKey === key) ??
-          (key === "email_status" ? emailStatusFacetSection : undefined);
+        const section = filterSections.find((s) => s.filterKey === key);
+        const label = section?.displayName ?? key;
+        const prefix = isContactIncludeExcludeFacet(key) ? "Include " : "";
+        const summary =
+          vals.length === 1
+            ? `${prefix}${label}: ${vals[0]}`
+            : `${prefix}${label}: ${vals.length} selected`;
+        out.push({
+          key: `facet-include-${key}`,
+          label: summary,
+          onRemove: () => onFacetChange(key, []),
+        });
+      }
+    }
+    for (const [key, vals] of Object.entries(excludedFacetValues)) {
+      if (vals != null && vals.length > 0) {
+        const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
         const summary =
           vals.length === 1
-            ? `${label}: ${vals[0]}`
-            : `${label}: ${vals.length} selected`;
+            ? `Exclude ${label}: ${vals[0]}`
+            : `Exclude ${label}: ${vals.length} selected`;
         out.push({
-          key: `facet-${key}`,
+          key: `facet-exclude-${key}`,
           label: summary,
-          onRemove: () => onFacetChange(key, []),
+          onRemove: () => onExcludedFacetChange?.(key, []),
         });
       }
     }
@@ -282,8 +293,9 @@ export function ContactsFilterSidebar({
     search,
     activeTab,
     facetValues,
+    excludedFacetValues,
     filterSections,
-    emailStatusFacetSection,
+    onExcludedFacetChange,
     companyFacetValues,
     companyFilterSections,
     advancedVqlRuleCount,
@@ -426,51 +438,6 @@ export function ContactsFilterSidebar({
       ) : null}
 
       <ContactsCollapsibleFilterSection
-        title="Email status"
-        count={
-          (facetValues.email_status?.length ?? 0) > 0
-            ? facetValues.email_status!.length
-            : 0
-        }
-        defaultOpen
-        onClear={
-          (facetValues.email_status?.length ?? 0) > 0
-            ? () => onFacetChange("email_status", [])
-            : undefined
-        }
-      >
-        <FilterCombobox
-          label={emailStatusFacetSection.displayName}
-          options={emailStatusFacetSection.options}
-          selectedValues={facetValues.email_status ?? []}
-          onSelectionChange={(next) => onFacetChange("email_status", next)}
-          loading={emailStatusFacetSection.loading}
-          loadingMore={emailStatusFacetSection.loadingMore}
-          hasMore={
-            filterSections.some((s) => s.filterKey === "email_status")
-              ? emailStatusFacetSection.hasMore
-              : false
-          }
-          onOpen={
-            filterSections.some((s) => s.filterKey === "email_status")
-              ? () => onSectionExpand("email_status")
-              : () => {}
-          }
-          onLoadMore={
-            filterSections.some((s) => s.filterKey === "email_status")
-              ? () => onLoadMoreFacet("email_status")
-              : () => {}
-          }
-          searchText={emailStatusFacetSection.searchText}
-          onSearchChange={
-            filterSections.some((s) => s.filterKey === "email_status")
-              ? (text) => setFacetSearch("email_status", text)
-              : () => {}
-          }
-        />
-      </ContactsCollapsibleFilterSection>
-
-      <ContactsCollapsibleFilterSection
         title="Sort"
         count={sortActiveCount}
         defaultOpen
@@ -499,33 +466,86 @@ export function ContactsFilterSidebar({
         </ContactsCollapsibleFilterSection>
       ) : null}
 
-      {facetSectionsWithoutEmailStatus.map((section) => {
-        const vals = facetValues[section.filterKey] ?? [];
+      {filtersLoading ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+          Loading filter definitions…
+        </p>
+      ) : null}
+      {filtersError ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-danger">
+          Could not load filters: {filtersError}
+        </p>
+      ) : null}
+      {!filtersLoading && !filtersError && filterSections.length === 0 ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+          No contact filters available. Use refresh above or check the API.
+        </p>
+      ) : null}
+
+      {filterSections.map((section) => {
+        const key = section.filterKey;
+        const useIncludeExclude =
+          isContactIncludeExcludeFacet(key) && onExcludedFacetChange != null;
+
+        if (useIncludeExclude) {
+          const included = facetValues[key] ?? [];
+          const excluded = excludedFacetValues[key] ?? [];
+          const active = included.length + excluded.length;
+          const { include: includeLabel, exclude: excludeLabel } =
+            contactFacetComboboxLabels(key, section.displayName);
+          return (
+            <ContactsCollapsibleFilterSection
+              key={key}
+              title={section.displayName}
+              count={active}
+              defaultOpen={active > 0}
+              onClear={
+                active > 0
+                  ? () => {
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
+                  : undefined
+              }
+            >
+              <ContactIncludeExcludeFacetFilter
+                section={section}
+                includeLabel={includeLabel}
+                excludeLabel={excludeLabel}
+                includedValues={included}
+                excludedValues={excluded}
+                onIncludedChange={(next) => onFacetChange(key, next)}
+                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                onSectionExpand={onSectionExpand}
+                onLoadMoreFacet={onLoadMoreFacet}
+                setFacetSearch={setFacetSearch}
+              />
+            </ContactsCollapsibleFilterSection>
+          );
+        }
+
+        const vals = facetValues[key] ?? [];
         const has = vals.length > 0;
         return (
           <ContactsCollapsibleFilterSection
-            key={section.filterKey}
+            key={key}
             title={section.displayName}
             count={has ? vals.length : 0}
             defaultOpen={has}
-            onClear={
-              has ? () => onFacetChange(section.filterKey, []) : undefined
-            }
+            onClear={has ? () => onFacetChange(key, []) : undefined}
           >
             <FilterCombobox
               label={section.displayName}
               options={section.options}
               selectedValues={vals}
-              onSelectionChange={(next) =>
-                onFacetChange(section.filterKey, next)
-              }
+              onSelectionChange={(next) => onFacetChange(key, next)}
               loading={section.loading}
               loadingMore={section.loadingMore}
               hasMore={section.hasMore}
-              onOpen={() => onSectionExpand(section.filterKey)}
-              onLoadMore={() => onLoadMoreFacet(section.filterKey)}
+              onOpen={() => onSectionExpand(key)}
+              onLoadMore={() => onLoadMoreFacet(key)}
               searchText={section.searchText}
-              onSearchChange={(text) => setFacetSearch(section.filterKey, text)}
+              onSearchChange={(text) => setFacetSearch(key, text)}
             />
           </ContactsCollapsibleFilterSection>
         );

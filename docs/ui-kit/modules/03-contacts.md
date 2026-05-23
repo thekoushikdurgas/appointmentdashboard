@@ -117,7 +117,7 @@ Use the kit as **layout/pattern** reference with **`--c360-*`**:
 ### Phase C — Hooks and state
 
 - [x] **`useContacts`** — **`exportVql`** for export jobs (wide `limit`, `offset: 0`).
-- [ ] **Facet hook** — Optional **`useContactFilters`** wrapping **`getFilters` + `filterData`** with cache _(planned)_.
+- [x] **Facet hook** — **`useContactFilters`**: static metadata from API; **`filterData`** from **`contacts_index`** (Connectra terms agg + counts).
 - [ ] **Bulk create** — Wire selection to **`batchCreate`** or repeated **`create`** _(product)_.
 
 ### Phase D — UI/UX (kit-aligned)
@@ -125,7 +125,7 @@ Use the kit as **layout/pattern** reference with **`--c360-*`**:
 - [x] **Export** — Modal + job polling + **`Progress`**.
 - [x] **Bulk delete** — Wired to API.
 - [ ] **Import (SuperAdmin)** — Modal for **`CreateContact360ImportInput`** (`s3Bucket`, `s3Key`, …) _(planned)_.
-- [ ] **Filter sidebar from `filters` / `filterData`** — Replace static **`FILTER_SECTIONS`** where product-ready _(planned)_.
+- [x] **Filter sidebar from `filters` / `filterData`** — Dynamic facets via **`ContactsFilterSidebar`** + **`useContactFilters`** (no **`connectra_filters`** index).
 - [ ] **`/contacts/[uuid]`** — Deep link detail _(planned)_.
 - [ ] **Accessibility** — Table/selection/modal audit _(incremental)_.
 

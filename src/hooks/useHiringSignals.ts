@@ -304,7 +304,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -377,7 +377,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         if (!parsed.success) {
           setError(
@@ -456,7 +456,8 @@ export function useHiringSignals(
         const currentDraft =
           cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
         if (
-          hireSignalFirmographicDraftKey(currentDraft) !== firmographicKeyAtFetch
+          hireSignalFirmographicDraftKey(currentDraft) !==
+          firmographicKeyAtFetch
         ) {
           return;
         }

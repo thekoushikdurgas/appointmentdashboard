@@ -68,9 +68,14 @@ import type { VqlQueryInput } from "@/graphql/generated/types";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
 import {
+  contactFacetExcludeDraftCondition,
+  contactFacetIncludeDraftCondition,
+} from "@/lib/contactFacetDraftConditions";
+import {
   contactVqlFieldForCompanyFacetFilterKey,
   contactVqlFieldForFacetFilterKey,
 } from "@/lib/contactFacetVql";
+import { isContactIncludeExcludeFacet } from "@/lib/contactIncludeExcludeFacets";
 import {
   LEGACY_EMAIL_STATUS_PILL_TO_TOKEN,
   normalizeEmailStatusFilterValues,
@@ -205,11 +210,16 @@ export default function ContactsPageClient() {
     null,
   );
   const [facetValues, setFacetValues] = useState<Record<string, string[]>>({});
+  const [excludedFacetValues, setExcludedFacetValues] = useState<
+    Record<string, string[]>
+  >({});
   const [companyFacetValues, setCompanyFacetValues] = useState<
     Record<string, string[]>
   >({});
   const {
     sections: filterSections,
+    filtersLoading,
+    filtersError,
     loadFilterData,
     loadMoreFilterData,
     setFilterSearch,
@@ -241,6 +251,13 @@ export default function ContactsPageClient() {
   const handleFacetChange = useCallback((key: string, values: string[]) => {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
   }, []);
+
+  const handleExcludedFacetChange = useCallback(
+    (key: string, values: string[]) => {
+      setExcludedFacetValues((prev) => ({ ...prev, [key]: values }));
+    },
+    [],
+  );
 
   const handleCompanyFacetChange = useCallback(
     (key: string, values: string[]) => {
@@ -347,11 +364,32 @@ export default function ContactsPageClient() {
     if (search.trim()) {
       sidebar.push(sidebarCond("email", "contains", search.trim()));
     }
-    for (const [key, vals] of Object.entries(facetValues)) {
-      if (!vals?.length) continue;
+    const facetKeys = new Set([
+      ...Object.keys(facetValues),
+      ...Object.keys(excludedFacetValues),
+    ]);
+    for (const key of facetKeys) {
       const meta = filterSections.find((s) => s.filterKey === key);
-      const cond = sidebarFacetCond(key, vals, meta?.displayName);
-      if (cond) sidebar.push(cond);
+      const displayName = meta?.displayName;
+      if (isContactIncludeExcludeFacet(key)) {
+        const inc = contactFacetIncludeDraftCondition(
+          key,
+          facetValues[key] ?? [],
+          displayName,
+        );
+        if (inc) sidebar.push(inc);
+        const exc = contactFacetExcludeDraftCondition(
+          key,
+          excludedFacetValues[key] ?? [],
+          displayName,
+        );
+        if (exc) sidebar.push(exc);
+      } else {
+        const vals = facetValues[key];
+        if (!vals?.length) continue;
+        const cond = sidebarFacetCond(key, vals, displayName);
+        if (cond) sidebar.push(cond);
+      }
     }
     for (const [key, vals] of Object.entries(companyFacetValues)) {
       if (!vals?.length) continue;
@@ -393,6 +431,7 @@ export default function ContactsPageClient() {
     sortBy,
     activeTab,
     facetValues,
+    excludedFacetValues,
     companyFacetValues,
     filterSections,
     advancedListDraft,
@@ -415,6 +454,7 @@ export default function ContactsPageClient() {
       getContactsToolbarActiveCount({
         activeTab,
         facetValues,
+        excludedFacetValues,
         companyFacetValues,
         search,
         advancedVqlRuleCount,
@@ -424,6 +464,7 @@ export default function ContactsPageClient() {
     [
       activeTab,
       facetValues,
+      excludedFacetValues,
       companyFacetValues,
       search,
       advancedVqlRuleCount,
@@ -454,6 +495,7 @@ export default function ContactsPageClient() {
       sortBy,
       activeTab,
       facetValues: { ...facetValues },
+      excludedFacetValues: { ...excludedFacetValues },
       companyFacetValues: { ...companyFacetValues },
       advancedListDraft: advancedListDraft
         ? structuredClone(advancedListDraft)
@@ -466,6 +508,7 @@ export default function ContactsPageClient() {
     sortBy,
     activeTab,
     facetValues,
+    excludedFacetValues,
     companyFacetValues,
     advancedListDraft,
   ]);
@@ -489,6 +532,7 @@ export default function ContactsPageClient() {
           ];
         }
         setFacetValues(mergedFacets);
+        setExcludedFacetValues({ ...(p.excludedFacetValues ?? {}) });
         setCompanyFacetValues({ ...(p.companyFacetValues ?? {}) });
         setAdvancedListDraft(
           p.advancedListDraft ? structuredClone(p.advancedListDraft) : null,
@@ -583,8 +627,12 @@ export default function ContactsPageClient() {
           sortBy={sortBy}
           onSortChange={setSortBy}
           filterSections={filterSections}
+          filtersLoading={filtersLoading}
+          filtersError={filtersError}
           facetValues={facetValues}
+          excludedFacetValues={excludedFacetValues}
           onFacetChange={handleFacetChange}
+          onExcludedFacetChange={handleExcludedFacetChange}
           onSectionExpand={loadFilterData}
           onLoadMoreFacet={loadMoreFilterData}
           setFacetSearch={setFilterSearch}
@@ -625,7 +673,10 @@ export default function ContactsPageClient() {
       search,
       sortBy,
       filterSections,
+      filtersLoading,
+      filtersError,
       facetValues,
+      excludedFacetValues,
       companyFilterSections,
       companyFacetValues,
       loadFilterData,
@@ -644,6 +695,7 @@ export default function ContactsPageClient() {
       handleAiSearch,
       aiSearching,
       handleFacetChange,
+      handleExcludedFacetChange,
       handleCompanyFacetChange,
       loadMoreFilterData,
       loadMoreCompanyFilterData,

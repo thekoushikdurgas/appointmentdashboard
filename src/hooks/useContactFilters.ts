@@ -16,8 +16,15 @@ import {
   computeFilterHasMore,
 } from "@/hooks/useFilterOptions";
 
-export const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v1";
+export const CONTACT_FILTERS_CACHE_KEY = "c360:contact:filters:v2";
 const CONTACT_FILTERS_TTL_MS = 30 * 60 * 1000;
+
+/** Non-empty cache only — empty arrays must not block refetch (failed/empty API responses). */
+function readValidContactFiltersCache(): ContactFilter[] | null {
+  const cached = readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY);
+  if (!cached || !Array.isArray(cached) || cached.length === 0) return null;
+  return cached;
+}
 
 export interface FilterSection {
   filterKey: string;
@@ -36,6 +43,8 @@ export interface FilterSection {
 export interface UseContactFiltersReturn {
   filters: ContactFilter[];
   filtersLoading: boolean;
+  /** Set when `getFilters` fails (e.g. API unavailable). */
+  filtersError: string | null;
   sections: FilterSection[];
   /** Load first page of options when the facet opens. */
   loadFilterData: (filterKey: string) => Promise<void>;
@@ -49,11 +58,12 @@ export interface UseContactFiltersReturn {
 
 export function useContactFilters(): UseContactFiltersReturn {
   const [filters, setFilters] = useState<ContactFilter[]>(
-    () => readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY) ?? [],
+    () => readValidContactFiltersCache() ?? [],
   );
   const [filtersLoading, setFiltersLoading] = useState(
-    () => readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY) == null,
+    () => readValidContactFiltersCache() == null,
   );
+  const [filtersError, setFiltersError] = useState<string | null>(null);
 
   const {
     getState,
@@ -64,29 +74,41 @@ export function useContactFilters(): UseContactFiltersReturn {
   } = useFilterOptions();
 
   useEffect(() => {
-    const cached = readTTLCache<ContactFilter[]>(CONTACT_FILTERS_CACHE_KEY);
+    const cached = readValidContactFiltersCache();
     if (cached) {
       setFilters(cached);
       setFiltersLoading(false);
+      setFiltersError(null);
       return;
     }
     let cancelled = false;
     setFiltersLoading(true);
+    setFiltersError(null);
     contactsService
       .getFilters()
       .then((res) => {
         if (!cancelled) {
           const items = res.contacts.filters.items;
           setFilters(items);
-          writeTTLCache(
-            CONTACT_FILTERS_CACHE_KEY,
-            items,
-            CONTACT_FILTERS_TTL_MS,
-          );
+          setFiltersError(null);
+          if (items.length > 0) {
+            writeTTLCache(
+              CONTACT_FILTERS_CACHE_KEY,
+              items,
+              CONTACT_FILTERS_TTL_MS,
+            );
+          }
         }
       })
-      .catch(() => {
-        if (!cancelled) setFilters([]);
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setFilters([]);
+          setFiltersError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load filter definitions",
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setFiltersLoading(false);
@@ -139,13 +161,22 @@ export function useContactFilters(): UseContactFiltersReturn {
     clearTTLCache(CONTACT_FILTERS_CACHE_KEY);
     resetFilterOptions();
     setFiltersLoading(true);
+    setFiltersError(null);
     try {
       const res = await contactsService.getFilters();
       const items = res.contacts.filters.items;
       setFilters(items);
-      writeTTLCache(CONTACT_FILTERS_CACHE_KEY, items, CONTACT_FILTERS_TTL_MS);
-    } catch {
+      setFiltersError(null);
+      if (items.length > 0) {
+        writeTTLCache(CONTACT_FILTERS_CACHE_KEY, items, CONTACT_FILTERS_TTL_MS);
+      }
+    } catch (err: unknown) {
       setFilters([]);
+      setFiltersError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load filter definitions",
+      );
     } finally {
       setFiltersLoading(false);
     }
@@ -154,6 +185,7 @@ export function useContactFilters(): UseContactFiltersReturn {
   return {
     filters,
     filtersLoading,
+    filtersError,
     sections,
     loadFilterData,
     loadMoreFilterData,

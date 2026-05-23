@@ -102,7 +102,9 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
         if (!cancelled) {
           setFilters([]);
           setFiltersError(
-            err instanceof Error ? err.message : "Failed to load filter definitions",
+            err instanceof Error
+              ? err.message
+              : "Failed to load filter definitions",
           );
         }
       })
@@ -168,7 +170,9 @@ export function useCompanyFilters(): UseCompanyFiltersReturn {
     } catch (err: unknown) {
       setFilters([]);
       setFiltersError(
-        err instanceof Error ? err.message : "Failed to load filter definitions",
+        err instanceof Error
+          ? err.message
+          : "Failed to load filter definitions",
       );
     } finally {
       setFiltersLoading(false);

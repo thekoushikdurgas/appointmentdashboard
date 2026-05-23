@@ -11,6 +11,17 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
+import { CompanyIncludeExcludeFacetFilter } from "@/components/feature/companies/CompanyIncludeExcludeFacetFilter";
+import { CompanyRangeBucketFacetFilter } from "@/components/feature/companies/CompanyRangeBucketFacetFilter";
+import {
+  companyFacetComboboxLabels,
+  isCompanyIncludeExcludeFacet,
+} from "@/lib/companyIncludeExcludeFacets";
+import {
+  companyRangeBucketComboboxLabels,
+  formatCompanyRangeBucketLabel,
+  isCompanyRangeBucketFacet,
+} from "@/lib/companyRangeBuckets";
 import {
   COMPANIES_DT_COLUMN_IDS,
   COMPANIES_DT_COLUMN_LABELS,
@@ -36,7 +47,9 @@ export interface CompaniesFilterSidebarProps {
   filtersLoading?: boolean;
   filtersError?: string | null;
   facetValues: Record<string, string[]>;
+  excludedFacetValues?: Record<string, string[]>;
   onFacetChange: (key: string, values: string[]) => void;
+  onExcludedFacetChange?: (key: string, values: string[]) => void;
   onSectionExpand: (key: string) => void;
   onLoadMoreFacet: (key: string) => void;
   setFacetSearch: (key: string, text: string) => void;
@@ -67,7 +80,9 @@ export function CompaniesFilterSidebar({
   filtersLoading = false,
   filtersError = null,
   facetValues,
+  excludedFacetValues = {},
   onFacetChange,
+  onExcludedFacetChange,
   onSectionExpand,
   onLoadMoreFacet,
   setFacetSearch,
@@ -88,13 +103,19 @@ export function CompaniesFilterSidebar({
   tableDensity = "comfortable",
   onTableDensityChange,
 }: CompaniesFilterSidebarProps) {
-  const facetActiveCount = useMemo(
-    () =>
-      Object.values(facetValues).filter(
-        (arr) => Array.isArray(arr) && arr.length > 0,
-      ).length,
-    [facetValues],
-  );
+  const facetActiveCount = useMemo(() => {
+    const keys = new Set([
+      ...Object.keys(facetValues),
+      ...Object.keys(excludedFacetValues),
+    ]);
+    let n = 0;
+    for (const k of keys) {
+      const inc = facetValues[k]?.length ?? 0;
+      const exc = excludedFacetValues[k]?.length ?? 0;
+      if (inc > 0 || exc > 0) n += 1;
+    }
+    return n;
+  }, [facetValues, excludedFacetValues]);
 
   const sortActiveCount = sortBy !== "newest" ? 1 : 0;
   const columnChipActive = hiddenColumnCount > 0 ? 1 : 0;
@@ -117,8 +138,9 @@ export function CompaniesFilterSidebar({
   const clearFacets = useCallback(() => {
     for (const s of filterSections) {
       onFacetChange(s.filterKey, []);
+      onExcludedFacetChange?.(s.filterKey, []);
     }
-  }, [filterSections, onFacetChange]);
+  }, [filterSections, onFacetChange, onExcludedFacetChange]);
 
   const clearAll = useCallback(() => {
     onSearchChange("");
@@ -140,14 +162,41 @@ export function CompaniesFilterSidebar({
       if (vals != null && vals.length > 0) {
         const section = filterSections.find((s) => s.filterKey === key);
         const label = section?.displayName ?? key;
+        const prefix =
+          isCompanyIncludeExcludeFacet(key) || isCompanyRangeBucketFacet(key)
+            ? "Include "
+            : "";
         const summary =
           vals.length === 1
-            ? `${label}: ${vals[0]}`
-            : `${label}: ${vals.length} selected`;
+            ? `${prefix}${label}: ${
+                isCompanyRangeBucketFacet(key)
+                  ? formatCompanyRangeBucketLabel(key, vals[0])
+                  : vals[0]
+              }`
+            : `${prefix}${label}: ${vals.length} selected`;
         out.push({
-          key: `facet-${key}`,
+          key: `facet-include-${key}`,
           label: summary,
           onRemove: () => onFacetChange(key, []),
+        });
+      }
+    }
+    for (const [key, vals] of Object.entries(excludedFacetValues)) {
+      if (vals != null && vals.length > 0) {
+        const section = filterSections.find((s) => s.filterKey === key);
+        const label = section?.displayName ?? key;
+        const summary =
+          vals.length === 1
+            ? `Exclude ${label}: ${
+                isCompanyRangeBucketFacet(key)
+                  ? formatCompanyRangeBucketLabel(key, vals[0])
+                  : vals[0]
+              }`
+            : `Exclude ${label}: ${vals.length} selected`;
+        out.push({
+          key: `facet-exclude-${key}`,
+          label: summary,
+          onRemove: () => onExcludedFacetChange?.(key, []),
         });
       }
     }
@@ -179,7 +228,9 @@ export function CompaniesFilterSidebar({
   }, [
     search,
     facetValues,
+    excludedFacetValues,
     filterSections,
+    onExcludedFacetChange,
     advancedVqlRuleCount,
     sortChipLabel,
     hiddenColumnCount,
@@ -357,32 +408,108 @@ export function CompaniesFilterSidebar({
       ) : null}
 
       {filterSections.map((section) => {
-        const vals = facetValues[section.filterKey] ?? [];
+        const key = section.filterKey;
+        const useRangeBuckets =
+          isCompanyRangeBucketFacet(key) && onExcludedFacetChange != null;
+        const useIncludeExclude =
+          isCompanyIncludeExcludeFacet(key) && onExcludedFacetChange != null;
+
+        if (useRangeBuckets) {
+          const included = facetValues[key] ?? [];
+          const excluded = excludedFacetValues[key] ?? [];
+          const active = included.length + excluded.length;
+          const { include: includeLabel, exclude: excludeLabel } =
+            companyRangeBucketComboboxLabels(key);
+          return (
+            <ContactsCollapsibleFilterSection
+              key={key}
+              title={section.displayName}
+              count={active}
+              defaultOpen={active > 0}
+              onClear={
+                active > 0
+                  ? () => {
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
+                  : undefined
+              }
+            >
+              <CompanyRangeBucketFacetFilter
+                section={section}
+                includeLabel={includeLabel}
+                excludeLabel={excludeLabel}
+                includedValues={included}
+                excludedValues={excluded}
+                onIncludedChange={(next) => onFacetChange(key, next)}
+                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                onSectionExpand={onSectionExpand}
+                onLoadMoreFacet={onLoadMoreFacet}
+                setFacetSearch={setFacetSearch}
+              />
+            </ContactsCollapsibleFilterSection>
+          );
+        }
+
+        if (useIncludeExclude) {
+          const included = facetValues[key] ?? [];
+          const excluded = excludedFacetValues[key] ?? [];
+          const active = included.length + excluded.length;
+          const { include: includeLabel, exclude: excludeLabel } =
+            companyFacetComboboxLabels(key, section.displayName);
+          return (
+            <ContactsCollapsibleFilterSection
+              key={key}
+              title={section.displayName}
+              count={active}
+              defaultOpen={active > 0}
+              onClear={
+                active > 0
+                  ? () => {
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
+                  : undefined
+              }
+            >
+              <CompanyIncludeExcludeFacetFilter
+                section={section}
+                includeLabel={includeLabel}
+                excludeLabel={excludeLabel}
+                includedValues={included}
+                excludedValues={excluded}
+                onIncludedChange={(next) => onFacetChange(key, next)}
+                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                onSectionExpand={onSectionExpand}
+                onLoadMoreFacet={onLoadMoreFacet}
+                setFacetSearch={setFacetSearch}
+              />
+            </ContactsCollapsibleFilterSection>
+          );
+        }
+
+        const vals = facetValues[key] ?? [];
         const has = vals.length > 0;
         return (
           <ContactsCollapsibleFilterSection
-            key={section.filterKey}
+            key={key}
             title={section.displayName}
             count={has ? vals.length : 0}
             defaultOpen={has}
-            onClear={
-              has ? () => onFacetChange(section.filterKey, []) : undefined
-            }
+            onClear={has ? () => onFacetChange(key, []) : undefined}
           >
             <FilterCombobox
               label={section.displayName}
               options={section.options}
               selectedValues={vals}
-              onSelectionChange={(next) =>
-                onFacetChange(section.filterKey, next)
-              }
+              onSelectionChange={(next) => onFacetChange(key, next)}
               loading={section.loading}
               loadingMore={section.loadingMore}
               hasMore={section.hasMore}
-              onOpen={() => onSectionExpand(section.filterKey)}
-              onLoadMore={() => onLoadMoreFacet(section.filterKey)}
+              onOpen={() => onSectionExpand(key)}
+              onLoadMore={() => onLoadMoreFacet(key)}
               searchText={section.searchText}
-              onSearchChange={(text) => setFacetSearch(section.filterKey, text)}
+              onSearchChange={(text) => setFacetSearch(key, text)}
             />
           </ContactsCollapsibleFilterSection>
         );

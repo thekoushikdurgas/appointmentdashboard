@@ -95,7 +95,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         const rows = await fetchHireSignalCompanyIndustryFilterOptions(base, {
           q: searchText,
@@ -121,8 +121,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
               sessionId: "7dc299",
               runId: "post-fix",
               hypothesisId: "H11",
-              location:
-                "HiringSignalCompanyIndustryFacetCombobox.tsx:runFetch",
+              location: "HiringSignalCompanyIndustryFacetCombobox.tsx:runFetch",
               message: "industry facet options loaded",
               data: {
                 rowCount: rows.length,
@@ -136,7 +135,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         const mapped: ContactFilterData[] = rows.map((r) => ({
           value: r.value,

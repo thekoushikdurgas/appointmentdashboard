@@ -20,6 +20,7 @@ import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { cn, formatDate, formatCompact } from "@/lib/utils";
+import { buildCompanyFacetVqlFilter } from "@/lib/companyFacetVql";
 import { parseOperationError } from "@/lib/errorParser";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyFilters } from "@/hooks/useCompanyFilters";
@@ -51,11 +52,7 @@ import {
   draftToVqlQueryInput,
   type DraftQuery,
 } from "@/lib/vqlDraft";
-import type {
-  VqlConditionInput,
-  VqlFilterInput,
-  VqlQueryInput,
-} from "@/graphql/generated/types";
+import type { VqlFilterInput, VqlQueryInput } from "@/graphql/generated/types";
 import { toast } from "sonner";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -132,6 +129,9 @@ export default function CompaniesPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [facetValues, setFacetValues] = useState<Record<string, string[]>>({});
+  const [excludedFacetValues, setExcludedFacetValues] = useState<
+    Record<string, string[]>
+  >({});
   const [vqlOpen, setVqlOpen] = useState(false);
   const [advancedCompanyDraft, setAdvancedCompanyDraft] =
     useState<DraftQuery | null>(null);
@@ -166,28 +166,18 @@ export default function CompaniesPage() {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
   }, []);
 
-  const facetFilter = useMemo((): VqlFilterInput | undefined => {
-    const conditions: VqlConditionInput[] = [];
-    for (const [key, vals] of Object.entries(facetValues)) {
-      const trimmed = vals.map((v) => String(v).trim()).filter(Boolean);
-      if (trimmed.length === 0) continue;
-      if (trimmed.length === 1) {
-        conditions.push({
-          field: key,
-          operator: "eq",
-          value: trimmed[0] as unknown as VqlConditionInput["value"],
-        });
-      } else {
-        conditions.push({
-          field: key,
-          operator: "in",
-          value: trimmed as unknown as VqlConditionInput["value"],
-        });
-      }
-    }
-    if (conditions.length === 0) return undefined;
-    return { conditions };
-  }, [facetValues]);
+  const handleExcludedFacetChange = useCallback(
+    (key: string, values: string[]) => {
+      setExcludedFacetValues((prev) => ({ ...prev, [key]: values }));
+    },
+    [],
+  );
+
+  const facetFilter = useMemo(
+    (): VqlFilterInput | undefined =>
+      buildCompanyFacetVqlFilter(facetValues, excludedFacetValues),
+    [facetValues, excludedFacetValues],
+  );
 
   useEffect(() => {
     const parts: VqlFilterInput[] = [];
@@ -280,13 +270,32 @@ export default function CompaniesPage() {
     sortBy !== "newest" ? `Sort: ${SORT_LABELS[sortBy] ?? sortBy}` : null;
 
   const toolbarActiveCount = useMemo(() => {
-    let n = Object.values(facetValues).filter((arr) => arr?.length > 0).length;
+    const facetKeys = new Set([
+      ...Object.keys(facetValues),
+      ...Object.keys(excludedFacetValues),
+    ]);
+    let n = 0;
+    for (const k of facetKeys) {
+      if (
+        (facetValues[k]?.length ?? 0) > 0 ||
+        (excludedFacetValues[k]?.length ?? 0) > 0
+      ) {
+        n += 1;
+      }
+    }
     if (search.trim()) n += 1;
     if (advancedVqlRuleCount > 0) n += 1;
     if (sortBy !== "newest") n += 1;
     if (hiddenColumnCount > 0) n += 1;
     return n;
-  }, [facetValues, search, advancedVqlRuleCount, sortBy, hiddenColumnCount]);
+  }, [
+    facetValues,
+    excludedFacetValues,
+    search,
+    advancedVqlRuleCount,
+    sortBy,
+    hiddenColumnCount,
+  ]);
 
   const toggleColumn = useCallback((id: CompaniesDataTableColumnId) => {
     setVisibleColumns((prev) => {
@@ -334,6 +343,7 @@ export default function CompaniesPage() {
       vqlQuery: currentCompanyVqlQuery,
       search,
       facetValues: { ...facetValues },
+      excludedFacetValues: { ...excludedFacetValues },
       advancedCompanyDraft: advancedCompanyDraft
         ? structuredClone(advancedCompanyDraft)
         : null,
@@ -344,6 +354,7 @@ export default function CompaniesPage() {
     currentCompanyVqlQuery,
     search,
     facetValues,
+    excludedFacetValues,
     advancedCompanyDraft,
     sortBy,
     pageSize,
@@ -355,6 +366,11 @@ export default function CompaniesPage() {
         setSearch(p.search);
         setFacetValues(
           normalizeCompanyFacetValues(p.facetValues as Record<string, unknown>),
+        );
+        setExcludedFacetValues(
+          normalizeCompanyFacetValues(
+            (p.excludedFacetValues ?? {}) as Record<string, unknown>,
+          ),
         );
         setAdvancedCompanyDraft(
           p.advancedCompanyDraft
@@ -373,6 +389,7 @@ export default function CompaniesPage() {
       applyVqlQuery,
       setSearch,
       setFacetValues,
+      setExcludedFacetValues,
       setAdvancedCompanyDraft,
       setSortBy,
       setPageSize,
@@ -407,7 +424,9 @@ export default function CompaniesPage() {
           filtersLoading={filtersLoading}
           filtersError={filtersError}
           facetValues={facetValues}
+          excludedFacetValues={excludedFacetValues}
           onFacetChange={handleFacetChange}
+          onExcludedFacetChange={handleExcludedFacetChange}
           onSectionExpand={loadFilterData}
           onLoadMoreFacet={loadMoreFilterData}
           setFacetSearch={setFilterSearch}
@@ -443,7 +462,9 @@ export default function CompaniesPage() {
       filtersLoading,
       filtersError,
       facetValues,
+      excludedFacetValues,
       handleFacetChange,
+      handleExcludedFacetChange,
       loadFilterData,
       loadMoreFilterData,
       setFilterSearch,

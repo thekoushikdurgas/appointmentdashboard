@@ -331,7 +331,6 @@
     width var(--c360-transition-default);
 }
 
-
 .c360-sidebar--collapsed .c360-sidebar__brand-mark {
   display: none;
 }

@@ -23,6 +23,8 @@ export type ContactSavedSearchPayloadV2 = {
   sortBy: string;
   activeTab: string;
   facetValues: Record<string, string[]>;
+  /** Exclude facets (e.g. city, departments); optional for backward compatibility. */
+  excludedFacetValues?: Record<string, string[]>;
   /** Company-index facets applied on contacts (optional for backward compatibility). */
   companyFacetValues?: Record<string, string[]>;
   advancedListDraft: DraftQuery | null;
@@ -43,6 +45,8 @@ export type CompanySavedSearchPayloadV2 = {
   vqlQuery: Partial<VqlQueryInput>;
   search: string;
   facetValues: Record<string, string[]>;
+  /** Exclude facets (e.g. address); optional for backward compatibility. */
+  excludedFacetValues?: Record<string, string[]>;
   advancedCompanyDraft: DraftQuery | null;
   sortBy?: string;
   pageSize?: number;
@@ -95,6 +99,10 @@ export function isContactSavedSearchPayload(
       v.facetValues !== null &&
       !Array.isArray(v.facetValues) &&
       (v.advancedListDraft === null || isDraftQueryLike(v.advancedListDraft)) &&
+      (v.excludedFacetValues === undefined ||
+        (typeof v.excludedFacetValues === "object" &&
+          v.excludedFacetValues !== null &&
+          !Array.isArray(v.excludedFacetValues))) &&
       (v.companyFacetValues === undefined ||
         (typeof v.companyFacetValues === "object" &&
           v.companyFacetValues !== null &&
