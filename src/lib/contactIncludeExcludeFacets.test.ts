@@ -9,9 +9,7 @@ describe("contactIncludeExcludeFacets", () => {
   it("lists person and company include/exclude facet keys", () => {
     expect(CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS).toContain("city");
     expect(CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS).toContain("company_name");
-    expect(CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS).toContain(
-      "company_industries",
-    );
+    expect(CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS).toContain("company_industries");
     expect(CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS.length).toBeGreaterThan(7);
   });
 
@@ -26,11 +24,11 @@ describe("contactIncludeExcludeFacets", () => {
       include: "Include email status",
       exclude: "Exclude email status",
     });
-    expect(contactFacetComboboxLabels("company_name", "Company · Name")).toEqual(
-      {
-        include: "Include company names",
-        exclude: "Exclude company names",
-      },
-    );
+    expect(
+      contactFacetComboboxLabels("company_name", "Company · Name"),
+    ).toEqual({
+      include: "Include company names",
+      exclude: "Exclude company names",
+    });
   });
 });

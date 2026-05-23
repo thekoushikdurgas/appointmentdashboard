@@ -24,8 +24,7 @@ export function mergeLegacyCompanyFacetValues(
   const merged = { ...facetValues };
   for (const [legacyKey, vals] of Object.entries(companyFacetValues)) {
     if (!vals?.length) continue;
-    const target =
-      LEGACY_COMPANY_FACET_TO_CONTACT_KEY[legacyKey] ?? legacyKey;
+    const target = LEGACY_COMPANY_FACET_TO_CONTACT_KEY[legacyKey] ?? legacyKey;
     if (!merged[target]?.length) merged[target] = vals;
   }
   return merged;
