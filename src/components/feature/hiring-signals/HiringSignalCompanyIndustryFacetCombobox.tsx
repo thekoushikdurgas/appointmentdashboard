@@ -5,6 +5,7 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import type { ContactFilterData } from "@/graphql/generated/types";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { buildHireSignalCompanyFacetOptionBase } from "@/components/feature/hiring-signals/hireSignalCompanyFacetOptionBase";
+import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import { fetchHireSignalCompanyIndustryFilterOptions } from "@/services/graphql/hiringSignalService";
@@ -112,7 +113,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
           count: typeof r.count === "number" ? r.count : undefined,
         }));
         if (mode === "replace") {
-          setOptions(mapped);
+          setOptions(sortHireSignalFacetOptionsByCount(mapped));
         } else {
           setOptions((prev) => {
             const seen = new Set(prev.map((p) => String(p.value)));
@@ -124,7 +125,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
                 out.push(m);
               }
             }
-            return out;
+            return sortHireSignalFacetOptionsByCount(out);
           });
         }
         setHasMore(rows.length === DEFAULT_PAGE_SIZE);

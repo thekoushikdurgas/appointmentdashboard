@@ -514,13 +514,6 @@ function buildHiringSignalChipBuckets(
   }
 
   addTokenChips("title", "title", draft.titles, "Title", "titles");
-  addTokenChips(
-    "company",
-    "co",
-    draft.companies,
-    "Employer on posting",
-    "companies",
-  );
   addTokenChips("location", "loc", draft.locations, "Location", "locations");
   addTokenChips(
     "title",
@@ -528,13 +521,6 @@ function buildHiringSignalChipBuckets(
     draft.excludedTitles,
     "Excl. title",
     "excludedTitles",
-  );
-  addTokenChips(
-    "company",
-    "exco",
-    draft.excludedCompanies,
-    "Excl. company",
-    "excludedCompanies",
   );
   addTokenChips(
     "location",
@@ -804,7 +790,6 @@ export function HiringSignalsFilterSidebar({
       </span>
     ) : null;
   const titleValues = normalizeHiringSignalTokenList(draft.titles);
-  const companyValues = normalizeHiringSignalTokenList(draft.companies);
   const locationValues = normalizeHiringSignalTokenList(draft.locations);
   const seniorityCount =
     draft.seniorityPreset.trim() || draft.seniorityCustom.trim() ? 1 : 0;
@@ -867,9 +852,6 @@ export function HiringSignalsFilterSidebar({
   ).length;
   const exTitleCount = normalizeHiringSignalTokenList(
     draft.excludedTitles,
-  ).length;
-  const exCoCount = normalizeHiringSignalTokenList(
-    draft.excludedCompanies,
   ).length;
   const exLocCount = normalizeHiringSignalTokenList(
     draft.excludedLocations,
@@ -988,39 +970,6 @@ export function HiringSignalsFilterSidebar({
                 draft.excludedTitles,
               )}
               onSelectionChange={(v) => onDraftField("excludedTitles", v)}
-            />
-          </div>
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Employer on posting"
-          count={companyValues.length + exCoCount}
-          onClear={() => {
-            onDraftField("companies", []);
-            onDraftField("excludedCompanies", []);
-          }}
-        >
-          <div className="c360-space-y-3">
-            <HsFilterChipList items={chipBuckets.company} variant="section" />
-            <HiringSignalTextFacetCombobox
-              field="company"
-              label="Include employer names"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={companyValues}
-              onSelectionChange={(v) => onDraftField("companies", v)}
-            />
-            <HiringSignalTextFacetCombobox
-              field="company"
-              label="Exclude employer names"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={normalizeHiringSignalTokenList(
-                draft.excludedCompanies,
-              )}
-              onSelectionChange={(v) => onDraftField("excludedCompanies", v)}
             />
           </div>
         </ContactsCollapsibleFilterSection>

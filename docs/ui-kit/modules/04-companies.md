@@ -94,7 +94,7 @@ Patterns only: **`Card`**, **`Button`**, **`Pagination`**, **`Modal`**, **`Alert
 - [x] **`/companies/[id]`** — **`get`** + **paginated contacts**.
 - [x] **List** — Server-side search; **Export** modal.
 - [ ] **Import modal** — SuperAdmin + **`CreateContact360ImportInput`** _(planned)_.
-- [ ] **Filter sidebar** — **`filters` / `filterData`** instead of static **`FilterSection`** _(planned)_.
+- [x] **Filter sidebar** — Static **`companies.filters`** metadata + **`filterData`** from **`companies_index`** (no **`connectra_filters`** storage).
 - [ ] **Optional `useCompanyDetail` + tabs** (“Overview | Activity”) _(planned)_.
 
 ### Phase E — QA

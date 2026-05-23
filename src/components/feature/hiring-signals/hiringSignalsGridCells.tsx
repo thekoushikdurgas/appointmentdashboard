@@ -5,9 +5,9 @@ import {
   Building2,
   ExternalLink,
   FileText,
-  Link2,
   Linkedin,
   Mail,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -230,7 +230,7 @@ export function HiringSignalsJobActionsCellMain({
           onClick={() => onOpenConnectra(row)}
           aria-label="Open Connectra data"
         >
-          <Link2 size={iconSz} aria-hidden />
+          <Users size={iconSz} aria-hidden />
         </Button>
       </Tooltip>
       {row.jobUrl ? (

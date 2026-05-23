@@ -34,6 +34,7 @@ export interface CompaniesFilterSidebarProps {
   onSortChange: (value: string) => void;
   filterSections: CompanyFilterSection[];
   filtersLoading?: boolean;
+  filtersError?: string | null;
   facetValues: Record<string, string[]>;
   onFacetChange: (key: string, values: string[]) => void;
   onSectionExpand: (key: string) => void;
@@ -64,6 +65,7 @@ export function CompaniesFilterSidebar({
   onSortChange,
   filterSections,
   filtersLoading = false,
+  filtersError = null,
   facetValues,
   onFacetChange,
   onSectionExpand,
@@ -294,9 +296,14 @@ export function CompaniesFilterSidebar({
           Loading filter definitions…
         </p>
       ) : null}
-      {!filtersLoading && filterSections.length === 0 ? (
+      {filtersError ? (
+        <p className="c360-mb-2 c360-text-2xs c360-text-danger">
+          Could not load filters: {filtersError}
+        </p>
+      ) : null}
+      {!filtersLoading && !filtersError && filterSections.length === 0 ? (
         <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-          No company filters available. Use refresh above or check Connectra.
+          No company filters available. Use refresh above or check the API.
         </p>
       ) : null}
 

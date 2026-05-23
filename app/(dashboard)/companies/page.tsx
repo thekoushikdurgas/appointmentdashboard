@@ -138,35 +138,12 @@ export default function CompaniesPage() {
   const {
     sections: filterSections,
     filtersLoading,
+    filtersError,
     loadFilterData,
     loadMoreFilterData,
     setFilterSearch,
     refetchFiltersMetadata,
   } = useCompanyFilters();
-
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "d296a1",
-      },
-      body: JSON.stringify({
-        sessionId: "d296a1",
-        location: "companies/page.tsx:filterSections",
-        message: "companies page filter state",
-        data: {
-          filterSectionsCount: filterSections.length,
-          filtersLoading,
-          sectionTitles: filterSections.slice(0, 8).map((s) => s.displayName),
-        },
-        timestamp: Date.now(),
-        hypothesisId: "D",
-      }),
-    }).catch(() => {});
-  }, [filterSections.length, filtersLoading]);
-  // #endregion
   const { isSuperAdmin } = useRole();
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -428,6 +405,7 @@ export default function CompaniesPage() {
           onSortChange={setSortBy}
           filterSections={filterSections}
           filtersLoading={filtersLoading}
+          filtersError={filtersError}
           facetValues={facetValues}
           onFacetChange={handleFacetChange}
           onSectionExpand={loadFilterData}
@@ -463,6 +441,7 @@ export default function CompaniesPage() {
       setSortBy,
       filterSections,
       filtersLoading,
+      filtersError,
       facetValues,
       handleFacetChange,
       loadFilterData,
