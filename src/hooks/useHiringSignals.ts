@@ -18,6 +18,7 @@ import {
   fetchHiringSignalJobs,
   fetchHiringSignalStats,
   applyFirmographicFiltersFromDraft,
+  hireSignalFirmographicDraftKey,
   type JobListFilters,
   type JobListSortKey,
   type JobListSortOrder,
@@ -262,6 +263,8 @@ export function useHiringSignals(
       try {
         const draftForCohort =
           cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
+        const firmographicKeyAtFetch =
+          hireSignalFirmographicDraftKey(draftForCohort);
         setCompanyCohortResolving(false);
         let fetchSnapshot = applyFirmographicFiltersFromDraft(
           {
@@ -301,7 +304,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -374,7 +377,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         if (!parsed.success) {
           setError(
@@ -450,11 +453,18 @@ export function useHiringSignals(
         if (gen !== hireSignalLoadGenRef.current) {
           return;
         }
+        const currentDraft =
+          cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
+        if (
+          hireSignalFirmographicDraftKey(currentDraft) !== firmographicKeyAtFetch
+        ) {
+          return;
+        }
         setJobs(merged);
         setTotal(listTotal);
         if (
           listTotal === 0 &&
-          isCompanyCohortActiveExcludingNames(draftForCohort) &&
+          isCompanyCohortActiveExcludingNames(currentDraft) &&
           includePostingNames.length === 0
         ) {
           setError(

@@ -95,7 +95,7 @@ export function HiringSignalCompanyIndustryFacetCombobox({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         const rows = await fetchHireSignalCompanyIndustryFilterOptions(base, {
           q: searchText,
@@ -103,6 +103,41 @@ export function HiringSignalCompanyIndustryFacetCombobox({
           offset,
         });
         if (req !== loadReqRef.current) return;
+        const counts = rows.map((r) =>
+          typeof r.count === "number" ? r.count : 0,
+        );
+        const maxCount = counts.length ? Math.max(...counts) : 0;
+        const nonZero = counts.filter((c) => c > 0).length;
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "7dc299",
+            },
+            body: JSON.stringify({
+              sessionId: "7dc299",
+              runId: "post-fix",
+              hypothesisId: "H11",
+              location:
+                "HiringSignalCompanyIndustryFacetCombobox.tsx:runFetch",
+              message: "industry facet options loaded",
+              data: {
+                rowCount: rows.length,
+                maxCount,
+                nonZeroCount: nonZero,
+                topCounts: rows.slice(0, 5).map((r) => ({
+                  value: r.value,
+                  count: r.count,
+                })),
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
         const mapped: ContactFilterData[] = rows.map((r) => ({
           value: r.value,
           displayValue: formatCompanyIndustryLabel(
