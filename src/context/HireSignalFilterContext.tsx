@@ -82,12 +82,20 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
       }
       return;
     }
+    if (
+      k === "companyCsuiteContactMinCount" ||
+      k === "companyHrContactMinCount"
+    ) {
+      const nVal = d[k];
+      if (nVal != null && Number.isFinite(nVal) && nVal >= 0) n += 1;
+      return;
+    }
     const v = d[k];
     if (Array.isArray(v)) {
       if (normalizeHiringSignalTokenList(v).length > 0) n += 1;
     } else if (typeof v === "boolean") {
       if (v) n += 1;
-    } else if (String(v).trim()) n += 1;
+    } else if (v != null && String(v).trim()) n += 1;
   });
   return n;
 }
@@ -104,7 +112,13 @@ export interface HireSignalFilterContextValue {
   setDraft: React.Dispatch<React.SetStateAction<HiringSignalFilterDraft>>;
   onDraftField: (
     field: HiringSignalDraftField,
-    value: string | string[] | boolean | Record<string, string[]>,
+    value:
+      | string
+      | string[]
+      | boolean
+      | number
+      | null
+      | Record<string, string[]>,
   ) => void;
   applyFilters: () => void;
   resetFilters: () => void;
@@ -322,6 +336,10 @@ export function HireSignalFilterProvider({
       excludedCompanyCountries: undefined,
       companyIndustries: undefined,
       excludedCompanyIndustries: undefined,
+      companyMissingWebsite: undefined,
+      companyMissingRevenue: undefined,
+      companyCsuiteContactMinCount: undefined,
+      companyHrContactMinCount: undefined,
       sortKey: DEFAULT_JOB_SORT_KEY,
       sortOrder: DEFAULT_JOB_SORT_ORDER,
       offset: 0,
@@ -331,7 +349,13 @@ export function HireSignalFilterProvider({
   const onDraftField = useCallback(
     (
       field: HiringSignalDraftField,
-      value: string | string[] | boolean | Record<string, string[]>,
+      value:
+        | string
+        | string[]
+        | boolean
+        | number
+        | null
+        | Record<string, string[]>,
     ) => {
       setDraft((d) => {
         if (
@@ -345,8 +369,20 @@ export function HireSignalFilterProvider({
             companyFacetValues: value as Record<string, string[]>,
           };
         }
-        if (field === "h1bOnly" && typeof value === "boolean") {
-          return { ...d, h1bOnly: value };
+        if (
+          (field === "companyMissingWebsite" ||
+            field === "companyMissingRevenue" ||
+            field === "h1bOnly") &&
+          typeof value === "boolean"
+        ) {
+          return { ...d, [field]: value };
+        }
+        if (
+          (field === "companyCsuiteContactMinCount" ||
+            field === "companyHrContactMinCount") &&
+          (value === null || typeof value === "number")
+        ) {
+          return { ...d, [field]: value };
         }
         if (TOKEN_ARRAY_FIELDS.has(field)) {
           const arr = Array.isArray(value) ? value : [String(value)];

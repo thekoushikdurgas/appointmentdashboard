@@ -19,6 +19,7 @@ import {
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
 import { HiringSignalsCompanyFilters } from "@/components/feature/hiring-signals/HiringSignalsCompanyFilters";
+import { HiringSignalsDataQualityFilters } from "@/components/feature/hiring-signals/HiringSignalsDataQualityFilters";
 import {
   HsFilterChipList,
   type HsFilterChipItem,
@@ -938,6 +939,8 @@ export function HiringSignalsFilterSidebar({
           companyCohortTruncated={companyCohortTruncated}
           companyFilterChips={chipBuckets.companyCohort}
         />
+
+        <HiringSignalsDataQualityFilters />
 
         <h3 className="c360-hs-filters__group-header">Job filters</h3>
 

@@ -281,6 +281,34 @@ export function useHiringSignals(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "X-Debug-Session-Id": "d81365",
+            },
+            body: JSON.stringify({
+              sessionId: "d81365",
+              runId: "post-fix",
+              hypothesisId: "H5",
+              location: "useHiringSignals.ts:dataQualityFetch",
+              message: "data quality filters in job list fetch snapshot",
+              data: {
+                draftCsuite: draftForCohort.companyCsuiteContactMinCount,
+                draftHr: draftForCohort.companyHrContactMinCount,
+                fetchCsuite: fetchSnapshot.companyCsuiteContactMinCount,
+                fetchHr: fetchSnapshot.companyHrContactMinCount,
+                draftMissingWebsite: draftForCohort.companyMissingWebsite,
+                draftMissingRevenue: draftForCohort.companyMissingRevenue,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
               "X-Debug-Session-Id": "7dc299",
             },
             body: JSON.stringify({
@@ -304,7 +332,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -347,6 +375,43 @@ export function useHiringSignals(
           return;
         }
         // #region agent log
+        const roivantRow = parsed.data.find(
+          (r) =>
+            String(r.companyName ?? "")
+              .trim()
+              .toLowerCase() === "roivant",
+        );
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "d81365",
+            },
+            body: JSON.stringify({
+              sessionId: "d81365",
+              runId: "post-fix",
+              hypothesisId: "H6",
+              location: "useHiringSignals.ts:jobFetchResult",
+              message: "job list result includes Roivant check",
+              data: {
+                listTotal: parsed.total,
+                rowCount: parsed.data.length,
+                fetchCsuite: fetchSnapshot.companyCsuiteContactMinCount,
+                fetchHr: fetchSnapshot.companyHrContactMinCount,
+                roivantInResults: Boolean(roivantRow),
+                roivantCompanyUuid: roivantRow?.companyUuid ?? null,
+                firstCompanies: parsed.data
+                  .slice(0, 5)
+                  .map((r) => r.companyName ?? ""),
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
+        // #region agent log
         fetch(
           "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
           {
@@ -377,7 +442,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         if (!parsed.success) {
           setError(

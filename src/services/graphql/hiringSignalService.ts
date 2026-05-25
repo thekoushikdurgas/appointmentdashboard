@@ -39,9 +39,9 @@ export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
   const data = r?.data;
   const rows = Array.isArray(data)
     ? data.filter(
-        (x): x is Record<string, unknown> =>
-          !!x && typeof x === "object" && !Array.isArray(x),
-      )
+      (x): x is Record<string, unknown> =>
+        !!x && typeof x === "object" && !Array.isArray(x),
+    )
     : [];
   const total = typeof r?.total === "number" ? r.total : rows.length;
   return { rows, total };
@@ -499,6 +499,14 @@ export interface JobListFilters {
   excludedCompanyCountries?: string[];
   companyIndustries?: string[];
   excludedCompanyIndustries?: string[];
+  /** Data quality — companies missing website (Connectra). */
+  companyMissingWebsite?: boolean;
+  /** Data quality — companies missing annual_revenue or zero. */
+  companyMissingRevenue?: boolean;
+  /** Data quality — C-Suite contacts under this count per company (0 = none). */
+  companyCsuiteContactMinCount?: number;
+  /** Data quality — HR contacts under this count per company (0 = none). */
+  companyHrContactMinCount?: number;
   limit: number;
   offset: number;
 }
@@ -610,6 +618,26 @@ function buildExtendedJobFilters(
   if (filters.excludedCompanyIndustries?.length) {
     x.excludedCompanyIndustries = filters.excludedCompanyIndustries;
   }
+  if (filters.companyMissingWebsite) {
+    x.companyMissingWebsite = true;
+  }
+  if (filters.companyMissingRevenue) {
+    x.companyMissingRevenue = true;
+  }
+  if (
+    filters.companyCsuiteContactMinCount != null &&
+    filters.companyCsuiteContactMinCount >= 0
+  ) {
+    x.companyCsuiteContactMinCount = Math.floor(
+      filters.companyCsuiteContactMinCount,
+    );
+  }
+  if (
+    filters.companyHrContactMinCount != null &&
+    filters.companyHrContactMinCount >= 0
+  ) {
+    x.companyHrContactMinCount = Math.floor(filters.companyHrContactMinCount);
+  }
   return Object.keys(x).length > 0 ? x : null;
 }
 
@@ -632,6 +660,13 @@ const HIRE_SIGNAL_FIRMOGRAPHIC_FILTER_KEYS = [
   "excludedCompanyCountries",
   "companyIndustries",
   "excludedCompanyIndustries",
+] as const;
+
+const HIRE_SIGNAL_DATA_QUALITY_FILTER_KEYS = [
+  "companyMissingWebsite",
+  "companyMissingRevenue",
+  "companyCsuiteContactMinCount",
+  "companyHrContactMinCount",
 ] as const;
 
 const FIRMOGRAPHIC_DIMENSION_KEYS: Record<
@@ -665,6 +700,9 @@ export function clearFirmographicJobListFilterFields(
   for (const key of HIRE_SIGNAL_FIRMOGRAPHIC_FILTER_KEYS) {
     cleared[key] = undefined;
   }
+  for (const key of HIRE_SIGNAL_DATA_QUALITY_FILTER_KEYS) {
+    cleared[key] = undefined;
+  }
   return cleared;
 }
 
@@ -676,14 +714,18 @@ export function applyFirmographicFiltersFromDraft(
   return {
     ...clearFirmographicJobListFilterFields(base),
     ...hireSignalFirmographicListFiltersFromDraft(draft),
+    ...hireSignalDataQualityListFiltersFromDraft(draft),
   };
 }
 
-/** Stable key for refetch when firmographic draft tokens change. */
+/** Stable key for refetch when firmographic / data-quality draft tokens change. */
 export function hireSignalFirmographicDraftKey(
   draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
 ): string {
-  const f = hireSignalFirmographicListFiltersFromDraft(draft);
+  const f = {
+    ...hireSignalFirmographicListFiltersFromDraft(draft),
+    ...hireSignalDataQualityListFiltersFromDraft(draft),
+  };
   return JSON.stringify(f);
 }
 
@@ -738,6 +780,40 @@ export function hireSignalFirmographicListFiltersFromDraft(
   if (ind.length) out.companyIndustries = ind;
   const exInd = trim(draft.excludedCompanyIndustries);
   if (exInd.length) out.excludedCompanyIndustries = exInd;
+  return out;
+}
+
+/** Data quality filters from draft for job list (server resolves company UUIDs). */
+export function hireSignalDataQualityListFiltersFromDraft(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): Pick<
+  JobListFilters,
+  | "companyMissingWebsite"
+  | "companyMissingRevenue"
+  | "companyCsuiteContactMinCount"
+  | "companyHrContactMinCount"
+> {
+  const out: Pick<
+    JobListFilters,
+    | "companyMissingWebsite"
+    | "companyMissingRevenue"
+    | "companyCsuiteContactMinCount"
+    | "companyHrContactMinCount"
+  > = {};
+  if (draft.companyMissingWebsite) {
+    out.companyMissingWebsite = true;
+  }
+  if (draft.companyMissingRevenue) {
+    out.companyMissingRevenue = true;
+  }
+  const csuite = draft.companyCsuiteContactMinCount;
+  if (csuite != null && Number.isFinite(csuite) && csuite >= 0) {
+    out.companyCsuiteContactMinCount = Math.floor(csuite);
+  }
+  const hr = draft.companyHrContactMinCount;
+  if (hr != null && Number.isFinite(hr) && hr >= 0) {
+    out.companyHrContactMinCount = Math.floor(hr);
+  }
   return out;
 }
 
@@ -866,7 +942,7 @@ export async function fetchHireSignalCompanyFundingFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_funding")) {
       throw new Error(
         "Funding filter requires a restarted GraphQL API (company_funding). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -888,7 +964,7 @@ export async function fetchHireSignalCompanyCountryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_country")) {
       throw new Error(
         "Country filter requires a restarted GraphQL API (company_country). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -910,7 +986,7 @@ export async function fetchHireSignalCompanyIndustryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_industry")) {
       throw new Error(
         "Industry filter requires a restarted GraphQL API (company_industry). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -932,7 +1008,7 @@ export async function fetchHireSignalCompanyEmployeeSizeFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_employee_size")) {
       throw new Error(
         "Employee size filter requires a restarted GraphQL API (company_employee_size). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -954,7 +1030,7 @@ export async function fetchHireSignalCompanyRevenueFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_revenue")) {
       throw new Error(
         "Revenue filter requires a restarted GraphQL API (company_revenue). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -997,8 +1073,8 @@ export function parseResolveCompanyCohortPayload(
     : [];
   const excludedUuids = Array.isArray(r?.excludedUuids)
     ? (r.excludedUuids as unknown[])
-        .map((x) => String(x).trim())
-        .filter(Boolean)
+      .map((x) => String(x).trim())
+      .filter(Boolean)
     : [];
   const total = typeof r?.total === "number" ? r.total : uuids.length;
   return {
@@ -1279,7 +1355,7 @@ export async function fetchLinkedinJobIdsAllMatching(
   let offset = 0;
   let totalMatching = 0;
 
-  for (;;) {
+  for (; ;) {
     const res = await fetchHiringSignalJobs({
       ...filters,
       limit: HS_EXPORT_FETCH_BATCH,

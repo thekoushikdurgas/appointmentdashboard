@@ -80,6 +80,14 @@ export type HiringSignalFilterDraft = {
   companyRevenue: string[];
   /** Revenue bucket ids (exclude). */
   excludedCompanyRevenue: string[];
+  /** Companies with no website (null / empty) — job list scoped by company_uuid. */
+  companyMissingWebsite: boolean;
+  /** Companies with no annual_revenue (null / 0) — job list scoped by company_uuid. */
+  companyMissingRevenue: boolean;
+  /** C-Suite contacts under this count per company (`null` = off; `0` = none). */
+  companyCsuiteContactMinCount: number | null;
+  /** HR contacts under this count per company (`null` = off; `0` = none). */
+  companyHrContactMinCount: number | null;
   /** Legacy Connectra facet values (unused — firmographics use dedicated fields). */
   companyFacetValues: Record<string, string[]>;
 };
@@ -126,6 +134,10 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
   excludedCompanyEmployeeSizes: [],
   companyRevenue: [],
   excludedCompanyRevenue: [],
+  companyMissingWebsite: false,
+  companyMissingRevenue: false,
+  companyCsuiteContactMinCount: null,
+  companyHrContactMinCount: null,
   companyFacetValues: {},
 };
 
