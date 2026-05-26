@@ -742,10 +742,12 @@
   width: var(--c360-skeleton-w, auto);
   height: var(--c360-skeleton-h, 16px);
   border-radius: var(--c360-skeleton-radius, var(--c360-radius-sm));
-  background: linear-gradient(90deg,
-      var(--c360-border) 25%,
-      var(--c360-bg) 50%,
-      var(--c360-border) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--c360-border) 25%,
+    var(--c360-bg) 50%,
+    var(--c360-border) 75%
+  );
   background-size: 200% 100%;
   animation: c360-skeleton 1.5s ease-in-out infinite;
 }

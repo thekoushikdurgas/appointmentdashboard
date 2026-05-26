@@ -42,13 +42,13 @@ type ConnectraState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | {
-    kind: "ok";
-    company: unknown;
-    contacts: unknown[];
-    poster: unknown | null;
-    /** Total contacts in contacts_index for this company (server count). */
-    contactTotal: number;
-  };
+      kind: "ok";
+      company: unknown;
+      contacts: unknown[];
+      poster: unknown | null;
+      /** Total contacts in contacts_index for this company (server count). */
+      contactTotal: number;
+    };
 
 const DEFAULT_CONTACT_PAGE_SIZE = 25;
 const DEPT_OPTIONS_SAMPLE_LIMIT = 100;
@@ -114,7 +114,9 @@ export function JobConnectraModal({
   const [state, setState] = useState<ConnectraState>({ kind: "idle" });
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(1);
-  const [contactPageSize, setContactPageSize] = useState(DEFAULT_CONTACT_PAGE_SIZE);
+  const [contactPageSize, setContactPageSize] = useState(
+    DEFAULT_CONTACT_PAGE_SIZE,
+  );
   const [selectedContactKeys, setSelectedContactKeys] = useState<Set<string>>(
     () => new Set(),
   );
@@ -264,11 +266,11 @@ export function JobConnectraModal({
         setState((prev) =>
           prev.kind === "ok"
             ? {
-              ...prev,
-              contacts: parsed.contacts,
-              poster: contactPage === 1 ? parsed.poster : prev.poster,
-              contactTotal: parsed.contactTotal,
-            }
+                ...prev,
+                contacts: parsed.contacts,
+                poster: contactPage === 1 ? parsed.poster : prev.poster,
+                contactTotal: parsed.contactTotal,
+              }
             : prev,
         );
         setSelectedContactKeys(new Set());
@@ -373,8 +375,8 @@ export function JobConnectraModal({
     const rowsToExport =
       selectedContactKeys.size > 0
         ? state.contacts.filter((row, i) =>
-          selectedContactKeys.has(connectraContactStableKey(row, i)),
-        )
+            selectedContactKeys.has(connectraContactStableKey(row, i)),
+          )
         : state.contacts;
     if (rowsToExport.length === 0) {
       toast.message("Nothing to export", {
@@ -597,9 +599,9 @@ export function JobConnectraModal({
                 disabled={contactsLoading}
               />
               {state.kind === "ok" &&
-                companyDisp?.employees &&
-                state.contactTotal > 0 &&
-                Number(companyDisp.employees) > state.contactTotal ? (
+              companyDisp?.employees &&
+              state.contactTotal > 0 &&
+              Number(companyDisp.employees) > state.contactTotal ? (
                 <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
                   {state.contactTotal.toLocaleString()} contacts indexed in
                   Connectra for this company (LinkedIn headcount ~

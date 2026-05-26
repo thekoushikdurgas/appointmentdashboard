@@ -255,12 +255,12 @@ const DATE_POSTED_PRESET_OPTIONS: {
   value: DatePostedPreset;
   label: string;
 }[] = [
-    { value: "any", label: "Any time" },
-    { value: "24h", label: "Last 4 days (UTC, rolling)" },
-    { value: "7d", label: "Last 7 days (UTC)" },
-    { value: "30d", label: "Last 30 days (UTC)" },
-    { value: "custom", label: "Custom range" },
-  ];
+  { value: "any", label: "Any time" },
+  { value: "24h", label: "Last 4 days (UTC, rolling)" },
+  { value: "7d", label: "Last 7 days (UTC)" },
+  { value: "30d", label: "Last 30 days (UTC)" },
+  { value: "custom", label: "Custom range" },
+];
 
 const DATE_POSTED_PRESET_LABELS: Record<
   Exclude<DatePostedPreset, "any" | "custom">,
@@ -778,7 +778,7 @@ export function HiringSignalsFilterSidebar({
           Run: {runIdTrimmed.slice(0, 12)}
           {runIdTrimmed.length > 12 ? "…" : ""}
           {typeof runScopedJobTotal === "number" &&
-            Number.isFinite(runScopedJobTotal) ? (
+          Number.isFinite(runScopedJobTotal) ? (
             <> · {runScopedJobTotal.toLocaleString()} jobs</>
           ) : null}
         </span>
@@ -808,7 +808,7 @@ export function HiringSignalsFilterSidebar({
   const workplaceCount = normalizedWorkplaceTypes.length;
   const workplaceSelectValue =
     normalizedWorkplaceTypes.length === 1 &&
-      WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
+    WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
       ? normalizedWorkplaceTypes[0]
       : "";
   const normalizedExperienceBuckets = normalizeHiringSignalTokenList(
@@ -816,9 +816,9 @@ export function HiringSignalsFilterSidebar({
   );
   const experienceBucketSelectValue =
     normalizedExperienceBuckets.length === 1 &&
-      EXPERIENCE_BUCKET_OPTIONS.some(
-        (o) => o.value === normalizedExperienceBuckets[0],
-      )
+    EXPERIENCE_BUCKET_OPTIONS.some(
+      (o) => o.value === normalizedExperienceBuckets[0],
+    )
       ? normalizedExperienceBuckets[0]
       : "";
   const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
@@ -826,15 +826,15 @@ export function HiringSignalsFilterSidebar({
   );
   const educationMinSelectValue =
     normalizedEducationLevelMins.length === 1 &&
-      EDUCATION_MIN_OPTIONS.some(
-        (o) => o.value === normalizedEducationLevelMins[0],
-      )
+    EDUCATION_MIN_OPTIONS.some(
+      (o) => o.value === normalizedEducationLevelMins[0],
+    )
       ? normalizedEducationLevelMins[0]
       : "";
   const normalizedIndustries = normalizeHiringSignalTokenList(draft.industries);
   const industryIncludeSelectValue =
     normalizedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
+    INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
       ? normalizedIndustries[0]
       : "";
   const normalizedExcludedIndustries = normalizeHiringSignalTokenList(
@@ -842,9 +842,9 @@ export function HiringSignalsFilterSidebar({
   );
   const industryExcludeSelectValue =
     normalizedExcludedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some(
-        (o) => o.value === normalizedExcludedIndustries[0],
-      )
+    INDUSTRY_FILTER_OPTIONS.some(
+      (o) => o.value === normalizedExcludedIndustries[0],
+    )
       ? normalizedExcludedIndustries[0]
       : "";
   const industriesCount = normalizeHiringSignalTokenList(
@@ -862,8 +862,8 @@ export function HiringSignalsFilterSidebar({
   const salaryBounds = resolveSalaryBoundsFromDraft(draft);
   const salaryCount =
     draft.salaryPreset.trim() ||
-      salaryBounds.salaryMin != null ||
-      salaryBounds.salaryMax != null
+    salaryBounds.salaryMin != null ||
+    salaryBounds.salaryMax != null
       ? 1
       : 0;
   const expBucketCount = normalizeHiringSignalTokenList(
@@ -877,7 +877,7 @@ export function HiringSignalsFilterSidebar({
   const applyMethodCount = draft.applyMethod.trim() ? 1 : 0;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
-      draft.clearanceMode.trim() === "only"
+    draft.clearanceMode.trim() === "only"
       ? 1
       : 0;
   const h1bCount = draft.h1bOnly ? 1 : 0;

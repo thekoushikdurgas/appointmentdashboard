@@ -148,8 +148,8 @@ export default function Sidebar({
             className={cn(
               "c360-sidebar__header-row",
               showDesktopCollapseToggle &&
-              onToggleCollapse &&
-              "c360-sidebar__header-row--with-collapse",
+                onToggleCollapse &&
+                "c360-sidebar__header-row--with-collapse",
             )}
           >
             <Link

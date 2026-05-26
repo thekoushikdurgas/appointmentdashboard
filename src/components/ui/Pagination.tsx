@@ -106,7 +106,11 @@ export function Pagination({
         <div
           role="navigation"
           aria-label="Pagination"
-          className={cn("c360-pagination", "c360-pagination--with-size", className)}
+          className={cn(
+            "c360-pagination",
+            "c360-pagination--with-size",
+            className,
+          )}
         >
           {pageSizeSelect}
           <div className="c360-pagination__pages">{controls}</div>
