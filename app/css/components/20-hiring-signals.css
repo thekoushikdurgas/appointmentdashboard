@@ -85,6 +85,7 @@
 .c360-hs-dashboard-top-companies-card.c360-card {
   box-shadow: none;
 }
+
 .c360-hs-dashboard-top-companies-card .c360-card__body {
   width: 100%;
   max-width: 100%;
@@ -146,12 +147,15 @@
 .c360-job-desc-html h1 {
   font-size: var(--c360-text-2xl);
 }
+
 .c360-job-desc-html h2 {
   font-size: var(--c360-text-xl);
 }
+
 .c360-job-desc-html h3 {
   font-size: var(--c360-text-lg);
 }
+
 .c360-job-desc-html h4 {
   font-size: var(--c360-text-base);
 }
@@ -328,7 +332,7 @@
   right: 0;
   bottom: 0;
   z-index: var(--c360-z-modal);
-  width: min(550px, 100vw);
+  width: min(600px, 100vw);
   max-width: 100%;
   background: var(--c360-bg-elevated);
   box-shadow: var(--c360-shadow-xl);
@@ -360,13 +364,11 @@
   align-items: center;
 }
 
-.c360-hs-drawer__header-company .c360-hs-drawer__header-meta > p.c360-text-ink {
+.c360-hs-drawer__header-company .c360-hs-drawer__header-meta>p.c360-text-ink {
   width: 100%;
 }
 
-.c360-hs-drawer__header-company
-  .c360-hs-drawer__header-meta
-  > a.c360-btn:first-of-type {
+.c360-hs-drawer__header-company .c360-hs-drawer__header-meta>a.c360-btn:first-of-type {
   margin-right: 5px;
 }
 
@@ -410,12 +412,12 @@
 }
 
 /* Company drawer — open roles line + hiring functions pills */
-.c360-hs-drawer__body > p.c360-mb-4.c360-text-sm {
+.c360-hs-drawer__body>p.c360-mb-4.c360-text-sm {
   padding-left: 10px;
   padding-right: 10px;
 }
 
-.c360-hs-drawer__body > section.c360-mb-4 {
+.c360-hs-drawer__body>section.c360-mb-4 {
   margin-bottom: 0;
   padding-left: 10px;
   padding-right: 10px;
@@ -427,7 +429,7 @@
   gap: 10px;
 }
 
-.c360-hs-drawer__body > section.c360-mb-4 > p.c360-mb-2 {
+.c360-hs-drawer__body>section.c360-mb-4>p.c360-mb-2 {
   margin-bottom: 0;
 }
 
@@ -448,7 +450,7 @@
   box-sizing: content-box;
 }
 
-.c360-hs-drawer section.c360-mb-1 > .c360-section-stack {
+.c360-hs-drawer section.c360-mb-1>.c360-section-stack {
   gap: 0;
   justify-content: flex-start;
   align-items: flex-start;
@@ -499,6 +501,22 @@
 /* Connectra drawer — section title row (browser preview layout) */
 .c360-hs-drawer__section-toolbar {
   padding: 5px 15px;
+}
+
+/* Connectra job drawer — people panel */
+.c360-hs-drawer__people-section {
+  padding: 0;
+}
+
+.c360-hs-drawer section[aria-labelledby="c360-connectra-people"] {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.c360-hs-drawer__people-section .c360-pagination {
+  flex-wrap: nowrap;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .c360-hs-drawer__jobs-meta {
@@ -564,7 +582,7 @@
 }
 
 /* Demands & Trends: kit `.c360-card__body { width: 50% }` clips tables/charts */
-.c360-demands-trends-page .c360-card > .c360-card__body {
+.c360-demands-trends-page .c360-card>.c360-card__body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -599,12 +617,8 @@
 }
 
 /* Line / bar charts in demands: Recharts wrapper max-width follows card */
-.c360-demands-trends-page
-  .c360-hs-chart:not(.c360-hs-chart--pie)
-  .recharts-responsive-container,
-.c360-demands-trends-page
-  .c360-hs-chart:not(.c360-hs-chart--pie)
-  .recharts-wrapper {
+.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-responsive-container,
+.c360-demands-trends-page .c360-hs-chart:not(.c360-hs-chart--pie) .recharts-wrapper {
   max-width: 100% !important;
 }
 
@@ -637,8 +651,7 @@
 }
 
 /* Skills tab: first row is a 2-col grid (unique among insight tabs) */
-.c360-market-insights-page
-  .c360-section-stack:has(> .c360-2col-grid:first-child) {
+.c360-market-insights-page .c360-section-stack:has(> .c360-2col-grid:first-child) {
   justify-content: flex-start;
 }
 
@@ -647,7 +660,7 @@
   border-radius: 0;
 }
 
-.c360-market-insights-page .c360-card > .c360-card__body {
+.c360-market-insights-page .c360-card>.c360-card__body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -660,19 +673,19 @@
 }
 
 /* Hiring KPI strip (dashboard, demands, etc.) — flex wrap vs grid */
-.c360-hiring-kpi-strip > .c360-stat-card {
+.c360-hiring-kpi-strip>.c360-stat-card {
   flex: 1 1 140px;
   min-width: min(140px, 100%);
 }
 
 @media (min-width: 768px) {
-  .c360-hiring-kpi-strip > .c360-stat-card {
+  .c360-hiring-kpi-strip>.c360-stat-card {
     flex: 1 1 calc(50% - var(--c360-spacing-4) / 2);
   }
 }
 
 @media (min-width: 1280px) {
-  .c360-hiring-kpi-strip > .c360-stat-card {
+  .c360-hiring-kpi-strip>.c360-stat-card {
     flex: 1 1 calc(20% - var(--c360-spacing-4) * 4 / 5);
     max-width: calc(20% - var(--c360-spacing-4) * 4 / 5);
   }
@@ -700,26 +713,33 @@
 .c360-text-ink {
   color: var(--c360-text);
 }
+
 .c360-text-ink-muted {
   color: var(--c360-text-muted);
 }
+
 .c360-border-ink-8 {
   border-color: var(--c360-border);
 }
+
 .c360-border-ink-12 {
   border-color: var(--c360-border-strong);
 }
+
 .c360-bg-ink-1 {
   background: var(--c360-bg-secondary);
 }
+
 .c360-bg-ink-1\/30,
 .c360-bg-ink-1\/40 {
   background: var(--c360-bg-secondary);
 }
+
 .c360-bg-ink-2\/15,
 .c360-bg-ink-2\/30 {
   background: var(--c360-bg-elevated);
 }
+
 .c360-bg-ink-4\/40 {
   background: var(--c360-bg-secondary);
 }
@@ -739,12 +759,15 @@
 .c360-hs-run-status--success {
   color: var(--c360-success);
 }
+
 .c360-hs-run-status--warning {
   color: var(--c360-warning);
 }
+
 .c360-hs-run-status--danger {
   color: var(--c360-danger);
 }
+
 .c360-hs-run-status--muted {
   color: var(--c360-text-muted);
 }
@@ -758,7 +781,7 @@
   padding: 0;
 }
 
-.c360-page.c360-hiring-signals-page > .c360-data-layout {
+.c360-page.c360-hiring-signals-page>.c360-data-layout {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -767,58 +790,34 @@
   width: 100%;
 }
 
-.c360-page.c360-hiring-signals-page
-  > .c360-data-layout
-  > .c360-data-layout__filters {
+.c360-page.c360-hiring-signals-page>.c360-data-layout>.c360-data-layout__filters {
   flex: 0 0 auto;
 }
 
-.c360-page.c360-hiring-signals-page
-  > .c360-data-layout
-  > .c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail) {
+.c360-page.c360-hiring-signals-page>.c360-data-layout>.c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail) {
   min-width: 260px;
   max-width: 300px;
   width: 300px;
 }
 
-.c360-page.c360-hiring-signals-page
-  > .c360-data-layout
-  > .c360-data-layout__content {
+.c360-page.c360-hiring-signals-page>.c360-data-layout>.c360-data-layout__content {
   flex: 1;
   min-width: 0;
   gap: 0;
 }
 
 /* Sticky signals toolbar: stays visible under fixed topbar while scrolling the list */
-.c360-page.c360-hiring-signals-page
-  > .c360-data-layout--with-toolbar
-  > .c360-data-layout__content
-  > .c360-data-layout__toolbar {
+.c360-page.c360-hiring-signals-page>.c360-data-layout--with-toolbar>.c360-data-layout__content>.c360-data-layout__toolbar {
   position: sticky;
   z-index: 5;
   align-self: stretch;
 }
 
-.c360-main:not(.c360-main--collapsed)
-  .c360-page.c360-hiring-signals-page
-  > .c360-data-layout--with-toolbar
-  > .c360-data-layout__content
-  > .c360-data-layout__toolbar,
-.c360-shell--sidebar-peek
-  .c360-main.c360-main--collapsed
-  .c360-page.c360-hiring-signals-page
-  > .c360-data-layout--with-toolbar
-  > .c360-data-layout__content
-  > .c360-data-layout__toolbar {
+.c360-main:not(.c360-main--collapsed) .c360-page.c360-hiring-signals-page>.c360-data-layout--with-toolbar>.c360-data-layout__content>.c360-data-layout__toolbar {
   top: var(--c360-topbar-height);
 }
 
-.c360-shell:not(.c360-shell--sidebar-peek)
-  .c360-main.c360-main--collapsed
-  .c360-page.c360-hiring-signals-page
-  > .c360-data-layout--with-toolbar
-  > .c360-data-layout__content
-  > .c360-data-layout__toolbar {
+.c360-main.c360-main--collapsed .c360-page.c360-hiring-signals-page>.c360-data-layout--with-toolbar>.c360-data-layout__content>.c360-data-layout__toolbar {
   top: var(--c360-topbar-height-collapsed);
 }
 
@@ -827,18 +826,12 @@
 }
 
 /* Peek rail filter aside: square corners (flush with chrome; overrides layout peek peel radius) */
-.c360-page.c360-hiring-signals-page
-  > .c360-data-layout
-  > .c360-data-layout__filters.c360-data-layout__filters--peek-rail {
+.c360-page.c360-hiring-signals-page>.c360-data-layout>.c360-data-layout__filters.c360-data-layout__filters--peek-rail {
   border-radius: 0;
 }
 
 @media (hover: hover) {
-  .c360-page.c360-hiring-signals-page
-    > .c360-data-layout
-    > .c360-data-layout__filters.c360-data-layout__filters--peek-rail:not(
-      .c360-data-layout__filters--peek-pinned
-    ):is(:hover, :focus-within) {
+  .c360-page.c360-hiring-signals-page>.c360-data-layout>.c360-data-layout__filters.c360-data-layout__filters--peek-rail:not(.c360-data-layout__filters--peek-pinned):is(:hover, :focus-within) {
     border-radius: 0;
   }
 }

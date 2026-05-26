@@ -64,7 +64,7 @@ interface SidebarProps {
   collapsed: boolean;
   mobileOpen: boolean;
   onMobileClose: () => void;
-  /** Desktop collapsed rail: optional hover peek (pointer fine + motion OK). */
+  /** Desktop collapsed rail: hover expands a sticky overlay (pointer fine + motion OK). */
   peekAllowed?: boolean;
   onPeekChange?: (peek: boolean) => void;
   /** When true, show full labels on a collapsed rail (hover peek). */
@@ -148,8 +148,8 @@ export default function Sidebar({
             className={cn(
               "c360-sidebar__header-row",
               showDesktopCollapseToggle &&
-                onToggleCollapse &&
-                "c360-sidebar__header-row--with-collapse",
+              onToggleCollapse &&
+              "c360-sidebar__header-row--with-collapse",
             )}
           >
             <Link

@@ -35,6 +35,7 @@ import { HiringSignalDrawerContactFilters } from "@/components/feature/hiring-si
 import type { FilterComboboxOption } from "@/components/ui/FilterCombobox";
 import { HiringSignalCompanyWebsiteButton } from "@/components/feature/hiring-signals/HiringSignalCompanyWebsiteButton";
 import { HiringSignalCompanyLinkedInButton } from "@/components/feature/hiring-signals/HiringSignalCompanyLinkedInButton";
+import { CONTACTS_DT_PAGE_SIZE_OPTIONS } from "@/components/feature/contacts/ContactsDataTable";
 
 type ConnectraState =
   | { kind: "idle" }
@@ -49,7 +50,7 @@ type ConnectraState =
     contactTotal: number;
   };
 
-const CONTACT_PAGE_SIZE = 25;
+const DEFAULT_CONTACT_PAGE_SIZE = 25;
 const DEPT_OPTIONS_SAMPLE_LIMIT = 100;
 
 type ParseResult =
@@ -113,6 +114,7 @@ export function JobConnectraModal({
   const [state, setState] = useState<ConnectraState>({ kind: "idle" });
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(1);
+  const [contactPageSize, setContactPageSize] = useState(DEFAULT_CONTACT_PAGE_SIZE);
   const [selectedContactKeys, setSelectedContactKeys] = useState<Set<string>>(
     () => new Set(),
   );
@@ -172,7 +174,12 @@ export function JobConnectraModal({
 
   useEffect(() => {
     setContactPage(1);
-  }, [debouncedTitleFilter, contactDepartmentsFilter]);
+  }, [debouncedTitleFilter, contactDepartmentsFilter, contactPageSize]);
+
+  const onContactPageSizeChange = useCallback((next: number) => {
+    setContactPageSize(next);
+    setContactPage(1);
+  }, []);
 
   /** Load company profile + department facet sample once per open/job. */
   useEffect(() => {
@@ -238,7 +245,7 @@ export function JobConnectraModal({
       try {
         const ct = await fetchJobConnectraContacts(job.linkedinJobId, {
           page: contactPage,
-          limit: CONTACT_PAGE_SIZE,
+          limit: contactPageSize,
           includePoster: contactPage === 1,
           title: debouncedTitleFilter || undefined,
           departments:
@@ -265,33 +272,6 @@ export function JobConnectraModal({
             : prev,
         );
         setSelectedContactKeys(new Set());
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "84e500",
-            },
-            body: JSON.stringify({
-              sessionId: "84e500",
-              hypothesisId: "H3-H4",
-              location: "JobConnectraModal.tsx:contactsPage",
-              message: "connectra contacts page loaded",
-              data: {
-                page: contactPage,
-                pageSize: CONTACT_PAGE_SIZE,
-                contactTotal: parsed.contactTotal,
-                contactsReturned: parsed.contacts.length,
-                titleFilter: debouncedTitleFilter,
-                departmentFilterCount: contactDepartmentsFilter.length,
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => { });
-        // #endregion
       } catch (e) {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : "Failed to load contacts";
@@ -308,6 +288,7 @@ export function JobConnectraModal({
     job.linkedinJobId,
     companyReady,
     contactPage,
+    contactPageSize,
     debouncedTitleFilter,
     contactDepartmentsFilter,
   ]);
@@ -426,8 +407,10 @@ export function JobConnectraModal({
     toast.success("Exported contacts", { description: `${flat.length} rows` });
   };
 
-  const showContactPagination =
-    state.kind === "ok" && state.contactTotal > CONTACT_PAGE_SIZE;
+  const hasMultipleContactPages =
+    state.kind === "ok" && state.contactTotal > contactPageSize;
+  const showContactPaginationFooter =
+    state.kind === "ok" && state.contactTotal > 0;
 
   return (
     <HiringSignalAsideDrawer
@@ -580,7 +563,7 @@ export function JobConnectraModal({
             ) : null}
 
             <section
-              className="c360-rounded c360-border c360-border-ink-8 c360-p-3"
+              className="c360-hs-drawer__people-section c360-rounded c360-border c360-border-ink-8"
               aria-labelledby="c360-connectra-people"
             >
               <div className="c360-hs-drawer__section-toolbar c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
@@ -613,6 +596,16 @@ export function JobConnectraModal({
                 onClear={clearContactFilters}
                 disabled={contactsLoading}
               />
+              {state.kind === "ok" &&
+                companyDisp?.employees &&
+                state.contactTotal > 0 &&
+                Number(companyDisp.employees) > state.contactTotal ? (
+                <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                  {state.contactTotal.toLocaleString()} contacts indexed in
+                  Connectra for this company (LinkedIn headcount ~
+                  {Number(companyDisp.employees).toLocaleString()} employees).
+                </p>
+              ) : null}
               {contactsLoading && state.contacts.length === 0 ? (
                 <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
                   <Loader2 className="c360-animate-spin" size={20} />
@@ -640,13 +633,17 @@ export function JobConnectraModal({
                     revealedRowIds={revealedRowIds}
                     onRevealRow={onRevealRow}
                   />
-                  {showContactPagination ? (
+                  {showContactPaginationFooter ? (
                     <Pagination
                       className="c360-mt-3 c360-justify-center"
                       page={contactPage}
-                      pageSize={CONTACT_PAGE_SIZE}
+                      pageSize={contactPageSize}
                       total={state.contactTotal}
                       onPageChange={setContactPage}
+                      onPageSizeChange={onContactPageSizeChange}
+                      pageSizeOptions={CONTACTS_DT_PAGE_SIZE_OPTIONS}
+                      pageSizeSelectLabel="Rows"
+                      showWhenSinglePage={!hasMultipleContactPages}
                     />
                   ) : null}
                 </>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Pagination as ArkPagination } from "@ark-ui/react/pagination";
 import {
   ChevronLeft,
@@ -7,6 +8,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { Select, type SelectOption } from "@/components/ui/Select";
 import { getPaginationBounds } from "@/lib/paginationBounds";
 import { cn, formatCompact } from "@/lib/utils";
 
@@ -22,6 +24,10 @@ export interface PaginationProps {
    * page `1`. Defaults to `false` so list footers can omit controls when everything fits one page.
    */
   showWhenSinglePage?: boolean;
+  /** Optional rows-per-page dropdown rendered at the start of the pagination bar. */
+  pageSizeOptions?: readonly SelectOption[];
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeSelectLabel?: string;
 }
 
 const PAGER_TRANSLATIONS = {
@@ -36,6 +42,36 @@ const PAGER_TRANSLATIONS = {
       : `Page ${pageNum}`,
 };
 
+function PaginationPageSizeSelect({
+  pageSize,
+  options,
+  label,
+  onPageSizeChange,
+}: {
+  pageSize: number;
+  options: readonly SelectOption[];
+  label: string;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  return (
+    <div className="c360-pagination__page-size">
+      <span className="c360-pagination__info">{label}</span>
+      <Select
+        className="c360-pagination__page-size-select"
+        fullWidth={false}
+        inputSize="sm"
+        aria-label={`${label} per page`}
+        value={String(pageSize)}
+        options={[...options]}
+        onChange={(e) => {
+          const next = Number(e.target.value);
+          onPageSizeChange(Number.isFinite(next) && next > 0 ? next : pageSize);
+        }}
+      />
+    </div>
+  );
+}
+
 export function Pagination({
   total,
   page,
@@ -44,6 +80,9 @@ export function Pagination({
   siblingCount = 1,
   className,
   showWhenSinglePage = false,
+  pageSizeOptions,
+  onPageSizeChange,
+  pageSizeSelectLabel = "Rows",
 }: PaginationProps) {
   const {
     pageSize: ps,
@@ -51,11 +90,44 @@ export function Pagination({
     safePage,
   } = getPaginationBounds(total, page, pageSize);
 
-  if (totalPages <= 1 && !showWhenSinglePage) return null;
+  const pageSizeSelect =
+    onPageSizeChange && pageSizeOptions && pageSizeOptions.length > 0 ? (
+      <PaginationPageSizeSelect
+        pageSize={ps}
+        options={pageSizeOptions}
+        label={pageSizeSelectLabel}
+        onPageSizeChange={onPageSizeChange}
+      />
+    ) : null;
 
-  if (totalPages <= 1 && showWhenSinglePage) {
+  const wrapPaginationBar = (controls: ReactNode) => {
+    if (pageSizeSelect) {
+      return (
+        <div
+          role="navigation"
+          aria-label="Pagination"
+          className={cn("c360-pagination", "c360-pagination--with-size", className)}
+        >
+          {pageSizeSelect}
+          <div className="c360-pagination__pages">{controls}</div>
+        </div>
+      );
+    }
     return (
       <nav aria-label="Pagination" className={cn("c360-pagination", className)}>
+        {controls}
+      </nav>
+    );
+  };
+
+  if (totalPages <= 1 && !showWhenSinglePage) {
+    if (!pageSizeSelect) return null;
+    return wrapPaginationBar(null);
+  }
+
+  if (totalPages <= 1 && showWhenSinglePage) {
+    return wrapPaginationBar(
+      <>
         <button
           type="button"
           className="c360-pagination__page c360-pagination__page--icon"
@@ -83,14 +155,13 @@ export function Pagination({
         >
           <ChevronRight size={16} aria-hidden />
         </button>
-      </nav>
+      </>,
     );
   }
 
-  return (
+  return wrapPaginationBar(
     <ArkPagination.Root
-      aria-label="Pagination"
-      className={cn("c360-pagination", className)}
+      className="c360-pagination__pages-inner"
       count={Math.max(0, total)}
       pageSize={ps}
       page={safePage}
@@ -155,7 +226,7 @@ export function Pagination({
       >
         <ChevronsRight size={16} aria-hidden />
       </ArkPagination.LastTrigger>
-    </ArkPagination.Root>
+    </ArkPagination.Root>,
   );
 }
 
