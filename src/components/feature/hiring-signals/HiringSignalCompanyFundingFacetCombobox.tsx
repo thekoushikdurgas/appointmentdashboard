@@ -20,7 +20,7 @@ export interface HiringSignalCompanyFundingFacetComboboxProps {
 }
 
 /**
- * Fixed total_funding ranges on Connectra companies with job counts (job.server).
+ * Fixed total_funding ranges from Connectra for job employers, with job counts (job.server).
  */
 export function HiringSignalCompanyFundingFacetCombobox({
   appliedListFilters,
@@ -94,7 +94,7 @@ export function HiringSignalCompanyFundingFacetCombobox({
         loadingMore={false}
         hasMore={false}
         onOpen={onOpen}
-        onLoadMore={() => {}}
+        onLoadMore={() => { }}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}

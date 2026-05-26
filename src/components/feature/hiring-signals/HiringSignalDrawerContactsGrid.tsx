@@ -253,6 +253,7 @@ export function HiringSignalDrawerContactsGrid({
           <HiringSignalDrawerContactEmailCell
             isRevealed={revealedRowIds.has(params.row.id)}
             resolvedEmail={resolvedEmails[params.row.id] ?? ""}
+            storedEmail={params.row.email}
             loading={loadingRowId === params.row.id}
             onFindClick={() => {
               void handleFindEmail(params.row);

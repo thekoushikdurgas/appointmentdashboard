@@ -42,11 +42,11 @@ export function RunScrapeModal({
 
   const reset = useCallback(() => {
     setKeywords("golang developer");
-    setGeoId(105080838);
-    setCount(100);
-    setEnableEnrichment(false);
+    setGeoId(103644278);
+    setCount(1000);
+    setEnableEnrichment(true);
     setTrigger("manual");
-    setRepeatAfterHours("");
+    setRepeatAfterHours("2");
     setValidationError(null);
   }, []);
 

@@ -20,7 +20,7 @@ export interface HiringSignalCompanyRevenueFacetComboboxProps {
 }
 
 /**
- * Fixed annual_revenue ranges on Connectra companies with job counts (job.server).
+ * Fixed annual_revenue ranges from Connectra for job employers, with job counts (job.server).
  */
 export function HiringSignalCompanyRevenueFacetCombobox({
   appliedListFilters,

@@ -1037,23 +1037,47 @@ export async function fetchHireSignalCompanyRevenueFilterOptions(
   }
 }
 
-/** Firmographic-only subset of filter draft for cohort UUID resolution. */
+/** Firmographic-only subset of filter draft (legacy cohort callers). */
 export function hireSignalFirmographicCohortFiltersFromDraft(
   draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
 ): Record<string, string[]> {
-  const trim = (xs: string[]) =>
-    xs.map((n) => String(n).trim()).filter(Boolean);
+  const scope = hireSignalCompanyScopeFiltersFromDraft(draft);
   return {
-    companyFunding: trim(draft.companyFunding),
-    excludedCompanyFunding: trim(draft.excludedCompanyFunding),
-    companyCountries: trim(draft.companyCountries),
-    excludedCompanyCountries: trim(draft.excludedCompanyCountries),
-    companyIndustries: trim(draft.companyIndustries),
-    excludedCompanyIndustries: trim(draft.excludedCompanyIndustries),
-    companyEmployeeSizes: trim(draft.companyEmployeeSizes),
-    excludedCompanyEmployeeSizes: trim(draft.excludedCompanyEmployeeSizes),
-    companyRevenue: trim(draft.companyRevenue),
-    excludedCompanyRevenue: trim(draft.excludedCompanyRevenue),
+    companyFunding: (scope.companyFunding as string[]) ?? [],
+    excludedCompanyFunding: (scope.excludedCompanyFunding as string[]) ?? [],
+    companyCountries: (scope.companyCountries as string[]) ?? [],
+    excludedCompanyCountries: (scope.excludedCompanyCountries as string[]) ?? [],
+    companyIndustries: (scope.companyIndustries as string[]) ?? [],
+    excludedCompanyIndustries: (scope.excludedCompanyIndustries as string[]) ?? [],
+    companyEmployeeSizes: (scope.companyEmployeeSizes as string[]) ?? [],
+    excludedCompanyEmployeeSizes:
+      (scope.excludedCompanyEmployeeSizes as string[]) ?? [],
+    companyRevenue: (scope.companyRevenue as string[]) ?? [],
+    excludedCompanyRevenue: (scope.excludedCompanyRevenue as string[]) ?? [],
+  };
+}
+
+/** Full company scope for cohort UUID resolution (matches GET /jobs OpenSearch filters). */
+export function hireSignalCompanyScopeFiltersFromDraft(
+  draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
+): Record<string, unknown> {
+  const firmographic = hireSignalFirmographicListFiltersFromDraft(draft);
+  const dataQuality = hireSignalDataQualityListFiltersFromDraft(draft);
+  return {
+    companyFunding: firmographic.companyFunding ?? [],
+    excludedCompanyFunding: firmographic.excludedCompanyFunding ?? [],
+    companyCountries: firmographic.companyCountries ?? [],
+    excludedCompanyCountries: firmographic.excludedCompanyCountries ?? [],
+    companyIndustries: firmographic.companyIndustries ?? [],
+    excludedCompanyIndustries: firmographic.excludedCompanyIndustries ?? [],
+    companyEmployeeSizes: firmographic.companyEmployeeSizes ?? [],
+    excludedCompanyEmployeeSizes: firmographic.excludedCompanyEmployeeSizes ?? [],
+    companyRevenue: firmographic.companyRevenue ?? [],
+    excludedCompanyRevenue: firmographic.excludedCompanyRevenue ?? [],
+    companyMissingWebsite: dataQuality.companyMissingWebsite === true,
+    companyMissingRevenue: dataQuality.companyMissingRevenue === true,
+    companyCsuiteContactMinCount: dataQuality.companyCsuiteContactMinCount,
+    companyHrContactMinCount: dataQuality.companyHrContactMinCount,
   };
 }
 
@@ -1088,7 +1112,7 @@ export function parseResolveCompanyCohortPayload(
 export async function fetchHireSignalResolveCompanyCohortUuids(
   draft: import("@/components/feature/hiring-signals/hiringSignalFilterDraft").HiringSignalFilterDraft,
 ) {
-  const cohortFilters = hireSignalFirmographicCohortFiltersFromDraft(draft);
+  const cohortFilters = hireSignalCompanyScopeFiltersFromDraft(draft);
   return graphqlQuery<{
     hireSignal: { resolveCompanyCohortUuids: HireSignalApiJson };
   }>(

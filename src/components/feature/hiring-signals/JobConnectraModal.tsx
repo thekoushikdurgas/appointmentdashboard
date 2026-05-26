@@ -41,12 +41,12 @@ type ConnectraState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | {
-      kind: "ok";
-      company: unknown;
-      contacts: unknown[];
-      poster: unknown | null;
-      total: number;
-    };
+    kind: "ok";
+    company: unknown;
+    contacts: unknown[];
+    poster: unknown | null;
+    total: number;
+  };
 
 const DRAWER_CONTACTS_LIMIT = 50;
 const BASELINE_CONTACTS_LIMIT = 100;
@@ -235,6 +235,43 @@ export function JobConnectraModal({
           poster: filtered.poster,
           total: filtered.total,
         });
+        // #region agent log
+        {
+          const coDisp = pickCompanyDisplay(company ?? null);
+          const firstContact = filtered.contacts[0] ?? null;
+          const firstEmail = firstContact
+            ? pickContactDisplay(firstContact).email
+            : "";
+          let contactsWithEmail = 0;
+          for (const row of filtered.contacts) {
+            if (pickContactDisplay(row).email.trim()) contactsWithEmail += 1;
+          }
+          fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "84e500",
+              },
+              body: JSON.stringify({
+                sessionId: "84e500",
+                hypothesisId: "H1-H2",
+                location: "JobConnectraModal.tsx:load",
+                message: "connectra modal loaded",
+                data: {
+                  companyEmployees: coDisp.employees,
+                  contactTotal: filtered.total,
+                  contactsShown: filtered.contacts.length,
+                  contactsWithEmail,
+                  firstContactEmailPresent: Boolean(firstEmail.trim()),
+                },
+                timestamp: Date.now(),
+              }),
+            },
+          ).catch(() => {});
+        }
+        // #endregion
       } catch (e) {
         if (cancelled) return;
         const msg =
@@ -267,10 +304,10 @@ export function JobConnectraModal({
     setState((prev) =>
       prev.kind === "ok"
         ? {
-            ...prev,
-            contacts: filtered,
-            total: filtered.length,
-          }
+          ...prev,
+          contacts: filtered,
+          total: filtered.length,
+        }
         : prev,
     );
     setSelectedContactKeys(new Set());
@@ -360,8 +397,8 @@ export function JobConnectraModal({
     const rowsToExport =
       selectedContactKeys.size > 0
         ? state.contacts.filter((row, i) =>
-            selectedContactKeys.has(connectraContactStableKey(row, i)),
-          )
+          selectedContactKeys.has(connectraContactStableKey(row, i)),
+        )
         : state.contacts;
     if (rowsToExport.length === 0) {
       toast.message("Nothing to export", {
@@ -578,10 +615,11 @@ export function JobConnectraModal({
               />
               {state.contacts.length === 0 ? (
                 <p className="c360-text-2xs c360-text-ink-muted">
-                  No contacts indexed in Connectra for this job&apos;s{" "}
-                  <span className="c360-font-mono">company_uuid</span>. Export
-                  and indexing jobs may still be pending, or this company has no
-                  contact documents yet.
+                  No contacts in{" "}
+                  <span className="c360-font-mono">contacts_index</span> for this
+                  company yet. Bulk contact data is loaded via sync/export; job
+                  posters are indexed after scrape when a LinkedIn poster URL is
+                  on the job row.
                 </p>
               ) : (
                 <HiringSignalDrawerContactsGrid

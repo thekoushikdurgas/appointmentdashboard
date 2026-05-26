@@ -367,32 +367,34 @@ export function HiringSignalsContactInitialsCell({ name }: { name: string }) {
   );
 }
 
-/** Connectra drawer contacts: always run email finder on click (stored row email is not shown). */
+/** Connectra drawer contacts: show stored email when present; otherwise run email finder on click. */
 export function HiringSignalDrawerContactEmailCell({
   isRevealed,
   resolvedEmail,
+  storedEmail,
   loading,
   onFindClick,
 }: {
   isRevealed: boolean;
   resolvedEmail: string;
+  storedEmail: string;
   loading: boolean;
   onFindClick: () => void;
 }) {
+  const email = (resolvedEmail || storedEmail).trim();
+  if (email) {
+    return (
+      <a
+        href={`mailto:${email}`}
+        className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-2xs c360-text-primary hover:c360-underline"
+        title={email}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {email}
+      </a>
+    );
+  }
   if (isRevealed) {
-    const email = resolvedEmail.trim();
-    if (email) {
-      return (
-        <a
-          href={`mailto:${email}`}
-          className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-2xs c360-text-primary hover:c360-underline"
-          title={email}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {email}
-        </a>
-      );
-    }
     return (
       <span
         className="c360-text-2xs c360-text-ink-muted"

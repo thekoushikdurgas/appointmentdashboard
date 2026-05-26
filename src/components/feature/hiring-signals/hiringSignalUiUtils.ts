@@ -392,6 +392,17 @@ export function connectraContactStableKey(row: unknown, index: number): string {
 }
 
 /** Normalize Connectra company record for cards. */
+function formatCompanyEmployeesCount(raw: unknown): string {
+  if (raw == null || raw === "") return "";
+  const n = Number(raw);
+  if (Number.isFinite(n)) {
+    if (n <= 0) return "";
+    return String(Math.round(n));
+  }
+  const s = String(raw).trim();
+  return s === "0" ? "" : s;
+}
+
 export function pickCompanyDisplay(row: unknown): {
   name: string;
   website: string;
@@ -420,8 +431,8 @@ export function pickCompanyDisplay(row: unknown): {
         ? o.industries.join(", ")
         : o.industries || o.industry || "",
     ),
-    employees: String(
-      o.employees_count ?? o.employeesCount ?? o.company_employees_count ?? "",
+    employees: formatCompanyEmployeesCount(
+      o.employees_count ?? o.employeesCount ?? o.company_employees_count,
     ),
     linkedinUrl: String(o.linkedin_url ?? o.linkedinUrl ?? ""),
     profilePic: String(

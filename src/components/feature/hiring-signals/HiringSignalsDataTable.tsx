@@ -114,11 +114,59 @@ const COL_LABELS: Record<HiringSignalsDataTableColumnId, string> = {
   actions: "Actions",
 };
 
-function HiringSignalsNoRowsOverlay() {
+function jobListFiltersRestrictResults(f: JobListFilters): boolean {
+  return Boolean(
+    f.titles?.length ||
+    f.companies?.length ||
+    f.locations?.length ||
+    f.excludedTitles?.length ||
+    f.excludedCompanies?.length ||
+    f.excludedLocations?.length ||
+    f.companyFunding?.length ||
+    f.excludedCompanyFunding?.length ||
+    f.companyRevenue?.length ||
+    f.excludedCompanyRevenue?.length ||
+    f.companyCountries?.length ||
+    f.excludedCompanyCountries?.length ||
+    f.companyIndustries?.length ||
+    f.excludedCompanyIndustries?.length ||
+    f.companyEmployeeSizes?.length ||
+    f.excludedCompanyEmployeeSizes?.length ||
+    f.companyMissingWebsite ||
+    f.companyMissingRevenue ||
+    f.companyCsuiteContactMinCount != null ||
+    f.companyHrContactMinCount != null ||
+    f.employmentType ||
+    f.employmentTypes?.length ||
+    f.seniority ||
+    f.functionCategory ||
+    f.postedAfter ||
+    f.postedBefore ||
+    f.runId ||
+    f.workplaceTypes?.length ||
+    f.industries?.length ||
+    f.excludedIndustries?.length ||
+    f.countries?.length ||
+    f.applyMethod ||
+    f.salaryMin != null ||
+    f.salaryMax != null ||
+    f.experienceBuckets?.length ||
+    f.roleTracks?.length ||
+    f.educationLevelMins?.length ||
+    (f.clearanceMode && f.clearanceMode !== "") ||
+    f.h1bOnly ||
+    f.skillsAll?.length ||
+    f.hideApplied,
+  );
+}
+
+function HiringSignalsNoRowsOverlay({ filtered }: { filtered: boolean }) {
   return (
     <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4">
       <p className="c360-table__empty c360-m-0 c360-text-sm c360-text-ink-muted">
-        No job rows yet. Run a scrape from job.server or check filters.
+        {filtered
+          ? "No jobs match the current filters. Clear or broaden filters to see more results."
+          : "No job rows yet. Run a scrape from job.server or check filters."}
       </p>
     </div>
   );
@@ -196,6 +244,12 @@ export function HiringSignalsDataTable({
   onColumnVisibilityResolved,
   className,
 }: HiringSignalsDataTableProps) {
+  const filteredEmpty = jobListFiltersRestrictResults(listFilters);
+  const NoRowsOverlay = useCallback(
+    () => <HiringSignalsNoRowsOverlay filtered={filteredEmpty} />,
+    [filteredEmpty],
+  );
+
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
   const columnVisibilityModel = useMemo(() => {
@@ -476,7 +530,7 @@ export function HiringSignalsDataTable({
               columnHeaderHeight={44}
               density={density === "compact" ? "compact" : "comfortable"}
               slots={{
-                noRowsOverlay: HiringSignalsNoRowsOverlay,
+                noRowsOverlay: NoRowsOverlay,
               }}
               showColumnVerticalBorder
               sx={getHiringSignalsDataGridSx(density)}
