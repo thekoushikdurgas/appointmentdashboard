@@ -41,13 +41,13 @@ type ConnectraState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | {
-      kind: "ok";
-      company: unknown;
-      contacts: unknown[];
-      poster: unknown | null;
-      /** Total contacts in contacts_index for this company (server count). */
-      contactTotal: number;
-    };
+    kind: "ok";
+    company: unknown;
+    contacts: unknown[];
+    poster: unknown | null;
+    /** Total contacts in contacts_index for this company (server count). */
+    contactTotal: number;
+  };
 
 const CONTACT_PAGE_SIZE = 25;
 const DEPT_OPTIONS_SAMPLE_LIMIT = 100;
@@ -257,11 +257,11 @@ export function JobConnectraModal({
         setState((prev) =>
           prev.kind === "ok"
             ? {
-                ...prev,
-                contacts: parsed.contacts,
-                poster: contactPage === 1 ? parsed.poster : prev.poster,
-                contactTotal: parsed.contactTotal,
-              }
+              ...prev,
+              contacts: parsed.contacts,
+              poster: contactPage === 1 ? parsed.poster : prev.poster,
+              contactTotal: parsed.contactTotal,
+            }
             : prev,
         );
         setSelectedContactKeys(new Set());
@@ -290,7 +290,7 @@ export function JobConnectraModal({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
       } catch (e) {
         if (cancelled) return;
@@ -392,8 +392,8 @@ export function JobConnectraModal({
     const rowsToExport =
       selectedContactKeys.size > 0
         ? state.contacts.filter((row, i) =>
-            selectedContactKeys.has(connectraContactStableKey(row, i)),
-          )
+          selectedContactKeys.has(connectraContactStableKey(row, i)),
+        )
         : state.contacts;
     if (rowsToExport.length === 0) {
       toast.message("Nothing to export", {
@@ -405,7 +405,9 @@ export function JobConnectraModal({
       const p = pickContactDisplay(row);
       const idx = state.contacts.indexOf(row);
       const stableKey = connectraContactStableKey(row, idx >= 0 ? idx : 0);
-      const email = resolvedEmails[stableKey] ?? p.email;
+      const email = revealedRowIds.has(stableKey)
+        ? (resolvedEmails[stableKey] ?? "")
+        : "";
       return {
         name: p.name,
         title: p.title,

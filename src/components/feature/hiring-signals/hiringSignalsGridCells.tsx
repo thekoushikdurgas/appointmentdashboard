@@ -367,7 +367,10 @@ export function HiringSignalsContactInitialsCell({ name }: { name: string }) {
   );
 }
 
-/** Connectra drawer contacts: show stored email when present; otherwise run email finder on click. */
+/**
+ * Connectra drawer contacts: mask email until revealed.
+ * Parent grid reveals stored email (free/starter) or runs email.findEmails (pro/super-admin).
+ */
 export function HiringSignalDrawerContactEmailCell({
   isRevealed,
   resolvedEmail,
@@ -381,6 +384,26 @@ export function HiringSignalDrawerContactEmailCell({
   loading: boolean;
   onFindClick: () => void;
 }) {
+  if (!isRevealed) {
+    return (
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        loading={loading}
+        disabled={loading}
+        leftIcon={<Mail size={12} aria-hidden />}
+        className="c360-max-w-full c360-shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          onFindClick();
+        }}
+      >
+        Find email
+      </Button>
+    );
+  }
+
   const email = (resolvedEmail || storedEmail).trim();
   if (email) {
     return (
@@ -394,32 +417,11 @@ export function HiringSignalDrawerContactEmailCell({
       </a>
     );
   }
-  if (isRevealed) {
-    return (
-      <span
-        className="c360-text-2xs c360-text-ink-muted"
-        title="No email found"
-      >
-        Not found
-      </span>
-    );
-  }
+
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="secondary"
-      loading={loading}
-      disabled={loading}
-      leftIcon={<Mail size={12} aria-hidden />}
-      className="c360-max-w-full c360-shrink-0"
-      onClick={(e) => {
-        e.stopPropagation();
-        onFindClick();
-      }}
-    >
-      Find email
-    </Button>
+    <span className="c360-text-2xs c360-text-ink-muted" title="No email found">
+      Not found
+    </span>
   );
 }
 

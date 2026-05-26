@@ -24,6 +24,7 @@ import {
   type HiringSignalFilterDraft,
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { useRole } from "@/context/RoleContext";
 
 const TOKEN_ARRAY_FIELDS = new Set<HiringSignalDraftField>([
   "titles",
@@ -146,12 +147,39 @@ export function HireSignalFilterProvider({
   setFilters: React.Dispatch<React.SetStateAction<JobListFilters>>;
   draftRef?: MutableRefObject<HiringSignalFilterDraft>;
 }) {
+  const { isSuperAdmin } = useRole();
+  const firmographicDraftOptions = useMemo(
+    () => ({ includeDataQuality: isSuperAdmin }),
+    [isSuperAdmin],
+  );
+
   const [draft, setDraft] = useState<HiringSignalFilterDraft>(
     EMPTY_HIRING_SIGNAL_DRAFT,
   );
   const internalDraftRef = useRef(draft);
   const draftRef = draftRefProp ?? internalDraftRef;
   draftRef.current = draft;
+
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    setDraft((d) => {
+      if (
+        !d.companyMissingWebsite &&
+        !d.companyMissingRevenue &&
+        d.companyCsuiteContactMinCount == null &&
+        d.companyHrContactMinCount == null
+      ) {
+        return d;
+      }
+      return {
+        ...d,
+        companyMissingWebsite: false,
+        companyMissingRevenue: false,
+        companyCsuiteContactMinCount: null,
+        companyHrContactMinCount: null,
+      };
+    });
+  }, [isSuperAdmin]);
 
   const applyFilters = useCallback(() => {
     const titles = normalizeHiringSignalTokenList(draft.titles);
@@ -248,9 +276,10 @@ export function HireSignalFilterProvider({
           offset: 0,
         },
         draft,
+        firmographicDraftOptions,
       ),
     );
-  }, [draft, setFilters]);
+  }, [draft, firmographicDraftOptions, setFilters]);
 
   const applyFiltersRef = useRef(applyFilters);
   applyFiltersRef.current = applyFilters;

@@ -2,6 +2,7 @@
 
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
+import { useRole } from "@/context/RoleContext";
 
 function dataQualityActiveCount(draft: {
   companyMissingWebsite: boolean;
@@ -22,9 +23,15 @@ function formatUnderLabel(value: number): string {
   return String(value);
 }
 
+/** Super-admin only — parent sidebar gates visibility; this guards direct usage. */
 export function HiringSignalsDataQualityFilters() {
+  const { isSuperAdmin } = useRole();
   const { draft, onDraftField } = useHireSignalFilter();
   const activeCount = dataQualityActiveCount(draft);
+
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   const csuiteEnabled = draft.companyCsuiteContactMinCount != null;
   const hrEnabled = draft.companyHrContactMinCount != null;
@@ -39,11 +46,11 @@ export function HiringSignalsDataQualityFilters() {
         onClear={
           activeCount > 0
             ? () => {
-                onDraftField("companyMissingWebsite", false);
-                onDraftField("companyMissingRevenue", false);
-                onDraftField("companyCsuiteContactMinCount", null);
-                onDraftField("companyHrContactMinCount", null);
-              }
+              onDraftField("companyMissingWebsite", false);
+              onDraftField("companyMissingRevenue", false);
+              onDraftField("companyCsuiteContactMinCount", null);
+              onDraftField("companyHrContactMinCount", null);
+            }
             : undefined
         }
       >

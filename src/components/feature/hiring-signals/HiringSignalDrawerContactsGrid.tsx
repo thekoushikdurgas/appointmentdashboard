@@ -23,6 +23,7 @@ import {
   pickContactDisplay,
   pickContactFinderNames,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import { useRole } from "@/context/RoleContext";
 import { emailService } from "@/services/graphql/emailService";
 
 const DataGrid = dynamic(
@@ -83,6 +84,9 @@ export function HiringSignalDrawerContactsGrid({
   revealedRowIds,
   onRevealRow,
 }: HiringSignalDrawerContactsGridProps) {
+  const { isSuperAdmin, isPro } = useRole();
+  const canRunEmailFinderApi = isSuperAdmin || isPro();
+
   const rows = useMemo<HiringSignalContactGridRow[]>(
     () =>
       contacts.map((row, i) => {
@@ -143,6 +147,11 @@ export function HiringSignalDrawerContactsGrid({
 
   const handleFindEmail = useCallback(
     async (row: HiringSignalContactGridRow) => {
+      if (!canRunEmailFinderApi) {
+        onRevealRow(row.id, row.email.trim());
+        return;
+      }
+
       if (!row.firstName.trim()) {
         toast.error("Contact must have a first name to find email.");
         return;
@@ -170,7 +179,7 @@ export function HiringSignalDrawerContactsGrid({
         setLoadingRowId(null);
       }
     },
-    [companyWebsite, onRevealRow],
+    [canRunEmailFinderApi, companyWebsite, onRevealRow],
   );
 
   const columns = useMemo<GridColDef<HiringSignalContactGridRow>[]>(() => {

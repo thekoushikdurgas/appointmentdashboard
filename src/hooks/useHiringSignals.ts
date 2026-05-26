@@ -34,6 +34,7 @@ import {
   EMPTY_HIRING_SIGNAL_DRAFT,
   normalizeHiringSignalTokenList,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import { useRole } from "@/context/RoleContext";
 
 function mergeJobListTokens(
   existing: string[] | undefined,
@@ -184,6 +185,11 @@ export function useHiringSignals(
   } = options;
   const cohortDraftRef = companyCohortDraftRef;
   const enabled = enabledOption !== false;
+  const { isSuperAdmin } = useRole();
+  const firmographicDraftOptions = useMemo(
+    () => ({ includeDataQuality: isSuperAdmin }),
+    [isSuperAdmin],
+  );
 
   const [filters, setFilters] = useState<JobListFilters>(() => ({
     ...initial,
@@ -262,8 +268,10 @@ export function useHiringSignals(
       try {
         const draftForCohort =
           cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
-        const firmographicKeyAtFetch =
-          hireSignalFirmographicDraftKey(draftForCohort);
+        const firmographicKeyAtFetch = hireSignalFirmographicDraftKey(
+          draftForCohort,
+          firmographicDraftOptions,
+        );
         setCompanyCohortResolving(false);
         let fetchSnapshot = applyFirmographicFiltersFromDraft(
           {
@@ -272,6 +280,7 @@ export function useHiringSignals(
             excludedCompanyUuids: undefined,
           },
           draftForCohort,
+          firmographicDraftOptions,
         );
         if (gen !== hireSignalLoadGenRef.current) {
           return;
@@ -390,8 +399,10 @@ export function useHiringSignals(
         const currentDraft =
           cohortDraftRef?.current ?? EMPTY_HIRING_SIGNAL_DRAFT;
         if (
-          hireSignalFirmographicDraftKey(currentDraft) !==
-          firmographicKeyAtFetch
+          hireSignalFirmographicDraftKey(
+            currentDraft,
+            firmographicDraftOptions,
+          ) !== firmographicKeyAtFetch
         ) {
           return;
         }
@@ -417,7 +428,7 @@ export function useHiringSignals(
         }
       }
     },
-    [fetchFullMatchPages, cohortDraftRef],
+    [fetchFullMatchPages, cohortDraftRef, firmographicDraftOptions],
   );
 
   const loadStats = useCallback(async () => {
