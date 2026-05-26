@@ -39,9 +39,9 @@ export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
   const data = r?.data;
   const rows = Array.isArray(data)
     ? data.filter(
-      (x): x is Record<string, unknown> =>
-        !!x && typeof x === "object" && !Array.isArray(x),
-    )
+        (x): x is Record<string, unknown> =>
+          !!x && typeof x === "object" && !Array.isArray(x),
+      )
     : [];
   const total = typeof r?.total === "number" ? r.total : rows.length;
   return { rows, total };
@@ -312,6 +312,8 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
     $limit: Int
     $populateCompany: Boolean
     $includePoster: Boolean
+    $title: String
+    $departments: [String!]
   ) {
     hireSignal {
       jobConnectraContacts(
@@ -320,6 +322,8 @@ const HIRE_SIGNAL_JOB_CONNECTRA_CONTACTS = gql`
         limit: $limit
         populateCompany: $populateCompany
         includePoster: $includePoster
+        title: $title
+        departments: $departments
       )
     }
   }
@@ -942,7 +946,7 @@ export async function fetchHireSignalCompanyFundingFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_funding")) {
       throw new Error(
         "Funding filter requires a restarted GraphQL API (company_funding). " +
-        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -964,7 +968,7 @@ export async function fetchHireSignalCompanyCountryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_country")) {
       throw new Error(
         "Country filter requires a restarted GraphQL API (company_country). " +
-        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -986,7 +990,7 @@ export async function fetchHireSignalCompanyIndustryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_industry")) {
       throw new Error(
         "Industry filter requires a restarted GraphQL API (company_industry). " +
-        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1008,7 +1012,7 @@ export async function fetchHireSignalCompanyEmployeeSizeFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_employee_size")) {
       throw new Error(
         "Employee size filter requires a restarted GraphQL API (company_employee_size). " +
-        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1030,7 +1034,7 @@ export async function fetchHireSignalCompanyRevenueFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_revenue")) {
       throw new Error(
         "Revenue filter requires a restarted GraphQL API (company_revenue). " +
-        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1046,9 +1050,11 @@ export function hireSignalFirmographicCohortFiltersFromDraft(
     companyFunding: (scope.companyFunding as string[]) ?? [],
     excludedCompanyFunding: (scope.excludedCompanyFunding as string[]) ?? [],
     companyCountries: (scope.companyCountries as string[]) ?? [],
-    excludedCompanyCountries: (scope.excludedCompanyCountries as string[]) ?? [],
+    excludedCompanyCountries:
+      (scope.excludedCompanyCountries as string[]) ?? [],
     companyIndustries: (scope.companyIndustries as string[]) ?? [],
-    excludedCompanyIndustries: (scope.excludedCompanyIndustries as string[]) ?? [],
+    excludedCompanyIndustries:
+      (scope.excludedCompanyIndustries as string[]) ?? [],
     companyEmployeeSizes: (scope.companyEmployeeSizes as string[]) ?? [],
     excludedCompanyEmployeeSizes:
       (scope.excludedCompanyEmployeeSizes as string[]) ?? [],
@@ -1071,7 +1077,8 @@ export function hireSignalCompanyScopeFiltersFromDraft(
     companyIndustries: firmographic.companyIndustries ?? [],
     excludedCompanyIndustries: firmographic.excludedCompanyIndustries ?? [],
     companyEmployeeSizes: firmographic.companyEmployeeSizes ?? [],
-    excludedCompanyEmployeeSizes: firmographic.excludedCompanyEmployeeSizes ?? [],
+    excludedCompanyEmployeeSizes:
+      firmographic.excludedCompanyEmployeeSizes ?? [],
     companyRevenue: firmographic.companyRevenue ?? [],
     excludedCompanyRevenue: firmographic.excludedCompanyRevenue ?? [],
     companyMissingWebsite: dataQuality.companyMissingWebsite === true,
@@ -1097,8 +1104,8 @@ export function parseResolveCompanyCohortPayload(
     : [];
   const excludedUuids = Array.isArray(r?.excludedUuids)
     ? (r.excludedUuids as unknown[])
-      .map((x) => String(x).trim())
-      .filter(Boolean)
+        .map((x) => String(x).trim())
+        .filter(Boolean)
     : [];
   const total = typeof r?.total === "number" ? r.total : uuids.length;
   return {
@@ -1265,8 +1272,13 @@ export async function fetchJobConnectraContacts(
     limit?: number;
     populateCompany?: boolean;
     includePoster?: boolean;
+    title?: string;
+    departments?: string[];
   },
 ) {
+  const title = options?.title?.trim() ?? "";
+  const departments =
+    options?.departments?.map((d) => d.trim()).filter(Boolean) ?? [];
   return graphqlQuery<{
     hireSignal: { jobConnectraContacts: HireSignalApiJson };
   }>(
@@ -1277,6 +1289,8 @@ export async function fetchJobConnectraContacts(
       limit: options?.limit ?? 25,
       populateCompany: options?.populateCompany ?? true,
       includePoster: options?.includePoster ?? true,
+      title: title || null,
+      departments: departments.length > 0 ? departments : null,
     },
     HS_GQL,
   );
@@ -1379,7 +1393,7 @@ export async function fetchLinkedinJobIdsAllMatching(
   let offset = 0;
   let totalMatching = 0;
 
-  for (; ;) {
+  for (;;) {
     const res = await fetchHiringSignalJobs({
       ...filters,
       limit: HS_EXPORT_FETCH_BATCH,

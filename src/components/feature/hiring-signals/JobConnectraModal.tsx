@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Loader2,
   UserCircle2,
@@ -13,6 +13,7 @@ import Papa from "papaparse";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { MediaObject } from "@/components/ui/MediaObject";
+import { Pagination } from "@/components/ui/Pagination";
 import {
   fetchJobConnectraCompany,
   fetchJobConnectraContacts,
@@ -24,7 +25,6 @@ import {
   hiringSignalInitials,
   pickCompanyDisplay,
   pickContactDisplay,
-  pickContactDepartments,
   connectraContactStableKey,
   collectDepartmentOptionsFromContacts,
   proxiedCompanyLogoSrc,
@@ -41,35 +41,16 @@ type ConnectraState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | {
-    kind: "ok";
-    company: unknown;
-    contacts: unknown[];
-    poster: unknown | null;
-    total: number;
-  };
+      kind: "ok";
+      company: unknown;
+      contacts: unknown[];
+      poster: unknown | null;
+      /** Total contacts in contacts_index for this company (server count). */
+      contactTotal: number;
+    };
 
-const DRAWER_CONTACTS_LIMIT = 50;
-const BASELINE_CONTACTS_LIMIT = 100;
-
-function filterConnectraContacts(
-  contacts: unknown[],
-  titleQ: string,
-  departments: string[],
-): unknown[] {
-  const titleNorm = titleQ.trim().toLowerCase();
-  const deptSet = new Set(departments.map((d) => d.trim()).filter(Boolean));
-  return contacts.filter((row) => {
-    if (titleNorm) {
-      const t = pickContactDisplay(row).title.toLowerCase();
-      if (!t.includes(titleNorm)) return false;
-    }
-    if (deptSet.size > 0) {
-      const rowDepts = pickContactDepartments(row);
-      if (!rowDepts.some((d) => deptSet.has(d))) return false;
-    }
-    return true;
-  });
-}
+const CONTACT_PAGE_SIZE = 25;
+const DEPT_OPTIONS_SAMPLE_LIMIT = 100;
 
 type ParseResult =
   | { ok: true; data: Record<string, unknown> }
@@ -89,6 +70,25 @@ function parseJobServerJson(raw: unknown): ParseResult {
     return { ok: true, data: d as Record<string, unknown> };
   }
   return { ok: false, message: "Invalid data shape" };
+}
+
+function parseContactsPayload(raw: unknown) {
+  const b = parseJobServerJson(raw);
+  if (!b.ok) return { ok: false as const, message: b.message };
+  const contacts = b.data?.contacts;
+  const poster = b.data?.job_poster_contact;
+  const contactList = Array.isArray(contacts) ? contacts : [];
+  const totalRaw = b.data?.total;
+  const total =
+    typeof totalRaw === "number" && Number.isFinite(totalRaw)
+      ? totalRaw
+      : contactList.length;
+  return {
+    ok: true as const,
+    contacts: contactList,
+    poster: poster ?? null,
+    contactTotal: total,
+  };
 }
 
 const modalTableShellScrollClass =
@@ -111,6 +111,8 @@ export function JobConnectraModal({
   density = "comfortable",
 }: JobConnectraModalProps) {
   const [state, setState] = useState<ConnectraState>({ kind: "idle" });
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactPage, setContactPage] = useState(1);
   const [selectedContactKeys, setSelectedContactKeys] = useState<Set<string>>(
     () => new Set(),
   );
@@ -128,8 +130,7 @@ export function JobConnectraModal({
   const [departmentOptions, setDepartmentOptions] = useState<
     FilterComboboxOption[]
   >([]);
-  const initialContactsLoadedRef = useRef(false);
-  const rawContactsRef = useRef<unknown[]>([]);
+  const [companyReady, setCompanyReady] = useState(false);
 
   const onRevealRow = useCallback((rowId: string, email: string) => {
     setRevealedRowIds((prev) => new Set(prev).add(rowId));
@@ -145,6 +146,8 @@ export function JobConnectraModal({
       setDebouncedTitleFilter("");
       setContactDepartmentsFilter([]);
       setDepartmentOptions([]);
+      setContactPage(1);
+      setCompanyReady(false);
     }
   }, [isOpen]);
 
@@ -156,7 +159,8 @@ export function JobConnectraModal({
     setDebouncedTitleFilter("");
     setContactDepartmentsFilter([]);
     setDepartmentOptions([]);
-    initialContactsLoadedRef.current = false;
+    setContactPage(1);
+    setCompanyReady(false);
   }, [job.linkedinJobId]);
 
   useEffect(() => {
@@ -166,41 +170,24 @@ export function JobConnectraModal({
     return () => window.clearTimeout(t);
   }, [contactTitleFilter]);
 
-  const parseContactsPayload = useCallback((raw: unknown) => {
-    const b = parseJobServerJson(raw);
-    if (!b.ok) return { ok: false as const, message: b.message };
-    const contacts = b.data?.contacts;
-    const poster = b.data?.job_poster_contact;
-    const contactList = Array.isArray(contacts) ? contacts : [];
-    const totalRaw = b.data?.total;
-    const total =
-      typeof totalRaw === "number" && Number.isFinite(totalRaw)
-        ? totalRaw
-        : contactList.length;
-    return {
-      ok: true as const,
-      contacts: contactList,
-      poster: poster ?? null,
-      total,
-    };
-  }, []);
+  useEffect(() => {
+    setContactPage(1);
+  }, [debouncedTitleFilter, contactDepartmentsFilter]);
 
+  /** Load company profile + department facet sample once per open/job. */
   useEffect(() => {
     if (!isOpen || !job.linkedinJobId.trim()) return;
     let cancelled = false;
-    initialContactsLoadedRef.current = false;
+    setCompanyReady(false);
     (async () => {
       setState({ kind: "loading" });
       try {
-        const [co, baselineCt, filteredCt] = await Promise.all([
+        const [co, deptSample] = await Promise.all([
           fetchJobConnectraCompany(job.linkedinJobId),
           fetchJobConnectraContacts(job.linkedinJobId, {
-            limit: BASELINE_CONTACTS_LIMIT,
+            page: 1,
+            limit: DEPT_OPTIONS_SAMPLE_LIMIT,
             includePoster: false,
-          }),
-          fetchJobConnectraContacts(job.linkedinJobId, {
-            limit: DRAWER_CONTACTS_LIMIT,
-            includePoster: true,
           }),
         ]);
         if (cancelled) return;
@@ -209,111 +196,118 @@ export function JobConnectraModal({
           setState({ kind: "error", message: a.message });
           return;
         }
-        const baseline = parseContactsPayload(
-          baselineCt.hireSignal?.jobConnectraContacts,
+        const sample = parseContactsPayload(
+          deptSample.hireSignal?.jobConnectraContacts,
         );
-        const filtered = parseContactsPayload(
-          filteredCt.hireSignal?.jobConnectraContacts,
-        );
-        if (!filtered.ok) {
-          setState({ kind: "error", message: filtered.message });
-          return;
-        }
-        if (baseline.ok) {
+        if (sample.ok) {
           setDepartmentOptions(
-            collectDepartmentOptionsFromContacts(baseline.contacts).map(
-              (d) => ({ value: d, displayValue: d }),
-            ),
+            collectDepartmentOptionsFromContacts(sample.contacts).map((d) => ({
+              value: d,
+              displayValue: d,
+            })),
           );
         }
         const company = a.data?.company;
-        rawContactsRef.current = filtered.contacts;
         setState({
           kind: "ok",
           company: company ?? null,
-          contacts: filtered.contacts,
-          poster: filtered.poster,
-          total: filtered.total,
+          contacts: [],
+          poster: null,
+          contactTotal: 0,
         });
-        // #region agent log
-        {
-          const coDisp = pickCompanyDisplay(company ?? null);
-          const firstContact = filtered.contacts[0] ?? null;
-          const firstEmail = firstContact
-            ? pickContactDisplay(firstContact).email
-            : "";
-          let contactsWithEmail = 0;
-          for (const row of filtered.contacts) {
-            if (pickContactDisplay(row).email.trim()) contactsWithEmail += 1;
-          }
-          fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "84e500",
-              },
-              body: JSON.stringify({
-                sessionId: "84e500",
-                hypothesisId: "H1-H2",
-                location: "JobConnectraModal.tsx:load",
-                message: "connectra modal loaded",
-                data: {
-                  companyEmployees: coDisp.employees,
-                  contactTotal: filtered.total,
-                  contactsShown: filtered.contacts.length,
-                  contactsWithEmail,
-                  firstContactEmailPresent: Boolean(firstEmail.trim()),
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(() => {});
-        }
-        // #endregion
+        setCompanyReady(true);
       } catch (e) {
         if (cancelled) return;
         const msg =
           e instanceof Error ? e.message : "Failed to load Connectra data";
         setState({ kind: "error", message: msg });
         toast.error("Connectra (job)", { description: msg });
-      } finally {
-        if (!cancelled) {
-          initialContactsLoadedRef.current = true;
-        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isOpen, job.linkedinJobId, parseContactsPayload]);
+  }, [isOpen, job.linkedinJobId]);
 
+  /** Server-paged contacts (limit/offset via page + limit). */
   useEffect(() => {
-    if (
-      !isOpen ||
-      !job.linkedinJobId.trim() ||
-      !initialContactsLoadedRef.current
-    )
-      return;
-    const filtered = filterConnectraContacts(
-      rawContactsRef.current,
-      debouncedTitleFilter,
-      contactDepartmentsFilter,
-    );
-    setState((prev) =>
-      prev.kind === "ok"
-        ? {
-          ...prev,
-          contacts: filtered,
-          total: filtered.length,
+    if (!isOpen || !job.linkedinJobId.trim() || !companyReady) return;
+    let cancelled = false;
+    (async () => {
+      setContactsLoading(true);
+      try {
+        const ct = await fetchJobConnectraContacts(job.linkedinJobId, {
+          page: contactPage,
+          limit: CONTACT_PAGE_SIZE,
+          includePoster: contactPage === 1,
+          title: debouncedTitleFilter || undefined,
+          departments:
+            contactDepartmentsFilter.length > 0
+              ? contactDepartmentsFilter
+              : undefined,
+        });
+        if (cancelled) return;
+        const parsed = parseContactsPayload(
+          ct.hireSignal?.jobConnectraContacts,
+        );
+        if (!parsed.ok) {
+          toast.error("Connectra contacts", { description: parsed.message });
+          return;
         }
-        : prev,
-    );
-    setSelectedContactKeys(new Set());
+        setState((prev) =>
+          prev.kind === "ok"
+            ? {
+                ...prev,
+                contacts: parsed.contacts,
+                poster: contactPage === 1 ? parsed.poster : prev.poster,
+                contactTotal: parsed.contactTotal,
+              }
+            : prev,
+        );
+        setSelectedContactKeys(new Set());
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "84e500",
+            },
+            body: JSON.stringify({
+              sessionId: "84e500",
+              hypothesisId: "H3-H4",
+              location: "JobConnectraModal.tsx:contactsPage",
+              message: "connectra contacts page loaded",
+              data: {
+                page: contactPage,
+                pageSize: CONTACT_PAGE_SIZE,
+                contactTotal: parsed.contactTotal,
+                contactsReturned: parsed.contacts.length,
+                titleFilter: debouncedTitleFilter,
+                departmentFilterCount: contactDepartmentsFilter.length,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
+      } catch (e) {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : "Failed to load contacts";
+        toast.error("Connectra contacts", { description: msg });
+      } finally {
+        if (!cancelled) setContactsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [
     isOpen,
     job.linkedinJobId,
+    companyReady,
+    contactPage,
     debouncedTitleFilter,
     contactDepartmentsFilter,
   ]);
@@ -327,12 +321,13 @@ export function JobConnectraModal({
   const peopleCountLabel = useCallback(() => {
     if (state.kind !== "ok") return null;
     const shown = state.contacts.length;
-    const total = state.total;
-    if (total > shown) {
-      return ` (${shown} shown of ${total})`;
+    const total = state.contactTotal;
+    if (total <= 0 && shown <= 0) return null;
+    if (total > shown || contactPage > 1) {
+      return ` (${shown.toLocaleString()} shown of ${total.toLocaleString()} contacts)`;
     }
-    return shown ? ` (${shown} shown)` : null;
-  }, [state]);
+    return ` (${shown.toLocaleString()} contact${shown === 1 ? "" : "s"})`;
+  }, [state, contactPage]);
 
   const companyDisp =
     state.kind === "ok" ? pickCompanyDisplay(state.company) : null;
@@ -390,15 +385,15 @@ export function JobConnectraModal({
   const exportContactsCsv = () => {
     if (state.kind !== "ok" || state.contacts.length === 0) {
       toast.message("Nothing to export", {
-        description: "No contacts returned for this job.",
+        description: "No contacts returned for this page.",
       });
       return;
     }
     const rowsToExport =
       selectedContactKeys.size > 0
         ? state.contacts.filter((row, i) =>
-          selectedContactKeys.has(connectraContactStableKey(row, i)),
-        )
+            selectedContactKeys.has(connectraContactStableKey(row, i)),
+          )
         : state.contacts;
     if (rowsToExport.length === 0) {
       toast.message("Nothing to export", {
@@ -428,6 +423,9 @@ export function JobConnectraModal({
     URL.revokeObjectURL(url);
     toast.success("Exported contacts", { description: `${flat.length} rows` });
   };
+
+  const showContactPagination =
+    state.kind === "ok" && state.contactTotal > CONTACT_PAGE_SIZE;
 
   return (
     <HiringSignalAsideDrawer
@@ -598,7 +596,7 @@ export function JobConnectraModal({
                   size="sm"
                   className="c360-gap-1"
                   onClick={exportContactsCsv}
-                  disabled={state.contacts.length === 0}
+                  disabled={state.contacts.length === 0 || contactsLoading}
                   leftIcon={<Download size={14} />}
                 >
                   Export CSV
@@ -611,29 +609,45 @@ export function JobConnectraModal({
                 selectedDepartments={contactDepartmentsFilter}
                 onDepartmentsChange={setContactDepartmentsFilter}
                 onClear={clearContactFilters}
-                disabled={false}
+                disabled={contactsLoading}
               />
-              {state.contacts.length === 0 ? (
+              {contactsLoading && state.contacts.length === 0 ? (
+                <div className="c360-flex c360-items-center c360-gap-2 c360-py-8 c360-text-ink-muted">
+                  <Loader2 className="c360-animate-spin" size={20} />
+                  Loading contacts…
+                </div>
+              ) : state.contacts.length === 0 ? (
                 <p className="c360-text-2xs c360-text-ink-muted">
                   No contacts in{" "}
-                  <span className="c360-font-mono">contacts_index</span> for this
-                  company yet. Bulk contact data is loaded via sync/export; job
-                  posters are indexed after scrape when a LinkedIn poster URL is
-                  on the job row.
+                  <span className="c360-font-mono">contacts_index</span> for
+                  this company yet. Bulk contact data is loaded via sync/export;
+                  job posters are indexed after scrape when a LinkedIn poster
+                  URL is on the job row.
                 </p>
               ) : (
-                <HiringSignalDrawerContactsGrid
-                  contacts={state.contacts}
-                  loading={false}
-                  density={density}
-                  selectedKeys={selectedContactKeys}
-                  onSelectionChange={setSelectedContactKeys}
-                  scrollClassName={modalTableShellScrollClass}
-                  companyWebsite={companyDisp?.website ?? ""}
-                  resolvedEmails={resolvedEmails}
-                  revealedRowIds={revealedRowIds}
-                  onRevealRow={onRevealRow}
-                />
+                <>
+                  <HiringSignalDrawerContactsGrid
+                    contacts={state.contacts}
+                    loading={contactsLoading}
+                    density={density}
+                    selectedKeys={selectedContactKeys}
+                    onSelectionChange={setSelectedContactKeys}
+                    scrollClassName={modalTableShellScrollClass}
+                    companyWebsite={companyDisp?.website ?? ""}
+                    resolvedEmails={resolvedEmails}
+                    revealedRowIds={revealedRowIds}
+                    onRevealRow={onRevealRow}
+                  />
+                  {showContactPagination ? (
+                    <Pagination
+                      className="c360-mt-3 c360-justify-center"
+                      page={contactPage}
+                      pageSize={CONTACT_PAGE_SIZE}
+                      total={state.contactTotal}
+                      onPageChange={setContactPage}
+                    />
+                  ) : null}
+                </>
               )}
             </section>
           </div>

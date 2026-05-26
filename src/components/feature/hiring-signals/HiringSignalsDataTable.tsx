@@ -153,7 +153,7 @@ function jobListFiltersRestrictResults(f: JobListFilters): boolean {
     f.experienceBuckets?.length ||
     f.roleTracks?.length ||
     f.educationLevelMins?.length ||
-    (f.clearanceMode && f.clearanceMode !== "") ||
+    (f.clearanceMode && f.clearanceMode !== "allow") ||
     f.h1bOnly ||
     f.skillsAll?.length ||
     f.hideApplied,

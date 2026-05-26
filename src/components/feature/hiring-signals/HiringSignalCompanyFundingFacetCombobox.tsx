@@ -94,7 +94,7 @@ export function HiringSignalCompanyFundingFacetCombobox({
         loadingMore={false}
         hasMore={false}
         onOpen={onOpen}
-        onLoadMore={() => { }}
+        onLoadMore={() => {}}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}

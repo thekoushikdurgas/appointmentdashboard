@@ -105,24 +105,11 @@ export function HiringSignalDrawerContactsGrid({
 
   const iconSz = density === "compact" ? 14 : 16;
 
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 50,
-  });
-
   const [loadingRowId, setLoadingRowId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoadingRowId(null);
   }, [contacts]);
-
-  useEffect(() => {
-    setPaginationModel((prev) => ({
-      ...prev,
-      page: 0,
-      pageSize: Math.max(rows.length || 1, 1),
-    }));
-  }, [rows.length]);
 
   const rowSelectionModel = useMemo<GridRowSelectionModel>(
     () => ({
@@ -305,9 +292,6 @@ export function HiringSignalDrawerContactsGrid({
             rowSelectionModel={rowSelectionModel}
             onRowSelectionModelChange={handleRowSelectionModelChange}
             sortingMode="client"
-            paginationMode="client"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
             hideFooter
             loading={Boolean(loading)}
             getRowHeight={() => "auto"}
