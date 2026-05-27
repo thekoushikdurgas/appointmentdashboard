@@ -150,9 +150,7 @@ export function RunsTab({
     return (
       <span
         className="c360-hs-grid-posted"
-        title={
-          dateOnly ? `Date only in index: ${s}` : s
-        }
+        title={dateOnly ? `Date only in index: ${s}` : s}
       >
         <span className="c360-hs-grid-posted__date">{date}</span>
         {time ? (
@@ -273,10 +271,7 @@ export function RunsTab({
         render: (row) => {
           const raw =
             String(
-              row.started_at ??
-                row.startedAt ??
-                row.StartedAt ??
-                "",
+              row.started_at ?? row.startedAt ?? row.StartedAt ?? "",
             ).trim() ||
             String(row.created_at ?? row.createdAt ?? row.CreatedAt ?? "");
           return renderRunDateTime(raw);

@@ -4,6 +4,7 @@ import { asRecord } from "@/services/graphql/hiringSignalService";
 export { hiringSignalRowKey } from "@/lib/jobs/hiringSignalRowKeys";
 export {
   formatHireSignalPostedDate,
+  formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
 } from "@/lib/jobs/hiringSignalPostedDate";
 

@@ -20,7 +20,9 @@ export type HireSignalPostedParts = {
 /**
  * Split posted timestamp into date + optional clock time for grid cells.
  */
-export function formatHireSignalPostedParts(iso: string): HireSignalPostedParts {
+export function formatHireSignalPostedParts(
+  iso: string,
+): HireSignalPostedParts {
   const empty: HireSignalPostedParts = { date: "—", time: null };
   const s = iso?.trim() ?? "";
   if (!s || s.startsWith("0001-01-01")) return empty;

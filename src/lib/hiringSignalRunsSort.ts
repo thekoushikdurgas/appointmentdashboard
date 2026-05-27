@@ -30,10 +30,7 @@ const STATUS_RANK: Record<string, number> = {
   cancelled: 5,
 };
 
-function pickIso(
-  row: Record<string, unknown>,
-  ...keys: string[]
-): string {
+function pickIso(row: Record<string, unknown>, ...keys: string[]): string {
   for (const k of keys) {
     const v = row[k];
     if (v != null && String(v).trim()) return String(v).trim();
@@ -41,22 +38,32 @@ function pickIso(
   return "";
 }
 
-/** Parse ISO / scraper timestamps for stable ordering. */
+/** True when an ISO datetime has no explicit UTC/offset suffix (scraper.server style). */
+function isNaiveIsoDateTime(s: string): boolean {
+  return (
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) &&
+    !/[zZ]$/.test(s) &&
+    !/[+-]\d{2}:\d{2}$/.test(s) &&
+    !/[+-]\d{4}$/.test(s)
+  );
+}
+
+/** Parse ISO / scraper timestamps for stable ordering (naive values treated as UTC). */
 export function hireSignalRunSortMs(iso: string): number {
-  const s = (iso ?? "").trim();
+  let s = (iso ?? "").trim();
   if (!s) return 0;
-  const t = Date.parse(s.includes("T") ? s : `${s}T00:00:00.000Z`);
+  if (!s.includes("T")) {
+    s = `${s}T00:00:00.000Z`;
+  } else if (isNaiveIsoDateTime(s)) {
+    s = `${s}Z`;
+  }
+  const t = Date.parse(s);
   return Number.isFinite(t) ? t : 0;
 }
 
 /** Best “activity” time: worker start, else queue time, else last update. */
 export function hireSignalRunStartedMs(row: Record<string, unknown>): number {
-  const started = pickIso(
-    row,
-    "started_at",
-    "startedAt",
-    "StartedAt",
-  );
+  const started = pickIso(row, "started_at", "startedAt", "StartedAt");
   if (started) return hireSignalRunSortMs(started);
   return hireSignalRunSortMs(
     pickIso(row, "created_at", "createdAt", "CreatedAt"),
@@ -94,10 +101,7 @@ export function compareHireSignalRunRows(
 ): number {
   switch (key) {
     case "runId":
-      return compareStrings(
-        satelliteRunIdFromRow(a),
-        satelliteRunIdFromRow(b),
-      );
+      return compareStrings(satelliteRunIdFromRow(a), satelliteRunIdFromRow(b));
     case "keywords":
       return compareStrings(
         satelliteKeywordsFromRow(a),
@@ -148,8 +152,7 @@ export function sortHireSignalRunRows(
     const c = compareHireSignalRunRows(a, b, key);
     if (c !== 0) return c * sign;
     return (
-      compareStrings(satelliteRunIdFromRow(a), satelliteRunIdFromRow(b)) *
-      sign
+      compareStrings(satelliteRunIdFromRow(a), satelliteRunIdFromRow(b)) * sign
     );
   });
   return copy;

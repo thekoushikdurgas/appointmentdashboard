@@ -2052,6 +2052,7 @@ export type HireSignalQueryJobFilterOptionsArgs = {
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
   q?: InputMaybe<Scalars["String"]["input"]>;
   runId?: InputMaybe<Scalars["String"]["input"]>;
+  searchTokens?: InputMaybe<Array<Scalars["String"]["input"]>>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
   titles?: InputMaybe<Array<Scalars["String"]["input"]>>;
@@ -2073,6 +2074,7 @@ export type HireSignalQueryJobsArgs = {
   postedAfter?: InputMaybe<Scalars["String"]["input"]>;
   postedBefore?: InputMaybe<Scalars["String"]["input"]>;
   runId?: InputMaybe<Scalars["String"]["input"]>;
+  searchTokens?: InputMaybe<Array<Scalars["String"]["input"]>>;
   seniority?: InputMaybe<Scalars["String"]["input"]>;
   title?: InputMaybe<Scalars["String"]["input"]>;
   titles?: InputMaybe<Array<Scalars["String"]["input"]>>;

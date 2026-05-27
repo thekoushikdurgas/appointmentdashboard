@@ -1,7 +1,12 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDataFiltersPeek } from "@/context/DataFiltersPeekContext";
 import { getPaginationBounds } from "@/lib/paginationBounds";
@@ -38,10 +43,7 @@ function PaginationPageMenu({
   const menuOpenRef = useRef(false);
   const [open, setOpen] = useState(false);
 
-  const options = useMemo(
-    () => buildPageOptions(totalPages),
-    [totalPages],
-  );
+  const options = useMemo(() => buildPageOptions(totalPages), [totalPages]);
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -75,7 +77,10 @@ function PaginationPageMenu({
         aria-label={`Page ${page} of ${totalPages}`}
       >
         <SelectPrimitive.Value />
-        <SelectPrimitive.Icon aria-hidden className="c360-pagination__dropdown-chevron">
+        <SelectPrimitive.Icon
+          aria-hidden
+          className="c360-pagination__dropdown-chevron"
+        >
           {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>

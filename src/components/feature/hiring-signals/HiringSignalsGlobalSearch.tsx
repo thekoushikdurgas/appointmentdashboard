@@ -70,10 +70,10 @@ export function HiringSignalsGlobalSearch({
   const commitInput = useCallback(() => {
     const parts = splitInputTokens(input);
     if (parts.length === 0) return;
-    const merged = normalizeHiringSignalTokenList([...draftTokens, ...parts]).slice(
-      0,
-      MAX_TOKENS,
-    );
+    const merged = normalizeHiringSignalTokenList([
+      ...draftTokens,
+      ...parts,
+    ]).slice(0, MAX_TOKENS);
     setInput("");
     scheduleEmit(merged);
   }, [draftTokens, input, scheduleEmit]);

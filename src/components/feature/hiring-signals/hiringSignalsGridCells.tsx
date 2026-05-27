@@ -16,10 +16,12 @@ import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   employmentTypeBadgeColor,
   hiringSignalInitials,
-  formatHireSignalPostedParts,
-  isHireSignalPostedDateOnly,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import {
+  formatHireSignalPostedParts,
+  isHireSignalPostedDateOnly,
+} from "@/lib/jobs/hiringSignalPostedDate";
 
 export function hiringSignalsIsRemoteAllowed(remote: string): boolean {
   const x = remote.trim().toLowerCase();
@@ -183,9 +185,7 @@ export function HiringSignalsJobPostedCell({ row }: { row: LinkedInJobRow }) {
   return (
     <span className="c360-hs-grid-posted" title={title}>
       <span className="c360-hs-grid-posted__date">{date}</span>
-      {time ? (
-        <span className="c360-hs-grid-posted__time">{time}</span>
-      ) : null}
+      {time ? <span className="c360-hs-grid-posted__time">{time}</span> : null}
     </span>
   );
 }

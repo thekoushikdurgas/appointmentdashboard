@@ -91,18 +91,24 @@ export function Table<T>({
     const copy = [...data];
     const sign = sortDir === "asc" ? 1 : -1;
     copy.sort((a, b) => {
-      const av = col.sortValue ? col.sortValue(a) : (a as Record<string, unknown>)[sortKey];
-      const bv = col.sortValue ? col.sortValue(b) : (b as Record<string, unknown>)[sortKey];
+      const av = col.sortValue
+        ? col.sortValue(a)
+        : (a as Record<string, unknown>)[sortKey];
+      const bv = col.sortValue
+        ? col.sortValue(b)
+        : (b as Record<string, unknown>)[sortKey];
       if (av == null && bv == null) return 0;
       if (av == null) return 1;
       if (bv == null) return -1;
       if (typeof av === "number" && typeof bv === "number") {
         return av === bv ? 0 : (av < bv ? -1 : 1) * sign;
       }
-      return String(av).localeCompare(String(bv), undefined, {
-        sensitivity: "base",
-        numeric: true,
-      }) * sign;
+      return (
+        String(av).localeCompare(String(bv), undefined, {
+          sensitivity: "base",
+          numeric: true,
+        }) * sign
+      );
     });
     return copy;
   }, [columns, data, isControlled, sortDir, sortKey]);

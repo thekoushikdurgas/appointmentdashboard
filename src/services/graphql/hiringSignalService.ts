@@ -862,7 +862,8 @@ function hireSignalJobListFilterVars(filters: JobListFilters) {
         ? filters.companyUuids
         : null,
     searchTokens:
-      filters.globalSearchTokens?.length && filters.globalSearchTokens.length > 0
+      filters.globalSearchTokens?.length &&
+      filters.globalSearchTokens.length > 0
         ? filters.globalSearchTokens
         : null,
   };
