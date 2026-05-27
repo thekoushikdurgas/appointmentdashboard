@@ -845,8 +845,82 @@
   top: var(--c360-topbar-height-collapsed);
 }
 
+.c360-page.c360-hiring-signals-page {
+  --c360-hs-toolbar-control-h: var(--c360-button-height-sm);
+}
+
 .c360-page.c360-hiring-signals-page .c360-toolbar {
   border-radius: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-2);
+  padding-top: var(--c360-spacing-2);
+  padding-bottom: var(--c360-spacing-2);
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__leading {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--c360-spacing-3);
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__tabs {
+  align-items: center;
+  min-height: var(--c360-hs-toolbar-control-h);
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__tab {
+  box-sizing: border-box;
+  height: var(--c360-hs-toolbar-control-h);
+  min-height: var(--c360-hs-toolbar-control-h);
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: center;
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__action-prefix,
+.c360-page.c360-hiring-signals-page .c360-toolbar__action-buttons {
+  align-items: center;
+}
+
+.c360-page.c360-hiring-signals-page .c360-toolbar__filter-btn {
+  height: var(--c360-hs-toolbar-control-h);
+  min-height: var(--c360-hs-toolbar-control-h);
+}
+
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  height: var(--c360-hs-toolbar-control-h);
+  flex-shrink: 0;
+}
+
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-page-size__label {
+  font-size: var(--c360-text-2xs);
+  color: var(--c360-text-muted);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-page-size__select.c360-input-group {
+  margin-bottom: 0;
+  width: 4.5rem;
+}
+
+.c360-page.c360-hiring-signals-page
+  .c360-hs-toolbar-page-size__select
+  .c360-select__trigger {
+  height: var(--c360-hs-toolbar-control-h);
+  min-height: var(--c360-hs-toolbar-control-h);
+  max-height: var(--c360-hs-toolbar-control-h);
+  box-sizing: border-box;
 }
 
 /* Peek rail filter aside: square corners (flush with chrome; overrides layout peek peel radius) */
@@ -875,6 +949,13 @@
   min-width: 0;
 }
 
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-meta > .c360-text-2xs {
+  display: inline-flex;
+  align-items: center;
+  height: var(--c360-hs-toolbar-control-h);
+  flex-shrink: 0;
+}
+
 .c360-hs-toolbar-meta {
   display: flex;
   align-items: center;
@@ -882,6 +963,7 @@
   gap: var(--c360-spacing-2);
   flex: 1 1 auto;
   min-width: 0;
+  min-height: var(--c360-hs-toolbar-control-h);
 }
 
 .c360-hs-global-search {
@@ -891,7 +973,10 @@
   flex: 1 1 auto;
   min-width: 8rem;
   max-width: 22rem;
-  height: 32px;
+  height: var(--c360-hs-toolbar-control-h);
+  min-height: var(--c360-hs-toolbar-control-h);
+  max-height: var(--c360-hs-toolbar-control-h);
+  box-sizing: border-box;
   padding: 0 var(--c360-spacing-2);
   border: 1px solid var(--c360-border-strong);
   border-radius: var(--c360-radius-md);
@@ -969,11 +1054,31 @@
 .c360-page.c360-hiring-signals-page .c360-hiring-signals-toolbar-pagination {
   flex-wrap: nowrap;
   justify-content: flex-end;
+  align-items: center;
+  height: var(--c360-hs-toolbar-control-h);
+  flex-shrink: 0;
 }
 
 .c360-page.c360-hiring-signals-page
   .c360-hiring-signals-toolbar-pagination.c360-pagination--dropdown {
   gap: 2px;
+}
+
+.c360-page.c360-hiring-signals-page
+  .c360-hiring-signals-toolbar-pagination
+  .c360-pagination__page {
+  width: var(--c360-hs-toolbar-control-h);
+  height: var(--c360-hs-toolbar-control-h);
+  min-width: var(--c360-hs-toolbar-control-h);
+  min-height: var(--c360-hs-toolbar-control-h);
+  box-sizing: border-box;
+}
+
+.c360-page.c360-hiring-signals-page
+  .c360-hiring-signals-toolbar-pagination
+  .c360-pagination__page--dropdown {
+  min-width: 3rem;
+  width: auto;
 }
 
 /* Filter rail root: flush with peek panel (overrides shared `.c360-contacts-filters` padding/gap) */

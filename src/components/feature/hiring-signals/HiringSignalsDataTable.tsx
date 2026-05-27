@@ -190,11 +190,12 @@ export function HiringSignalsToolbarTableExtras({
   onPageSizeChange,
 }: HiringSignalsToolbarTableExtrasProps) {
   return (
-    <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-      <span className="c360-text-2xs c360-text-ink-muted">Per page</span>
+    <div className="c360-hs-toolbar-page-size">
+      <span className="c360-hs-toolbar-page-size__label">Per page</span>
       <Select
-        className="c360-w-24"
+        className="c360-hs-toolbar-page-size__select"
         fullWidth={false}
+        inputSize="sm"
         value={String(pageSize)}
         onChange={(e) => onPageSizeChange(Number(e.target.value) || 25)}
         options={PAGE_SIZE_OPTIONS}
