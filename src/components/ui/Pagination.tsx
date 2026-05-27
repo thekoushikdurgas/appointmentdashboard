@@ -9,8 +9,11 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { Select, type SelectOption } from "@/components/ui/Select";
+import { PaginationDropdownNav } from "@/components/ui/PaginationDropdownNav";
 import { getPaginationBounds } from "@/lib/paginationBounds";
 import { cn, formatCompact } from "@/lib/utils";
+
+export type PaginationVariant = "numbered" | "dropdown";
 
 export interface PaginationProps {
   total: number;
@@ -19,6 +22,8 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
   siblingCount?: number;
   className?: string;
+  /** Numbered page list (default) or compact prev / dropdown / next. */
+  variant?: PaginationVariant;
   /**
    * When there is only one page of results, still render prev/next (disabled) and
    * page `1`. Defaults to `false` so list footers can omit controls when everything fits one page.
@@ -79,11 +84,25 @@ export function Pagination({
   onPageChange,
   siblingCount = 1,
   className,
+  variant = "numbered",
   showWhenSinglePage = false,
   pageSizeOptions,
   onPageSizeChange,
   pageSizeSelectLabel = "Rows",
 }: PaginationProps) {
+  if (variant === "dropdown") {
+    return (
+      <PaginationDropdownNav
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        className={className}
+        showWhenSinglePage={showWhenSinglePage}
+      />
+    );
+  }
+
   const {
     pageSize: ps,
     totalPages,
@@ -234,4 +253,6 @@ export function Pagination({
   );
 }
 
+export { PaginationDropdownNav } from "@/components/ui/PaginationDropdownNav";
+export type { PaginationDropdownNavProps } from "@/components/ui/PaginationDropdownNav";
 export default Pagination;

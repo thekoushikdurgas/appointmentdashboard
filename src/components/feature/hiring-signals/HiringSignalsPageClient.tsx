@@ -62,6 +62,7 @@ import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { useRole } from "@/context/RoleContext";
 import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
 import {
   HIRE_SIGNAL_SAVED_SEARCH_VERSION,
   type HireSignalSavedSearchPayload,
@@ -263,20 +264,20 @@ function HiringSignalsPageBody({
       const parsed0 = parseStatusPayload(row.statusPayload);
       const rawPct0 =
         row.statusPayload &&
-        typeof row.statusPayload === "object" &&
-        typeof (row.statusPayload as Record<string, unknown>)
-          .progress_percent === "number"
+          typeof row.statusPayload === "object" &&
+          typeof (row.statusPayload as Record<string, unknown>)
+            .progress_percent === "number"
           ? ((row.statusPayload as Record<string, unknown>)
-              .progress_percent as number)
+            .progress_percent as number)
           : null;
       const prog0 =
         rawPct0 != null && rawPct0 > 0
           ? Math.min(100, Math.max(0, Math.round(rawPct0)))
           : deriveDisplayProgressPercent(st0.toUpperCase(), {
-              progress: parsed0.progress,
-              total: parsed0.total,
-              processed: parsed0.processed,
-            });
+            progress: parsed0.progress,
+            total: parsed0.total,
+            processed: parsed0.processed,
+          });
       setExportBanner({
         jobId: row.jobId,
         status: st0,
@@ -373,20 +374,20 @@ function HiringSignalsPageBody({
             const parsed = parseStatusPayload(row.statusPayload);
             const rawPct =
               row.statusPayload &&
-              typeof row.statusPayload === "object" &&
-              typeof (row.statusPayload as Record<string, unknown>)
-                .progress_percent === "number"
+                typeof row.statusPayload === "object" &&
+                typeof (row.statusPayload as Record<string, unknown>)
+                  .progress_percent === "number"
                 ? ((row.statusPayload as Record<string, unknown>)
-                    .progress_percent as number)
+                  .progress_percent as number)
                 : null;
             const prog =
               rawPct != null && rawPct > 0
                 ? Math.min(100, Math.max(0, Math.round(rawPct)))
                 : deriveDisplayProgressPercent(st.toUpperCase(), {
-                    progress: parsed.progress,
-                    total: parsed.total,
-                    processed: parsed.processed,
-                  });
+                  progress: parsed.progress,
+                  total: parsed.total,
+                  processed: parsed.processed,
+                });
             setExportBanner((b) =>
               b && b.jobId === exportBanner.jobId
                 ? { jobId: b.jobId, status: st, progress: prog }
@@ -439,14 +440,26 @@ function HiringSignalsPageBody({
         onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
         totalCount={total}
         meta={
-          <>
+          <div className="c360-hs-toolbar-meta">
+            <HiringSignalsGlobalSearch
+              tokens={filters.globalSearchTokens ?? []}
+              disabled={loading}
+              onTokensChange={(next) => {
+                setFilters((f) => ({
+                  ...f,
+                  globalSearchTokens: next.length > 0 ? next : undefined,
+                  offset: 0,
+                }));
+              }}
+            />
             {filters.runId?.trim() ? (
-              <span className="c360-mr-3 c360-text-2xs c360-text-muted">
+              <span className="c360-text-2xs c360-text-muted c360-shrink-0">
                 {total.toLocaleString()} jobs match this run
               </span>
             ) : null}
             {total > filters.limit ? (
               <Pagination
+                variant="dropdown"
                 className="c360-hiring-signals-toolbar-pagination"
                 page={currentPage + 1}
                 pageSize={filters.limit}
@@ -454,7 +467,7 @@ function HiringSignalsPageBody({
                 onPageChange={(p) => setPage(p - 1)}
               />
             ) : null}
-          </>
+          </div>
         }
         filterConfig={{
           activeCount: activeDraftCount,
@@ -484,13 +497,13 @@ function HiringSignalsPageBody({
           },
           ...(isSuperAdmin
             ? [
-                {
-                  label: "Run scrape",
-                  onClick: () => setScrapeModalOpen(true),
-                  icon: Play,
-                  variant: "primary" as const,
-                },
-              ]
+              {
+                label: "Run scrape",
+                onClick: () => setScrapeModalOpen(true),
+                icon: Play,
+                variant: "primary" as const,
+              },
+            ]
             : []),
         ]}
       />
@@ -498,12 +511,14 @@ function HiringSignalsPageBody({
     [
       activeDraftCount,
       currentPage,
+      filters.globalSearchTokens,
       filters.limit,
       filters.runId,
       isDesktop,
       isSuperAdmin,
       loading,
       refetch,
+      setFilters,
       setPage,
       setPageSize,
       setSignalTimePreset,
@@ -626,7 +641,7 @@ function HiringSignalsPageBody({
                     to download when complete.
                   </p>
                   {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
-                  exportBanner.status.toUpperCase() !== "FAILED" ? (
+                    exportBanner.status.toUpperCase() !== "FAILED" ? (
                     <Progress
                       value={exportBanner.progress}
                       max={100}

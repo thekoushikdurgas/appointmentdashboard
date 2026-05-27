@@ -875,9 +875,105 @@
   min-width: 0;
 }
 
-.c360-page.c360-hiring-signals-page .c360-hiring-signals-toolbar-pagination {
-  flex-wrap: wrap;
+.c360-hs-toolbar-meta {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--c360-spacing-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.c360-hs-global-search {
+  display: flex;
+  align-items: center;
+  gap: var(--c360-spacing-1);
+  flex: 1 1 auto;
+  min-width: 8rem;
+  max-width: 22rem;
+  height: 32px;
+  padding: 0 var(--c360-spacing-2);
+  border: 1px solid var(--c360-border-strong);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-bg-elevated);
+}
+
+.c360-hs-global-search__icon {
+  flex-shrink: 0;
+  color: var(--c360-text-muted);
+}
+
+.c360-hs-global-search__field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.c360-hs-global-search__chip {
+  max-width: 9rem;
+}
+
+.c360-hs-global-search__chip .c360-hs-filter-chip__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c360-hs-global-search__input {
+  flex: 1 1 4rem;
+  min-width: 4rem;
+  border: none;
+  background: transparent;
+  font-size: var(--c360-text-xs);
+  color: var(--c360-text);
+  outline: none;
+  padding: 0;
+}
+
+.c360-hs-global-search__input::placeholder {
+  color: var(--c360-text-muted);
+}
+
+.c360-hs-global-search__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.c360-hs-global-search__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--c360-text-muted);
+  cursor: pointer;
+  border-radius: var(--c360-radius-sm);
+}
+
+.c360-hs-global-search__clear:hover:not(:disabled) {
+  color: var(--c360-text);
+  background: var(--c360-bg-subtle);
+}
+
+.c360-hs-global-search__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.c360-page.c360-hiring-signals-page .c360-hiring-signals-toolbar-pagination {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.c360-page.c360-hiring-signals-page
+  .c360-hiring-signals-toolbar-pagination.c360-pagination--dropdown {
+  gap: 2px;
 }
 
 /* Filter rail root: flush with peek panel (overrides shared `.c360-contacts-filters` padding/gap) */

@@ -81,6 +81,7 @@ const HIRE_SIGNAL_JOBS = gql`
     $extendedJobFilters: JSON
     $hideApplied: Boolean
     $companyUuids: [String!]
+    $searchTokens: [String!]
   ) {
     hireSignal {
       jobs(
@@ -98,6 +99,7 @@ const HIRE_SIGNAL_JOBS = gql`
         extendedJobFilters: $extendedJobFilters
         hideApplied: $hideApplied
         companyUuids: $companyUuids
+        searchTokens: $searchTokens
       )
     }
   }
@@ -129,6 +131,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
     $extendedJobFilters: JSON
     $hideApplied: Boolean
     $companyUuids: [String!]
+    $searchTokens: [String!]
   ) {
     hireSignal {
       jobFilterOptions(
@@ -148,6 +151,7 @@ const HIRE_SIGNAL_JOB_FILTER_OPTIONS = gql`
         extendedJobFilters: $extendedJobFilters
         hideApplied: $hideApplied
         companyUuids: $companyUuids
+        searchTokens: $searchTokens
       )
     }
   }
@@ -465,6 +469,8 @@ export interface JobListFilters {
   postedBefore?: string;
   /** Apify / job.server run id (gateway must expose `jobs(runId:)`). */
   runId?: string;
+  /** Toolbar global search — each token matches title OR company OR location (AND across tokens). */
+  globalSearchTokens?: string[];
   workplaceTypes?: string[];
   industries?: string[];
   excludedIndustries?: string[];
@@ -854,6 +860,10 @@ function hireSignalJobListFilterVars(filters: JobListFilters) {
     companyUuids:
       filters.companyUuids?.length && filters.companyUuids.length > 0
         ? filters.companyUuids
+        : null,
+    searchTokens:
+      filters.globalSearchTokens?.length && filters.globalSearchTokens.length > 0
+        ? filters.globalSearchTokens
         : null,
   };
 }

@@ -336,6 +336,7 @@ export function HireSignalFilterProvider({
       postedAfter: undefined,
       postedBefore: undefined,
       runId: undefined,
+      globalSearchTokens: undefined,
       workplaceTypes: undefined,
       industries: undefined,
       excludedIndustries: undefined,
