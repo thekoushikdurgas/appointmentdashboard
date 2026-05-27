@@ -87,7 +87,7 @@ export function normalizeGatewayRole(
   const key = (role ?? "").trim().toLowerCase().replace(/\s+/g, "");
   if (key === "superadmin") return ROLES.SUPER_ADMIN;
   if (key === "admin" || key === "owner") return ROLES.ADMIN;
-  if (key === "prouser") return ROLES.USER;
+  if (key === "prouser") return ROLES.USER; // Pro user type → RoleContext.isPro()
   if (key === "freeuser" || key === "member") return ROLES.FREE;
   return ROLES.FREE;
 }

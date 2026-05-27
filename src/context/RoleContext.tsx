@@ -25,6 +25,7 @@ interface RoleContextValue {
   creditsLimit: number;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  /** True for backend `ProUser` (frontend `ROLES.USER`) and `SuperAdmin`; not subscription plan. */
   isPro: () => boolean;
   checkAccess: (feature: string) => boolean;
   checkRole: (requiredRole: UserRole) => boolean;
@@ -105,10 +106,9 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[ROLES.ADMIN];
   const isSuperAdmin = role === ROLES.SUPER_ADMIN;
 
+  /** Backend `ProUser` → `ROLES.USER`, plus `SuperAdmin`. Not tied to subscription plan. */
   const isPro = (): boolean => {
-    return (
-      plan === PLANS.PROFESSIONAL || plan === PLANS.ENTERPRISE || isSuperAdmin
-    );
+    return role === ROLES.USER || isSuperAdmin;
   };
 
   const checkRole = (required: UserRole): boolean => {

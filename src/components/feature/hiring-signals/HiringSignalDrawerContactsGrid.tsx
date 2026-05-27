@@ -84,8 +84,8 @@ export function HiringSignalDrawerContactsGrid({
   revealedRowIds,
   onRevealRow,
 }: HiringSignalDrawerContactsGridProps) {
-  const { isSuperAdmin, isPro } = useRole();
-  const canRunEmailFinderApi = isSuperAdmin || isPro();
+  const { isPro } = useRole();
+  const canRunEmailFinderApi = isPro();
 
   const rows = useMemo<HiringSignalContactGridRow[]>(
     () =>
