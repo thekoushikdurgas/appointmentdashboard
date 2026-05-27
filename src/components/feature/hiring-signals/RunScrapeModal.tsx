@@ -26,13 +26,13 @@ export function RunScrapeModal({
   onClose,
   onSuccess,
 }: RunScrapeModalProps) {
-  const [keywords, setKeywords] = useState("golang developer");
-  const [geoId, setGeoId] = useState(105080838);
-  const [count, setCount] = useState(100);
-  const [enableEnrichment, setEnableEnrichment] = useState(false);
+  const [keywords, setKeywords] = useState("Oracle");
+  const [geoId, setGeoId] = useState(103644278);
+  const [count, setCount] = useState(1000);
+  const [enableEnrichment, setEnableEnrichment] = useState(true);
   const [trigger, setTrigger] = useState("manual");
   /** Empty string = omit from payload; scraper repeats after N hours when set (> 0). */
-  const [repeatAfterHours, setRepeatAfterHours] = useState("");
+  const [repeatAfterHours, setRepeatAfterHours] = useState("2");
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function RunScrapeModal({
   }, [isOpen]);
 
   const reset = useCallback(() => {
-    setKeywords("golang developer");
+    setKeywords("Oracle");
     setGeoId(103644278);
     setCount(1000);
     setEnableEnrichment(true);
@@ -218,7 +218,7 @@ export function RunScrapeModal({
             onChange={(e) => setGeoId(Number(e.target.value))}
           />
           <span className="c360-text-2xs c360-text-muted">
-            Example: 105080838 (United States), 103644278 (India).
+            Example: 103644278 (United States), 103644278 (India).
           </span>
         </label>
         <label className="c360-flex c360-flex-col c360-gap-1">

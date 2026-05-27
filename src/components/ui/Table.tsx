@@ -1,15 +1,19 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { applyVars } from "@/lib/applyCssVars";
+
+export type TableSortDir = "asc" | "desc";
 
 export interface TableColumn<T> {
   key: string;
   header: ReactNode;
   render: (row: T, index: number) => ReactNode;
   sortable?: boolean;
+  /** When set, used for client-side sort (uncontrolled mode only). */
+  sortValue?: (row: T) => string | number | null;
   width?: string | number;
   align?: "left" | "center" | "right";
 }
@@ -26,9 +30,15 @@ export interface TableProps<T> {
   selectedKeys?: Set<string>;
   onSelectAll?: (selected: boolean) => void;
   onSelectRow?: (key: string, selected: boolean) => void;
+  /** Controlled sort — parent sorts full dataset (e.g. before pagination). */
+  sortKey?: string | null;
+  sortDir?: TableSortDir | null;
+  onSortChange?: (key: string | null, dir: TableSortDir | null) => void;
+  /** First click on a sortable column when uncontrolled (default `asc`). */
+  defaultSortDir?: TableSortDir;
 }
 
-type SortDir = "asc" | "desc" | null;
+type SortDir = TableSortDir | null;
 
 export function Table<T>({
   columns,
@@ -42,21 +52,60 @@ export function Table<T>({
   selectedKeys,
   onSelectAll,
   onSelectRow,
+  sortKey: controlledSortKey,
+  sortDir: controlledSortDir,
+  onSortChange,
+  defaultSortDir = "asc",
 }: TableProps<T>) {
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [internalSortKey, setInternalSortKey] = useState<string | null>(null);
+  const [internalSortDir, setInternalSortDir] = useState<SortDir>(null);
+  const isControlled = onSortChange != null;
+  const sortKey = isControlled ? (controlledSortKey ?? null) : internalSortKey;
+  const sortDir = isControlled ? (controlledSortDir ?? null) : internalSortDir;
 
   const toggleSort = (key: string) => {
+    let nextKey: string | null = key;
+    let nextDir: SortDir = defaultSortDir;
     if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir("asc");
+      nextDir = defaultSortDir;
     } else if (sortDir === "asc") {
-      setSortDir("desc");
+      nextDir = "desc";
+    } else if (sortDir === "desc") {
+      nextKey = null;
+      nextDir = null;
     } else {
-      setSortKey(null);
-      setSortDir(null);
+      nextDir = defaultSortDir;
+    }
+    if (isControlled) {
+      onSortChange?.(nextKey, nextDir);
+    } else {
+      setInternalSortKey(nextKey);
+      setInternalSortDir(nextDir);
     }
   };
+
+  const displayData = useMemo(() => {
+    if (isControlled || !sortKey || !sortDir) return data;
+    const col = columns.find((c) => c.key === sortKey);
+    if (!col?.sortable) return data;
+    const copy = [...data];
+    const sign = sortDir === "asc" ? 1 : -1;
+    copy.sort((a, b) => {
+      const av = col.sortValue ? col.sortValue(a) : (a as Record<string, unknown>)[sortKey];
+      const bv = col.sortValue ? col.sortValue(b) : (b as Record<string, unknown>)[sortKey];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === "number" && typeof bv === "number") {
+        return av === bv ? 0 : (av < bv ? -1 : 1) * sign;
+      }
+      return String(av).localeCompare(String(bv), undefined, {
+        sensitivity: "base",
+        numeric: true,
+      }) * sign;
+    });
+    return copy;
+  }, [columns, data, isControlled, sortDir, sortKey]);
 
   const hasSelection = !!selectedKeys;
   const allSelected =
@@ -157,7 +206,7 @@ export function Table<T>({
               </td>
             </tr>
           ) : (
-            data.map((row, index) => {
+            displayData.map((row, index) => {
               const key = keyExtractor(row, index);
               const selected = selectedKeys?.has(key) ?? false;
               return (

@@ -443,8 +443,8 @@ export function HiringSignalsDataTable({
         field: "posted",
         headerName: COL_LABELS.posted,
         flex: 0,
-        width: 172,
-        minWidth: 158,
+        width: 118,
+        minWidth: 108,
         sortable: true,
         /**
          * MUI: first sort on a column uses `sortingOrder[0]` (see getNextGridSortDirection).

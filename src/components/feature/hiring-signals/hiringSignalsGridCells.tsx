@@ -16,7 +16,7 @@ import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   employmentTypeBadgeColor,
   hiringSignalInitials,
-  formatHireSignalPostedDate,
+  formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
@@ -170,22 +170,22 @@ export function HiringSignalsJobTypeBadgesCell({
 
 export function HiringSignalsJobPostedCell({ row }: { row: LinkedInJobRow }) {
   const raw = row.postedAt?.trim() ?? "";
+  if (!raw) {
+    return (
+      <span className="c360-hs-grid-meta-text c360-hs-grid-posted">—</span>
+    );
+  }
+  const { date, time } = formatHireSignalPostedParts(raw);
   const dateOnly = isHireSignalPostedDateOnly(raw);
-  const label = formatHireSignalPostedDate(raw, {
-    withTime: true,
-    emptyAsDash: true,
-  });
-  const title = raw
-    ? dateOnly
-      ? `Posted date: ${raw} (no time stored in index)`
-      : raw
-    : undefined;
+  const title = dateOnly
+    ? `Posted date: ${raw} (no time stored in index)`
+    : raw;
   return (
-    <span
-      className="c360-hs-grid-meta-text c360-whitespace-nowrap"
-      title={title}
-    >
-      {label}
+    <span className="c360-hs-grid-posted" title={title}>
+      <span className="c360-hs-grid-posted__date">{date}</span>
+      {time ? (
+        <span className="c360-hs-grid-posted__time">{time}</span>
+      ) : null}
     </span>
   );
 }

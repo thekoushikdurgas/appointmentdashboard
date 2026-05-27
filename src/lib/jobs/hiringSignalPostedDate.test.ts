@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import {
   formatHireSignalPostedDate,
+  formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
 } from "./hiringSignalPostedDate";
 
@@ -35,5 +36,21 @@ describe("formatHireSignalPostedDate", () => {
     });
     expect(out.length).toBeGreaterThan(10);
     expect(out).not.toBe("—");
+  });
+});
+
+describe("formatHireSignalPostedParts", () => {
+  it("returns date and time for full ISO", () => {
+    const { date, time } = formatHireSignalPostedParts(
+      "2026-05-27T00:07:19.000Z",
+    );
+    expect(date).toMatch(/2026|27|May/i);
+    expect(time).toBeTruthy();
+  });
+
+  it("returns date only when index has calendar day", () => {
+    const { date, time } = formatHireSignalPostedParts("2026-05-22");
+    expect(date).toMatch(/2026|22|May/i);
+    expect(time).toBeNull();
   });
 });

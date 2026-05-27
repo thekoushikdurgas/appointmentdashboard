@@ -12,6 +12,42 @@ export function isHireSignalPostedDateOnly(iso: string): boolean {
   return false;
 }
 
+export type HireSignalPostedParts = {
+  date: string;
+  time: string | null;
+};
+
+/**
+ * Split posted timestamp into date + optional clock time for grid cells.
+ */
+export function formatHireSignalPostedParts(iso: string): HireSignalPostedParts {
+  const empty: HireSignalPostedParts = { date: "—", time: null };
+  const s = iso?.trim() ?? "";
+  if (!s || s.startsWith("0001-01-01")) return empty;
+  try {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime()) || d.getUTCFullYear() < 1970) {
+      return { date: s.slice(0, 10) || "—", time: null };
+    }
+    const dateOnly = isHireSignalPostedDateOnly(s);
+    const date = d.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    if (dateOnly) {
+      return { date, time: null };
+    }
+    const time = d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return { date, time };
+  } catch {
+    return { date: s.slice(0, 10) || "—", time: null };
+  }
+}
+
 /**
  * Format job `postedAt` / ISO strings from job.server for the hiring-signals UI.
  */

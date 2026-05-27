@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { History, Play, RefreshCw } from "lucide-react";
 import { Pagination } from "@/components/ui/Pagination";
 import { Table, type TableColumn } from "@/components/ui/Table";
@@ -9,7 +9,19 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { Button } from "@/components/ui/Button";
 import { Accordion } from "@/components/ui/Accordion";
 import { Progress } from "@/components/ui/Progress";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  formatHireSignalPostedParts,
+  isHireSignalPostedDateOnly,
+} from "@/lib/jobs/hiringSignalPostedDate";
+import {
+  hireSignalRunFinishedMs,
+  hireSignalRunStartedMs,
+  sortHireSignalRunRows,
+  type HireSignalRunSortDir,
+  type HireSignalRunSortKey,
+} from "@/lib/hiringSignalRunsSort";
+import type { TableSortDir } from "@/components/ui/Table";
 import {
   hireSignalRunCanCancel,
   hireSignalRunCanPause,
@@ -22,6 +34,8 @@ import {
   scrapeStatusBadgeColor,
   satelliteRunIdFromRow,
   satelliteStatusFromRow,
+  satelliteJobsCollected,
+  satelliteJobsCompletionRatio,
   satelliteJobsCountSummary,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { QueueMetricsBar } from "@/components/feature/hiring-signals/QueueMetricsBar";
@@ -50,6 +64,10 @@ export function RunsTab({
   const [satelliteFilter, setSatelliteFilter] = useState<"active" | "all">(
     "active",
   );
+  const [runsSortKey, setRunsSortKey] = useState<HireSignalRunSortKey | null>(
+    "started",
+  );
+  const [runsSortDir, setRunsSortDir] = useState<HireSignalRunSortDir>("desc");
 
   const {
     runsLoading,
@@ -91,16 +109,19 @@ export function RunsTab({
     });
   }, [satelliteRunsRows, satelliteFilter]);
 
+  const sortedSatelliteRows = useMemo(() => {
+    if (!runsSortKey) return filteredSatelliteRows;
+    return sortHireSignalRunRows(
+      filteredSatelliteRows,
+      runsSortKey,
+      runsSortDir,
+    );
+  }, [filteredSatelliteRows, runsSortKey, runsSortDir]);
+
   const satellitePaged = useMemo(() => {
-    if (satelliteFilter === "all") return satelliteRunsRows;
     const start = (satellitePage - 1) * RUNS_PAGE_SIZE;
-    return filteredSatelliteRows.slice(start, start + RUNS_PAGE_SIZE);
-  }, [
-    satelliteFilter,
-    satelliteRunsRows,
-    filteredSatelliteRows,
-    satellitePage,
-  ]);
+    return sortedSatelliteRows.slice(start, start + RUNS_PAGE_SIZE);
+  }, [sortedSatelliteRows, satellitePage]);
 
   const satelliteTotalFiltered = filteredSatelliteRows.length;
   const satellitePaginationTotal =
@@ -119,11 +140,49 @@ export function RunsTab({
     return trackedScrapeRows.slice(start, start + RUNS_PAGE_SIZE);
   }, [trackedScrapeRows, trackedPage]);
 
+  const renderRunDateTime = useCallback((raw: string) => {
+    const s = raw.trim();
+    if (!s) {
+      return <span className="c360-text-2xs c360-text-muted">—</span>;
+    }
+    const { date, time } = formatHireSignalPostedParts(s);
+    const dateOnly = isHireSignalPostedDateOnly(s);
+    return (
+      <span
+        className="c360-hs-grid-posted"
+        title={
+          dateOnly ? `Date only in index: ${s}` : s
+        }
+      >
+        <span className="c360-hs-grid-posted__date">{date}</span>
+        {time ? (
+          <span className="c360-hs-grid-posted__time">{time}</span>
+        ) : null}
+      </span>
+    );
+  }, []);
+
+  const handleRunsSortChange = useCallback(
+    (key: string | null, dir: TableSortDir | null) => {
+      if (!key || !dir) {
+        setRunsSortKey(null);
+        setRunsSortDir("desc");
+      } else {
+        setRunsSortKey(key as HireSignalRunSortKey);
+        setRunsSortDir(dir);
+      }
+      setSatellitePage(1);
+    },
+    [],
+  );
+
   const satelliteColumns: TableColumn<Record<string, unknown>>[] = useMemo(
     () => [
       {
         key: "runId",
         header: "Session / run ID",
+        sortable: true,
+        sortValue: (row) => satelliteRunIdFromRow(row),
         render: (row) => {
           const full = satelliteRunIdFromRow(row);
           const short =
@@ -138,6 +197,8 @@ export function RunsTab({
       {
         key: "keywords",
         header: "Keywords",
+        sortable: true,
+        sortValue: (row) => satelliteKeywordsFromRow(row),
         render: (row) => {
           const full = satelliteKeywordsFromRow(row);
           if (!full) {
@@ -161,6 +222,8 @@ export function RunsTab({
       {
         key: "status",
         header: "Status",
+        sortable: true,
+        sortValue: (row) => satelliteStatusFromRow(row),
         render: (row) => {
           const st = satelliteStatusFromRow(row) || "—";
           const jobsLine = satelliteJobsCountSummary(row);
@@ -179,6 +242,12 @@ export function RunsTab({
       {
         key: "progress",
         header: "Jobs vs target",
+        sortable: true,
+        sortValue: (row) => {
+          const ratio = satelliteJobsCompletionRatio(row);
+          if (ratio != null) return ratio;
+          return satelliteJobsCollected(row);
+        },
         render: (row) => {
           const p = satelliteSessionProgressProps(row);
           return (
@@ -199,34 +268,37 @@ export function RunsTab({
       {
         key: "started",
         header: "Started",
-        render: (row) =>
-          formatDateTime(
+        sortable: true,
+        sortValue: (row) => hireSignalRunStartedMs(row),
+        render: (row) => {
+          const raw =
             String(
-              row.startedAt ??
-                row.started_at ??
+              row.started_at ??
+                row.startedAt ??
                 row.StartedAt ??
-                row.createdAt ??
-                row.created_at ??
-                row.CreatedAt ??
                 "",
-            ) || undefined,
-          ),
+            ).trim() ||
+            String(row.created_at ?? row.createdAt ?? row.CreatedAt ?? "");
+          return renderRunDateTime(raw);
+        },
       },
       {
         key: "finished",
         header: "Finished",
-        render: (row) =>
-          formatDateTime(
-            String(
+        sortable: true,
+        sortValue: (row) => hireSignalRunFinishedMs(row),
+        render: (row) => {
+          const raw = String(
+            row.finished_at ??
               row.finishedAt ??
-                row.finished_at ??
-                row.FinishedAt ??
-                row.completedAt ??
-                row.completed_at ??
-                row.CompletedAt ??
-                "",
-            ) || undefined,
-          ),
+              row.FinishedAt ??
+              row.completed_at ??
+              row.completedAt ??
+              row.CompletedAt ??
+              "",
+          );
+          return renderRunDateTime(raw);
+        },
       },
       {
         key: "actions",
@@ -307,6 +379,7 @@ export function RunsTab({
       onCancelRun,
       onPauseRun,
       onResumeRun,
+      renderRunDateTime,
       runActionId,
       cancelRunId,
       pauseRunId,
@@ -446,6 +519,10 @@ export function RunsTab({
                   <Table<Record<string, unknown>>
                     columns={satelliteColumns}
                     data={satellitePaged}
+                    sortKey={runsSortKey}
+                    sortDir={runsSortDir}
+                    onSortChange={handleRunsSortChange}
+                    defaultSortDir="desc"
                     keyExtractor={(row) =>
                       satelliteRunIdFromRow(row) ||
                       JSON.stringify(row).slice(0, 48)
