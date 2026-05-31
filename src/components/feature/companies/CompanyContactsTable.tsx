@@ -12,9 +12,8 @@ import type { Contact } from "@/services/graphql/contactsService";
 const EMBEDDED_VISIBLE_COLUMNS: ContactsDataTableColumnId[] = [
   "name",
   "title",
-  "company",
+  "department",
   "region",
-  "status",
   "email",
   "added",
   "action",
@@ -29,6 +28,8 @@ interface CompanyContactsTableProps {
   total: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  sortBy: string;
+  onSortChange: (sort: string) => void;
 }
 
 export function CompanyContactsTable({
@@ -40,12 +41,13 @@ export function CompanyContactsTable({
   total,
   pageSize,
   onPageChange,
+  sortBy,
+  onSortChange,
 }: CompanyContactsTableProps) {
-  const noop = useCallback(() => {}, []);
-  const noopId = useCallback((_id: string) => {}, []);
-  const noopSort = useCallback((_s: string) => {}, []);
-  const noopIds = useCallback((_ids: string[]) => {}, []);
-  const noopSize = useCallback((_n: number) => {}, []);
+  const noop = useCallback(() => { }, []);
+  const noopId = useCallback((_id: string) => { }, []);
+  const noopIds = useCallback((_ids: string[]) => { }, []);
+  const noopSize = useCallback((_n: number) => { }, []);
 
   const rowsWithCompany = useMemo(
     () => contacts.map((c) => ({ ...c, company: companyName })),
@@ -68,8 +70,9 @@ export function CompanyContactsTable({
             error={error}
             search=""
             onSearchChange={noop}
-            sortBy="newest"
-            onSortChange={noopSort}
+            sortBy={sortBy}
+            onSortChange={onSortChange}
+            embeddedServerSort
             selected={[]}
             onSelectionChange={noopIds}
             expandedRow={null}
@@ -85,7 +88,7 @@ export function CompanyContactsTable({
       </Card>
 
       {total > pageSize ? (
-        <div className="c360-flex c360-justify-end c360-mt-3">
+        <div className="c360-company-contacts-dt__pagination c360-flex c360-justify-end c360-mt-3">
           <Pagination
             page={page}
             total={total}

@@ -19,7 +19,7 @@ import { Select } from "@/components/ui/Select";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
-import { cn, formatDate, formatCompact } from "@/lib/utils";
+import { cn, formatDateTime, formatCompact } from "@/lib/utils";
 import { buildCompanyFacetVqlFilter } from "@/lib/companyFacetVql";
 import { parseOperationError } from "@/lib/errorParser";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -39,6 +39,7 @@ import {
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
 import { CompanyPagination } from "@/components/feature/companies/CompanyPagination";
+import { stashCompanyRowForDetail } from "@/lib/companyRowSession";
 import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
 import {
   companySearchStringFromTokens,
@@ -76,6 +77,14 @@ const SORT_LABELS: Record<string, string> = {
   oldest: "Oldest first",
   name_asc: "Name A→Z",
   name_desc: "Name Z→A",
+  employees_asc: "Employees ↑",
+  employees_desc: "Employees ↓",
+  location_asc: "Location A→Z",
+  location_desc: "Location Z→A",
+  domain_asc: "Domain A→Z",
+  domain_desc: "Domain Z→A",
+  contacts_asc: "Contacts ↑",
+  contacts_desc: "Contacts ↓",
 };
 
 const VISIBLE_COLUMNS_STORAGE_KEY = "c360:companies:visibleColumns:v1";
@@ -748,6 +757,7 @@ export default function CompaniesPage() {
                       <div className="c360-min-w-0">
                         <Link
                           href={`/companies/${company.id}`}
+                          onClick={() => stashCompanyRowForDetail(company)}
                           className="c360-company-name-link"
                         >
                           {company.name}
@@ -778,11 +788,14 @@ export default function CompaniesPage() {
                       ) : null}
                       <div className="c360-text-xs c360-text-muted">
                         {company.contactCount || 0} contacts · Added{" "}
-                        {formatDate(company.createdAt)}
+                        {formatDateTime(company.createdAt)}
                       </div>
                     </div>
 
-                    <Link href={`/companies/${company.id}`}>
+                    <Link
+                      href={`/companies/${company.id}`}
+                      onClick={() => stashCompanyRowForDetail(company)}
+                    >
                       <Button
                         variant="secondary"
                         size="sm"

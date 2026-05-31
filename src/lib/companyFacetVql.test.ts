@@ -76,13 +76,29 @@ describe("buildCompanyFacetVqlFilter", () => {
 
   it("builds range bucket include as OR and exclude as AND", () => {
     const f = buildCompanyFacetVqlFilter(
-      { annual_revenue: ["0-10000", "10000-50000"] },
+      { annual_revenue: ["1-10000", "10000-50000"] },
       { annual_revenue: ["1000000000+"] },
     );
     expect(f?.allOf).toHaveLength(2);
-    expect(f?.allOf?.[0]?.anyOf).toHaveLength(2);
+    const includeBranches = f?.allOf?.[0]?.anyOf ?? [];
+    expect(includeBranches).toHaveLength(2);
+    expect(includeBranches[0]?.conditions).toEqual([
+      { field: "annual_revenue", operator: "gte", value: 1 },
+      { field: "annual_revenue", operator: "lte", value: 10_000 },
+    ]);
     expect(f?.allOf?.[1]?.conditions).toEqual([
       { field: "annual_revenue", operator: "ngte", value: 1_000_000_000 },
+    ]);
+  });
+
+  it("maps legacy total_funding bucket id 0-10000 to 1-10000", () => {
+    const f = buildCompanyFacetVqlFilter(
+      { total_funding: ["0-10000"] },
+      {},
+    );
+    expect(f?.conditions).toEqual([
+      { field: "total_funding", operator: "gte", value: 1 },
+      { field: "total_funding", operator: "lte", value: 10_000 },
     ]);
   });
 });

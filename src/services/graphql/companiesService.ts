@@ -4,6 +4,7 @@ import {
   type GraphQLRequestOptions,
 } from "@/lib/graphqlClient";
 import type {
+  VqlConditionInput,
   VqlQueryInput,
   SchedulerJob,
   CompanyFilter,
@@ -73,10 +74,19 @@ export interface Company {
   updatedAt: string;
 }
 
+/** GraphQL BigInt may serialize as string in JSON. */
+function graphqlBigIntToNumber(
+  value: string | number | null | undefined,
+): number | undefined {
+  if (value == null || value === "") return undefined;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 interface CompanyRow {
   uuid: string;
   name: string | null;
-  employeesCount: number | null;
+  employeesCount: string | number | null;
   industries: string[] | null;
   keywords: string[] | null;
   technologies: string[] | null;
@@ -92,13 +102,14 @@ interface CompanyRow {
   city: string | null;
   state: string | null;
   country: string | null;
-  annualRevenue: number | null;
-  totalFunding: number | null;
+  annualRevenue: string | number | null;
+  totalFunding: string | number | null;
   latestFunding: string | null;
   latestFundingAmount: number | null;
   lastRaisedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  contactCount: number | null;
 }
 
 function mapCompany(r: CompanyRow): Company {
@@ -114,7 +125,7 @@ function mapCompany(r: CompanyRow): Company {
     keywords: r.keywords?.filter(Boolean) ?? undefined,
     technologies: r.technologies?.filter(Boolean) ?? undefined,
     address: r.address?.trim() || undefined,
-    employeeCount: r.employeesCount ?? undefined,
+    employeeCount: graphqlBigIntToNumber(r.employeesCount),
     city: r.city ?? undefined,
     state: r.state ?? undefined,
     country: r.country ?? undefined,
@@ -125,13 +136,17 @@ function mapCompany(r: CompanyRow): Company {
     twitterUrl: r.twitterUrl ?? undefined,
     phoneNumber: r.phoneNumber ?? undefined,
     companyNameForEmails: r.companyNameForEmails ?? undefined,
-    annualRevenue: r.annualRevenue ?? undefined,
-    totalFunding: r.totalFunding ?? undefined,
+    annualRevenue: graphqlBigIntToNumber(r.annualRevenue),
+    totalFunding: graphqlBigIntToNumber(r.totalFunding),
     latestFunding: r.latestFunding ?? undefined,
     latestFundingAmount: r.latestFundingAmount ?? undefined,
     lastRaisedAt: r.lastRaisedAt ?? undefined,
     createdAt: r.createdAt ?? "",
     updatedAt: r.updatedAt ?? "",
+    contactCount:
+      r.contactCount != null && Number.isFinite(Number(r.contactCount))
+        ? Number(r.contactCount)
+        : undefined,
   };
 }
 
@@ -256,22 +271,67 @@ export const companiesService = {
   get: async (
     uuid: string,
     options?: GraphQLRequestOptions & { notFoundReturnsNull?: boolean },
-  ) => {
+  ): Promise<Company | null> => {
+    const companyUuid = uuid.trim();
+    const gqlOpts: GraphQLRequestOptions = {
+      showToastOnError: options?.showToastOnError ?? true,
+    };
+    const returnNullOnNotFound = options?.notFoundReturnsNull === true;
+    const isNotFoundMessage = (msg: string) =>
+      msg.toLowerCase().includes("not found");
+
+    const fetchViaListCohort = async (
+      filterField: "uuid" | "id",
+      value: string,
+    ): Promise<Company | null> => {
+      const result = await companiesService.list(
+        {
+          filters: {
+            conditions: [
+              {
+                field: filterField,
+                operator: "eq",
+                value: value as unknown as VqlConditionInput["value"],
+              },
+            ],
+          },
+          limit: 1,
+          offset: 0,
+        },
+        { showToastOnError: false },
+      );
+      return result.items[0] ?? null;
+    };
+
+    const fetchViaListFallbacks = async (): Promise<Company | null> => {
+      for (const filterField of ["uuid", "id"] as const) {
+        const hit = await fetchViaListCohort(filterField, companyUuid);
+        if (hit) return hit;
+      }
+      return null;
+    };
+
+    const fromList = await fetchViaListFallbacks();
+    if (fromList) return fromList;
+
     try {
       const data = await graphqlQuery<{
-        companies: { company: CompanyRow };
-      }>(COMPANY_ONE_QUERY, { uuid }, options);
-      return mapCompany(data.companies.company);
+        companies: { company: CompanyRow | null };
+      }>(COMPANY_ONE_QUERY, { uuid: companyUuid }, {
+        ...gqlOpts,
+        notFoundReturnsNull: true,
+      });
+      const row = data?.companies?.company;
+      if (row) return mapCompany(row);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (
-        options?.notFoundReturnsNull &&
-        msg.toLowerCase().includes("not found")
-      ) {
-        return null;
-      }
-      throw err;
+      if (!isNotFoundMessage(msg)) throw err;
     }
+
+    const fallback = await fetchViaListFallbacks();
+    if (fallback) return fallback;
+    if (returnNullOnNotFound) return null;
+    throw new Error(`Company with identifier '${companyUuid}' not found`);
   },
 
   create: async (input: CreateCompanyInput): Promise<Company> => {
@@ -309,6 +369,7 @@ export const companiesService = {
   companyContacts: async (
     companyUuid: string,
     opts?: { query?: VqlQueryInput; limit?: number; offset?: number },
+    gqlOpts?: GraphQLRequestOptions,
   ) => {
     const data = await graphqlQuery<{
       companies: {
@@ -319,12 +380,16 @@ export const companiesService = {
           offset: number;
         };
       };
-    }>(COMPANY_CONTACTS_QUERY, {
-      companyUuid,
-      query: opts?.query ?? {},
-      limit: opts?.limit ?? 100,
-      offset: opts?.offset ?? 0,
-    });
+    }>(
+      COMPANY_CONTACTS_QUERY,
+      {
+        companyUuid,
+        query: opts?.query ?? {},
+        limit: opts?.limit ?? 100,
+        offset: opts?.offset ?? 0,
+      },
+      gqlOpts,
+    );
     return data.companies.companyContacts;
   },
 

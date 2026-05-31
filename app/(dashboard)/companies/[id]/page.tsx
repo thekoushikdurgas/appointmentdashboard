@@ -46,6 +46,8 @@ export default function CompanyDetailPage({ params }: PageProps) {
     contacts,
     contactsTotal,
     contactsPage,
+    contactsSortBy,
+    setContactsSortBy,
     contactsLoading,
     contactsError,
     setContactsPage,
@@ -147,7 +149,7 @@ export default function CompanyDetailPage({ params }: PageProps) {
         linkedinSalesUrl={company.linkedinSalesUrl}
         address={company.address}
         phoneNumber={company.phoneNumber}
-        contactCount={contactsTotal}
+        contactCount={company.contactCount ?? contactsTotal}
         findingEmails={findingEmails}
         onFindAllEmails={handleFindAllEmails}
         onReload={() => void reload()}
@@ -296,7 +298,7 @@ export default function CompanyDetailPage({ params }: PageProps) {
                   </div>
                 ) : null}
                 {company.latestFundingAmount != null &&
-                company.latestFundingAmount > 0 ? (
+                  company.latestFundingAmount > 0 ? (
                   <div className="c360-detail-row">
                     <span className="c360-section-label">
                       Latest funding amount
@@ -405,6 +407,8 @@ export default function CompanyDetailPage({ params }: PageProps) {
               total={contactsTotal}
               pageSize={CONTACTS_PAGE_SIZE}
               onPageChange={setContactsPage}
+              sortBy={contactsSortBy}
+              onSortChange={setContactsSortBy}
             />
           </div>
         </TabsContent>

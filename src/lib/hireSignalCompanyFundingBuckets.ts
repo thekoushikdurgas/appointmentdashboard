@@ -3,9 +3,11 @@ import type {
   VqlFilterInput,
 } from "@/graphql/generated/types";
 
+import { LEGACY_MONEY_RANGE_BUCKET_IDS } from "@/lib/companyRangeBuckets";
+
 /** Fixed Connectra `total_funding` cohort buckets (value = bucket id). */
 export const HIRE_SIGNAL_COMPANY_FUNDING_BUCKETS = [
-  { id: "0-10000", label: "0 – 10,000", gte: 0, lte: 10_000 },
+  { id: "1-10000", label: "1 – 10,000", gte: 1, lte: 10_000 },
   { id: "10000-50000", label: "10,000 – 50,000", gte: 10_000, lte: 50_000 },
   { id: "50000-100000", label: "50,000 – 100,000", gte: 50_000, lte: 100_000 },
   {
@@ -53,17 +55,25 @@ export function formatCompanyFundingBucketLabel(id: string): string {
   return BUCKET_BY_ID.get(id as HireSignalCompanyFundingBucketId)?.label ?? id;
 }
 
+export function normalizeFundingBucketId(id: string): string {
+  const trimmed = id.trim();
+  return LEGACY_MONEY_RANGE_BUCKET_IDS[trimmed] ?? trimmed;
+}
+
 export function isKnownFundingBucketId(
   id: string,
 ): id is HireSignalCompanyFundingBucketId {
-  return BUCKET_BY_ID.has(id as HireSignalCompanyFundingBucketId);
+  return BUCKET_BY_ID.has(
+    normalizeFundingBucketId(id) as HireSignalCompanyFundingBucketId,
+  );
 }
 
 /** One bucket → VQL range on `total_funding`. */
 export function fundingBucketVqlFilter(
   bucketId: string,
 ): VqlFilterInput | undefined {
-  const b = BUCKET_BY_ID.get(bucketId as HireSignalCompanyFundingBucketId);
+  const normalized = normalizeFundingBucketId(bucketId);
+  const b = BUCKET_BY_ID.get(normalized as HireSignalCompanyFundingBucketId);
   if (!b) return undefined;
   const conditions: VqlConditionInput[] = [
     {
@@ -86,7 +96,9 @@ export function fundingBucketVqlFilter(
 export function companyFundingTokensToVqlFilter(
   tokens: string[],
 ): VqlFilterInput | undefined {
-  const ids = tokens.map((t) => t.trim()).filter(isKnownFundingBucketId);
+  const ids = tokens
+    .map((t) => normalizeFundingBucketId(t))
+    .filter(isKnownFundingBucketId);
   if (ids.length === 0) return undefined;
   if (ids.length === 1) return fundingBucketVqlFilter(ids[0]);
   const branches = ids

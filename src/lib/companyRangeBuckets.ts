@@ -12,7 +12,7 @@ export type CompanyRangeBucketDef = {
 
 /** Fixed numeric range buckets for `annual_revenue` and `total_funding`. */
 export const COMPANY_MONEY_RANGE_BUCKETS: readonly CompanyRangeBucketDef[] = [
-  { id: "0-10000", label: "0 – 10,000", gte: 0, lte: 10_000 },
+  { id: "1-10000", label: "1 – 10,000", gte: 1, lte: 10_000 },
   { id: "10000-50000", label: "10,000 – 50,000", gte: 10_000, lte: 50_000 },
   { id: "50000-100000", label: "50,000 – 1 Lakh", gte: 50_000, lte: 100_000 },
   {
@@ -47,9 +47,13 @@ export const COMPANY_MONEY_RANGE_BUCKETS: readonly CompanyRangeBucketDef[] = [
   },
 ];
 
-/** Saved searches created before the 1–10 rename may still store `0-10`. */
+/** Saved searches may still store legacy bucket ids before the 1-based lower bound. */
 export const LEGACY_EMPLOYEES_COUNT_BUCKET_IDS: Record<string, string> = {
   "0-10": "1-10",
+};
+
+export const LEGACY_MONEY_RANGE_BUCKET_IDS: Record<string, string> = {
+  "0-10000": "1-10000",
 };
 
 /** Fixed range buckets for `employees_count`. */
@@ -124,6 +128,14 @@ export function normalizeCompanyRangeBucketId(
     field === CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD
   ) {
     return LEGACY_EMPLOYEES_COUNT_BUCKET_IDS[trimmed] ?? trimmed;
+  }
+  if (
+    field === COMPANY_ANNUAL_REVENUE_FIELD ||
+    field === COMPANY_TOTAL_FUNDING_FIELD ||
+    field === CONTACT_COMPANY_ANNUAL_REVENUE_FIELD ||
+    field === CONTACT_COMPANY_TOTAL_FUNDING_FIELD
+  ) {
+    return LEGACY_MONEY_RANGE_BUCKET_IDS[trimmed] ?? trimmed;
   }
   return trimmed;
 }
@@ -239,7 +251,7 @@ export function companyRangeBucketTokensToIncludeVql(
           }),
         },
       )
-      .catch(() => {});
+      .catch(() => { });
   }
   // #endregion
   if (ids.length === 0) return undefined;

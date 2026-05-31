@@ -225,6 +225,8 @@ export interface ContactsDataTableProps {
   className?: string;
   /** Opens hiring-signals company drawer (`CompanyDrawerPanel`) for this contact's company. */
   onOpenCompanyDrawer?: (contact: Contact) => void;
+  /** Company detail: server-side sort via `companyContacts` (not client-only). */
+  embeddedServerSort?: boolean;
 }
 
 export function ContactsDataTable({
@@ -256,6 +258,7 @@ export function ContactsDataTable({
   embedded = false,
   className,
   onOpenCompanyDrawer,
+  embeddedServerSort = false,
 }: ContactsDataTableProps) {
   const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -566,7 +569,7 @@ export function ContactsDataTable({
                       timestamp: Date.now(),
                     }),
                   },
-                ).catch(() => {});
+                ).catch(() => { });
                 // #endregion
               }}
             >
@@ -813,13 +816,21 @@ export function ContactsDataTable({
               keepNonExistentRowsSelected={!embedded}
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={handleRowSelectionModelChange}
-              sortingMode={embedded ? "client" : "server"}
-              sortModel={embedded ? undefined : sortModel}
-              onSortModelChange={embedded ? () => {} : handleSortModelChange}
+              sortingMode={
+                embedded && !embeddedServerSort ? "client" : "server"
+              }
+              sortModel={
+                embedded && !embeddedServerSort ? undefined : sortModel
+              }
+              onSortModelChange={
+                embedded && !embeddedServerSort
+                  ? () => { }
+                  : handleSortModelChange
+              }
               disableColumnMenu={embedded}
               columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={
-                embedded ? () => {} : handleColumnVisibilityModelChange
+                embedded ? () => { } : handleColumnVisibilityModelChange
               }
               disableColumnFilter
               hideFooter

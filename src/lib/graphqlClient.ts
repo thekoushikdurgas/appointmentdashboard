@@ -26,6 +26,8 @@ export interface GraphQLRequestOptions {
   skipAuth?: boolean;
   skipRefresh?: boolean;
   showToastOnError?: boolean;
+  /** When true, NOT_FOUND GraphQL errors return partial/null data instead of throwing. */
+  notFoundReturnsNull?: boolean;
 }
 
 export interface GraphQLErrorResponse {
@@ -199,6 +201,7 @@ export async function graphqlRequest<T = unknown>(
     skipAuth = false,
     skipRefresh = false,
     showToastOnError = true,
+    notFoundReturnsNull = false,
   } = options;
 
   try {
@@ -280,7 +283,7 @@ export async function graphqlRequest<T = unknown>(
                   timestamp: Date.now(),
                 }),
               },
-            ).catch(() => {});
+            ).catch(() => { });
           }
           // #endregion
           const apiError = new Error(parsed.message) as Error & {
@@ -294,6 +297,10 @@ export async function graphqlRequest<T = unknown>(
             parsed.message.toLowerCase().includes("service unavailable") ||
             parsed.message.toLowerCase().includes("circuit open") ||
             parsed.message.toLowerCase().includes("request timeout");
+          if (notFoundReturnsNull && parsed.isNotFoundError) {
+            if (gqlError.response?.data) return gqlError.response.data as T;
+            return null as T;
+          }
           if (showToastOnError && !isUnavailable) toast.error(parsed.message);
           throw apiError;
         }

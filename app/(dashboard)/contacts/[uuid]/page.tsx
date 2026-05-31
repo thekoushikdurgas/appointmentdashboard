@@ -124,7 +124,7 @@ export default function ContactDetailPage({ params }: PageProps) {
             timestamp: Date.now(),
           }),
         },
-      ).catch(() => {});
+      ).catch(() => { });
       // #endregion
       setContact(c);
       setFromListSnapshot(false);
@@ -144,63 +144,22 @@ export default function ContactDetailPage({ params }: PageProps) {
       if (!stashedEarly && !companyRedirectAttempted.current) {
         companyRedirectAttempted.current = true;
         let redirected = false;
-        const company = await companiesService.get(uuid, {
-          showToastOnError: false,
-          notFoundReturnsNull: true,
-        });
-        if (company) {
-          redirected = true;
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "c73258",
-              },
-              body: JSON.stringify({
-                sessionId: "c73258",
-                runId: "contact-detail",
-                hypothesisId: "E5",
-                location: "contacts/[uuid]/page.tsx:companyRedirect",
-                message: "company redirect via companies.company",
-                data: { uuid },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
-        } else {
-          try {
-            const rec = await fetchConnectraCompany(uuid);
-            const rr = asRecord(rec.hireSignal?.connectraCompany);
-            if (rr && rr.success !== false && rr.data) {
-              redirected = true;
-              // #region agent log
-              fetch(
-                "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "X-Debug-Session-Id": "c73258",
-                  },
-                  body: JSON.stringify({
-                    sessionId: "c73258",
-                    runId: "contact-detail",
-                    hypothesisId: "E5",
-                    location: "contacts/[uuid]/page.tsx:companyRedirect",
-                    message: "company redirect via hireSignal.connectraCompany",
-                    data: { uuid },
-                    timestamp: Date.now(),
-                  }),
-                },
-              ).catch(() => {});
-              // #endregion
-            }
-          } catch {
-            /* not a company either */
+        try {
+          const rec = await fetchConnectraCompany(uuid);
+          const rr = asRecord(rec.hireSignal?.connectraCompany);
+          if (rr && rr.success !== false && rr.data) {
+            redirected = true;
+          }
+        } catch {
+          /* not a company via Connectra */
+        }
+        if (!redirected) {
+          const company = await companiesService.get(uuid, {
+            showToastOnError: false,
+            notFoundReturnsNull: true,
+          });
+          if (company) {
+            redirected = true;
           }
         }
         if (redirected) {
@@ -232,7 +191,7 @@ export default function ContactDetailPage({ params }: PageProps) {
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => {});
+        ).catch(() => { });
         // #endregion
         setContact(stashed);
         setFromListSnapshot(true);

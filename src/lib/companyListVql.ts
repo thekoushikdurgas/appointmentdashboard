@@ -6,6 +6,40 @@ import type {
 } from "@/graphql/generated/types";
 import { companySearchTokensFromString } from "@/lib/companySearchTokens";
 
+/** Sort keys for companies list / table (server-side via Connectra `order_by`). */
+export type CompanyListSortBy =
+  | "newest"
+  | "oldest"
+  | "name_asc"
+  | "name_desc"
+  | "employees_asc"
+  | "employees_desc"
+  | "location_asc"
+  | "location_desc"
+  | "domain_asc"
+  | "domain_desc"
+  | "contacts_asc"
+  | "contacts_desc";
+
+const COMPANY_LIST_SORT_KEYS = new Set<string>([
+  "newest",
+  "oldest",
+  "name_asc",
+  "name_desc",
+  "employees_asc",
+  "employees_desc",
+  "location_asc",
+  "location_desc",
+  "domain_asc",
+  "domain_desc",
+  "contacts_asc",
+  "contacts_desc",
+]);
+
+export function isCompanyListSortBy(value: string): value is CompanyListSortBy {
+  return COMPANY_LIST_SORT_KEYS.has(value);
+}
+
 function sortByToCompanyOrderBy(sortBy: string): VqlOrderByInput[] {
   switch (sortBy) {
     case "oldest":
@@ -14,6 +48,32 @@ function sortByToCompanyOrderBy(sortBy: string): VqlOrderByInput[] {
       return [{ orderBy: "name", orderDirection: "asc" }];
     case "name_desc":
       return [{ orderBy: "name", orderDirection: "desc" }];
+    case "employees_asc":
+      return [{ orderBy: "employeesCount", orderDirection: "asc" }];
+    case "employees_desc":
+      return [{ orderBy: "employeesCount", orderDirection: "desc" }];
+    case "location_asc":
+      return [
+        { orderBy: "country", orderDirection: "asc" },
+        { orderBy: "state", orderDirection: "asc" },
+        { orderBy: "city", orderDirection: "asc" },
+      ];
+    case "location_desc":
+      return [
+        { orderBy: "country", orderDirection: "desc" },
+        { orderBy: "state", orderDirection: "desc" },
+        { orderBy: "city", orderDirection: "desc" },
+      ];
+    case "domain_asc":
+      return [{ orderBy: "normalizedDomain", orderDirection: "asc" }];
+    case "domain_desc":
+      return [{ orderBy: "normalizedDomain", orderDirection: "desc" }];
+    case "contacts_asc":
+      return [{ orderBy: "contactCount", orderDirection: "asc" }];
+    case "contacts_desc":
+      return [{ orderBy: "contactCount", orderDirection: "desc" }];
+    case "newest":
+      return [{ orderBy: "createdAt", orderDirection: "desc" }];
     default:
       return [{ orderBy: "createdAt", orderDirection: "desc" }];
   }
@@ -38,25 +98,25 @@ export function buildCompanyListVql(
       ? undefined
       : tokens.length === 1
         ? {
+          conditions: [
+            {
+              field: "name",
+              operator: "contains",
+              value: tokens[0] as unknown as VqlConditionInput["value"],
+            },
+          ],
+        }
+        : {
+          allOf: tokens.map((token) => ({
             conditions: [
               {
                 field: "name",
                 operator: "contains",
-                value: tokens[0] as unknown as VqlConditionInput["value"],
+                value: token as unknown as VqlConditionInput["value"],
               },
             ],
-          }
-        : {
-            allOf: tokens.map((token) => ({
-              conditions: [
-                {
-                  field: "name",
-                  operator: "contains",
-                  value: token as unknown as VqlConditionInput["value"],
-                },
-              ],
-            })),
-          };
+          })),
+        };
 
   const baseFilters = extra.filters as VqlFilterInput | undefined;
   let filters: VqlFilterInput | undefined;

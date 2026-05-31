@@ -84,7 +84,9 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
           data: {
             seq,
             page,
+            sortBy,
             searchLen: search.length,
+            orderBy: listQuery.orderBy,
             filterKeys: vqlQuery.filters
               ? Object.keys(vqlQuery.filters as object)
               : [],
@@ -100,7 +102,14 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
         .catch(() => null as number | null);
       const [listResult, countResult] = await Promise.all([listP, countP]);
       if (seq !== fetchSeq.current) return;
-      const { items, total: listTotal, nextSearchAfter } = listResult;
+      let { items, total: listTotal, nextSearchAfter } = listResult;
+      if (sortBy === "contacts_asc" || sortBy === "contacts_desc") {
+        const dir = sortBy === "contacts_desc" ? -1 : 1;
+        items = [...items].sort(
+          (a, b) =>
+            dir * ((a.contactCount ?? 0) - (b.contactCount ?? 0)),
+        );
+      }
       const cohortTotal =
         typeof countResult === "number" && countResult >= 0
           ? countResult
@@ -125,6 +134,9 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
             itemCount: items.length,
             cohortTotal,
             firstIndustries: items.slice(0, 3).map((c) => c.industries ?? c.industry),
+            firstContactCounts: items
+              .slice(0, 3)
+              .map((c) => ({ name: c.name, contactCount: c.contactCount })),
           },
           timestamp: Date.now(),
         }),
@@ -137,6 +149,24 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
       if (seq !== fetchSeq.current) return;
       const msg =
         err instanceof Error ? err.message : "Failed to load companies";
+      // #region agent log
+      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "c73258",
+        },
+        body: JSON.stringify({
+          sessionId: "c73258",
+          runId: "company-sort",
+          hypothesisId: "SORT_ERR",
+          location: "useCompanies.ts:loadCompanies:error",
+          message: "companies list fetch failed",
+          data: { seq, sortBy, error: msg },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
       setError(msg);
       setCompanies([]);
       setTotal(0);

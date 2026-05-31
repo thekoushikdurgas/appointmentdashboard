@@ -29,6 +29,7 @@ export const COMPANY_LIST_FIELDS = `
   lastRaisedAt
   createdAt
   updatedAt
+  contactCount
 ` as const;
 
 export const COMPANIES_LIST_QUERY = `

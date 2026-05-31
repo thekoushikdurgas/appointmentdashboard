@@ -20,10 +20,11 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
-import { cn, formatDate, formatCompact } from "@/lib/utils";
+import { cn, formatDateTime, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import type { Company } from "@/services/graphql/companiesService";
 import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
+import { stashCompanyRowForDetail } from "@/lib/companyRowSession";
 
 import {
   COMPANIES_DT_COLUMN_IDS,
@@ -70,6 +71,38 @@ function gridSortModelFromSortBy(sortBy: string): GridSortModel {
       {
         field: "name",
         sort: sortBy === "name_asc" ? "asc" : "desc",
+      },
+    ];
+  }
+  if (sortBy === "employees_asc" || sortBy === "employees_desc") {
+    return [
+      {
+        field: "employeeCount",
+        sort: sortBy === "employees_asc" ? "asc" : "desc",
+      },
+    ];
+  }
+  if (sortBy === "location_asc" || sortBy === "location_desc") {
+    return [
+      {
+        field: "location",
+        sort: sortBy === "location_asc" ? "asc" : "desc",
+      },
+    ];
+  }
+  if (sortBy === "domain_asc" || sortBy === "domain_desc") {
+    return [
+      {
+        field: "domain",
+        sort: sortBy === "domain_asc" ? "asc" : "desc",
+      },
+    ];
+  }
+  if (sortBy === "contacts_asc" || sortBy === "contacts_desc") {
+    return [
+      {
+        field: "contactCount",
+        sort: sortBy === "contacts_asc" ? "asc" : "desc",
       },
     ];
   }
@@ -225,6 +258,14 @@ export function CompaniesDataTable({
         onSortChange(first.sort === "asc" ? "oldest" : "newest");
       } else if (first.field === "name") {
         onSortChange(first.sort === "asc" ? "name_asc" : "name_desc");
+      } else if (first.field === "employeeCount") {
+        onSortChange(first.sort === "asc" ? "employees_asc" : "employees_desc");
+      } else if (first.field === "location") {
+        onSortChange(first.sort === "asc" ? "location_asc" : "location_desc");
+      } else if (first.field === "domain") {
+        onSortChange(first.sort === "asc" ? "domain_asc" : "domain_desc");
+      } else if (first.field === "contactCount") {
+        onSortChange(first.sort === "asc" ? "contacts_asc" : "contacts_desc");
       }
     },
     [onSortChange],
@@ -265,6 +306,7 @@ export function CompaniesDataTable({
                 <CompanyLogoThumb key={row.id} company={row} iconSize={14} />
                 <Link
                   href={`/companies/${row.id}`}
+                  onClick={() => stashCompanyRowForDetail(row)}
                   className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
                 >
                   {row.name || "—"}
@@ -278,6 +320,7 @@ export function CompaniesDataTable({
               <div className="c360-min-w-0 c360-flex-1">
                 <Link
                   href={`/companies/${row.id}`}
+                  onClick={() => stashCompanyRowForDetail(row)}
                   className="c360-block c360-max-w-full c360-truncate c360-font-medium c360-text-body hover:c360-underline"
                 >
                   {row.name}
@@ -343,7 +386,7 @@ export function CompaniesDataTable({
         flex: 0,
         width: 110,
         minWidth: 96,
-        sortable: false,
+        sortable: true,
         filterable: false,
         type: "number",
         align: "left",
@@ -363,7 +406,7 @@ export function CompaniesDataTable({
         headerName: COMPANIES_DT_COLUMN_LABELS.location,
         flex: 1,
         minWidth: 140,
-        sortable: false,
+        sortable: true,
         filterable: false,
         valueGetter: (_v, row) =>
           row.location ||
@@ -393,7 +436,7 @@ export function CompaniesDataTable({
         headerName: COMPANIES_DT_COLUMN_LABELS.domain,
         flex: 0.9,
         minWidth: 120,
-        sortable: false,
+        sortable: true,
         filterable: false,
         valueGetter: (_v, row) => row.domain ?? "",
         renderCell: (params: GridRenderCellParams<Company>) => (
@@ -409,8 +452,10 @@ export function CompaniesDataTable({
         flex: 0,
         width: 110,
         minWidth: 96,
-        sortable: false,
+        sortable: true,
         filterable: false,
+        description:
+          "Sorted by contact count for the current page after counts are loaded.",
         type: "number",
         align: "left",
         headerAlign: "left",
@@ -429,18 +474,25 @@ export function CompaniesDataTable({
         field: "createdAt",
         headerName: COMPANIES_DT_COLUMN_LABELS.added,
         flex: 0,
-        width: 128,
-        minWidth: 110,
+        width: 168,
+        minWidth: 148,
         sortable: true,
         filterable: false,
         type: "dateTime",
         valueGetter: (_v, row) =>
           row.createdAt ? new Date(row.createdAt) : null,
-        renderCell: (params: GridRenderCellParams<Company>) => (
-          <span className="c360-hs-grid-meta-text c360-text-ink-muted">
-            {formatDate(params.row.createdAt)}
-          </span>
-        ),
+        renderCell: (params: GridRenderCellParams<Company>) => {
+          const added = params.row.createdAt;
+          const label = formatDateTime(added);
+          return (
+            <span
+              className="c360-hs-grid-meta-text c360-text-ink-muted c360-whitespace-nowrap"
+              title={added ? new Date(added).toISOString() : undefined}
+            >
+              {label}
+            </span>
+          );
+        },
         cellClassName: "c360-co-grid-cell--center",
       },
       {
@@ -455,7 +507,10 @@ export function CompaniesDataTable({
         headerAlign: "right",
         renderCell: (params: GridRenderCellParams<Company>) => (
           <div className="c360-hs-grid-actions-row c360-flex c360-items-center c360-justify-end c360-gap-1">
-            <Link href={`/companies/${params.row.id}`}>
+            <Link
+              href={`/companies/${params.row.id}`}
+              onClick={() => stashCompanyRowForDetail(params.row)}
+            >
               <Button
                 variant="ghost"
                 size="sm"

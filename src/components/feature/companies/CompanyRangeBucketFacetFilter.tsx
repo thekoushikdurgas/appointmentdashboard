@@ -5,6 +5,7 @@ import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 import {
   formatCompanyRangeBucketLabel,
   isCompanyRangeBucketFacet,
+  normalizeCompanyRangeBucketId,
 } from "@/lib/companyRangeBuckets";
 
 export interface CompanyRangeBucketFacetFilterProps {
@@ -38,10 +39,16 @@ export function CompanyRangeBucketFacetFilter({
     return null;
   }
 
-  const options = section.options.map((o) => ({
-    ...o,
-    displayValue: formatCompanyRangeBucketLabel(key, String(o.value)),
-  }));
+  const options = section.options.map((o) => {
+    const value = normalizeCompanyRangeBucketId(key, String(o.value));
+    return {
+      ...o,
+      value,
+      displayValue: formatCompanyRangeBucketLabel(key, value),
+    };
+  });
+  const normalizeSelection = (values: string[]) =>
+    values.map((v) => normalizeCompanyRangeBucketId(key, v));
   // #region agent log
   if (key === "company_employees_count" && options.length > 0) {
     globalThis
@@ -70,7 +77,7 @@ export function CompanyRangeBucketFacetFilter({
           }),
         },
       )
-      .catch(() => {});
+      .catch(() => { });
   }
   // #endregion
 
@@ -89,14 +96,22 @@ export function CompanyRangeBucketFacetFilter({
     <div className="c360-space-y-3">
       <FilterCombobox
         label={includeLabel}
-        selectedValues={includedValues}
-        onSelectionChange={onIncludedChange}
+        selectedValues={includedValues.map((v) =>
+          normalizeCompanyRangeBucketId(key, v),
+        )}
+        onSelectionChange={(values) =>
+          onIncludedChange(normalizeSelection(values))
+        }
         {...comboboxProps}
       />
       <FilterCombobox
         label={excludeLabel}
-        selectedValues={excludedValues}
-        onSelectionChange={onExcludedChange}
+        selectedValues={excludedValues.map((v) =>
+          normalizeCompanyRangeBucketId(key, v),
+        )}
+        onSelectionChange={(values) =>
+          onExcludedChange(normalizeSelection(values))
+        }
         {...comboboxProps}
       />
     </div>
