@@ -16,6 +16,7 @@ import {
   readCompaniesListCache,
   writeCompaniesListCache,
 } from "@/lib/companiesListCache";
+import { dedupeCompaniesById } from "@/lib/dedupeCompaniesById";
 
 const DEFAULT_PAGE_SIZE = 25;
 const EXPORT_VQL_LIMIT = 50_000;
@@ -72,7 +73,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
       if (useListCache && !opts?.force) {
         const cached = readCompaniesListCache(cacheKey);
         if (cached) {
-          setCompanies(cached.items);
+          setCompanies(dedupeCompaniesById(cached.items));
           setTotal(cached.total);
           setError(null);
           setLoading(false);
@@ -99,10 +100,11 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
         const listResult = await companiesService.list(listQuery);
         if (seq !== fetchSeq.current) return;
         const { items, total: cohortTotal, nextSearchAfter } = listResult;
-        setCompanies(items);
+        const uniqueItems = dedupeCompaniesById(items);
+        setCompanies(uniqueItems);
         setTotal(cohortTotal);
         if (useListCache) {
-          writeCompaniesListCache(cacheKey, items, cohortTotal);
+          writeCompaniesListCache(cacheKey, uniqueItems, cohortTotal);
         }
         if (nextSearchAfter?.length) {
           cursorsForPageRef.current.set(page + 1, nextSearchAfter);
