@@ -569,7 +569,7 @@ export function ContactsDataTable({
                       timestamp: Date.now(),
                     }),
                   },
-                ).catch(() => { });
+                ).catch(() => {});
                 // #endregion
               }}
             >
@@ -824,13 +824,13 @@ export function ContactsDataTable({
               }
               onSortModelChange={
                 embedded && !embeddedServerSort
-                  ? () => { }
+                  ? () => {}
                   : handleSortModelChange
               }
               disableColumnMenu={embedded}
               columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={
-                embedded ? () => { } : handleColumnVisibilityModelChange
+                embedded ? () => {} : handleColumnVisibilityModelChange
               }
               disableColumnFilter
               hideFooter

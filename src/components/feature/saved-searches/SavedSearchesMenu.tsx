@@ -20,6 +20,7 @@ import {
   type SavedSearch,
 } from "@/services/graphql/savedSearchesService";
 import {
+  SAVED_SEARCH_VERSION_SIDEBAR,
   type ContactSavedSearchPayload,
   type CompanySavedSearchPayload,
   type HireSignalSavedSearchPayload,
@@ -90,6 +91,14 @@ function SaveSearchNameModal({
 
 const SAVED_SEARCHES_PANEL_TITLE_ID = "c360-saved-searches-panel-title";
 
+function countNonEmptyFacetGroups(
+  facetValues: Record<string, string[]> | undefined,
+): number {
+  if (!facetValues) return 0;
+  return Object.values(facetValues).filter((values) => values.length > 0)
+    .length;
+}
+
 function describeSavedSearchSummary(s: SavedSearch): string {
   const raw = s.filters;
   if (!raw || typeof raw !== "object") {
@@ -97,28 +106,30 @@ function describeSavedSearchSummary(s: SavedSearch): string {
   }
   if (isContactSavedSearchPayload(raw)) {
     const parts: string[] = [];
-    if (raw.search?.trim()) parts.push("Email search");
-    const facetCount = Object.values(raw.facetValues ?? {}).filter(
-      (v) => v.length > 0,
-    ).length;
-    if (facetCount > 0) {
-      parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+    if (raw.version === SAVED_SEARCH_VERSION_SIDEBAR) {
+      if (raw.search.trim()) parts.push("Email search");
+      const facetCount = countNonEmptyFacetGroups(raw.facetValues);
+      if (facetCount > 0) {
+        parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+      }
+      const adv =
+        raw.advancedListDraft &&
+        countDraftConditions(raw.advancedListDraft.rootGroup) > 0;
+      if (adv) parts.push("Advanced rules");
+    } else {
+      parts.push("Saved contact filters");
     }
-    const adv =
-      raw.advancedListDraft &&
-      countDraftConditions(raw.advancedListDraft.rootGroup) > 0;
-    if (adv) parts.push("Advanced rules");
     if (parts.length === 0) return "Current view (no extra filters)";
     return parts.join(" · ");
   }
   if (isCompanySavedSearchPayload(raw)) {
     const parts: string[] = [];
-    if (raw.search?.trim()) parts.push("Company search");
-    const facetCount = Object.values(raw.facetValues ?? {}).filter(
-      (v) => v.length > 0,
-    ).length;
-    if (facetCount > 0) {
-      parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+    if (raw.search.trim()) parts.push("Company search");
+    if (raw.version === SAVED_SEARCH_VERSION_SIDEBAR) {
+      const facetCount = countNonEmptyFacetGroups(raw.facetValues);
+      if (facetCount > 0) {
+        parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+      }
     }
     return parts.length > 0 ? parts.join(" · ") : "Current company view";
   }
@@ -234,7 +245,7 @@ export function SavedSearchesMenu({
         data: { instanceId, entity },
         timestamp: Date.now(),
       }),
-    }).catch(() => { });
+    }).catch(() => {});
     // #endregion
     return () => {
       // #region agent log
@@ -256,7 +267,7 @@ export function SavedSearchesMenu({
             timestamp: Date.now(),
           }),
         },
-      ).catch(() => { });
+      ).catch(() => {});
       // #endregion
     };
   }, [entity]);
@@ -307,7 +318,7 @@ export function SavedSearchesMenu({
             timestamp: Date.now(),
           }),
         },
-      ).catch(() => { });
+      ).catch(() => {});
       // #endregion
       if (!opts?.silent) setLoading(true);
       try {
@@ -341,7 +352,7 @@ export function SavedSearchesMenu({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         setList(searches);
       } catch (e) {
@@ -371,7 +382,7 @@ export function SavedSearchesMenu({
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         toast.error(parseOperationError(e, errorDomain).userMessage);
       } finally {
@@ -405,7 +416,7 @@ export function SavedSearchesMenu({
             timestamp: Date.now(),
           }),
         },
-      ).catch(() => { });
+      ).catch(() => {});
       // #endregion
       if (opened) void load();
     },
@@ -432,7 +443,7 @@ export function SavedSearchesMenu({
         data: { panelOpen, opened, typeFilter, entity },
         timestamp: Date.now(),
       }),
-    }).catch(() => { });
+    }).catch(() => {});
     // #endregion
     if (opened) void load();
   }, [presentation, panelOpen, load, typeFilter, entity]);
@@ -457,7 +468,7 @@ export function SavedSearchesMenu({
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => { });
+    }).catch(() => {});
     // #endregion
     setSaveName(value);
   }, []);

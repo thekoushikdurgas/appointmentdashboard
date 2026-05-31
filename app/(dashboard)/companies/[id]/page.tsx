@@ -298,7 +298,7 @@ export default function CompanyDetailPage({ params }: PageProps) {
                   </div>
                 ) : null}
                 {company.latestFundingAmount != null &&
-                  company.latestFundingAmount > 0 ? (
+                company.latestFundingAmount > 0 ? (
                   <div className="c360-detail-row">
                     <span className="c360-section-label">
                       Latest funding amount

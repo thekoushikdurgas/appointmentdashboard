@@ -44,10 +44,10 @@ export function CompanyContactsTable({
   sortBy,
   onSortChange,
 }: CompanyContactsTableProps) {
-  const noop = useCallback(() => { }, []);
-  const noopId = useCallback((_id: string) => { }, []);
-  const noopIds = useCallback((_ids: string[]) => { }, []);
-  const noopSize = useCallback((_n: number) => { }, []);
+  const noop = useCallback(() => {}, []);
+  const noopId = useCallback((_id: string) => {}, []);
+  const noopIds = useCallback((_ids: string[]) => {}, []);
+  const noopSize = useCallback((_n: number) => {}, []);
 
   const rowsWithCompany = useMemo(
     () => contacts.map((c) => ({ ...c, company: companyName })),

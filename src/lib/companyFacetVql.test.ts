@@ -92,10 +92,7 @@ describe("buildCompanyFacetVqlFilter", () => {
   });
 
   it("maps legacy total_funding bucket id 0-10000 to 1-10000", () => {
-    const f = buildCompanyFacetVqlFilter(
-      { total_funding: ["0-10000"] },
-      {},
-    );
+    const f = buildCompanyFacetVqlFilter({ total_funding: ["0-10000"] }, {});
     expect(f?.conditions).toEqual([
       { field: "total_funding", operator: "gte", value: 1 },
       { field: "total_funding", operator: "lte", value: 10_000 },

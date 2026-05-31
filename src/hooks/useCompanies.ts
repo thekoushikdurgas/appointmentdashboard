@@ -6,14 +6,16 @@ import {
   companiesService,
 } from "@/services/graphql/companiesService";
 import type { VqlQueryInput } from "@/graphql/generated/types";
-import {
-  buildCompanyCountQueryInput,
-  buildCompanyListVql,
-} from "@/lib/companyListVql";
+import { buildCompanyListVql } from "@/lib/companyListVql";
 import {
   readCompaniesPageSizePreference,
   writeCompaniesPageSizePreference,
 } from "@/lib/companiesListPrefs";
+import {
+  companiesListCacheKey,
+  readCompaniesListCache,
+  writeCompaniesListCache,
+} from "@/lib/companiesListCache";
 
 const DEFAULT_PAGE_SIZE = 25;
 const EXPORT_VQL_LIMIT = 50_000;
@@ -55,125 +57,165 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
     cursorsForPageRef.current.clear();
   }, []);
 
-  const loadCompanies = useCallback(async () => {
-    const seq = ++fetchSeq.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const cursor =
-        page > 10 ? cursorsForPageRef.current.get(page) : undefined;
-      const useCursor = page > 10 && !!cursor?.length;
-      const listQuery = buildCompanyListVql(page, pageSize, search, vqlQuery, {
-        searchAfter: useCursor ? cursor : null,
+  const loadCompanies = useCallback(
+    async (opts?: { force?: boolean }) => {
+      const seq = ++fetchSeq.current;
+      const useListCache = page <= 10;
+      const cacheKey = companiesListCacheKey(
+        vqlQuery,
+        page,
+        pageSize,
         sortBy,
-      });
-      const countQuery = buildCompanyCountQueryInput(search, vqlQuery, sortBy);
-      // #region agent log
-      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "c73258",
-        },
-        body: JSON.stringify({
-          sessionId: "c73258",
-          runId: "company-facet",
-          hypothesisId: "IF1",
-          location: "useCompanies.ts:loadCompanies:start",
-          message: "companies list fetch",
-          data: {
-            seq,
-            page,
+        search,
+      );
+
+      if (useListCache && !opts?.force) {
+        const cached = readCompaniesListCache(cacheKey);
+        if (cached) {
+          setCompanies(cached.items);
+          setTotal(cached.total);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        const cursor =
+          page > 10 ? cursorsForPageRef.current.get(page) : undefined;
+        const useCursor = page > 10 && !!cursor?.length;
+        const listQuery = buildCompanyListVql(
+          page,
+          pageSize,
+          search,
+          vqlQuery,
+          {
+            searchAfter: useCursor ? cursor : null,
             sortBy,
-            searchLen: search.length,
-            orderBy: listQuery.orderBy,
-            filterKeys: vqlQuery.filters
-              ? Object.keys(vqlQuery.filters as object)
-              : [],
-            filters: vqlQuery.filters,
           },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => { });
-      // #endregion
-      const listP = companiesService.list(listQuery);
-      const countP = companiesService
-        .count(countQuery)
-        .catch(() => null as number | null);
-      const [listResult, countResult] = await Promise.all([listP, countP]);
-      if (seq !== fetchSeq.current) return;
-      let { items, total: listTotal, nextSearchAfter } = listResult;
-      if (sortBy === "contacts_asc" || sortBy === "contacts_desc") {
-        const dir = sortBy === "contacts_desc" ? -1 : 1;
-        items = [...items].sort(
-          (a, b) =>
-            dir * ((a.contactCount ?? 0) - (b.contactCount ?? 0)),
         );
+        // #region agent log
+        globalThis
+          .fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "c73258",
+              },
+              body: JSON.stringify({
+                sessionId: "c73258",
+                runId: "company-facet",
+                hypothesisId: "IF1",
+                location: "useCompanies.ts:loadCompanies:start",
+                message: "companies list fetch",
+                data: {
+                  seq,
+                  page,
+                  sortBy,
+                  searchLen: search.length,
+                  orderBy: listQuery.orderBy,
+                  filterKeys: vqlQuery.filters
+                    ? Object.keys(vqlQuery.filters as object)
+                    : [],
+                  filters: vqlQuery.filters,
+                },
+                timestamp: Date.now(),
+              }),
+            },
+          )
+          .catch(() => {});
+        // #endregion
+        const listResult = await companiesService.list(listQuery);
+        if (seq !== fetchSeq.current) return;
+        let { items, total: cohortTotal, nextSearchAfter } = listResult;
+        if (sortBy === "contacts_asc" || sortBy === "contacts_desc") {
+          const dir = sortBy === "contacts_desc" ? -1 : 1;
+          items = [...items].sort(
+            (a, b) => dir * ((a.contactCount ?? 0) - (b.contactCount ?? 0)),
+          );
+        }
+        setCompanies(items);
+        setTotal(cohortTotal);
+        if (useListCache) {
+          writeCompaniesListCache(cacheKey, items, cohortTotal);
+        }
+        // #region agent log
+        globalThis
+          .fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "c73258",
+              },
+              body: JSON.stringify({
+                sessionId: "c73258",
+                runId: "company-facet",
+                hypothesisId: "IF2",
+                location: "useCompanies.ts:loadCompanies:done",
+                message: "companies list fetch done",
+                data: {
+                  seq,
+                  itemCount: items.length,
+                  cohortTotal,
+                  firstIndustries: items
+                    .slice(0, 3)
+                    .map((c) => c.industries ?? c.industry),
+                  firstContactCounts: items.slice(0, 3).map((c) => ({
+                    name: c.name,
+                    contactCount: c.contactCount,
+                  })),
+                },
+                timestamp: Date.now(),
+              }),
+            },
+          )
+          .catch(() => {});
+        // #endregion
+        if (nextSearchAfter?.length) {
+          cursorsForPageRef.current.set(page + 1, nextSearchAfter);
+        }
+      } catch (err) {
+        if (seq !== fetchSeq.current) return;
+        const msg =
+          err instanceof Error ? err.message : "Failed to load companies";
+        // #region agent log
+        globalThis
+          .fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "c73258",
+              },
+              body: JSON.stringify({
+                sessionId: "c73258",
+                runId: "company-sort",
+                hypothesisId: "SORT_ERR",
+                location: "useCompanies.ts:loadCompanies:error",
+                message: "companies list fetch failed",
+                data: { seq, sortBy, error: msg },
+                timestamp: Date.now(),
+              }),
+            },
+          )
+          .catch(() => {});
+        // #endregion
+        setError(msg);
+        setCompanies([]);
+        setTotal(0);
+      } finally {
+        if (seq === fetchSeq.current) setLoading(false);
       }
-      const cohortTotal =
-        typeof countResult === "number" && countResult >= 0
-          ? countResult
-          : listTotal;
-      setCompanies(items);
-      setTotal(cohortTotal);
-      // #region agent log
-      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "c73258",
-        },
-        body: JSON.stringify({
-          sessionId: "c73258",
-          runId: "company-facet",
-          hypothesisId: "IF2",
-          location: "useCompanies.ts:loadCompanies:done",
-          message: "companies list fetch done",
-          data: {
-            seq,
-            itemCount: items.length,
-            cohortTotal,
-            firstIndustries: items.slice(0, 3).map((c) => c.industries ?? c.industry),
-            firstContactCounts: items
-              .slice(0, 3)
-              .map((c) => ({ name: c.name, contactCount: c.contactCount })),
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => { });
-      // #endregion
-      if (nextSearchAfter?.length) {
-        cursorsForPageRef.current.set(page + 1, nextSearchAfter);
-      }
-    } catch (err) {
-      if (seq !== fetchSeq.current) return;
-      const msg =
-        err instanceof Error ? err.message : "Failed to load companies";
-      // #region agent log
-      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "c73258",
-        },
-        body: JSON.stringify({
-          sessionId: "c73258",
-          runId: "company-sort",
-          hypothesisId: "SORT_ERR",
-          location: "useCompanies.ts:loadCompanies:error",
-          message: "companies list fetch failed",
-          data: { seq, sortBy, error: msg },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => { });
-      // #endregion
-      setError(msg);
-      setCompanies([]);
-      setTotal(0);
-    } finally {
-      if (seq === fetchSeq.current) setLoading(false);
-    }
-  }, [page, pageSize, search, vqlQuery, sortBy]);
+    },
+    [page, pageSize, search, vqlQuery, sortBy],
+  );
 
   useEffect(() => {
     void loadCompanies();

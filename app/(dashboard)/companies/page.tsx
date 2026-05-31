@@ -217,26 +217,31 @@ export default function CompaniesPage() {
       ? draftToVqlQueryInput(advancedCompanyDraft, "company")
       : {};
     // #region agent log
-    globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "company-facet",
-        hypothesisId: "IF3",
-        location: "companies/page.tsx:applyFacetVql",
-        message: "apply company facet vql",
-        data: {
-          facetValues,
-          facetFilter,
-          mergedFilters: filters,
+    globalThis
+      .fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "company-facet",
+            hypothesisId: "IF3",
+            location: "companies/page.tsx:applyFacetVql",
+            message: "apply company facet vql",
+            data: {
+              facetValues,
+              facetFilter,
+              mergedFilters: filters,
+            },
+            timestamp: Date.now(),
+          }),
         },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => { });
+      )
+      .catch(() => {});
     // #endregion
     applyVqlQuery({
       ...extra,
@@ -464,8 +469,9 @@ export default function CompaniesPage() {
     setSavedSearchesPanelOpen(true);
   }, []);
 
-  const savedSearchesTrigger = (
-    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
+  const savedSearchesTrigger = useMemo(
+    () => <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />,
+    [openSavedSearchesPanel],
   );
 
   const filtersSidebar = useMemo(
@@ -599,12 +605,12 @@ export default function CompaniesPage() {
         },
         ...(hasAdvancedBuilderState
           ? [
-            {
-              label: "Clear advanced",
-              onClick: clearCompanyVql,
-              variant: "ghost" as const,
-            },
-          ]
+              {
+                label: "Clear advanced",
+                onClick: clearCompanyVql,
+                variant: "ghost" as const,
+              },
+            ]
           : []),
         {
           label: "Export",
@@ -614,13 +620,13 @@ export default function CompaniesPage() {
         },
         ...(isSuperAdmin
           ? [
-            {
-              label: "Import",
-              onClick: () => setImportOpen(true),
-              icon: Upload,
-              variant: "secondary" as const,
-            },
-          ]
+              {
+                label: "Import",
+                onClick: () => setImportOpen(true),
+                icon: Upload,
+                variant: "secondary" as const,
+              },
+            ]
           : []),
         {
           label: "Add company",

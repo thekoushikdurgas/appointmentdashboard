@@ -124,7 +124,7 @@ export default function ContactDetailPage({ params }: PageProps) {
             timestamp: Date.now(),
           }),
         },
-      ).catch(() => { });
+      ).catch(() => {});
       // #endregion
       setContact(c);
       setFromListSnapshot(false);
@@ -191,7 +191,7 @@ export default function ContactDetailPage({ params }: PageProps) {
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
         setContact(stashed);
         setFromListSnapshot(true);

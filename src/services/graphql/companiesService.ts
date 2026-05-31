@@ -219,7 +219,10 @@ export function mapCompanyContactRow(r: CompanyContactRow): Contact {
 }
 
 export const companiesService = {
-  list: async (query?: VqlQueryInput): Promise<CompanyListResult> => {
+  list: async (
+    query?: VqlQueryInput,
+    options?: GraphQLRequestOptions,
+  ): Promise<CompanyListResult> => {
     const data = await graphqlQuery<{
       companies: {
         companies: {
@@ -230,7 +233,7 @@ export const companiesService = {
           nextSearchAfter?: string[] | null;
         };
       };
-    }>(COMPANIES_LIST_QUERY, { query: query ?? {} });
+    }>(COMPANIES_LIST_QUERY, { query: query ?? {} }, options);
     const conn = data.companies.companies;
     return {
       items: conn.items.map(mapCompany),
@@ -317,10 +320,14 @@ export const companiesService = {
     try {
       const data = await graphqlQuery<{
         companies: { company: CompanyRow | null };
-      }>(COMPANY_ONE_QUERY, { uuid: companyUuid }, {
-        ...gqlOpts,
-        notFoundReturnsNull: true,
-      });
+      }>(
+        COMPANY_ONE_QUERY,
+        { uuid: companyUuid },
+        {
+          ...gqlOpts,
+          notFoundReturnsNull: true,
+        },
+      );
       const row = data?.companies?.company;
       if (row) return mapCompany(row);
     } catch (err) {

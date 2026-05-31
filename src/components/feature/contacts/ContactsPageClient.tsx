@@ -616,25 +616,29 @@ export default function ContactsPageClient() {
     setSavedSearchesPanelOpen(true);
   }, []);
 
-  const savedSearchesTrigger = (
-    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
+  const savedSearchesTrigger = useMemo(
+    () => <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />,
+    [openSavedSearchesPanel],
   );
 
-  const filtersRefreshButton = (
-    <button
-      type="button"
-      className="c360-contacts-filters__icon-btn"
-      title="Refresh filter definitions"
-      aria-label="Refresh filter definitions"
-      disabled={filtersRefreshing}
-      onClick={() => void handleRefreshFilters()}
-    >
-      <RefreshCw
-        size={16}
-        className={cn(filtersRefreshing && "c360-spin")}
-        aria-hidden
-      />
-    </button>
+  const filtersRefreshButton = useMemo(
+    () => (
+      <button
+        type="button"
+        className="c360-contacts-filters__icon-btn"
+        title="Refresh filter definitions"
+        aria-label="Refresh filter definitions"
+        disabled={filtersRefreshing}
+        onClick={() => void handleRefreshFilters()}
+      >
+        <RefreshCw
+          size={16}
+          className={cn(filtersRefreshing && "c360-spin")}
+          aria-hidden
+        />
+      </button>
+    ),
+    [filtersRefreshing, handleRefreshFilters],
   );
 
   const filtersPinExtra = useMemo(
@@ -644,7 +648,7 @@ export default function ContactsPageClient() {
         {filtersRefreshButton}
       </>
     ),
-    [savedSearchesTrigger, filtersRefreshing, handleRefreshFilters],
+    [savedSearchesTrigger, filtersRefreshButton],
   );
 
   const handleAiSearch = useCallback(() => {
@@ -738,6 +742,7 @@ export default function ContactsPageClient() {
     ),
     [
       filtersRefreshButton,
+      savedSearchesTrigger,
       isDesktop,
       search,
       sortBy,

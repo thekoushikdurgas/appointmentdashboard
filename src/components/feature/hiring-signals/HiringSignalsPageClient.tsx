@@ -232,8 +232,9 @@ function HiringSignalsPageBody({
     setSavedSearchesPanelOpen(true);
   }, []);
 
-  const savedSearchesTrigger = (
-    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
+  const savedSearchesTrigger = useMemo(
+    () => <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />,
+    [openSavedSearchesPanel],
   );
 
   const hireSignalFiltersPinExtra = useMemo(

@@ -166,7 +166,7 @@ export function useCompanyDetail(id: string): UseCompanyDetailReturn {
             }),
           },
         )
-        .catch(() => { });
+        .catch(() => {});
       // #endregion
       setContactsTotal(conn.total);
       setContacts(conn.items.map(mapCompanyContactRow));

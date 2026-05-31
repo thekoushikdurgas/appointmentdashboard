@@ -24,14 +24,9 @@ const LOWERCASE_FACET_VALUES = new Set<CompanyIncludeExcludeFilterKey>([
   "technologies",
 ]);
 
-function normalizeFacetValues(
-  filterKey: string,
-  vals: string[],
-): string[] {
+function normalizeFacetValues(filterKey: string, vals: string[]): string[] {
   const trimmed = trimValues(vals);
-  if (
-    LOWERCASE_FACET_VALUES.has(filterKey as CompanyIncludeExcludeFilterKey)
-  ) {
+  if (LOWERCASE_FACET_VALUES.has(filterKey as CompanyIncludeExcludeFilterKey)) {
     return trimmed.map((v) => v.toLowerCase());
   }
   return trimmed;

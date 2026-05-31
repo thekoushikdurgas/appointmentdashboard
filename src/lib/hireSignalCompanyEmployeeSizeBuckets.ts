@@ -54,7 +54,9 @@ export function employeeSizeBucketVqlFilter(
   bucketId: string,
 ): VqlFilterInput | undefined {
   const b = BUCKET_BY_ID.get(
-    normalizeEmployeeSizeBucketId(bucketId) as HireSignalCompanyEmployeeSizeBucketId,
+    normalizeEmployeeSizeBucketId(
+      bucketId,
+    ) as HireSignalCompanyEmployeeSizeBucketId,
   );
   if (!b) return undefined;
   const conditions: VqlConditionInput[] = [

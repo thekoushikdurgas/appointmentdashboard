@@ -98,25 +98,25 @@ export function buildCompanyListVql(
       ? undefined
       : tokens.length === 1
         ? {
-          conditions: [
-            {
-              field: "name",
-              operator: "contains",
-              value: tokens[0] as unknown as VqlConditionInput["value"],
-            },
-          ],
-        }
-        : {
-          allOf: tokens.map((token) => ({
             conditions: [
               {
                 field: "name",
                 operator: "contains",
-                value: token as unknown as VqlConditionInput["value"],
+                value: tokens[0] as unknown as VqlConditionInput["value"],
               },
             ],
-          })),
-        };
+          }
+        : {
+            allOf: tokens.map((token) => ({
+              conditions: [
+                {
+                  field: "name",
+                  operator: "contains",
+                  value: token as unknown as VqlConditionInput["value"],
+                },
+              ],
+            })),
+          };
 
   const baseFilters = extra.filters as VqlFilterInput | undefined;
   let filters: VqlFilterInput | undefined;

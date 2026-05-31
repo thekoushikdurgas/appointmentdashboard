@@ -244,14 +244,15 @@ export function companyRangeBucketTokensToIncludeVql(
             sessionId: "c73258",
             runId: "emp-bucket",
             hypothesisId: "EB1",
-            location: "companyRangeBuckets.ts:companyRangeBucketTokensToIncludeVql",
+            location:
+              "companyRangeBuckets.ts:companyRangeBucketTokensToIncludeVql",
             message: "employees_count bucket VQL",
             data: { field, tokens, normalizedIds: ids },
             timestamp: Date.now(),
           }),
         },
       )
-      .catch(() => { });
+      .catch(() => {});
   }
   // #endregion
   if (ids.length === 0) return undefined;

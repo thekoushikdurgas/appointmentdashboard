@@ -77,7 +77,7 @@ export function CompanyRangeBucketFacetFilter({
           }),
         },
       )
-      .catch(() => { });
+      .catch(() => {});
   }
   // #endregion
 

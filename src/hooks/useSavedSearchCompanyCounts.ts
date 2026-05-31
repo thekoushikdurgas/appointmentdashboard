@@ -50,10 +50,7 @@ export function useSavedSearchCompanyCounts(
 
     let cancelled = false;
 
-    const vqlGroups = new Map<
-      string,
-      { vql: VqlQueryInput; ids: string[] }
-    >();
+    const vqlGroups = new Map<string, { vql: VqlQueryInput; ids: string[] }>();
     for (const s of searches) {
       const vql = companyCountQueryFromSavedSearchFilters(s.filters);
       if (!vql) continue;
@@ -100,7 +97,7 @@ export function useSavedSearchCompanyCounts(
                     timestamp: Date.now(),
                   }),
                 },
-              ).catch(() => { });
+              ).catch(() => {});
               // #endregion
               setCounts((prev) => {
                 const next = { ...prev };
@@ -128,7 +125,7 @@ export function useSavedSearchCompanyCounts(
                     timestamp: Date.now(),
                   }),
                 },
-              ).catch(() => { });
+              ).catch(() => {});
               // #endregion
               setCounts((prev) => {
                 const next = { ...prev };

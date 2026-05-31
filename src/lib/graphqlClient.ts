@@ -283,7 +283,7 @@ export async function graphqlRequest<T = unknown>(
                   timestamp: Date.now(),
                 }),
               },
-            ).catch(() => { });
+            ).catch(() => {});
           }
           // #endregion
           const apiError = new Error(parsed.message) as Error & {
