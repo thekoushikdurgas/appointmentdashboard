@@ -223,55 +223,6 @@ export function SavedSearchesMenu({
     },
     [onPanelOpenChange],
   );
-  const instanceIdRef = useRef(
-    `saved-menu-${Math.random().toString(36).slice(2, 9)}`,
-  );
-
-  useEffect(() => {
-    const instanceId = instanceIdRef.current;
-    // #region agent log
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "post-fix",
-        hypothesisId: "F",
-        location: "SavedSearchesMenu.tsx:mount",
-        message: "SavedSearchesMenu mounted",
-        data: { instanceId, entity },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    return () => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "post-fix",
-            hypothesisId: "F",
-            location: "SavedSearchesMenu.tsx:unmount",
-            message: "SavedSearchesMenu unmounted",
-            data: { instanceId, entity },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
-    };
-  }, [entity]);
-
   const typeFilter =
     entity === "contact"
       ? "contact"
@@ -294,32 +245,7 @@ export function SavedSearchesMenu({
 
   const load = useCallback(
     async (opts?: { fresh?: boolean; silent?: boolean }) => {
-      const invocation = ++loadInvocationRef.current;
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "pre-fix",
-            hypothesisId: "B",
-            location: "SavedSearchesMenu.tsx:load:start",
-            message: "listSavedSearches load invoked",
-            data: {
-              invocation,
-              typeFilter,
-              popoverOpen: popoverOpenRef.current,
-            },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
+      ++loadInvocationRef.current;
       if (!opts?.silent) setLoading(true);
       try {
         const res = await savedSearchesService.list(
@@ -327,63 +253,8 @@ export function SavedSearchesMenu({
           { fresh: opts?.fresh },
         );
         const searches = res.savedSearches.listSavedSearches.searches;
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "c73258",
-            },
-            body: JSON.stringify({
-              sessionId: "c73258",
-              runId: "post-fix",
-              hypothesisId: "H",
-              location: "SavedSearchesMenu.tsx:load:success",
-              message: "listSavedSearches succeeded",
-              data: {
-                invocation,
-                count: searches.length,
-                typeFilter,
-                fresh: !!opts?.fresh,
-                names: searches.map((s) => s.name),
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         setList(searches);
       } catch (e) {
-        const parsed = (e as Error & { parsedError?: { status?: number } })
-          ?.parsedError;
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "c73258",
-            },
-            body: JSON.stringify({
-              sessionId: "c73258",
-              runId: "pre-fix",
-              hypothesisId: "A",
-              location: "SavedSearchesMenu.tsx:load:error",
-              message: "listSavedSearches failed",
-              data: {
-                invocation,
-                typeFilter,
-                status: parsed?.status ?? null,
-                is429: parsed?.status === 429,
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         toast.error(parseOperationError(e, errorDomain).userMessage);
       } finally {
         setLoading(false);
@@ -397,27 +268,6 @@ export function SavedSearchesMenu({
       const opened = isOpen && !popoverWasOpenRef.current;
       popoverOpenRef.current = isOpen;
       popoverWasOpenRef.current = isOpen;
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "post-fix",
-            hypothesisId: "B",
-            location: "SavedSearchesMenu.tsx:handlePopoverOpenChange",
-            message: "popover onOpenChange",
-            data: { isOpen, opened, typeFilter },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       if (opened) void load();
     },
     [load, typeFilter],
@@ -427,49 +277,10 @@ export function SavedSearchesMenu({
     if (presentation !== "panel") return;
     const opened = panelOpen && !panelWasOpenRef.current;
     panelWasOpenRef.current = panelOpen;
-    // #region agent log
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "post-fix",
-        hypothesisId: "P",
-        location: "SavedSearchesMenu.tsx:panelOpenEffect",
-        message: "saved searches panel open changed",
-        data: { panelOpen, opened, typeFilter, entity },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     if (opened) void load();
   }, [presentation, panelOpen, load, typeFilter, entity]);
 
   const handleSaveNameChange = useCallback((value: string) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "post-fix",
-        hypothesisId: "F",
-        location: "SavedSearchesMenu.tsx:saveNameChange",
-        message: "save modal name input change",
-        data: {
-          instanceId: instanceIdRef.current,
-          length: value.length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     setSaveName(value);
   }, []);
 

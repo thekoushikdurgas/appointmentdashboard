@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import type { Contact } from "@/services/graphql/contactsService";
 import { HiringSignalsCompanyAvatar } from "@/components/feature/hiring-signals/hiringSignalsGridCells";
 import { useConnectraCompanyLogoUrl } from "@/hooks/useConnectraCompanyLogoUrl";
@@ -99,31 +98,6 @@ function contactCompanyLogoUrl(contact: Contact): string | undefined {
 function ContactsGridCompanyAvatar({ contact }: { contact: Contact }) {
   const fromList = contactCompanyLogoUrl(contact);
   const logoUrl = useConnectraCompanyLogoUrl(contact.companyId, fromList);
-  // #region agent log
-  useEffect(() => {
-    if (!contact.companyId || logoUrl) return;
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "logo-col",
-        hypothesisId: "L2",
-        location: "contactsGridCells.tsx:ContactsGridCompanyAvatar",
-        message: "company logo still missing after list+fetch",
-        data: {
-          companyId: contact.companyId,
-          companyName: contact.company ?? null,
-          fromList: fromList ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }, [contact.companyId, contact.company, fromList, logoUrl]);
-  // #endregion
   return (
     <HiringSignalsCompanyAvatar
       logoUrl={logoUrl}

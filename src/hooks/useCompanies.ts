@@ -96,87 +96,14 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
             sortBy,
           },
         );
-        // #region agent log
-        globalThis
-          .fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "c73258",
-              },
-              body: JSON.stringify({
-                sessionId: "c73258",
-                runId: "company-facet",
-                hypothesisId: "IF1",
-                location: "useCompanies.ts:loadCompanies:start",
-                message: "companies list fetch",
-                data: {
-                  seq,
-                  page,
-                  sortBy,
-                  searchLen: search.length,
-                  orderBy: listQuery.orderBy,
-                  filterKeys: vqlQuery.filters
-                    ? Object.keys(vqlQuery.filters as object)
-                    : [],
-                  filters: vqlQuery.filters,
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          )
-          .catch(() => {});
-        // #endregion
         const listResult = await companiesService.list(listQuery);
         if (seq !== fetchSeq.current) return;
-        let { items, total: cohortTotal, nextSearchAfter } = listResult;
-        if (sortBy === "contacts_asc" || sortBy === "contacts_desc") {
-          const dir = sortBy === "contacts_desc" ? -1 : 1;
-          items = [...items].sort(
-            (a, b) => dir * ((a.contactCount ?? 0) - (b.contactCount ?? 0)),
-          );
-        }
+        const { items, total: cohortTotal, nextSearchAfter } = listResult;
         setCompanies(items);
         setTotal(cohortTotal);
         if (useListCache) {
           writeCompaniesListCache(cacheKey, items, cohortTotal);
         }
-        // #region agent log
-        globalThis
-          .fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "c73258",
-              },
-              body: JSON.stringify({
-                sessionId: "c73258",
-                runId: "company-facet",
-                hypothesisId: "IF2",
-                location: "useCompanies.ts:loadCompanies:done",
-                message: "companies list fetch done",
-                data: {
-                  seq,
-                  itemCount: items.length,
-                  cohortTotal,
-                  firstIndustries: items
-                    .slice(0, 3)
-                    .map((c) => c.industries ?? c.industry),
-                  firstContactCounts: items.slice(0, 3).map((c) => ({
-                    name: c.name,
-                    contactCount: c.contactCount,
-                  })),
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          )
-          .catch(() => {});
-        // #endregion
         if (nextSearchAfter?.length) {
           cursorsForPageRef.current.set(page + 1, nextSearchAfter);
         }
@@ -184,29 +111,6 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
         if (seq !== fetchSeq.current) return;
         const msg =
           err instanceof Error ? err.message : "Failed to load companies";
-        // #region agent log
-        globalThis
-          .fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "c73258",
-              },
-              body: JSON.stringify({
-                sessionId: "c73258",
-                runId: "company-sort",
-                hypothesisId: "SORT_ERR",
-                location: "useCompanies.ts:loadCompanies:error",
-                message: "companies list fetch failed",
-                data: { seq, sortBy, error: msg },
-                timestamp: Date.now(),
-              }),
-            },
-          )
-          .catch(() => {});
-        // #endregion
         setError(msg);
         setCompanies([]);
         setTotal(0);

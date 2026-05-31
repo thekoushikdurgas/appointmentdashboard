@@ -61,24 +61,6 @@ export function Popover({
   onOpenChangeRef.current = onOpenChange;
 
   useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "post-fix",
-        hypothesisId: "B",
-        location: "Popover.tsx:onOpenChangeEffect",
-        message: "popover open state changed",
-        data: { open },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     onOpenChangeRef.current?.(open);
   }, [open]);
 
@@ -207,11 +189,11 @@ export function Popover({
   const popover =
     open && mounted && pos
       ? createPortal(
-          <div ref={popoverRef} className={panelClass}>
-            {content}
-          </div>,
-          document.body,
-        )
+        <div ref={popoverRef} className={panelClass}>
+          {content}
+        </div>,
+        document.body,
+      )
       : null;
 
   return (

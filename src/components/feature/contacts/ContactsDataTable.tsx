@@ -546,31 +546,6 @@ export function ContactsDataTable({
               }}
               onClick={() => {
                 stashContactRowForDetail(params.row);
-                // #region agent log
-                fetch(
-                  "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-Debug-Session-Id": "c73258",
-                    },
-                    body: JSON.stringify({
-                      sessionId: "c73258",
-                      runId: "contact-detail",
-                      hypothesisId: "E6",
-                      location: "ContactsDataTable.tsx:viewClick",
-                      message: "contact View clicked from table",
-                      data: {
-                        contactId: params.row.id,
-                        companyId: params.row.companyId ?? null,
-                        name: params.row.name,
-                      },
-                      timestamp: Date.now(),
-                    }),
-                  },
-                ).catch(() => {});
-                // #endregion
               }}
             >
               <Button
@@ -824,13 +799,13 @@ export function ContactsDataTable({
               }
               onSortModelChange={
                 embedded && !embeddedServerSort
-                  ? () => {}
+                  ? () => { }
                   : handleSortModelChange
               }
               disableColumnMenu={embedded}
               columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={
-                embedded ? () => {} : handleColumnVisibilityModelChange
+                embedded ? () => { } : handleColumnVisibilityModelChange
               }
               disableColumnFilter
               hideFooter

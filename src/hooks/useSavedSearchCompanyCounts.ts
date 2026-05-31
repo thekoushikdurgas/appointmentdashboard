@@ -78,27 +78,6 @@ export function useSavedSearchCompanyCounts(
             try {
               const value = await companiesService.count(vql);
               if (cancelled) return;
-              // #region agent log
-              fetch(
-                "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "X-Debug-Session-Id": "c73258",
-                  },
-                  body: JSON.stringify({
-                    sessionId: "c73258",
-                    runId: "company-count",
-                    hypothesisId: "CC1",
-                    location: "useSavedSearchCompanyCounts.ts:ready",
-                    message: "company saved search count ready",
-                    data: { ids, value },
-                    timestamp: Date.now(),
-                  }),
-                },
-              ).catch(() => {});
-              // #endregion
               setCounts((prev) => {
                 const next = { ...prev };
                 for (const id of ids) next[id] = { status: "ready", value };
@@ -106,27 +85,6 @@ export function useSavedSearchCompanyCounts(
               });
             } catch {
               if (cancelled) return;
-              // #region agent log
-              fetch(
-                "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "X-Debug-Session-Id": "c73258",
-                  },
-                  body: JSON.stringify({
-                    sessionId: "c73258",
-                    runId: "company-count",
-                    hypothesisId: "CC2",
-                    location: "useSavedSearchCompanyCounts.ts:error",
-                    message: "company saved search count failed",
-                    data: { ids },
-                    timestamp: Date.now(),
-                  }),
-                },
-              ).catch(() => {});
-              // #endregion
               setCounts((prev) => {
                 const next = { ...prev };
                 for (const id of ids) next[id] = { status: "error" };

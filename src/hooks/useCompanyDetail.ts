@@ -145,29 +145,6 @@ export function useCompanyDetail(id: string): UseCompanyDetailReturn {
         },
         { showToastOnError: false, notFoundReturnsNull: false },
       );
-      // #region agent log
-      globalThis
-        .fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "c73258",
-            },
-            body: JSON.stringify({
-              sessionId: "c73258",
-              runId: "post-fix-3",
-              hypothesisId: "H-contacts-fe",
-              location: "useCompanyDetail.ts:loadContacts",
-              message: "company contacts loaded",
-              data: { companyId: id, total: conn.total },
-              timestamp: Date.now(),
-            }),
-          },
-        )
-        .catch(() => {});
-      // #endregion
       setContactsTotal(conn.total);
       setContacts(conn.items.map(mapCompanyContactRow));
     } catch (e) {

@@ -193,34 +193,6 @@ async function fetchConnection(
   const resolved = await data;
   const conn = resolved.contacts.contacts;
   const items = conn.items.map(mapContact);
-  // #region agent log
-  const sample = conn.items[0];
-  if (sample) {
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "company-col",
-        hypothesisId: "C1",
-        location: "contactsService.ts:fetchConnection",
-        message: "contact list company field sample",
-        data: {
-          mappedCompany: items[0]?.company ?? null,
-          mappedLogoUrl: items[0]?.companyLogoUrl ?? null,
-          rawProfilePic: sample.company?.profilePic ?? null,
-          rawCompanyName: sample.company?.name ?? null,
-          rawCompanyUuid: sample.companyUuid ?? null,
-          itemCount: items.length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
   return {
     items,
     total: conn.total,
@@ -327,31 +299,6 @@ export const contactsService = {
       if (email) {
         const byEmail = await fetchViaListCohort("email", email);
         if (byEmail) {
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "c73258",
-              },
-              body: JSON.stringify({
-                sessionId: "c73258",
-                runId: "contact-detail",
-                hypothesisId: "D8",
-                location: "contactsService.ts:get:emailFallback",
-                message: "contact loaded via list email VQL fallback",
-                data: {
-                  requestedUuid: contactUuid,
-                  contactId: byEmail.id,
-                  email,
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
           return byEmail;
         }
       }
@@ -362,81 +309,14 @@ export const contactsService = {
       const data = await graphqlQuery<{
         contacts: { contact: ContactRow };
       }>(CONTACT_ONE_QUERY, { uuid: contactUuid }, gqlOpts);
-      const mapped = mapContact(data.contacts.contact);
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "contact-detail",
-            hypothesisId: "D1",
-            location: "contactsService.ts:get:direct",
-            message: "contact loaded via contact(uuid)",
-            data: { uuid: contactUuid, contactId: mapped.id },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
-      return mapped;
+      return mapContact(data.contacts.contact);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (!isNotFoundMessage(msg)) throw err;
       const fallback = await fetchViaListFallbacks();
       if (fallback) {
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "c73258",
-            },
-            body: JSON.stringify({
-              sessionId: "c73258",
-              runId: "contact-detail",
-              hypothesisId: "D3",
-              location: "contactsService.ts:get:listFallback",
-              message: "contact loaded via list VQL fallback",
-              data: {
-                requestedUuid: contactUuid,
-                contactId: fallback.id,
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         return fallback;
       }
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "contact-detail",
-            hypothesisId: "D4",
-            location: "contactsService.ts:get:listFallback",
-            message: "list VQL fallback returned no rows",
-            data: { requestedUuid: contactUuid },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       if (returnNullOnNotFound) return null;
       throw err;
     }

@@ -226,35 +226,6 @@ export function companyRangeBucketTokensToIncludeVql(
   const ids = tokens
     .map((t) => normalizeCompanyRangeBucketId(field, t))
     .filter((id) => isKnownCompanyRangeBucketId(field, id));
-  // #region agent log
-  if (
-    field === COMPANY_EMPLOYEES_COUNT_FIELD &&
-    (tokens.length > 0 || ids.length > 0)
-  ) {
-    globalThis
-      .fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "emp-bucket",
-            hypothesisId: "EB1",
-            location:
-              "companyRangeBuckets.ts:companyRangeBucketTokensToIncludeVql",
-            message: "employees_count bucket VQL",
-            data: { field, tokens, normalizedIds: ids },
-            timestamp: Date.now(),
-          }),
-        },
-      )
-      .catch(() => {});
-  }
-  // #endregion
   if (ids.length === 0) return undefined;
   if (ids.length === 1) return rangeBucketIncludeVql(field, ids[0]);
   const branches = ids

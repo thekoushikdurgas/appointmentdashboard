@@ -104,28 +104,7 @@ export default function ContactDetailPage({ params }: PageProps) {
       setFromListSnapshot(false);
     }
 
-    const applyLoadedContact = (c: Contact, hypothesisId: string) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "contact-detail",
-            hypothesisId,
-            location: "contacts/[uuid]/page.tsx:fetchContact",
-            message: "contact detail loaded",
-            data: { uuid, contactId: c.id, name: c.name },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
+    const applyLoadedContact = (c: Contact) => {
       setContact(c);
       setFromListSnapshot(false);
     };
@@ -137,7 +116,7 @@ export default function ContactDetailPage({ params }: PageProps) {
         listHint: stashedEarly ?? undefined,
       });
       if (c) {
-        applyLoadedContact(c, "D1");
+        applyLoadedContact(c);
         return;
       }
 
@@ -172,27 +151,6 @@ export default function ContactDetailPage({ params }: PageProps) {
       }
       const stashed = readStashedContactRow(uuid);
       if (stashed) {
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "c73258",
-            },
-            body: JSON.stringify({
-              sessionId: "c73258",
-              runId: "contact-detail",
-              hypothesisId: "D7",
-              location: "contacts/[uuid]/page.tsx:sessionSnapshot",
-              message: "contact detail rendered from list row snapshot",
-              data: { uuid, contactId: stashed.id, name: stashed.name },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         setContact(stashed);
         setFromListSnapshot(true);
         return;

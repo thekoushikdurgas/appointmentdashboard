@@ -49,37 +49,6 @@ export function CompanyRangeBucketFacetFilter({
   });
   const normalizeSelection = (values: string[]) =>
     values.map((v) => normalizeCompanyRangeBucketId(key, v));
-  // #region agent log
-  if (key === "company_employees_count" && options.length > 0) {
-    globalThis
-      .fetch(
-        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "c73258",
-          },
-          body: JSON.stringify({
-            sessionId: "c73258",
-            runId: "emp-bucket",
-            hypothesisId: "EB2",
-            location:
-              "CompanyRangeBucketFacetFilter.tsx:employees_count options",
-            message: "facet dropdown bucket labels",
-            data: {
-              values: options.slice(0, 3).map((o) => ({
-                value: o.value,
-                displayValue: o.displayValue,
-              })),
-            },
-            timestamp: Date.now(),
-          }),
-        },
-      )
-      .catch(() => {});
-  }
-  // #endregion
 
   const comboboxProps = {
     options,

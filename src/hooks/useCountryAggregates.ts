@@ -23,17 +23,12 @@ export interface UseCountryAggregatesReturn {
 
 function mapGeoToCountryCounts(res: ContactGeoAnalyticsResult): CountryCount[] {
   const mapped: CountryCount[] = [];
-  const skipped: Array<{ value: string; displayValue: string }> = [];
   for (const item of res.countries ?? []) {
     const numericId = countryBucketToNumericIso(
       item.value ?? "",
       item.displayValue,
     );
     if (!numericId) {
-      skipped.push({
-        value: item.value ?? "",
-        displayValue: item.displayValue ?? "",
-      });
       continue;
     }
     const filterValue = (item.value ?? item.displayValue ?? "").trim();
@@ -44,31 +39,6 @@ function mapGeoToCountryCounts(res: ContactGeoAnalyticsResult): CountryCount[] {
       filterValue: filterValue || (item.displayValue ?? item.value ?? ""),
     });
   }
-  // #region agent log
-  if (typeof fetch !== "undefined") {
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "c73258",
-      },
-      body: JSON.stringify({
-        sessionId: "c73258",
-        runId: "post-fix",
-        hypothesisId: "M",
-        location: "useCountryAggregates.ts:mapGeoToCountryCounts",
-        message: "geo country bucket mapping",
-        data: {
-          apiCountryRows: (res.countries ?? []).length,
-          mappedCount: mapped.length,
-          skippedSample: skipped.slice(0, 5),
-          total: res.total,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
   return mapped;
 }
 

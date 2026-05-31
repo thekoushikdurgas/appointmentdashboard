@@ -256,36 +256,6 @@ export async function graphqlRequest<T = unknown>(
 
         if (errors.length > 0) {
           const parsed = parseGraphQLError(errors);
-          // #region agent log
-          if (
-            typeof query === "string" &&
-            query.includes("SavedSearchesGateway")
-          ) {
-            fetch(
-              "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Debug-Session-Id": "c73258",
-                },
-                body: JSON.stringify({
-                  sessionId: "c73258",
-                  runId: "pre-fix",
-                  hypothesisId: "A",
-                  location: "graphqlClient.ts:SavedSearchesGateway:error",
-                  message: "SavedSearches GraphQL error",
-                  data: {
-                    status: parsed.status,
-                    code: parsed.code,
-                    is429: parsed.status === 429,
-                  },
-                  timestamp: Date.now(),
-                }),
-              },
-            ).catch(() => {});
-          }
-          // #endregion
           const apiError = new Error(parsed.message) as Error & {
             parsedError?: ParsedGraphQLError;
           };
