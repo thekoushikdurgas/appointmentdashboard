@@ -19,22 +19,37 @@ export interface PaginationDropdownNavProps {
   onPageChange: (page: number) => void;
   className?: string;
   showWhenSinglePage?: boolean;
+  /**
+   * Cap how many page numbers appear in the dropdown (e.g. contacts offset pages 1–10).
+   * When exceeded, always includes pages 1..limit and the current page if above limit.
+   */
+  pageOptionLimit?: number;
 }
 
-function buildPageOptions(totalPages: number) {
-  return Array.from({ length: totalPages }, (_, i) => {
-    const n = i + 1;
-    return { value: String(n), label: String(n) };
-  });
+function buildPageOptions(
+  totalPages: number,
+  currentPage: number,
+  pageOptionLimit?: number,
+) {
+  const pages: number[] = [];
+  if (!pageOptionLimit || totalPages <= pageOptionLimit) {
+    for (let n = 1; n <= totalPages; n++) pages.push(n);
+  } else {
+    for (let n = 1; n <= pageOptionLimit; n++) pages.push(n);
+    if (currentPage > pageOptionLimit) pages.push(currentPage);
+  }
+  return pages.map((n) => ({ value: String(n), label: String(n) }));
 }
 
 function PaginationPageMenu({
   page,
   totalPages,
+  pageOptionLimit,
   onPageChange,
 }: {
   page: number;
   totalPages: number;
+  pageOptionLimit?: number;
   onPageChange: (page: number) => void;
 }) {
   const peek = useDataFiltersPeek();
@@ -43,7 +58,10 @@ function PaginationPageMenu({
   const menuOpenRef = useRef(false);
   const [open, setOpen] = useState(false);
 
-  const options = useMemo(() => buildPageOptions(totalPages), [totalPages]);
+  const options = useMemo(
+    () => buildPageOptions(totalPages, page, pageOptionLimit),
+    [totalPages, page, pageOptionLimit],
+  );
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -123,6 +141,7 @@ export function PaginationDropdownNav({
   onPageChange,
   className,
   showWhenSinglePage = false,
+  pageOptionLimit,
 }: PaginationDropdownNavProps) {
   const { totalPages, safePage } = getPaginationBounds(total, page, pageSize);
 
@@ -148,6 +167,7 @@ export function PaginationDropdownNav({
       <PaginationPageMenu
         page={safePage}
         totalPages={totalPages}
+        pageOptionLimit={pageOptionLimit}
         onPageChange={onPageChange}
       />
       <button

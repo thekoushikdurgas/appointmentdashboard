@@ -10,7 +10,14 @@ export const CONTACT_LIST_FIELDS = `
   email
   title
   companyUuid
+  company {
+    uuid
+    name
+    profilePic
+    website
+  }
   emailStatus
+  departments
   linkedinUrl
   mobilePhone
   city
@@ -23,13 +30,8 @@ export const CONTACT_LIST_FIELDS = `
 /** Single-contact fetch: joined company + extra profile fields (lists use CONTACT_LIST_FIELDS only). */
 export const CONTACT_DETAIL_FIELDS = `
   ${CONTACT_LIST_FIELDS}
-  company {
-    uuid
-    name
-  }
   seniority
   stage
-  departments
   workDirectPhone
   homePhone
   otherPhone

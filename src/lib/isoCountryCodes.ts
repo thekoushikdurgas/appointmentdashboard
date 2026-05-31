@@ -255,6 +255,80 @@ export const ALPHA2_TO_NUMERIC: Record<string, string> = {
   ZW: "716",
 };
 
+/** Connectra facet / geo bucket slugs that differ from Intl.DisplayNames labels. */
+const CONNECTRA_SLUG_TO_ALPHA2: Record<string, string> = {
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  "u.s.": "US",
+  "u.s.a.": "US",
+  america: "US",
+  "united kingdom": "GB",
+  "great britain": "GB",
+  england: "GB",
+  scotland: "GB",
+  wales: "GB",
+  uk: "GB",
+  "u.k.": "GB",
+  holland: "NL",
+  "south korea": "KR",
+  korea: "KR",
+  "north korea": "KP",
+  russia: "RU",
+  "russian federation": "RU",
+  czechia: "CZ",
+  "czech republic": "CZ",
+  "ivory coast": "CI",
+  "cote d'ivoire": "CI",
+  "côte d'ivoire": "CI",
+  taiwan: "TW",
+  "hong kong": "HK",
+  vietnam: "VN",
+  "viet nam": "VN",
+};
+
+export function normalizeCountryKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/['’]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function buildCountryNameToAlpha2(): Record<string, string> {
+  const map: Record<string, string> = { ...CONNECTRA_SLUG_TO_ALPHA2 };
+  for (const a2 of Object.keys(ALPHA2_TO_NUMERIC)) {
+    map[a2.toLowerCase()] = a2;
+  }
+  if (typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function") {
+    try {
+      const dn = new Intl.DisplayNames(["en"], { type: "region" });
+      for (const a2 of Object.keys(ALPHA2_TO_NUMERIC)) {
+        const label = dn.of(a2);
+        if (label && label !== a2) {
+          map[normalizeCountryKey(label)] = a2;
+        }
+      }
+    } catch {
+      // Intl region data unavailable in this runtime
+    }
+  }
+  return map;
+}
+
+const COUNTRY_NAME_TO_ALPHA2: Record<string, string> =
+  buildCountryNameToAlpha2();
+
+function alpha2ToNumeric(alpha2: string): string | null {
+  return ALPHA2_TO_NUMERIC[alpha2.toUpperCase()] ?? null;
+}
+
+function resolveAlpha2FromCountryKey(key: string): string | null {
+  if (!key) return null;
+  return COUNTRY_NAME_TO_ALPHA2[key] ?? null;
+}
+
 /** Map a country value (alpha-2 or numeric string) to its numeric ISO code string. */
 export function toNumericIso(value: string): string | null {
   if (!value) return null;
@@ -262,5 +336,26 @@ export function toNumericIso(value: string): string | null {
   // Already numeric
   if (/^\d+$/.test(upper)) return upper;
   // 2-letter alpha-2
-  return ALPHA2_TO_NUMERIC[upper] ?? null;
+  return alpha2ToNumeric(upper);
+}
+
+/**
+ * Map Connectra geo bucket `value` / `displayValue` (often full country names or slugs)
+ * to numeric ISO for react-simple-maps / world-atlas.
+ */
+export function countryBucketToNumericIso(
+  value: string,
+  displayValue?: string | null,
+): string | null {
+  const candidates = [value, displayValue].filter(
+    (c): c is string => typeof c === "string" && c.trim().length > 0,
+  );
+  for (const raw of candidates) {
+    const direct = toNumericIso(raw);
+    if (direct) return direct;
+    const key = normalizeCountryKey(raw);
+    const a2 = resolveAlpha2FromCountryKey(key);
+    if (a2) return alpha2ToNumeric(a2);
+  }
+  return null;
 }

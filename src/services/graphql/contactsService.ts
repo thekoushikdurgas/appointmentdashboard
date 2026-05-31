@@ -1,4 +1,8 @@
-import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
+import {
+  graphqlQuery,
+  graphqlMutation,
+  type GraphQLRequestOptions,
+} from "@/lib/graphqlClient";
 import type {
   VqlQueryInput,
   SchedulerJob,
@@ -10,6 +14,7 @@ import type {
   CreateContact360ImportInput,
   ContactFilterDataInput,
 } from "@/graphql/generated/types";
+import { contactUuidFilterCondition } from "@/lib/contactUuidFilter";
 import {
   CONTACTS_LIST_QUERY,
   CONTACT_ONE_QUERY,
@@ -47,6 +52,10 @@ export interface Contact {
   title?: string;
   company?: string;
   companyId?: string;
+  /** LinkedIn / Connectra logo when populated on list query. */
+  companyLogoUrl?: string;
+  /** Company website for favicon fallback in the table. */
+  companyWebsite?: string;
   location?: string;
   country?: string | null;
   linkedinUrl?: string;
@@ -72,7 +81,14 @@ export interface ContactRow {
   email: string | null;
   title: string | null;
   companyUuid: string | null;
-  company?: { uuid?: string | null; name?: string | null } | null;
+  /** Denormalized on contact index when company join is not populated. */
+  companyName?: string | null;
+  company?: {
+    uuid?: string | null;
+    name?: string | null;
+    profilePic?: string | null;
+    website?: string | null;
+  } | null;
   emailStatus: string | null;
   linkedinUrl: string | null;
   mobilePhone: string | null;
@@ -98,8 +114,11 @@ function mapContact(r: ContactRow): Contact {
   const ln = r.lastName ?? "";
   const name = [fn, ln].filter(Boolean).join(" ").trim() || r.email || r.uuid;
   const loc = [r.city, r.state, r.country].filter(Boolean).join(", ");
-  const companyName = r.company?.name?.trim() || undefined;
+  const companyName =
+    r.company?.name?.trim() || r.companyName?.trim() || undefined;
   const companyIdRaw = r.companyUuid ?? r.company?.uuid ?? null;
+  const companyLogoUrl = r.company?.profilePic?.trim() || undefined;
+  const companyWebsite = r.company?.website?.trim() || undefined;
   return {
     id: r.uuid,
     name,
@@ -110,6 +129,8 @@ function mapContact(r: ContactRow): Contact {
     title: r.title ?? undefined,
     company: companyName,
     companyId: companyIdRaw ?? undefined,
+    companyLogoUrl,
+    companyWebsite,
     location: loc || undefined,
     country: r.country,
     linkedinUrl: r.linkedinUrl ?? undefined,
@@ -171,8 +192,37 @@ async function fetchConnection(
 ): Promise<ContactListResult> {
   const resolved = await data;
   const conn = resolved.contacts.contacts;
+  const items = conn.items.map(mapContact);
+  // #region agent log
+  const sample = conn.items[0];
+  if (sample) {
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "company-col",
+        hypothesisId: "C1",
+        location: "contactsService.ts:fetchConnection",
+        message: "contact list company field sample",
+        data: {
+          mappedCompany: items[0]?.company ?? null,
+          mappedLogoUrl: items[0]?.companyLogoUrl ?? null,
+          rawProfilePic: sample.company?.profilePic ?? null,
+          rawCompanyName: sample.company?.name ?? null,
+          rawCompanyUuid: sample.companyUuid ?? null,
+          itemCount: items.length,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
   return {
-    items: conn.items.map(mapContact),
+    items,
     total: conn.total,
     limit: conn.limit,
     offset: conn.offset,
@@ -180,8 +230,22 @@ async function fetchConnection(
   };
 }
 
+const GQL_SILENT: GraphQLRequestOptions = { showToastOnError: false };
+
+export type ContactGetOptions = GraphQLRequestOptions & {
+  /** When true, returns null on not-found instead of throwing (avoids dev error overlay). */
+  notFoundReturnsNull?: boolean;
+  /** Row from the contacts table (email / company) when uuid keyword lookup misses. */
+  listHint?: Pick<Contact, "email" | "companyId" | "firstName" | "lastName">;
+};
+
+export { contactUuidFilterCondition } from "@/lib/contactUuidFilter";
+
 export const contactsService = {
-  list: async (query?: ContactsListQuery): Promise<ContactListResult> => {
+  list: async (
+    query?: ContactsListQuery,
+    options?: GraphQLRequestOptions,
+  ): Promise<ContactListResult> => {
     return fetchConnection(
       graphqlQuery<{
         contacts: {
@@ -192,7 +256,7 @@ export const contactsService = {
             offset: number;
           };
         };
-      }>(CONTACTS_LIST_QUERY, { query: query ?? {} }),
+      }>(CONTACTS_LIST_QUERY, { query: query ?? {} }, options),
     );
   },
 
@@ -225,11 +289,157 @@ export const contactsService = {
     };
   },
 
-  get: async (uuid: string) => {
-    const data = await graphqlQuery<{
-      contacts: { contact: ContactRow };
-    }>(CONTACT_ONE_QUERY, { uuid });
-    return mapContact(data.contacts.contact);
+  get: async (
+    uuid: string,
+    options?: ContactGetOptions,
+  ): Promise<Contact | null> => {
+    const contactUuid = uuid.trim();
+    const gqlOpts: GraphQLRequestOptions = {
+      showToastOnError: options?.showToastOnError ?? true,
+    };
+    const returnNullOnNotFound = options?.notFoundReturnsNull === true;
+    const isNotFoundMessage = (msg: string) =>
+      msg.toLowerCase().includes("not found");
+
+    const fetchViaListCohort = async (
+      filterField: "uuid" | "id" | "email",
+      value: string,
+    ): Promise<Contact | null> => {
+      const result = await contactsService.list(
+        {
+          filters: {
+            conditions: [contactUuidFilterCondition(filterField, value)],
+          },
+          limit: 1,
+          offset: 0,
+        },
+        GQL_SILENT,
+      );
+      return result.items[0] ?? null;
+    };
+
+    const fetchViaListFallbacks = async (): Promise<Contact | null> => {
+      for (const filterField of ["uuid", "id"] as const) {
+        const hit = await fetchViaListCohort(filterField, contactUuid);
+        if (hit) return hit;
+      }
+      const email = options?.listHint?.email?.trim().toLowerCase();
+      if (email) {
+        const byEmail = await fetchViaListCohort("email", email);
+        if (byEmail) {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "c73258",
+              },
+              body: JSON.stringify({
+                sessionId: "c73258",
+                runId: "contact-detail",
+                hypothesisId: "D8",
+                location: "contactsService.ts:get:emailFallback",
+                message: "contact loaded via list email VQL fallback",
+                data: {
+                  requestedUuid: contactUuid,
+                  contactId: byEmail.id,
+                  email,
+                },
+                timestamp: Date.now(),
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
+          return byEmail;
+        }
+      }
+      return null;
+    };
+
+    try {
+      const data = await graphqlQuery<{
+        contacts: { contact: ContactRow };
+      }>(CONTACT_ONE_QUERY, { uuid: contactUuid }, gqlOpts);
+      const mapped = mapContact(data.contacts.contact);
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "contact-detail",
+            hypothesisId: "D1",
+            location: "contactsService.ts:get:direct",
+            message: "contact loaded via contact(uuid)",
+            data: { uuid: contactUuid, contactId: mapped.id },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
+      return mapped;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!isNotFoundMessage(msg)) throw err;
+      const fallback = await fetchViaListFallbacks();
+      if (fallback) {
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "c73258",
+            },
+            body: JSON.stringify({
+              sessionId: "c73258",
+              runId: "contact-detail",
+              hypothesisId: "D3",
+              location: "contactsService.ts:get:listFallback",
+              message: "contact loaded via list VQL fallback",
+              data: {
+                requestedUuid: contactUuid,
+                contactId: fallback.id,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
+        return fallback;
+      }
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "contact-detail",
+            hypothesisId: "D4",
+            location: "contactsService.ts:get:listFallback",
+            message: "list VQL fallback returned no rows",
+            data: { requestedUuid: contactUuid },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
+      if (returnNullOnNotFound) return null;
+      throw err;
+    }
   },
 
   create: async (input: CreateContactInput): Promise<Contact> => {

@@ -55,7 +55,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
     cursorsForPageRef.current.clear();
   }, []);
 
-  const fetch = useCallback(async () => {
+  const loadCompanies = useCallback(async () => {
     const seq = ++fetchSeq.current;
     setLoading(true);
     setError(null);
@@ -68,6 +68,32 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
         sortBy,
       });
       const countQuery = buildCompanyCountQueryInput(search, vqlQuery, sortBy);
+      // #region agent log
+      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "c73258",
+        },
+        body: JSON.stringify({
+          sessionId: "c73258",
+          runId: "company-facet",
+          hypothesisId: "IF1",
+          location: "useCompanies.ts:loadCompanies:start",
+          message: "companies list fetch",
+          data: {
+            seq,
+            page,
+            searchLen: search.length,
+            filterKeys: vqlQuery.filters
+              ? Object.keys(vqlQuery.filters as object)
+              : [],
+            filters: vqlQuery.filters,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
       const listP = companiesService.list(listQuery);
       const countP = companiesService
         .count(countQuery)
@@ -81,6 +107,29 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
           : listTotal;
       setCompanies(items);
       setTotal(cohortTotal);
+      // #region agent log
+      globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "c73258",
+        },
+        body: JSON.stringify({
+          sessionId: "c73258",
+          runId: "company-facet",
+          hypothesisId: "IF2",
+          location: "useCompanies.ts:loadCompanies:done",
+          message: "companies list fetch done",
+          data: {
+            seq,
+            itemCount: items.length,
+            cohortTotal,
+            firstIndustries: items.slice(0, 3).map((c) => c.industries ?? c.industry),
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
       if (nextSearchAfter?.length) {
         cursorsForPageRef.current.set(page + 1, nextSearchAfter);
       }
@@ -97,11 +146,12 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
   }, [page, pageSize, search, vqlQuery, sortBy]);
 
   useEffect(() => {
-    void fetch();
-  }, [fetch]);
+    void loadCompanies();
+  }, [loadCompanies]);
 
   const applyVqlQuery = useCallback((q: Partial<VqlQueryInput>) => {
     cursorsForPageRef.current.clear();
+    setCompanies([]);
     setVqlQuery(q);
     setPage(1);
   }, []);
@@ -123,6 +173,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
     setSearchState(s);
     setPage(1);
     cursorsForPageRef.current.clear();
+    setCompanies([]);
   }, []);
 
   const hasMore = page * pageSize < total;
@@ -143,7 +194,7 @@ export function useCompanies(initialVql?: Partial<VqlQueryInput>) {
     vqlQuery,
     applyVqlQuery,
     exportVql,
-    refresh: fetch,
+    refresh: loadCompanies,
     hasMore,
   };
 }

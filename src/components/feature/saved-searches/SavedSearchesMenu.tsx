@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { Bookmark, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { SavedSearchesAsideDrawer } from "@/components/feature/saved-searches/SavedSearchesAsideDrawer";
 import {
   savedSearchesService,
   type SavedSearch,
@@ -19,10 +27,116 @@ import {
   isCompanySavedSearchPayload,
   isHireSignalSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
+import { countDraftConditions } from "@/lib/vqlDraft";
 import { parseOperationError } from "@/lib/errorParser";
 import { cn } from "@/lib/utils";
+import { useSavedSearchContactCounts } from "@/hooks/useSavedSearchContactCounts";
+import { useSavedSearchCompanyCounts } from "@/hooks/useSavedSearchCompanyCounts";
+import { SavedSearchCohortCount } from "@/components/feature/saved-searches/SavedSearchCohortCount";
 
 type Entity = "contact" | "company" | "hire_signal";
+
+/** Isolated from list-loading state so typing in the save modal does not remount the input. */
+function SaveSearchNameModal({
+  isOpen,
+  saving,
+  saveName,
+  onSaveNameChange,
+  onClose,
+  onSave,
+  nameInputRef,
+}: {
+  isOpen: boolean;
+  saving: boolean;
+  saveName: string;
+  onSaveNameChange: (value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+  nameInputRef: RefObject<HTMLInputElement | null>;
+}) {
+  const footer = useMemo(
+    () => (
+      <>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button loading={saving} onClick={onSave} disabled={!saveName.trim()}>
+          Save
+        </Button>
+      </>
+    ),
+    [onClose, onSave, saveName, saving],
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Save current view"
+      footer={footer}
+      stacked
+      initialFocusRef={nameInputRef}
+    >
+      <Input
+        ref={nameInputRef}
+        label="Name"
+        value={saveName}
+        onChange={(e) => onSaveNameChange(e.target.value)}
+        placeholder="e.g. EU verified contacts"
+      />
+    </Modal>
+  );
+}
+
+const SAVED_SEARCHES_PANEL_TITLE_ID = "c360-saved-searches-panel-title";
+
+function describeSavedSearchSummary(s: SavedSearch): string {
+  const raw = s.filters;
+  if (!raw || typeof raw !== "object") {
+    return "Click to apply this view";
+  }
+  if (isContactSavedSearchPayload(raw)) {
+    const parts: string[] = [];
+    if (raw.search?.trim()) parts.push("Email search");
+    const facetCount = Object.values(raw.facetValues ?? {}).filter(
+      (v) => v.length > 0,
+    ).length;
+    if (facetCount > 0) {
+      parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+    }
+    const adv =
+      raw.advancedListDraft &&
+      countDraftConditions(raw.advancedListDraft.rootGroup) > 0;
+    if (adv) parts.push("Advanced rules");
+    if (parts.length === 0) return "Current view (no extra filters)";
+    return parts.join(" · ");
+  }
+  if (isCompanySavedSearchPayload(raw)) {
+    const parts: string[] = [];
+    if (raw.search?.trim()) parts.push("Company search");
+    const facetCount = Object.values(raw.facetValues ?? {}).filter(
+      (v) => v.length > 0,
+    ).length;
+    if (facetCount > 0) {
+      parts.push(`${facetCount} facet${facetCount === 1 ? "" : "s"}`);
+    }
+    return parts.length > 0 ? parts.join(" · ") : "Current company view";
+  }
+  return "Click to apply this view";
+}
+
+function formatSavedSearchDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export type SavedSearchesPresentation = "popover" | "panel";
 
 interface SavedSearchesMenuProps {
   entity: Entity;
@@ -33,6 +147,35 @@ interface SavedSearchesMenuProps {
   onApplyCompany?: (payload: CompanySavedSearchPayload) => void;
   onApplyHireSignal?: (payload: HireSignalSavedSearchPayload) => void;
   className?: string;
+  /** Contacts page: right slide-over panel instead of popover. */
+  presentation?: SavedSearchesPresentation;
+  /** Controlled open state when `presentation` is `panel`. */
+  panelOpen?: boolean;
+  onPanelOpenChange?: (open: boolean) => void;
+  /** When false, only the panel/drawer + save modal render (use an external trigger). */
+  showTrigger?: boolean;
+}
+
+export function SavedSearchesTriggerButton({
+  onClick,
+  className,
+}: {
+  /** Omit when the trigger is wrapped by `Popover` (toggle handled by popover). */
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      className={cn(className)}
+      leftIcon={<Bookmark size={14} />}
+      onClick={onClick}
+    >
+      Saved
+    </Button>
+  );
 }
 
 export function SavedSearchesMenu({
@@ -44,12 +187,79 @@ export function SavedSearchesMenu({
   onApplyCompany,
   onApplyHireSignal,
   className,
+  presentation = "popover",
+  panelOpen: panelOpenProp,
+  onPanelOpenChange,
+  showTrigger = true,
 }: SavedSearchesMenuProps) {
   const [list, setList] = useState<SavedSearch[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [internalPanelOpen, setInternalPanelOpen] = useState(false);
+  const saveNameInputRef = useRef<HTMLInputElement>(null);
+  const loadInvocationRef = useRef(0);
+  const popoverOpenRef = useRef(false);
+  const popoverWasOpenRef = useRef(false);
+  const panelWasOpenRef = useRef(false);
+
+  const panelOpen = panelOpenProp ?? internalPanelOpen;
+  const setPanelOpen = useCallback(
+    (open: boolean) => {
+      if (onPanelOpenChange) onPanelOpenChange(open);
+      else setInternalPanelOpen(open);
+    },
+    [onPanelOpenChange],
+  );
+  const instanceIdRef = useRef(
+    `saved-menu-${Math.random().toString(36).slice(2, 9)}`,
+  );
+
+  useEffect(() => {
+    const instanceId = instanceIdRef.current;
+    // #region agent log
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "post-fix",
+        hypothesisId: "F",
+        location: "SavedSearchesMenu.tsx:mount",
+        message: "SavedSearchesMenu mounted",
+        data: { instanceId, entity },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => { });
+    // #endregion
+    return () => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "post-fix",
+            hypothesisId: "F",
+            location: "SavedSearchesMenu.tsx:unmount",
+            message: "SavedSearchesMenu unmounted",
+            data: { instanceId, entity },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => { });
+      // #endregion
+    };
+  }, [entity]);
 
   const typeFilter =
     entity === "contact"
@@ -64,22 +274,208 @@ export function SavedSearchesMenu({
         ? "companies"
         : "jobs";
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await savedSearchesService.list({
-        type: typeFilter,
-        limit: 100,
-      });
-      setList(res.savedSearches.listSavedSearches.searches);
-    } catch (e) {
-      toast.error(parseOperationError(e, errorDomain).userMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [typeFilter, errorDomain]);
+  const panelCountsEnabled = presentation === "panel" && panelOpen;
+  const contactCountsEnabled = entity === "contact" && panelCountsEnabled;
+  const companyCountsEnabled = entity === "company" && panelCountsEnabled;
+  const contactCounts = useSavedSearchContactCounts(list, contactCountsEnabled);
+  const companyCounts = useSavedSearchCompanyCounts(list, companyCountsEnabled);
+  const cohortCountsEnabled = contactCountsEnabled || companyCountsEnabled;
 
-  const handleSave = async () => {
+  const load = useCallback(
+    async (opts?: { fresh?: boolean; silent?: boolean }) => {
+      const invocation = ++loadInvocationRef.current;
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "pre-fix",
+            hypothesisId: "B",
+            location: "SavedSearchesMenu.tsx:load:start",
+            message: "listSavedSearches load invoked",
+            data: {
+              invocation,
+              typeFilter,
+              popoverOpen: popoverOpenRef.current,
+            },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => { });
+      // #endregion
+      if (!opts?.silent) setLoading(true);
+      try {
+        const res = await savedSearchesService.list(
+          { type: typeFilter, limit: 100 },
+          { fresh: opts?.fresh },
+        );
+        const searches = res.savedSearches.listSavedSearches.searches;
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "c73258",
+            },
+            body: JSON.stringify({
+              sessionId: "c73258",
+              runId: "post-fix",
+              hypothesisId: "H",
+              location: "SavedSearchesMenu.tsx:load:success",
+              message: "listSavedSearches succeeded",
+              data: {
+                invocation,
+                count: searches.length,
+                typeFilter,
+                fresh: !!opts?.fresh,
+                names: searches.map((s) => s.name),
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
+        setList(searches);
+      } catch (e) {
+        const parsed = (e as Error & { parsedError?: { status?: number } })
+          ?.parsedError;
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "c73258",
+            },
+            body: JSON.stringify({
+              sessionId: "c73258",
+              runId: "pre-fix",
+              hypothesisId: "A",
+              location: "SavedSearchesMenu.tsx:load:error",
+              message: "listSavedSearches failed",
+              data: {
+                invocation,
+                typeFilter,
+                status: parsed?.status ?? null,
+                is429: parsed?.status === 429,
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
+        toast.error(parseOperationError(e, errorDomain).userMessage);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [typeFilter, errorDomain],
+  );
+
+  const handlePopoverOpenChange = useCallback(
+    (isOpen: boolean) => {
+      const opened = isOpen && !popoverWasOpenRef.current;
+      popoverOpenRef.current = isOpen;
+      popoverWasOpenRef.current = isOpen;
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "post-fix",
+            hypothesisId: "B",
+            location: "SavedSearchesMenu.tsx:handlePopoverOpenChange",
+            message: "popover onOpenChange",
+            data: { isOpen, opened, typeFilter },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => { });
+      // #endregion
+      if (opened) void load();
+    },
+    [load, typeFilter],
+  );
+
+  useEffect(() => {
+    if (presentation !== "panel") return;
+    const opened = panelOpen && !panelWasOpenRef.current;
+    panelWasOpenRef.current = panelOpen;
+    // #region agent log
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "post-fix",
+        hypothesisId: "P",
+        location: "SavedSearchesMenu.tsx:panelOpenEffect",
+        message: "saved searches panel open changed",
+        data: { panelOpen, opened, typeFilter, entity },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => { });
+    // #endregion
+    if (opened) void load();
+  }, [presentation, panelOpen, load, typeFilter, entity]);
+
+  const handleSaveNameChange = useCallback((value: string) => {
+    // #region agent log
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "post-fix",
+        hypothesisId: "F",
+        location: "SavedSearchesMenu.tsx:saveNameChange",
+        message: "save modal name input change",
+        data: {
+          instanceId: instanceIdRef.current,
+          length: value.length,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => { });
+    // #endregion
+    setSaveName(value);
+  }, []);
+
+  const closeSaveModal = useCallback(() => {
+    setSaveOpen(false);
+    setSaveName("");
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setPanelOpen(false);
+  }, [setPanelOpen]);
+
+  const openSaveModal = useCallback(() => {
+    setSaveOpen(true);
+  }, []);
+
+  const handleSave = useCallback(async () => {
     const name = saveName.trim();
     if (!name) return;
     const filters =
@@ -94,21 +490,50 @@ export function SavedSearchesMenu({
     }
     setSaving(true);
     try {
-      await savedSearchesService.create({
+      const created = await savedSearchesService.create({
         name,
         type: typeFilter,
         filters: filters as unknown as Record<string, unknown>,
       });
+      const row = created.savedSearches.createSavedSearch;
+      setList((prev) => {
+        if (prev.some((s) => s.id === row.id)) return prev;
+        const optimistic: SavedSearch = {
+          id: row.id,
+          name: row.name,
+          description: null,
+          type: row.type,
+          searchTerm: null,
+          filters: filters as unknown as Record<string, unknown>,
+          sortField: null,
+          sortDirection: null,
+          pageSize: null,
+          createdAt: row.createdAt ?? new Date().toISOString(),
+          updatedAt: null,
+          lastUsedAt: null,
+          useCount: row.useCount ?? 0,
+        };
+        return [optimistic, ...prev];
+      });
       toast.success("Saved search created.");
-      setSaveOpen(false);
-      setSaveName("");
-      await load();
+      closeSaveModal();
+      await load({ fresh: true, silent: true });
     } catch (e) {
       toast.error(parseOperationError(e, errorDomain).userMessage);
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    saveName,
+    entity,
+    getContactPayload,
+    getCompanyPayload,
+    getHireSignalPayload,
+    typeFilter,
+    errorDomain,
+    closeSaveModal,
+    load,
+  ]);
 
   const handleApply = async (s: SavedSearch) => {
     try {
@@ -134,6 +559,7 @@ export function SavedSearchesMenu({
         return;
       }
       toast.success(`Applied “${row.name}”.`);
+      if (presentation === "panel") setPanelOpen(false);
     } catch (e) {
       toast.error(parseOperationError(e, errorDomain).userMessage);
     }
@@ -142,123 +568,212 @@ export function SavedSearchesMenu({
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete saved search “${name}”?`)) return;
     try {
-      await savedSearchesService.delete(id);
+      await savedSearchesService.delete(id, typeFilter);
+      setList((prev) => prev.filter((s) => s.id !== id));
       toast.success("Deleted.");
-      await load();
+      await load({ fresh: true, silent: true });
     } catch (e) {
       toast.error(parseOperationError(e, errorDomain).userMessage);
     }
   };
 
+  const listBody = loading ? (
+    <div className="c360-saved-searches-panel__loading">
+      <Loader2
+        className="c360-spin"
+        size={24}
+        aria-label="Loading saved searches"
+      />
+    </div>
+  ) : list.length === 0 ? (
+    <p className="c360-saved-searches-panel__empty">
+      No saved searches yet. Use &ldquo;Save current&rdquo; to store this view.
+    </p>
+  ) : (
+    <>
+      <p className="c360-saved-searches-panel__hint">
+        {list.length} saved view{list.length === 1 ? "" : "s"} — select one to
+        apply filters.
+        {contactCountsEnabled
+          ? " Contact counts match each saved cohort."
+          : companyCountsEnabled
+            ? " Company counts match each saved cohort."
+            : null}
+      </p>
+      <ul className="c360-saved-searches-panel__list">
+        {list.map((s) => {
+          const savedOn = formatSavedSearchDate(s.createdAt);
+          return (
+            <li key={s.id} className="c360-saved-searches-panel__item">
+              <button
+                type="button"
+                className="c360-saved-searches-panel__item-main"
+                onClick={() => void handleApply(s)}
+              >
+                <span className="c360-saved-searches-panel__item-text">
+                  <div className="c360-flex c360-items-center c360-gap-2">
+                    <span className="c360-saved-searches-panel__item-icon">
+                      <Bookmark size={16} aria-hidden />
+                    </span>
+                    <span className="c360-saved-searches-panel__item-name">
+                      {cohortCountsEnabled ? (
+                        <>
+                          {s.name} {" ("}
+                          {entity === "contact" ? (
+                            <SavedSearchCohortCount
+                              kind="contact"
+                              entry={contactCounts[s.id]}
+                            />
+                          ) : (
+                            <SavedSearchCohortCount
+                              kind="company"
+                              entry={companyCounts[s.id]}
+                            />
+                          )}
+                          {")"}
+                        </>
+                      ) : (
+                        s.name
+                      )}
+                    </span>
+                  </div>
+                  <span className="c360-saved-searches-panel__item-meta">
+                    {describeSavedSearchSummary(s)}
+                    {savedOn ? ` · Saved ${savedOn}` : ""}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-delete"
+                aria-label={`Delete ${s.name}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleDelete(s.id, s.name);
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+
+  const popoverListBody = (
+    <div className="c360-flex c360-flex-col c360-gap-3 c360-p-1">
+      <div className="c360-flex c360-justify-between c360-items-center c360-gap-2">
+        <span className="c360-text-sm c360-fw-medium">Saved searches</span>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          leftIcon={<Plus size={14} />}
+          onClick={() => setSaveOpen(true)}
+        >
+          Save current
+        </Button>
+      </div>
+      {loading ? (
+        <div className="c360-flex c360-justify-center c360-py-4">
+          <Loader2 className="c360-spin" size={20} />
+        </div>
+      ) : list.length === 0 ? (
+        <p className="c360-text-sm c360-text-muted c360-m-0">
+          No saved searches yet. Use &ldquo;Save current&rdquo; to store this
+          view.
+        </p>
+      ) : (
+        <ul className="c360-list-none">
+          {list.map((s) => (
+            <li
+              key={s.id}
+              className="c360-flex c360-justify-between c360-items-center c360-gap-2 c360-py-2 c360-border-b c360-border-default"
+            >
+              <button
+                type="button"
+                className="c360-interactive-plain c360-text-left c360-flex-1 c360-text-sm"
+                onClick={() => void handleApply(s)}
+              >
+                {s.name}
+              </button>
+              <button
+                type="button"
+                className="c360-btn c360-btn--ghost c360-btn--icon"
+                aria-label={`Delete ${s.name}`}
+                onClick={() => void handleDelete(s.id, s.name)}
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <Popover
-        align="end"
-        width={320}
-        onOpenChange={(isOpen) => {
-          if (isOpen) void load();
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className={cn(className)}
-            leftIcon={<Bookmark size={14} />}
-          >
-            Saved
-          </Button>
-        }
-        content={
-          <div className="c360-flex c360-flex-col c360-gap-3 c360-p-1">
-            <div className="c360-flex c360-justify-between c360-items-center c360-gap-2">
-              <span className="c360-text-sm c360-fw-medium">
-                Saved searches
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                leftIcon={<Plus size={14} />}
-                onClick={() => setSaveOpen(true)}
-              >
-                Save current
-              </Button>
-            </div>
-            {loading ? (
-              <div className="c360-flex c360-justify-center c360-py-4">
-                <Loader2 className="c360-spin" size={20} />
-              </div>
-            ) : list.length === 0 ? (
-              <p className="c360-text-sm c360-text-muted c360-m-0">
-                No saved searches yet. Use &ldquo;Save current&rdquo; to store
-                this view.
-              </p>
-            ) : (
-              <ul className="c360-list-none">
-                {list.map((s) => (
-                  <li
-                    key={s.id}
-                    className="c360-flex c360-justify-between c360-items-center c360-gap-2 c360-py-2 c360-border-b c360-border-default"
-                  >
-                    <button
-                      type="button"
-                      className="c360-interactive-plain c360-text-left c360-flex-1 c360-text-sm"
-                      onClick={() => void handleApply(s)}
-                    >
-                      {s.name}
-                    </button>
-                    <button
-                      type="button"
-                      className="c360-btn c360-btn--ghost c360-btn--icon"
-                      aria-label={`Delete ${s.name}`}
-                      onClick={() => void handleDelete(s.id, s.name)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        }
-      />
-
-      <Modal
-        isOpen={saveOpen}
-        onClose={() => {
-          setSaveOpen(false);
-          setSaveName("");
-        }}
-        title="Save current view"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSaveOpen(false);
-                setSaveName("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              loading={saving}
-              onClick={() => void handleSave()}
-              disabled={!saveName.trim()}
-            >
-              Save
-            </Button>
-          </>
-        }
-      >
-        <Input
-          label="Name"
-          value={saveName}
-          onChange={(e) => setSaveName(e.target.value)}
-          placeholder="e.g. EU verified contacts"
+      {presentation === "popover" && showTrigger ? (
+        <Popover
+          align="end"
+          width={320}
+          onOpenChange={handlePopoverOpenChange}
+          trigger={<SavedSearchesTriggerButton className={className} />}
+          content={popoverListBody}
         />
-      </Modal>
+      ) : null}
+
+      {presentation === "panel" ? (
+        <>
+          {showTrigger ? (
+            <SavedSearchesTriggerButton
+              className={className}
+              onClick={() => setPanelOpen(true)}
+            />
+          ) : null}
+          <SavedSearchesAsideDrawer
+            isOpen={panelOpen}
+            onClose={closePanel}
+            trapFocus={!saveOpen}
+            ariaLabelledBy={SAVED_SEARCHES_PANEL_TITLE_ID}
+          >
+            <header className="c360-saved-searches-panel__header">
+              <div className="c360-saved-searches-panel__header-text">
+                <h2
+                  id={SAVED_SEARCHES_PANEL_TITLE_ID}
+                  className="c360-saved-searches-panel__title"
+                >
+                  Saved searches
+                </h2>
+              </div>
+              <div className="c360-saved-searches-panel__header-actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<Plus size={14} />}
+                  onClick={openSaveModal}
+                >
+                  Save current
+                </Button>
+              </div>
+            </header>
+            <div className="c360-saved-searches-panel__body">{listBody}</div>
+          </SavedSearchesAsideDrawer>
+        </>
+      ) : null}
+
+      <SaveSearchNameModal
+        isOpen={saveOpen}
+        saving={saving}
+        saveName={saveName}
+        onSaveNameChange={handleSaveNameChange}
+        onClose={closeSaveModal}
+        onSave={handleSave}
+        nameInputRef={saveNameInputRef}
+      />
     </>
   );
 }

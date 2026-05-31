@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -39,8 +39,16 @@ import {
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
 import { CompanyPagination } from "@/components/feature/companies/CompanyPagination";
+import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
+import {
+  companySearchStringFromTokens,
+  companySearchTokensFromString,
+} from "@/lib/companySearchTokens";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
-import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import {
+  SavedSearchesMenu,
+  SavedSearchesTriggerButton,
+} from "@/components/feature/saved-searches/SavedSearchesMenu";
 import {
   SAVED_SEARCH_VERSION,
   SAVED_SEARCH_VERSION_SIDEBAR,
@@ -133,6 +141,7 @@ export default function CompaniesPage() {
     Record<string, string[]>
   >({});
   const [vqlOpen, setVqlOpen] = useState(false);
+  const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
   const [advancedCompanyDraft, setAdvancedCompanyDraft] =
     useState<DraftQuery | null>(null);
   const {
@@ -198,11 +207,33 @@ export default function CompaniesPage() {
     const extra = advancedCompanyDraft
       ? draftToVqlQueryInput(advancedCompanyDraft, "company")
       : {};
+    // #region agent log
+    globalThis.fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "company-facet",
+        hypothesisId: "IF3",
+        location: "companies/page.tsx:applyFacetVql",
+        message: "apply company facet vql",
+        data: {
+          facetValues,
+          facetFilter,
+          mergedFilters: filters,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => { });
+    // #endregion
     applyVqlQuery({
       ...extra,
       filters,
     });
-  }, [facetFilter, advancedCompanyDraft, applyVqlQuery]);
+  }, [facetFilter, advancedCompanyDraft, applyVqlQuery, facetValues]);
 
   const currentCompanyVqlQuery = useMemo((): Partial<VqlQueryInput> => {
     const parts: VqlFilterInput[] = [];
@@ -360,6 +391,13 @@ export default function CompaniesPage() {
     pageSize,
   ]);
 
+  const getCompanySavedPayloadRef = useRef(getCompanySavedPayload);
+  getCompanySavedPayloadRef.current = getCompanySavedPayload;
+  const getCompanySavedPayloadStable = useCallback(
+    (): CompanySavedSearchPayload => getCompanySavedPayloadRef.current(),
+    [],
+  );
+
   const handleApplyCompanySaved = useCallback(
     (p: CompanySavedSearchPayload) => {
       if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
@@ -396,15 +434,29 @@ export default function CompaniesPage() {
     ],
   );
 
-  const companySavedSearchesMenu = useMemo(
-    () => (
-      <SavedSearchesMenu
-        entity="company"
-        getCompanyPayload={getCompanySavedPayload}
-        onApplyCompany={handleApplyCompanySaved}
-      />
-    ),
-    [getCompanySavedPayload, handleApplyCompanySaved],
+  const companySavedSearchMenuProps = useMemo(
+    () => ({
+      entity: "company" as const,
+      getCompanyPayload: getCompanySavedPayloadStable,
+      onApplyCompany: handleApplyCompanySaved,
+      presentation: "panel" as const,
+      panelOpen: savedSearchesPanelOpen,
+      onPanelOpenChange: setSavedSearchesPanelOpen,
+      showTrigger: false,
+    }),
+    [
+      getCompanySavedPayloadStable,
+      handleApplyCompanySaved,
+      savedSearchesPanelOpen,
+    ],
+  );
+
+  const openSavedSearchesPanel = useCallback(() => {
+    setSavedSearchesPanelOpen(true);
+  }, []);
+
+  const savedSearchesTrigger = (
+    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
   );
 
   const filtersSidebar = useMemo(
@@ -412,7 +464,7 @@ export default function CompaniesPage() {
       <>
         {!isDesktop ? (
           <div className="c360-data-layout__filters-mobile-saved">
-            {companySavedSearchesMenu}
+            {savedSearchesTrigger}
           </div>
         ) : null}
         <CompaniesFilterSidebar
@@ -453,7 +505,7 @@ export default function CompaniesPage() {
     ),
     [
       isDesktop,
-      companySavedSearchesMenu,
+      savedSearchesTrigger,
       search,
       setSearch,
       sortBy,
@@ -487,14 +539,29 @@ export default function CompaniesPage() {
       cssPrefix="c360-toolbar"
       totalCount={total}
       meta={
-        !loading && total > 0 ? (
-          <CompanyPagination
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
+        <div
+          className="c360-companies-toolbar-meta"
+          role="region"
+          aria-label="Companies list toolbar"
+        >
+          <HiringSignalsGlobalSearch
+            tokens={companySearchTokensFromString(search)}
+            disabled={loading}
+            ariaLabel="Search companies by name"
+            placeholder="Search company name…"
+            onTokensChange={(tokens) => {
+              setSearch(companySearchStringFromTokens(tokens));
+            }}
           />
-        ) : undefined
+          {!loading && total > 0 ? (
+            <CompanyPagination
+              page={page}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          ) : null}
+        </div>
       }
       filterConfig={{
         activeCount: toolbarActiveCount,
@@ -523,12 +590,12 @@ export default function CompaniesPage() {
         },
         ...(hasAdvancedBuilderState
           ? [
-              {
-                label: "Clear advanced",
-                onClick: clearCompanyVql,
-                variant: "ghost" as const,
-              },
-            ]
+            {
+              label: "Clear advanced",
+              onClick: clearCompanyVql,
+              variant: "ghost" as const,
+            },
+          ]
           : []),
         {
           label: "Export",
@@ -538,13 +605,13 @@ export default function CompaniesPage() {
         },
         ...(isSuperAdmin
           ? [
-              {
-                label: "Import",
-                onClick: () => setImportOpen(true),
-                icon: Upload,
-                variant: "secondary" as const,
-              },
-            ]
+            {
+              label: "Import",
+              onClick: () => setImportOpen(true),
+              icon: Upload,
+              variant: "secondary" as const,
+            },
+          ]
           : []),
         {
           label: "Add company",
@@ -566,9 +633,10 @@ export default function CompaniesPage() {
       filterDrawerTitleId="c360-companies-filter-drawer-title"
       filtersPeekRail
       filtersPeekScope="companies"
-      filtersPinExtra={companySavedSearchesMenu}
+      filtersPinExtra={savedSearchesTrigger}
       className="c360-companies-page"
     >
+      <SavedSearchesMenu {...companySavedSearchMenuProps} />
       <CompanyExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}

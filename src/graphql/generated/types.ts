@@ -836,6 +836,7 @@ export type Company = {
   name?: Maybe<Scalars["String"]["output"]>;
   normalizedDomain?: Maybe<Scalars["String"]["output"]>;
   phoneNumber?: Maybe<Scalars["String"]["output"]>;
+  profilePic?: Maybe<Scalars["String"]["output"]>;
   state?: Maybe<Scalars["String"]["output"]>;
   technologies?: Maybe<Array<Scalars["String"]["output"]>>;
   totalFunding?: Maybe<Scalars["Int"]["output"]>;

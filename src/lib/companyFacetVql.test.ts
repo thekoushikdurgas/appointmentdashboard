@@ -35,15 +35,42 @@ describe("buildCompanyFacetVqlFilter", () => {
     ]);
   });
 
-  it("builds employees_count range buckets", () => {
+  it("lowercases industries for Connectra keyword index", () => {
     const f = buildCompanyFacetVqlFilter(
-      { employees_count: ["0-10", "10-100"] },
+      { industries: ["Construction", "Real Estate"] },
+      {},
+    );
+    expect(f?.conditions).toEqual([
+      {
+        field: "industries",
+        operator: "in",
+        value: ["construction", "real estate"],
+      },
+    ]);
+  });
+
+  it("builds employees_count range buckets (1–10 excludes zero)", () => {
+    const f = buildCompanyFacetVqlFilter(
+      { employees_count: ["1-10", "10-100"] },
       { employees_count: ["10000+"] },
     );
     expect(f?.allOf).toHaveLength(2);
     expect(f?.allOf?.[0]?.anyOf).toHaveLength(2);
+    const includeBranches = f?.allOf?.[0]?.anyOf ?? [];
+    expect(includeBranches[0]?.conditions).toEqual([
+      { field: "employees_count", operator: "gte", value: 1 },
+      { field: "employees_count", operator: "lte", value: 10 },
+    ]);
     expect(f?.allOf?.[1]?.conditions).toEqual([
       { field: "employees_count", operator: "ngte", value: 10_000 },
+    ]);
+  });
+
+  it("maps legacy employees_count bucket id 0-10 to 1-10", () => {
+    const f = buildCompanyFacetVqlFilter({ employees_count: ["0-10"] }, {});
+    expect(f?.conditions).toEqual([
+      { field: "employees_count", operator: "gte", value: 1 },
+      { field: "employees_count", operator: "lte", value: 10 },
     ]);
   });
 

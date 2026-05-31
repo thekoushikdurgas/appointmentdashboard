@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Mail,
@@ -27,9 +28,16 @@ import {
   contactsService,
   type Contact,
 } from "@/services/graphql/contactsService";
+import { companiesService } from "@/services/graphql/companiesService";
 import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateModal";
 import { ROUTES } from "@/lib/routes";
 import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
+import {
+  asRecord,
+  fetchConnectraCompany,
+} from "@/services/graphql/hiringSignalService";
+import { toast } from "sonner";
+import { readStashedContactRow } from "@/lib/contactRowSession";
 
 interface PageProps {
   params: Promise<{ uuid: string }>;
@@ -76,24 +84,170 @@ function isContactNotFoundMessage(message: string | null): boolean {
 
 export default function ContactDetailPage({ params }: PageProps) {
   const { uuid } = use(params);
+  const router = useRouter();
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fromListSnapshot, setFromListSnapshot] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const companyRedirectAttempted = useRef(false);
 
   const fetchContact = useCallback(async () => {
-    setLoading(true);
     setError(null);
-    try {
-      const c = await contactsService.get(uuid);
+    const stashedEarly = readStashedContactRow(uuid);
+    if (stashedEarly) {
+      setContact(stashedEarly);
+      setFromListSnapshot(true);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setFromListSnapshot(false);
+    }
+
+    const applyLoadedContact = (c: Contact, hypothesisId: string) => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "contact-detail",
+            hypothesisId,
+            location: "contacts/[uuid]/page.tsx:fetchContact",
+            message: "contact detail loaded",
+            data: { uuid, contactId: c.id, name: c.name },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
       setContact(c);
+      setFromListSnapshot(false);
+    };
+
+    try {
+      const c = await contactsService.get(uuid, {
+        showToastOnError: false,
+        notFoundReturnsNull: true,
+        listHint: stashedEarly ?? undefined,
+      });
+      if (c) {
+        applyLoadedContact(c, "D1");
+        return;
+      }
+
+      if (!stashedEarly && !companyRedirectAttempted.current) {
+        companyRedirectAttempted.current = true;
+        let redirected = false;
+        const company = await companiesService.get(uuid, {
+          showToastOnError: false,
+          notFoundReturnsNull: true,
+        });
+        if (company) {
+          redirected = true;
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "c73258",
+              },
+              body: JSON.stringify({
+                sessionId: "c73258",
+                runId: "contact-detail",
+                hypothesisId: "E5",
+                location: "contacts/[uuid]/page.tsx:companyRedirect",
+                message: "company redirect via companies.company",
+                data: { uuid },
+                timestamp: Date.now(),
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
+        } else {
+          try {
+            const rec = await fetchConnectraCompany(uuid);
+            const rr = asRecord(rec.hireSignal?.connectraCompany);
+            if (rr && rr.success !== false && rr.data) {
+              redirected = true;
+              // #region agent log
+              fetch(
+                "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-Debug-Session-Id": "c73258",
+                  },
+                  body: JSON.stringify({
+                    sessionId: "c73258",
+                    runId: "contact-detail",
+                    hypothesisId: "E5",
+                    location: "contacts/[uuid]/page.tsx:companyRedirect",
+                    message: "company redirect via hireSignal.connectraCompany",
+                    data: { uuid },
+                    timestamp: Date.now(),
+                  }),
+                },
+              ).catch(() => {});
+              // #endregion
+            }
+          } catch {
+            /* not a company either */
+          }
+        }
+        if (redirected) {
+          toast.info(
+            "That link is a company record. Opening the company page.",
+          );
+          router.replace(`/companies/${encodeURIComponent(uuid)}`);
+          return;
+        }
+      }
+      const stashed = readStashedContactRow(uuid);
+      if (stashed) {
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "c73258",
+            },
+            body: JSON.stringify({
+              sessionId: "c73258",
+              runId: "contact-detail",
+              hypothesisId: "D7",
+              location: "contacts/[uuid]/page.tsx:sessionSnapshot",
+              message: "contact detail rendered from list row snapshot",
+              data: { uuid, contactId: stashed.id, name: stashed.name },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
+        setContact(stashed);
+        setFromListSnapshot(true);
+        return;
+      }
+      setError(`Contact with identifier '${uuid}' was not found in Connectra.`);
+      setContact(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load contact");
+      const msg = e instanceof Error ? e.message : "Failed to load contact";
+      setError(msg);
       setContact(null);
     } finally {
       setLoading(false);
     }
-  }, [uuid]);
+  }, [uuid, router]);
 
   useEffect(() => {
     void fetchContact();
@@ -149,6 +303,12 @@ export default function ContactDetailPage({ params }: PageProps) {
   return (
     <DashboardPageLayout>
       {backLink}
+      {fromListSnapshot ? (
+        <p className="c360-mb-4 c360-text-sm c360-text-muted">
+          Showing data from your contacts list. Live profile refresh is
+          temporarily unavailable for this record.
+        </p>
+      ) : null}
 
       <div className="c360-contact-detail-page">
         {/* Header card */}

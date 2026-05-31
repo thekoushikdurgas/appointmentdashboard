@@ -33,6 +33,8 @@ export interface PaginationProps {
   pageSizeOptions?: readonly SelectOption[];
   onPageSizeChange?: (pageSize: number) => void;
   pageSizeSelectLabel?: string;
+  /** Passed through when `variant` is `dropdown` — see `PaginationDropdownNav`. */
+  pageOptionLimit?: number;
 }
 
 const PAGER_TRANSLATIONS = {
@@ -89,6 +91,7 @@ export function Pagination({
   pageSizeOptions,
   onPageSizeChange,
   pageSizeSelectLabel = "Rows",
+  pageOptionLimit,
 }: PaginationProps) {
   if (variant === "dropdown") {
     return (
@@ -99,6 +102,7 @@ export function Pagination({
         onPageChange={onPageChange}
         className={className}
         showWhenSinglePage={showWhenSinglePage}
+        pageOptionLimit={pageOptionLimit}
       />
     );
   }

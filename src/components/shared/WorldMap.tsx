@@ -8,6 +8,10 @@ import {
   ZoomableGroup,
 } from "react-simple-maps";
 import { CHART_COLORS, rgbaFromHex } from "@/lib/chartTheme";
+import {
+  countryBucketToNumericIso,
+  normalizeCountryKey,
+} from "@/lib/isoCountryCodes";
 import { applyVars, useCSSVars } from "@/hooks/useCSSVars";
 
 const GEO_URL =
@@ -45,14 +49,40 @@ export interface CountryCount {
   /** Country name for tooltip */
   name: string;
   count: number;
+  /** Connectra facet token for the `country` filter (e.g. `united states`). */
+  filterValue: string;
 }
 
 interface WorldMapProps {
   data?: CountryCount[];
   height?: number;
+  /** When set, clicking a country with contacts applies that cohort as a filter. */
+  onCountrySelect?: (country: CountryCount) => void;
 }
 
-export function WorldMap({ data = [], height = 340 }: WorldMapProps) {
+function resolveCountryForGeo(
+  geo: { id: string | number; properties: { name?: string } },
+  data: CountryCount[],
+): CountryCount | null {
+  const geoId = String(geo.id);
+  const geoName =
+    typeof geo.properties?.name === "string" ? geo.properties.name : "";
+  const byId = data.find((d) => d.id === geoId);
+  if (byId) return byId;
+  const numericFromName = countryBucketToNumericIso(geoName);
+  if (numericFromName) {
+    const byNumeric = data.find((d) => d.id === numericFromName);
+    if (byNumeric) return byNumeric;
+  }
+  const nameKey = normalizeCountryKey(geoName);
+  return data.find((d) => normalizeCountryKey(d.name) === nameKey) ?? null;
+}
+
+export function WorldMap({
+  data = [],
+  height = 340,
+  onCountrySelect,
+}: WorldMapProps) {
   const [tooltip, setTooltip] = useState<{
     name: string;
     count: number;
@@ -63,6 +93,15 @@ export function WorldMap({ data = [], height = 340 }: WorldMapProps) {
   const countById = useMemo(() => {
     const m: Record<string, number> = {};
     for (const d of data) m[d.id] = d.count;
+    return m;
+  }, [data]);
+
+  /** Fallback when topojson `geo.id` and stored numeric id differ slightly. */
+  const countByNameKey = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const d of data) {
+      m[normalizeCountryKey(d.name)] = d.count;
+    }
     return m;
   }, [data]);
 
@@ -86,9 +125,25 @@ export function WorldMap({ data = [], height = 340 }: WorldMapProps) {
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => {
-                  const count = countById[String(geo.id)] ?? 0;
+                  const geoName =
+                    typeof geo.properties?.name === "string"
+                      ? geo.properties.name
+                      : "";
+                  const numericFromName = countryBucketToNumericIso(geoName);
+                  const count =
+                    countById[String(geo.id)] ??
+                    (numericFromName ? (countById[numericFromName] ?? 0) : 0) ??
+                    countByNameKey[normalizeCountryKey(geoName)] ??
+                    0;
                   const intensity =
                     count > 0 ? 0.15 + (count / maxCount) * 0.85 : 0;
+                  const row =
+                    count > 0 && onCountrySelect
+                      ? resolveCountryForGeo(geo, data)
+                      : null;
+                  const clickable = !!row?.filterValue?.trim();
+                  const geoStyle = geographyInteractionStyle(count, intensity);
+                  const cursor = clickable ? "pointer" : "default";
                   return (
                     <Geography
                       key={geo.rsmKey}
@@ -102,7 +157,16 @@ export function WorldMap({ data = [], height = 340 }: WorldMapProps) {
                         });
                       }}
                       onMouseLeave={() => setTooltip(null)}
-                      style={geographyInteractionStyle(count, intensity)}
+                      onClick={() => {
+                        if (!onCountrySelect || !row?.filterValue?.trim())
+                          return;
+                        onCountrySelect(row);
+                      }}
+                      style={{
+                        ...geoStyle,
+                        default: { ...geoStyle.default, cursor },
+                        hover: { ...geoStyle.hover, cursor },
+                      }}
                     />
                   );
                 })
@@ -126,7 +190,9 @@ export function WorldMap({ data = [], height = 340 }: WorldMapProps) {
           <strong>{tooltip.name}</strong>
           {" — "}
           {tooltip.count > 0
-            ? `${tooltip.count.toLocaleString()} contacts`
+            ? `${tooltip.count.toLocaleString()} contacts${
+                onCountrySelect ? " · click to filter" : ""
+              }`
             : "No contacts"}
         </div>
       )}

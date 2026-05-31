@@ -37,6 +37,7 @@ import { JobDescriptionModal } from "@/components/feature/hiring-signals/JobDesc
 import { CompanyContactsModal } from "@/components/feature/hiring-signals/CompanyContactsModal";
 import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnectraModal";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
+import { companyDrawerAnchorFromJob } from "@/lib/companyDrawerAnchor";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import {
@@ -61,7 +62,10 @@ import { Progress } from "@/components/ui/Progress";
 import { toast } from "sonner";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { useRole } from "@/context/RoleContext";
-import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import {
+  SavedSearchesMenu,
+  SavedSearchesTriggerButton,
+} from "@/components/feature/saved-searches/SavedSearchesMenu";
 import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
 import {
   HIRE_SIGNAL_SAVED_SEARCH_VERSION,
@@ -135,6 +139,7 @@ function HiringSignalsPageBody({
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [runsReloadTick, setRunsReloadTick] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
   );
@@ -206,21 +211,35 @@ function HiringSignalsPageBody({
     [setFilters, setSignalTimePreset],
   );
 
-  const hireSignalSavedSearchesMenu = useMemo(
-    () => (
-      <SavedSearchesMenu
-        entity="hire_signal"
-        getHireSignalPayload={getHireSignalSavedPayload}
-        onApplyHireSignal={handleApplyHireSignalSaved}
-      />
-    ),
-    [getHireSignalSavedPayload, handleApplyHireSignalSaved],
+  const hireSignalSavedSearchMenuProps = useMemo(
+    () => ({
+      entity: "hire_signal" as const,
+      getHireSignalPayload: getHireSignalSavedPayload,
+      onApplyHireSignal: handleApplyHireSignalSaved,
+      presentation: "panel" as const,
+      panelOpen: savedSearchesPanelOpen,
+      onPanelOpenChange: setSavedSearchesPanelOpen,
+      showTrigger: false,
+    }),
+    [
+      getHireSignalSavedPayload,
+      handleApplyHireSignalSaved,
+      savedSearchesPanelOpen,
+    ],
+  );
+
+  const openSavedSearchesPanel = useCallback(() => {
+    setSavedSearchesPanelOpen(true);
+  }, []);
+
+  const savedSearchesTrigger = (
+    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
   );
 
   const hireSignalFiltersPinExtra = useMemo(
     () => (
       <>
-        {hireSignalSavedSearchesMenu}
+        {savedSearchesTrigger}
         <Button
           type="button"
           variant="ghost"
@@ -232,7 +251,7 @@ function HiringSignalsPageBody({
         </Button>
       </>
     ),
-    [hireSignalSavedSearchesMenu, resetFilters],
+    [savedSearchesTrigger, resetFilters],
   );
 
   const effectiveJobListFilters = useMemo(
@@ -603,6 +622,7 @@ function HiringSignalsPageBody({
               </>
             }
           >
+            <SavedSearchesMenu {...hireSignalSavedSearchMenuProps} />
             {exportBanner ? (
               <Alert
                 variant={
@@ -700,7 +720,7 @@ function HiringSignalsPageBody({
       ) : null}
 
       <CompanyDrawerPanel
-        anchor={drawerRow}
+        anchor={drawerRow ? companyDrawerAnchorFromJob(drawerRow) : null}
         previewJobs={previewJobsForDrawer}
         isOpen={!!drawerRow}
         onClose={() => setDrawerRow(null)}

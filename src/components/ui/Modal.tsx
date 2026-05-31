@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,10 @@ export interface ModalProps {
   footer?: React.ReactNode;
   className?: string;
   closeOnOverlay?: boolean;
+  /** Prefer focusing this element when the modal opens (e.g. primary input). */
+  initialFocusRef?: RefObject<HTMLElement | null>;
+  /** Stacks above slide-over panels that share `--c360-z-modal`. */
+  stacked?: boolean;
 }
 
 export function Modal({
@@ -31,6 +35,8 @@ export function Modal({
   footer,
   className,
   closeOnOverlay = true,
+  initialFocusRef,
+  stacked = false,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -41,7 +47,7 @@ export function Modal({
   }, []);
 
   const layerActive = isOpen && mounted;
-  useOverlayLayer(layerActive, onClose, dialogRef);
+  useOverlayLayer(layerActive, onClose, dialogRef, { initialFocusRef });
 
   if (!isOpen || !mounted) return null;
 
@@ -49,7 +55,10 @@ export function Modal({
 
   return createPortal(
     <div
-      className="c360-modal-overlay"
+      className={cn(
+        "c360-modal-overlay",
+        stacked && "c360-modal-overlay--stacked",
+      )}
       onClick={closeOnOverlay ? onClose : undefined}
     >
       <div

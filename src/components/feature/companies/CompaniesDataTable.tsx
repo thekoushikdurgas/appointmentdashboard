@@ -523,7 +523,7 @@ export function CompaniesDataTable({
   const showingFrom = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const showingTo = total === 0 ? 0 : Math.min(safePage * pageSize, total);
 
-  const showLoadingOverlay = Boolean(loading && rows.length === 0);
+  const showLoadingOverlay = Boolean(loading);
 
   return (
     <div

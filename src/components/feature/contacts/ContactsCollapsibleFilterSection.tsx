@@ -2,6 +2,8 @@
 
 import { useId, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
+import type { ContactFilterChip } from "@/components/feature/contacts/contactFilterSectionChips";
+import { FilterSectionChips } from "@/components/feature/contacts/FilterSectionChips";
 import { cn } from "@/lib/utils";
 
 export interface ContactsCollapsibleFilterSectionProps {
@@ -10,7 +12,9 @@ export interface ContactsCollapsibleFilterSectionProps {
   /** Initial expanded state (e.g. open for primary filter block). */
   defaultOpen?: boolean;
   children: React.ReactNode;
-  /** Shown inside the panel when `count > 0` (clears only this block’s scope — caller provides). */
+  /** Active filter chips rendered at the top of the section body. */
+  activeChips?: ContactFilterChip[];
+  /** Shown in the section header when `count > 0` (clears only this block’s scope — caller provides). */
   onClear?: () => void;
 }
 
@@ -21,6 +25,7 @@ export function ContactsCollapsibleFilterSection({
   count,
   defaultOpen = false,
   children,
+  activeChips = [],
   onClear,
 }: ContactsCollapsibleFilterSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -31,41 +36,59 @@ export function ContactsCollapsibleFilterSection({
     <div
       className={cn(baseClass, (isOpen || hasActive) && `${baseClass}--active`)}
     >
-      <button
-        type="button"
-        className={`${baseClass}__header`}
-        onClick={() => setIsOpen((v) => !v)}
-        aria-expanded={isOpen ? "true" : "false"}
-        aria-controls={contentId}
+      <div
+        className={cn(
+          `${baseClass}__header`,
+          hasActive && `${baseClass}__header--active`,
+        )}
       >
-        <span className={`${baseClass}__title`}>{title}</span>
-        {hasActive ? (
-          <span className={`${baseClass}__count`} aria-hidden>
-            {count}
-          </span>
+        <button
+          type="button"
+          className={`${baseClass}__header-toggle`}
+          onClick={() => setIsOpen((v) => !v)}
+          aria-expanded={isOpen ? "true" : "false"}
+          aria-controls={contentId}
+        >
+          <span className={`${baseClass}__title`}>{title}</span>
+          {hasActive ? (
+            <span className={`${baseClass}__count`} aria-hidden>
+              {count}
+            </span>
+          ) : null}
+        </button>
+        {onClear && hasActive ? (
+          <button
+            type="button"
+            className={`${baseClass}__clear`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            aria-label={`Clear ${title}`}
+          >
+            <X size={14} aria-hidden /> Clear
+          </button>
         ) : null}
-        <ChevronDown
-          size={16}
-          className={cn(
-            `${baseClass}__chevron`,
-            isOpen && `${baseClass}__chevron--open`,
-          )}
-          aria-hidden
-        />
-      </button>
+        <button
+          type="button"
+          className={`${baseClass}__header-chevron`}
+          onClick={() => setIsOpen((v) => !v)}
+          aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
+        >
+          <ChevronDown
+            size={16}
+            className={cn(
+              `${baseClass}__chevron`,
+              isOpen && `${baseClass}__chevron--open`,
+            )}
+            aria-hidden
+          />
+        </button>
+      </div>
       {isOpen ? (
         <div id={contentId} className={`${baseClass}__content`}>
+          <FilterSectionChips chips={activeChips} />
           {children}
-          {onClear && hasActive ? (
-            <button
-              type="button"
-              className={`${baseClass}__clear`}
-              onClick={onClear}
-              aria-label={`Clear ${title}`}
-            >
-              <X size={14} aria-hidden /> Clear
-            </button>
-          ) : null}
         </div>
       ) : null}
     </div>

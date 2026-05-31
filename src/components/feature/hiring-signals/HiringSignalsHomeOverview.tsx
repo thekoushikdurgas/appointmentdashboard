@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { HiringSignalsDashboard } from "@/components/feature/hiring-signals/HiringSignalsDashboard";
 import { HiringSignalStatsBar } from "@/components/feature/hiring-signals/HiringSignalStatsBar";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
+import { companyDrawerAnchorFromJob } from "@/lib/companyDrawerAnchor";
 import { useHireSignalRuns } from "@/hooks/useHireSignalRuns";
 import type {
   LinkedInJobRow,
@@ -86,7 +87,7 @@ export function HiringSignalsHomeOverview({
         onGoToRuns={() => router.push("/hiring-signals?tab=runs")}
       />
       <CompanyDrawerPanel
-        anchor={drawerRow}
+        anchor={drawerRow ? companyDrawerAnchorFromJob(drawerRow) : null}
         previewJobs={previewJobsForDrawer}
         isOpen={!!drawerRow}
         onClose={() => setDrawerRow(null)}

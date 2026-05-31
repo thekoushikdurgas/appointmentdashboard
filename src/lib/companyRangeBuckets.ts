@@ -47,10 +47,15 @@ export const COMPANY_MONEY_RANGE_BUCKETS: readonly CompanyRangeBucketDef[] = [
   },
 ];
 
+/** Saved searches created before the 1–10 rename may still store `0-10`. */
+export const LEGACY_EMPLOYEES_COUNT_BUCKET_IDS: Record<string, string> = {
+  "0-10": "1-10",
+};
+
 /** Fixed range buckets for `employees_count`. */
 export const COMPANY_EMPLOYEES_COUNT_BUCKETS: readonly CompanyRangeBucketDef[] =
   [
-    { id: "0-10", label: "0 – 10", gte: 0, lte: 10 },
+    { id: "1-10", label: "1 – 10", gte: 1, lte: 10 },
     { id: "10-100", label: "10 – 100", gte: 10, lte: 100 },
     { id: "100-500", label: "100 – 500", gte: 100, lte: 500 },
     { id: "500-1000", label: "500 – 1,000", gte: 500, lte: 1000 },
@@ -109,19 +114,34 @@ export function isCompanyRangeBucketFacet(
   return RANGE_BUCKET_SET.has(filterKey);
 }
 
+export function normalizeCompanyRangeBucketId(
+  field: string,
+  id: string,
+): string {
+  const trimmed = id.trim();
+  if (
+    field === COMPANY_EMPLOYEES_COUNT_FIELD ||
+    field === CONTACT_COMPANY_EMPLOYEES_COUNT_FIELD
+  ) {
+    return LEGACY_EMPLOYEES_COUNT_BUCKET_IDS[trimmed] ?? trimmed;
+  }
+  return trimmed;
+}
+
 export function isKnownCompanyRangeBucketId(
   field: string,
   id: string,
 ): boolean {
   const m = bucketMapForField(field);
-  return m != null && m.has(id);
+  return m != null && m.has(normalizeCompanyRangeBucketId(field, id));
 }
 
 export function formatCompanyRangeBucketLabel(
   field: string,
   id: string,
 ): string {
-  return bucketMapForField(field)?.get(id)?.label ?? id;
+  const normalized = normalizeCompanyRangeBucketId(field, id);
+  return bucketMapForField(field)?.get(normalized)?.label ?? id;
 }
 
 export function formatCompanyRevenueBucketLabel(id: string): string {
@@ -140,7 +160,9 @@ function rangeBucketIncludeVql(
   field: string,
   bucketId: string,
 ): VqlFilterInput | undefined {
-  const b = bucketMapForField(field)?.get(bucketId);
+  const b = bucketMapForField(field)?.get(
+    normalizeCompanyRangeBucketId(field, bucketId),
+  );
   if (!b) return undefined;
   const conditions: VqlConditionInput[] = [
     {
@@ -164,7 +186,9 @@ function rangeBucketExcludeVql(
   field: string,
   bucketId: string,
 ): VqlFilterInput | undefined {
-  const b = bucketMapForField(field)?.get(bucketId);
+  const b = bucketMapForField(field)?.get(
+    normalizeCompanyRangeBucketId(field, bucketId),
+  );
   if (!b) return undefined;
   const conditions: VqlConditionInput[] = [
     {
@@ -188,8 +212,36 @@ export function companyRangeBucketTokensToIncludeVql(
   tokens: string[],
 ): VqlFilterInput | undefined {
   const ids = tokens
-    .map((t) => t.trim())
+    .map((t) => normalizeCompanyRangeBucketId(field, t))
     .filter((id) => isKnownCompanyRangeBucketId(field, id));
+  // #region agent log
+  if (
+    field === COMPANY_EMPLOYEES_COUNT_FIELD &&
+    (tokens.length > 0 || ids.length > 0)
+  ) {
+    globalThis
+      .fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "emp-bucket",
+            hypothesisId: "EB1",
+            location: "companyRangeBuckets.ts:companyRangeBucketTokensToIncludeVql",
+            message: "employees_count bucket VQL",
+            data: { field, tokens, normalizedIds: ids },
+            timestamp: Date.now(),
+          }),
+        },
+      )
+      .catch(() => {});
+  }
+  // #endregion
   if (ids.length === 0) return undefined;
   if (ids.length === 1) return rangeBucketIncludeVql(field, ids[0]);
   const branches = ids
@@ -205,7 +257,7 @@ export function companyRangeBucketTokensToExcludeVql(
   tokens: string[],
 ): VqlFilterInput | undefined {
   const ids = tokens
-    .map((t) => t.trim())
+    .map((t) => normalizeCompanyRangeBucketId(field, t))
     .filter((id) => isKnownCompanyRangeBucketId(field, id));
   if (ids.length === 0) return undefined;
   if (ids.length === 1) return rangeBucketExcludeVql(field, ids[0]);

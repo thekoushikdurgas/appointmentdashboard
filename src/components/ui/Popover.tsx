@@ -57,9 +57,30 @@ export function Popover({
     setMounted(true);
   }, []);
 
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
   useEffect(() => {
-    onOpenChange?.(open);
-  }, [open, onOpenChange]);
+    // #region agent log
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "c73258",
+      },
+      body: JSON.stringify({
+        sessionId: "c73258",
+        runId: "post-fix",
+        hypothesisId: "B",
+        location: "Popover.tsx:onOpenChangeEffect",
+        message: "popover open state changed",
+        data: { open },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    onOpenChangeRef.current?.(open);
+  }, [open]);
 
   const computePos = useCallback(() => {
     if (!triggerRef.current) return;

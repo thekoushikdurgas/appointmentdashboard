@@ -1,4 +1,8 @@
-import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
+import {
+  graphqlQuery,
+  graphqlMutation,
+  invalidateGraphqlQueryCache,
+} from "@/lib/graphqlClient";
 
 export interface SavedSearch {
   id: string;
@@ -45,9 +49,30 @@ const CREATE = `mutation CreateSavedSearchGateway($input: CreateSavedSearchInput
       id
       name
       type
+      createdAt
+      useCount
     }
   }
 }`;
+
+function listVariables(params?: {
+  type?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  return {
+    type: params?.type ?? null,
+    limit: params?.limit ?? 100,
+    offset: params?.offset ?? 0,
+  };
+}
+
+function invalidateSavedSearchListCache(type?: string) {
+  invalidateGraphqlQueryCache(
+    LIST,
+    listVariables({ type, limit: 100, offset: 0 }),
+  );
+}
 
 const DELETE = `mutation DeleteSavedSearchGateway($id: ID!) {
   savedSearches {
@@ -100,23 +125,29 @@ const UPDATE_USAGE = `mutation UpdateSavedSearchUsage($id: ID!) {
 }`;
 
 export const savedSearchesService = {
-  list: (params?: { type?: string; limit?: number; offset?: number }) =>
-    graphqlQuery<{
+  list: (
+    params?: { type?: string; limit?: number; offset?: number },
+    options?: { fresh?: boolean },
+  ) => {
+    const variables = listVariables(params);
+    if (options?.fresh) {
+      invalidateGraphqlQueryCache(LIST, variables);
+    }
+    return graphqlQuery<{
       savedSearches: {
         listSavedSearches: { searches: SavedSearch[]; total: number };
       };
-    }>(LIST, {
-      type: params?.type ?? null,
-      limit: params?.limit ?? 100,
-      offset: params?.offset ?? 0,
-    }),
+    }>(LIST, variables, {
+      cacheTtlMs: options?.fresh ? 0 : 60_000,
+    });
+  },
 
   get: (id: string) =>
     graphqlQuery<{ savedSearches: { getSavedSearch: SavedSearch } }>(GET_ONE, {
       id,
     }),
 
-  create: (input: {
+  create: async (input: {
     name: string;
     type: string;
     description?: string | null;
@@ -125,10 +156,13 @@ export const savedSearchesService = {
     sortField?: string | null;
     sortDirection?: string | null;
     pageSize?: number | null;
-  }) =>
-    graphqlMutation<{
+  }) => {
+    const result = await graphqlMutation<{
       savedSearches: { createSavedSearch: SavedSearch };
-    }>(CREATE, { input }),
+    }>(CREATE, { input });
+    invalidateSavedSearchListCache(input.type);
+    return result;
+  },
 
   update: (
     id: string,
@@ -151,8 +185,11 @@ export const savedSearchesService = {
       savedSearches: { updateSavedSearchUsage: boolean };
     }>(UPDATE_USAGE, { id }),
 
-  delete: (id: string) =>
-    graphqlMutation<{ savedSearches: { deleteSavedSearch: boolean } }>(DELETE, {
-      id,
-    }),
+  delete: async (id: string, type?: string) => {
+    const result = await graphqlMutation<{
+      savedSearches: { deleteSavedSearch: boolean };
+    }>(DELETE, { id });
+    invalidateSavedSearchListCache(type);
+    return result;
+  },
 };

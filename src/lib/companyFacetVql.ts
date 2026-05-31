@@ -2,7 +2,10 @@ import type {
   VqlConditionInput,
   VqlFilterInput,
 } from "@/graphql/generated/types";
-import { companyFacetVqlField } from "@/lib/companyIncludeExcludeFacets";
+import {
+  companyFacetVqlField,
+  type CompanyIncludeExcludeFilterKey,
+} from "@/lib/companyIncludeExcludeFacets";
 import {
   companyRangeBucketTokensToExcludeVql,
   companyRangeBucketTokensToIncludeVql,
@@ -12,6 +15,26 @@ import {
 function trimValues(vals: string[] | undefined): string[] {
   if (!vals?.length) return [];
   return vals.map((v) => String(v).trim()).filter(Boolean);
+}
+
+/** Connectra stores these company array facets lowercase (see connectra_mappers). */
+const LOWERCASE_FACET_VALUES = new Set<CompanyIncludeExcludeFilterKey>([
+  "industries",
+  "keywords",
+  "technologies",
+]);
+
+function normalizeFacetValues(
+  filterKey: string,
+  vals: string[],
+): string[] {
+  const trimmed = trimValues(vals);
+  if (
+    LOWERCASE_FACET_VALUES.has(filterKey as CompanyIncludeExcludeFilterKey)
+  ) {
+    return trimmed.map((v) => v.toLowerCase());
+  }
+  return trimmed;
 }
 
 function facetCondition(
@@ -78,13 +101,13 @@ export function buildCompanyFacetVqlFilter(
     const conditions: VqlConditionInput[] = [];
     const include = facetCondition(
       vqlField,
-      trimValues(facetValues[key]),
+      normalizeFacetValues(key, facetValues[key] ?? []),
       "include",
     );
     if (include) conditions.push(include);
     const exclude = facetCondition(
       vqlField,
-      trimValues(excludedFacetValues[key]),
+      normalizeFacetValues(key, excludedFacetValues[key] ?? []),
       "exclude",
     );
     if (exclude) conditions.push(exclude);

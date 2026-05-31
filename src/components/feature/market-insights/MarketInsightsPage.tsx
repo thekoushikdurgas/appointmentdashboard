@@ -16,6 +16,7 @@ import type {
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
+import { companyDrawerAnchorFromJob } from "@/lib/companyDrawerAnchor";
 import { HiringSignalEmploymentTypeCard } from "@/components/feature/hiring-signals/HiringSignalCharts";
 import { HiringSignalTopCompaniesCard } from "@/components/feature/hiring-signals/HiringSignalTopCompaniesCard";
 import { OverviewTab } from "@/components/feature/market-insights/OverviewTab";
@@ -202,7 +203,7 @@ export function MarketInsightsPage({
         </Tabs>
       </DataPageLayout>
       <CompanyDrawerPanel
-        anchor={drawerRow}
+        anchor={drawerRow ? companyDrawerAnchorFromJob(drawerRow) : null}
         previewJobs={previewJobsForDrawer}
         isOpen={!!drawerRow}
         onClose={() => setDrawerRow(null)}

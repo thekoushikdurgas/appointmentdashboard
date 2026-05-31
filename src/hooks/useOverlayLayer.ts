@@ -25,14 +25,18 @@ export function useOverlayLayer(
   options?: UseOverlayLayerOptions,
 ) {
   const previouslyFocused = useRef<HTMLElement | null>(null);
-  const { onEscape, initialFocusRef, focusDelayMs = 0 } = options ?? {};
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const onEscapeRef = useRef(options?.onEscape);
+  onEscapeRef.current = options?.onEscape;
+  const { initialFocusRef, focusDelayMs = 0 } = options ?? {};
 
   useEffect(() => {
     if (!isOpen) return;
 
     previouslyFocused.current = document.activeElement as HTMLElement;
 
-    const escapeHandler = onEscape ?? onClose;
+    const escapeHandler = () => onEscapeRef.current?.() ?? onCloseRef.current();
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -74,6 +78,31 @@ export function useOverlayLayer(
       const first = el.querySelector<HTMLElement>(FOCUSABLE);
       if (first) first.focus();
       else el.focus();
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "post-fix",
+            hypothesisId: "G",
+            location: "useOverlayLayer.ts:runFocus",
+            message: "overlay layer moved focus",
+            data: {
+              focusedTag: (document.activeElement as HTMLElement | null)
+                ?.tagName,
+              containerClass: el.className,
+            },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
     };
 
     let timeoutId = 0;
@@ -93,5 +122,5 @@ export function useOverlayLayer(
       if (rafId) cancelAnimationFrame(rafId);
       previouslyFocused.current?.focus();
     };
-  }, [isOpen, onClose, onEscape, focusDelayMs, containerRef, initialFocusRef]);
+  }, [isOpen, focusDelayMs, containerRef, initialFocusRef]);
 }

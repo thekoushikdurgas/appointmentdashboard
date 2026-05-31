@@ -1,4 +1,5 @@
 import type { VqlQueryInput } from "@/graphql/generated/types";
+import { buildCompanyCountQueryInput } from "@/lib/companyListVql";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 import type { DraftQuery } from "@/lib/vqlDraft";
 
@@ -156,4 +157,28 @@ export function parseSavedSearchFilters(
   if (isContactSavedSearchPayload(filters)) return filters;
   if (isCompanySavedSearchPayload(filters)) return filters;
   return null;
+}
+
+/** VQL cohort used when applying a contact saved search (for contactCount). */
+export function contactVqlFromSavedSearchFilters(
+  filters: unknown,
+): Partial<VqlQueryInput> | null {
+  if (!isContactSavedSearchPayload(filters)) return null;
+  return filters.vqlQuery ?? {};
+}
+
+/** Cohort query for `companyCount` from a saved company view (search + facets merged). */
+export function companyCountQueryFromSavedSearchFilters(
+  filters: unknown,
+): VqlQueryInput | null {
+  if (!isCompanySavedSearchPayload(filters)) return null;
+  const sortBy =
+    filters.version === SAVED_SEARCH_VERSION_SIDEBAR
+      ? (filters.sortBy ?? "newest")
+      : "newest";
+  return buildCompanyCountQueryInput(
+    filters.search ?? "",
+    filters.vqlQuery ?? {},
+    sortBy,
+  );
 }

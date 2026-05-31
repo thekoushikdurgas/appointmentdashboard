@@ -13,6 +13,10 @@ export interface HiringSignalsGlobalSearchProps {
   onTokensChange: (tokens: string[]) => void;
   disabled?: boolean;
   className?: string;
+  /** Defaults to job search copy; override for companies or other lists. */
+  ariaLabel?: string;
+  placeholder?: string;
+  placeholderWithTokens?: string;
 }
 
 function splitInputTokens(raw: string): string[] {
@@ -31,6 +35,9 @@ export function HiringSignalsGlobalSearch({
   onTokensChange,
   disabled = false,
   className,
+  ariaLabel = "Search jobs by title, company, or location",
+  placeholder = "Search title, company, location…",
+  placeholderWithTokens = "Add term…",
 }: HiringSignalsGlobalSearchProps) {
   const inputId = useId();
   const [input, setInput] = useState("");
@@ -102,7 +109,7 @@ export function HiringSignalsGlobalSearch({
     <div
       className={cn("c360-hs-global-search", className)}
       role="search"
-      aria-label="Search jobs by title, company, or location"
+      aria-label={ariaLabel}
     >
       <div
         className={cn(
@@ -152,9 +159,7 @@ export function HiringSignalsGlobalSearch({
             value={input}
             disabled={disabled || atTokenLimit}
             placeholder={
-              draftTokens.length > 0
-                ? "Add term…"
-                : "Search title, company, location…"
+              draftTokens.length > 0 ? placeholderWithTokens : placeholder
             }
             aria-label="Add search term"
             onChange={(e) => setInput(e.target.value)}

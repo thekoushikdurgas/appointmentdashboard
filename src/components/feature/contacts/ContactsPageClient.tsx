@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
-import { Plus, Download, Trash2, Mail, Upload, Globe } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  Plus,
+  Download,
+  Trash2,
+  Mail,
+  Upload,
+  Globe,
+  RefreshCw,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -16,6 +24,7 @@ import { parseOperationError } from "@/lib/errorParser";
 import { useContacts } from "@/hooks/useContacts";
 import { useContactFilters } from "@/hooks/useContactFilters";
 import { useCountryAggregates } from "@/hooks/useCountryAggregates";
+import type { CountryCount } from "@/components/shared/WorldMap";
 import { useRole } from "@/context/RoleContext";
 import {
   ContactsDataTable,
@@ -26,6 +35,12 @@ import {
 } from "@/components/feature/contacts/ContactsDataTable";
 import { ContactsFilterSidebar } from "@/components/feature/contacts/ContactsFilterSidebar";
 import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateModal";
+import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
+import {
+  companyDrawerAnchorFromContact,
+  type CompanyDrawerAnchor,
+} from "@/lib/companyDrawerAnchor";
+import type { Contact } from "@/services/graphql/contactsService";
 import { ContactExportModal } from "@/components/feature/contacts/ContactExportModal";
 import { ContactImportModal } from "@/components/feature/contacts/ContactImportModal";
 import { contactsService } from "@/services/graphql/contactsService";
@@ -35,6 +50,7 @@ import {
   writeContactsSortPreference,
 } from "@/lib/contactsListCache";
 import { swallowBestEffortAsync } from "@/lib/bestEffort";
+import { cn } from "@/lib/utils";
 import {
   tryLocalStorageGet,
   tryLocalStorageSetJSON,
@@ -57,7 +73,11 @@ import {
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { ContactPagination } from "@/components/feature/contacts/ContactPagination";
-import { SavedSearchesMenu } from "@/components/feature/saved-searches/SavedSearchesMenu";
+import { ContactsToolbarAiSearch } from "@/components/feature/contacts/ContactsToolbarAiSearch";
+import {
+  SavedSearchesMenu,
+  SavedSearchesTriggerButton,
+} from "@/components/feature/saved-searches/SavedSearchesMenu";
 import {
   SAVED_SEARCH_VERSION,
   SAVED_SEARCH_VERSION_SIDEBAR,
@@ -146,7 +166,11 @@ function loadVisibleColumns(): ContactsDataTableColumnId[] {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...CONTACTS_DT_DEFAULT_COLUMNS];
-    const ordered = CONTACTS_DT_COLUMN_IDS.filter((id) => parsed.includes(id));
+    const legacy = parsed as string[];
+    if (legacy.includes("status") && !legacy.includes("email")) {
+      legacy.push("email");
+    }
+    const ordered = CONTACTS_DT_COLUMN_IDS.filter((id) => legacy.includes(id));
     return ordered.length > 0 ? ordered : [...CONTACTS_DT_DEFAULT_COLUMNS];
   } catch {
     return [...CONTACTS_DT_DEFAULT_COLUMNS];
@@ -192,6 +216,9 @@ export default function ContactsPageClient() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkFindingEmails, setBulkFindingEmails] = useState(false);
   const [vqlOpen, setVqlOpen] = useState(false);
+  const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
+  const [companyDrawerAnchor, setCompanyDrawerAnchor] =
+    useState<CompanyDrawerAnchor | null>(null);
   const [advancedListDraft, setAdvancedListDraft] = useState<DraftQuery | null>(
     null,
   );
@@ -212,6 +239,58 @@ export default function ContactsPageClient() {
   const handleFacetChange = useCallback((key: string, values: string[]) => {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
   }, []);
+
+  const handleOpenCompanyDrawer = useCallback((contact: Contact) => {
+    const anchor = companyDrawerAnchorFromContact(contact);
+    if (anchor) setCompanyDrawerAnchor(anchor);
+  }, []);
+
+  const handleMapCountrySelect = useCallback(
+    (country: CountryCount) => {
+      const token = country.filterValue.trim();
+      if (!token) {
+        toast.error("Could not apply a country filter for this region.");
+        return;
+      }
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "c73258",
+          },
+          body: JSON.stringify({
+            sessionId: "c73258",
+            runId: "post-fix",
+            hypothesisId: "N",
+            location: "ContactsPageClient.tsx:handleMapCountrySelect",
+            message: "map country click apply filter",
+            data: {
+              filterValue: token,
+              name: country.name,
+              count: country.count,
+            },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
+      setFacetValues((prev) => ({
+        ...prev,
+        country: [token],
+      }));
+      setExcludedFacetValues((prev) => ({
+        ...prev,
+        country: [],
+      }));
+      setMapModalOpen(false);
+      setPage(1);
+      toast.success(`Showing contacts in ${country.name}`);
+    },
+    [setPage],
+  );
 
   const handleExcludedFacetChange = useCallback(
     (key: string, values: string[]) => {
@@ -464,6 +543,13 @@ export default function ContactsPageClient() {
     advancedListDraft,
   ]);
 
+  const getContactSavedPayloadRef = useRef(getContactSavedPayload);
+  getContactSavedPayloadRef.current = getContactSavedPayload;
+  const getContactSavedPayloadStable = useCallback(
+    (): ContactSavedSearchPayload => getContactSavedPayloadRef.current(),
+    [],
+  );
+
   const handleApplyContactSaved = useCallback(
     (p: ContactSavedSearchPayload) => {
       if (p.version === SAVED_SEARCH_VERSION_SIDEBAR) {
@@ -509,15 +595,56 @@ export default function ContactsPageClient() {
     ],
   );
 
-  const contactSavedSearchesMenu = useMemo(
-    () => (
-      <SavedSearchesMenu
-        entity="contact"
-        getContactPayload={getContactSavedPayload}
-        onApplyContact={handleApplyContactSaved}
+  const contactSavedSearchMenuProps = useMemo(
+    () => ({
+      entity: "contact" as const,
+      getContactPayload: getContactSavedPayloadStable,
+      onApplyContact: handleApplyContactSaved,
+      presentation: "panel" as const,
+      panelOpen: savedSearchesPanelOpen,
+      onPanelOpenChange: setSavedSearchesPanelOpen,
+      showTrigger: false,
+    }),
+    [
+      getContactSavedPayloadStable,
+      handleApplyContactSaved,
+      savedSearchesPanelOpen,
+    ],
+  );
+
+  const openSavedSearchesPanel = useCallback(() => {
+    setSavedSearchesPanelOpen(true);
+  }, []);
+
+  const savedSearchesTrigger = (
+    <SavedSearchesTriggerButton onClick={openSavedSearchesPanel} />
+  );
+
+  const filtersRefreshButton = (
+    <button
+      type="button"
+      className="c360-contacts-filters__icon-btn"
+      title="Refresh filter definitions"
+      aria-label="Refresh filter definitions"
+      disabled={filtersRefreshing}
+      onClick={() => void handleRefreshFilters()}
+    >
+      <RefreshCw
+        size={16}
+        className={cn(filtersRefreshing && "c360-spin")}
+        aria-hidden
       />
+    </button>
+  );
+
+  const filtersPinExtra = useMemo(
+    () => (
+      <>
+        {savedSearchesTrigger}
+        {filtersRefreshButton}
+      </>
     ),
-    [getContactSavedPayload, handleApplyContactSaved],
+    [savedSearchesTrigger, filtersRefreshing, handleRefreshFilters],
   );
 
   const handleAiSearch = useCallback(() => {
@@ -570,8 +697,9 @@ export default function ContactsPageClient() {
     () => (
       <>
         {!isDesktop ? (
-          <div className="c360-data-layout__filters-mobile-saved">
-            {contactSavedSearchesMenu}
+          <div className="c360-data-layout__filters-mobile-saved c360-data-layout__filters-mobile-saved--actions">
+            {savedSearchesTrigger}
+            {filtersRefreshButton}
           </div>
         ) : null}
         <ContactsFilterSidebar
@@ -599,23 +727,17 @@ export default function ContactsPageClient() {
           sortChipLabel={sortChipLabel}
           hiddenColumnCount={hiddenColumnCount}
           onResetVisibleColumns={resetVisibleColumns}
-          onRefreshFilters={handleRefreshFilters}
-          filtersRefreshing={filtersRefreshing}
           filterDrawerTitleId="c360-filter-drawer-title"
           onCloseDrawer={
             isDesktop ? undefined : () => setMobileFiltersOpen(false)
           }
-          aiQuery={aiQuery}
-          onAiQueryChange={setAiQuery}
-          onAiSearch={handleAiSearch}
-          aiSearching={aiSearching}
           tableDensity={tableDensity}
           onTableDensityChange={setTableDensity}
         />
       </>
     ),
     [
-      contactSavedSearchesMenu,
+      filtersRefreshButton,
       isDesktop,
       search,
       sortBy,
@@ -633,11 +755,6 @@ export default function ContactsPageClient() {
       sortChipLabel,
       hiddenColumnCount,
       resetVisibleColumns,
-      handleRefreshFilters,
-      filtersRefreshing,
-      aiQuery,
-      handleAiSearch,
-      aiSearching,
       handleFacetChange,
       handleExcludedFacetChange,
       loadMoreFilterData,
@@ -660,14 +777,23 @@ export default function ContactsPageClient() {
       cssPrefix="c360-toolbar"
       totalCount={total}
       meta={
-        !loading && total > 0 ? (
-          <ContactPagination
-            page={page}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
+        <div className="c360-contacts-toolbar-meta">
+          {!loading && total > 0 ? (
+            <ContactPagination
+              page={page}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          ) : null}
+          <ContactsToolbarAiSearch
+            value={aiQuery}
+            onChange={setAiQuery}
+            onSearch={handleAiSearch}
+            searching={aiSearching}
+            disabled={loading}
           />
-        ) : undefined
+        </div>
       }
       filterConfig={{
         activeCount: toolbarActiveCount,
@@ -731,9 +857,10 @@ export default function ContactsPageClient() {
       filterDrawerTitleId="c360-filter-drawer-title"
       filtersPeekRail
       filtersPeekScope="contacts"
-      filtersPinExtra={contactSavedSearchesMenu}
+      filtersPinExtra={filtersPinExtra}
       className="c360-contacts-page"
     >
+      <SavedSearchesMenu {...contactSavedSearchMenuProps} />
       <Modal
         isOpen={mapModalOpen}
         onClose={() => setMapModalOpen(false)}
@@ -743,7 +870,8 @@ export default function ContactsPageClient() {
       >
         <p className="c360-text-sm c360-text-muted c360-mb-3">
           Countries reflect your current filters and search (same cohort as the
-          list). Hover a region for counts.
+          list). Hover for counts; click a shaded country to filter the contact
+          table.
         </p>
         {countryMapError ? (
           <Alert
@@ -797,6 +925,7 @@ export default function ContactsPageClient() {
         <WorldMap
           data={countryData}
           height={countryLoading && countryData.length === 0 ? 80 : 440}
+          onCountrySelect={handleMapCountrySelect}
         />
       </Modal>
 
@@ -907,9 +1036,16 @@ export default function ContactsPageClient() {
             showPageSizeControl={false}
             showPaginationFooter={false}
             density={tableDensity}
+            onOpenCompanyDrawer={handleOpenCompanyDrawer}
           />
         </div>
       </Card>
+
+      <CompanyDrawerPanel
+        anchor={companyDrawerAnchor}
+        isOpen={!!companyDrawerAnchor}
+        onClose={() => setCompanyDrawerAnchor(null)}
+      />
 
       <ConfirmModal
         isOpen={deleteOpen}

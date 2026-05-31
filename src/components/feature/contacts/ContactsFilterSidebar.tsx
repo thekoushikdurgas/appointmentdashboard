@@ -2,14 +2,19 @@
 
 import { useCallback, useMemo } from "react";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import {
+  buildEmailSearchChip,
+  buildFacetSectionChips,
+  type ContactFilterChip,
+} from "@/components/feature/contacts/contactFilterSectionChips";
+import { FilterSectionChips } from "@/components/feature/contacts/FilterSectionChips";
 import { ContactFilterSortSelect } from "@/components/feature/contacts/ContactFilterBar";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
-import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
-import { cn } from "@/lib/utils";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import { ContactIncludeExcludeFacetFilter } from "@/components/feature/contacts/ContactIncludeExcludeFacetFilter";
 import { CompanyRangeBucketFacetFilter } from "@/components/feature/companies/CompanyRangeBucketFacetFilter";
@@ -19,7 +24,6 @@ import {
 } from "@/lib/contactIncludeExcludeFacets";
 import {
   companyRangeBucketComboboxLabels,
-  formatCompanyRangeBucketLabel,
   isCompanyRangeBucketFacet,
 } from "@/lib/companyRangeBuckets";
 import {
@@ -63,17 +67,9 @@ export interface ContactsFilterSidebarProps {
   sortChipLabel?: string | null;
   hiddenColumnCount: number;
   onResetVisibleColumns: () => void;
-  /** Refetch filter definitions (clears TTL cache). */
-  onRefreshFilters?: () => void | Promise<void>;
-  filtersRefreshing?: boolean;
   /** Mobile drawer: close control + `id` for `aria-labelledby` on dialog. */
   filterDrawerTitleId?: string;
   onCloseDrawer?: () => void;
-  /** Secondary “AI” query line (appointment-d1-style); `aiQuery` is separate from email search when used. */
-  aiQuery?: string;
-  onAiQueryChange?: (value: string) => void;
-  onAiSearch?: () => void;
-  aiSearching?: boolean;
   /** Table row density — mirrors the toolbar view-mode select. */
   tableDensity?: "comfortable" | "compact";
   onTableDensityChange?: (density: "comfortable" | "compact") => void;
@@ -104,14 +100,8 @@ export function ContactsFilterSidebar({
   sortChipLabel,
   hiddenColumnCount,
   onResetVisibleColumns,
-  onRefreshFilters,
-  filtersRefreshing = false,
   filterDrawerTitleId,
   onCloseDrawer,
-  aiQuery = "",
-  onAiQueryChange,
-  onAiSearch,
-  aiSearching = false,
   tableDensity = "comfortable",
   onTableDensityChange,
 }: ContactsFilterSidebarProps) {
@@ -170,110 +160,65 @@ export function ContactsFilterSidebar({
     onClearVql();
   }, [clearFacets, onActiveTabChange, onClearVql, onSearchChange]);
 
-  const chips = useMemo(() => {
-    const out: Array<{ key: string; label: string; onRemove: () => void }> = [];
-    if (search.trim()) {
-      out.push({
-        key: "search",
-        label: `Search: ${search.trim()}`,
-        onRemove: () => onSearchChange(""),
-      });
-    }
-    if (activeTab === "net_new") {
-      out.push({
-        key: "tab-net",
-        label: "Net new (7 days)",
-        onRemove: () => onActiveTabChange("total"),
-      });
-    } else if (activeTab === "do_not_contact") {
-      out.push({
-        key: "tab-dnc",
-        label: "Do not contact",
-        onRemove: () => onActiveTabChange("total"),
-      });
-    }
-    for (const [key, vals] of Object.entries(facetValues)) {
-      if (vals != null && vals.length > 0) {
-        const section = filterSections.find((s) => s.filterKey === key);
-        const label = section?.displayName ?? key;
-        const prefix = isContactIncludeExcludeFacet(key) ? "Include " : "";
-        const valueLabel = isCompanyRangeBucketFacet(key)
-          ? formatCompanyRangeBucketLabel(key, vals[0])
-          : vals[0];
-        const summary =
-          vals.length === 1
-            ? `${prefix}${label}: ${valueLabel}`
-            : `${prefix}${label}: ${vals.length} selected`;
-        out.push({
-          key: `facet-include-${key}`,
-          label: summary,
-          onRemove: () => onFacetChange(key, []),
-        });
-      }
-    }
-    for (const [key, vals] of Object.entries(excludedFacetValues)) {
-      if (vals != null && vals.length > 0) {
-        const section = filterSections.find((s) => s.filterKey === key);
-        const label = section?.displayName ?? key;
-        const valueLabel = isCompanyRangeBucketFacet(key)
-          ? formatCompanyRangeBucketLabel(key, vals[0])
-          : vals[0];
-        const summary =
-          vals.length === 1
-            ? `Exclude ${label}: ${valueLabel}`
-            : `Exclude ${label}: ${vals.length} selected`;
-        out.push({
-          key: `facet-exclude-${key}`,
-          label: summary,
-          onRemove: () => onExcludedFacetChange?.(key, []),
-        });
-      }
-    }
-    if (advancedVqlRuleCount > 0) {
-      out.push({
+  const facetSectionChips = useCallback(
+    (filterKey: string, displayName: string): ContactFilterChip[] =>
+      buildFacetSectionChips(
+        filterKey,
+        displayName,
+        facetValues,
+        excludedFacetValues,
+        onFacetChange,
+        onExcludedFacetChange,
+      ),
+    [facetValues, excludedFacetValues, onFacetChange, onExcludedFacetChange],
+  );
+
+  const sortSectionChips = useMemo((): ContactFilterChip[] => {
+    if (!sortChipLabel) return [];
+    return [
+      {
+        key: "sort-chip",
+        label: sortChipLabel,
+        onRemove: () => onSortChange("newest"),
+      },
+    ];
+  }, [sortChipLabel, onSortChange]);
+
+  const viewSectionChips = useMemo((): ContactFilterChip[] => {
+    if (tableDensity !== "compact") return [];
+    return [
+      {
+        key: "view-compact",
+        label: "Compact rows",
+        onRemove: () => onTableDensityChange?.("comfortable"),
+      },
+    ];
+  }, [tableDensity, onTableDensityChange]);
+
+  const columnsSectionChips = useMemo((): ContactFilterChip[] => {
+    if (hiddenColumnCount <= 0) return [];
+    return [
+      {
+        key: "cols-chip",
+        label: `Columns: ${visibleColumns.length} visible`,
+        onRemove: onResetVisibleColumns,
+      },
+    ];
+  }, [hiddenColumnCount, visibleColumns.length, onResetVisibleColumns]);
+
+  const advancedSectionChips = useMemo((): ContactFilterChip[] => {
+    if (advancedVqlRuleCount <= 0) return [];
+    return [
+      {
         key: "vql",
         label:
           advancedVqlRuleCount === 1
             ? "Advanced: 1 rule"
             : `Advanced: ${advancedVqlRuleCount} rules`,
         onRemove: onClearVql,
-      });
-    }
-    if (sortChipLabel) {
-      out.push({
-        key: "sort-chip",
-        label: sortChipLabel,
-        onRemove: () => onSortChange("newest"),
-      });
-    }
-    if (hiddenColumnCount > 0) {
-      out.push({
-        key: "cols-chip",
-        label: `Columns: ${visibleColumns.length} visible`,
-        onRemove: onResetVisibleColumns,
-      });
-    }
-    return out;
-  }, [
-    search,
-    activeTab,
-    facetValues,
-    excludedFacetValues,
-    filterSections,
-    onExcludedFacetChange,
-    advancedVqlRuleCount,
-    sortChipLabel,
-    hiddenColumnCount,
-    visibleColumns.length,
-    onSearchChange,
-    onActiveTabChange,
-    onFacetChange,
-    onClearVql,
-    onSortChange,
-    onResetVisibleColumns,
-  ]);
-
-  const showAiRow = Boolean(onAiQueryChange && onAiSearch);
+      },
+    ];
+  }, [advancedVqlRuleCount, onClearVql]);
 
   return (
     <div className="c360-contacts-filters">
@@ -308,22 +253,6 @@ export function ContactsFilterSidebar({
               CLEAR
             </Button>
           ) : null}
-          {onRefreshFilters ? (
-            <button
-              type="button"
-              className="c360-contacts-filters__icon-btn"
-              title="Refresh filter definitions"
-              aria-label="Refresh filter definitions"
-              disabled={filtersRefreshing}
-              onClick={() => void onRefreshFilters()}
-            >
-              <RefreshCw
-                size={16}
-                className={cn(filtersRefreshing && "c360-spin")}
-                aria-hidden
-              />
-            </button>
-          ) : null}
           {onCloseDrawer ? (
             <button
               type="button"
@@ -338,71 +267,11 @@ export function ContactsFilterSidebar({
         </div>
       </div>
 
-      {showAiRow ? (
-        <div className="c360-contacts-filters__ai-row">
-          <div className="c360-contacts-filters__ai-input-wrap">
-            <Sparkles size={16} className="c360-text-muted" aria-hidden />
-            <input
-              type="text"
-              className="c360-contacts-filters__ai-input"
-              placeholder="Ask AI: 'VPs in tech with >100 employees'"
-              value={aiQuery}
-              onChange={(e) => onAiQueryChange?.(e.target.value)}
-              aria-label="AI-assisted filter prompt"
-            />
-            <button
-              type="button"
-              className="c360-contacts-filters__ai-btn"
-              title="Run AI filter"
-              aria-label="Run AI filter"
-              disabled={aiSearching || !aiQuery.trim()}
-              onClick={() => onAiSearch?.()}
-            >
-              {aiSearching ? (
-                <Loader2 size={14} className="c360-spin" aria-hidden />
-              ) : (
-                <Sparkles size={14} aria-hidden />
-              )}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="c360-contacts-filters__search">
-        <Input
-          type="search"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by email…"
-          aria-label="Search contacts"
-          className="c360-contacts-filters__search-input"
-        />
-      </div>
-
-      {chips.length > 0 ? (
-        <div
-          className="c360-contacts-filters__chips"
-          aria-label="Active filters"
-        >
-          {chips.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              className="c360-contacts-filters__chip"
-              title="Remove filter"
-              onClick={c.onRemove}
-            >
-              <span>{c.label}</span>
-              <span aria-hidden>×</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
       <ContactsCollapsibleFilterSection
         title="Sort"
         count={sortActiveCount}
         defaultOpen
+        activeChips={sortSectionChips}
         onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
       >
         <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
@@ -413,6 +282,7 @@ export function ContactsFilterSidebar({
           title="View"
           count={tableDensity === "compact" ? 1 : 0}
           defaultOpen={false}
+          activeChips={viewSectionChips}
           onClear={() => onTableDensityChange("comfortable")}
         >
           <Select
@@ -444,6 +314,27 @@ export function ContactsFilterSidebar({
         </p>
       ) : null}
 
+      {!filterSections.some((s) => s.filterKey === "email") ? (
+        <ContactsCollapsibleFilterSection
+          title="Email"
+          count={search.trim() ? 1 : 0}
+          defaultOpen={!!search.trim()}
+          activeChips={buildEmailSearchChip(search, () => onSearchChange(""))}
+          onClear={search.trim() ? () => onSearchChange("") : undefined}
+        >
+          <div className="c360-contacts-filters__email-search">
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search by email…"
+              aria-label="Search contacts"
+              className="c360-contacts-filters__search-input"
+            />
+          </div>
+        </ContactsCollapsibleFilterSection>
+      ) : null}
+
       {filterSections.map((section) => {
         const key = section.filterKey;
         const useRangeBuckets =
@@ -463,6 +354,7 @@ export function ContactsFilterSidebar({
               title={section.displayName}
               count={active}
               defaultOpen={active > 0}
+              activeChips={facetSectionChips(key, section.displayName)}
               onClear={
                 active > 0
                   ? () => {
@@ -500,6 +392,7 @@ export function ContactsFilterSidebar({
               title={section.displayName}
               count={active}
               defaultOpen={active > 0}
+              activeChips={facetSectionChips(key, section.displayName)}
               onClear={
                 active > 0
                   ? () => {
@@ -526,15 +419,44 @@ export function ContactsFilterSidebar({
         }
 
         const vals = facetValues[key] ?? [];
-        const has = vals.length > 0;
+        const hasFacetValues = vals.length > 0;
+        const isEmailFacet = key === "email";
+        const hasEmailSearch = isEmailFacet && search.trim().length > 0;
+        const sectionActiveCount = vals.length + (hasEmailSearch ? 1 : 0);
+        const sectionHasActive = hasFacetValues || hasEmailSearch;
         return (
           <ContactsCollapsibleFilterSection
             key={key}
             title={section.displayName}
-            count={has ? vals.length : 0}
-            defaultOpen={has}
-            onClear={has ? () => onFacetChange(key, []) : undefined}
+            count={sectionActiveCount > 0 ? sectionActiveCount : 0}
+            defaultOpen={sectionHasActive}
+            activeChips={[
+              ...(isEmailFacet
+                ? buildEmailSearchChip(search, () => onSearchChange(""))
+                : []),
+              ...facetSectionChips(key, section.displayName),
+            ]}
+            onClear={
+              sectionHasActive
+                ? () => {
+                    onFacetChange(key, []);
+                    if (hasEmailSearch) onSearchChange("");
+                  }
+                : undefined
+            }
           >
+            {isEmailFacet ? (
+              <div className="c360-contacts-filters__email-search">
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Search by email…"
+                  aria-label="Search contacts"
+                  className="c360-contacts-filters__search-input"
+                />
+              </div>
+            ) : null}
             <FilterCombobox
               label={section.displayName}
               options={section.options}
@@ -556,6 +478,8 @@ export function ContactsFilterSidebar({
         title="Columns"
         count={hiddenColumnCount}
         defaultOpen={false}
+        activeChips={columnsSectionChips}
+        onClear={hiddenColumnCount > 0 ? onResetVisibleColumns : undefined}
       >
         <div className="c360-contacts-filters__columns-inner">
           {CONTACTS_DT_COLUMN_IDS.map((id) => (
@@ -577,6 +501,7 @@ export function ContactsFilterSidebar({
       </ContactsCollapsibleFilterSection>
 
       <div className="c360-contacts-filters__advanced">
+        <FilterSectionChips chips={advancedSectionChips} />
         <Button
           type="button"
           variant="secondary"

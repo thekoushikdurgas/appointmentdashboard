@@ -9,9 +9,14 @@ import { MediaObject } from "@/components/ui/MediaObject";
 import { CompanyHiringTab } from "@/components/feature/companies/CompanyHiringTab";
 import {
   fetchConnectraCompany,
+  fetchCompanyHiringSignalJobs,
   asRecord,
 } from "@/services/graphql/hiringSignalService";
-import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
+import {
+  parseLinkedInJobsPayload,
+  type LinkedInJobRow,
+} from "@/lib/jobs/hiringSignalJobRows";
+import type { CompanyDrawerAnchor } from "@/lib/companyDrawerAnchor";
 import {
   hiringSignalInitials,
   pickCompanyDisplay,
@@ -23,9 +28,12 @@ import { HiringSignalCompanyLinkedInButton } from "@/components/feature/hiring-s
 import { toast } from "sonner";
 
 export interface CompanyDrawerPanelProps {
-  anchor: LinkedInJobRow | null;
-  /** Jobs on the current list for this company (titles / functions). */
-  previewJobs: LinkedInJobRow[];
+  anchor: CompanyDrawerAnchor | null;
+  /**
+   * When set, use these jobs for analytics (e.g. hiring signals list page).
+   * When omitted, jobs are loaded for `anchor.companyUuid` on open (e.g. contacts page).
+   */
+  previewJobs?: LinkedInJobRow[];
   isOpen: boolean;
   onClose: () => void;
 }
@@ -41,14 +49,20 @@ export function CompanyDrawerPanel({
 
   const companyUuid = anchor?.companyUuid?.trim() ?? "";
   const companyName = anchor?.companyName || "Company";
+  const usePagePreviewJobs = previewJobs !== undefined;
+
+  const [fetchedJobs, setFetchedJobs] = useState<LinkedInJobRow[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  const displayJobs = usePagePreviewJobs ? previewJobs : fetchedJobs;
 
   const rolePills = useMemo(() => {
     const fc = new Set<string>();
-    for (const j of previewJobs) {
+    for (const j of displayJobs) {
       if (j.functionCategory?.trim()) fc.add(j.functionCategory.trim());
     }
     return [...fc].slice(0, 8);
-  }, [previewJobs]);
+  }, [displayJobs]);
 
   useEffect(() => {
     if (!isOpen || !companyUuid) {
@@ -82,6 +96,34 @@ export function CompanyDrawerPanel({
       cancelled = true;
     };
   }, [isOpen, companyUuid]);
+
+  useEffect(() => {
+    if (!isOpen || !companyUuid || usePagePreviewJobs) {
+      setFetchedJobs([]);
+      setJobsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setJobsLoading(true);
+    (async () => {
+      try {
+        const res = await fetchCompanyHiringSignalJobs(companyUuid, 100);
+        const parsed = parseLinkedInJobsPayload(res.hireSignal?.companyJobs);
+        if (!cancelled) setFetchedJobs(parsed.data);
+      } catch (e) {
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : "Load failed";
+          toast.error("Company hiring signals", { description: msg });
+          setFetchedJobs([]);
+        }
+      } finally {
+        if (!cancelled) setJobsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, companyUuid, usePagePreviewJobs]);
 
   const co = pickCompanyDisplay(cRecord);
   const companyDisplayName = co.name || companyName;
@@ -192,14 +234,21 @@ export function CompanyDrawerPanel({
 
       <div className="c360-hs-drawer__body">
         <p className="c360-mb-4 c360-text-sm c360-text-muted">
-          <span className="c360-font-medium c360-text-ink">Open roles</span> on
-          this page: {previewJobs.length}
+          <span className="c360-font-medium c360-text-ink">Open roles</span>
+          {usePagePreviewJobs ? " on this page" : null}: {displayJobs.length}
+          {jobsLoading ? (
+            <Loader2
+              className="c360-ml-1 c360-inline c360-animate-spin"
+              size={14}
+              aria-hidden
+            />
+          ) : null}
         </p>
 
         {rolePills.length > 0 ? (
           <section className="c360-mb-4">
             <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-uppercase c360-tracking-wide c360-text-muted">
-              Hiring functions (this page)
+              Hiring functions{usePagePreviewJobs ? " (this page)" : null}
             </p>
             <div className="c360-flex c360-flex-wrap c360-gap-1">
               {rolePills.map((p) => (
@@ -215,7 +264,7 @@ export function CompanyDrawerPanel({
           className="c360-mb-1"
           aria-label="Hiring analytics for this page"
         >
-          <CompanyHiringTab jobs={previewJobs} loading={false} />
+          <CompanyHiringTab jobs={displayJobs} loading={jobsLoading} />
         </section>
       </div>
     </HiringSignalAsideDrawer>

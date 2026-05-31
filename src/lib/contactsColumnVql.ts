@@ -7,8 +7,8 @@ export const CONTACT_COLUMN_TO_VQL_FIELDS: Record<
 > = {
   name: ["first_name", "last_name"],
   title: ["title"],
+  department: ["departments"],
   region: ["city", "state", "country"],
-  status: ["email_status"],
   company: [],
   email: ["email"],
   added: ["created_at"],

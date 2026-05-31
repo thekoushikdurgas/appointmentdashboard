@@ -4,6 +4,7 @@ import type {
   VqlOrderByInput,
   VqlQueryInput,
 } from "@/graphql/generated/types";
+import { companySearchTokensFromString } from "@/lib/companySearchTokens";
 
 function sortByToCompanyOrderBy(sortBy: string): VqlOrderByInput[] {
   switch (sortBy) {
@@ -31,18 +32,31 @@ export function buildCompanyListVql(
 ): VqlQueryInput {
   const useCursor = !!opts?.searchAfter?.length;
   const offset = useCursor ? 0 : (page - 1) * pageSize;
-  const trimmed = search.trim();
-  const searchBlock: VqlFilterInput | undefined = trimmed
-    ? {
-        conditions: [
-          {
-            field: "name",
-            operator: "contains",
-            value: trimmed as unknown as VqlConditionInput["value"],
-          },
-        ],
-      }
-    : undefined;
+  const tokens = companySearchTokensFromString(search);
+  const searchBlock: VqlFilterInput | undefined =
+    tokens.length === 0
+      ? undefined
+      : tokens.length === 1
+        ? {
+            conditions: [
+              {
+                field: "name",
+                operator: "contains",
+                value: tokens[0] as unknown as VqlConditionInput["value"],
+              },
+            ],
+          }
+        : {
+            allOf: tokens.map((token) => ({
+              conditions: [
+                {
+                  field: "name",
+                  operator: "contains",
+                  value: token as unknown as VqlConditionInput["value"],
+                },
+              ],
+            })),
+          };
 
   const baseFilters = extra.filters as VqlFilterInput | undefined;
   let filters: VqlFilterInput | undefined;

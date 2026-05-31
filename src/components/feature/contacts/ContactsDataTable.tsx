@@ -19,10 +19,16 @@ import { Input } from "@/components/ui/Input";
 import { Popover } from "@/components/ui/Popover";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { ContactDetailPanel } from "@/components/feature/contacts/ContactDetailPanel";
+import {
+  ContactsGridCompanyCellComfortable,
+  ContactsGridCompanyCellCompact,
+  ContactsGridEmailCellComfortable,
+  ContactsGridEmailCellCompact,
+} from "@/components/feature/contacts/contactsGridCells";
 import { contactDetailRoute } from "@/lib/routes";
+import { stashContactRowForDetail } from "@/lib/contactRowSession";
 import { cn, getAvatarUrl } from "@/lib/utils";
 import { mapConnectraError } from "@/lib/linkedinValidation";
-import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 import type { Contact } from "@/services/graphql/contactsService";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
@@ -50,8 +56,8 @@ export const CONTACTS_DT_PAGE_SIZE_OPTIONS = [
 export const CONTACTS_DT_COLUMN_IDS = [
   "name",
   "title",
+  "department",
   "region",
-  "status",
   "company",
   "email",
   "added",
@@ -71,8 +77,8 @@ export const CONTACTS_DT_COLUMN_LABELS: Record<
 > = {
   name: "Name",
   title: "Title",
+  department: "Department",
   region: "Region",
-  status: "Status",
   company: "Company",
   email: "Email",
   added: "Added",
@@ -83,8 +89,8 @@ export const CONTACTS_DT_COLUMN_LABELS: Record<
 const COL_ID_TO_FIELD: Record<ContactsDataTableColumnId, string> = {
   name: "name",
   title: "title",
+  department: "departmentsJoined",
   region: "region",
-  status: "emailStatus",
   company: "company",
   email: "email",
   added: "createdAt",
@@ -106,27 +112,6 @@ function formatCheckInDate(iso: string): string {
   } catch {
     return "—";
   }
-}
-
-type StatusTone = "danger" | "warning" | "success" | "primary" | "muted";
-
-function emailStatusTone(status?: string): StatusTone {
-  const s = (status || "").toUpperCase();
-  if (isContactEmailVerifiedStatus(status)) return "success";
-  if (s === "FOUND") return "primary";
-  if (s === "RISKY") return "danger";
-  if (s === "UNKNOWN") return "warning";
-  return "muted";
-}
-
-function emailStatusLabel(status?: string): string {
-  const s = (status || "").toUpperCase();
-  if (isContactEmailVerifiedStatus(status)) return "Verified";
-  if (s === "FOUND") return "Found";
-  if (s === "RISKY") return "Risky";
-  if (s === "UNKNOWN") return "Unknown";
-  if (!status) return "No email";
-  return status;
 }
 
 function gridSortModelFromSortBy(sortBy: string): GridSortModel {
@@ -238,6 +223,8 @@ export interface ContactsDataTableProps {
   embedded?: boolean;
   /** Extra class on the root `.c360-contacts-dt` wrapper (e.g. company detail scope). */
   className?: string;
+  /** Opens hiring-signals company drawer (`CompanyDrawerPanel`) for this contact's company. */
+  onOpenCompanyDrawer?: (contact: Contact) => void;
 }
 
 export function ContactsDataTable({
@@ -268,6 +255,7 @@ export function ContactsDataTable({
   density = "comfortable",
   embedded = false,
   className,
+  onOpenCompanyDrawer,
 }: ContactsDataTableProps) {
   const visibleColumns = visibleColumnsProp ?? CONTACTS_DT_DEFAULT_COLUMNS;
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -432,6 +420,25 @@ export function ContactsDataTable({
         cellClassName: "c360-ct-grid-cell--center",
       },
       {
+        field: "departmentsJoined",
+        headerName: CONTACTS_DT_COLUMN_LABELS.department,
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+        filterable: false,
+        valueGetter: (_v, row) =>
+          row.departments?.length ? row.departments.join(", ") : "",
+        renderCell: (params: GridRenderCellParams<Contact>) => (
+          <span
+            className="c360-contacts-dt__muted c360-min-w-0 c360-truncate"
+            title={params.value ? String(params.value) : undefined}
+          >
+            {params.value ? String(params.value) : "—"}
+          </span>
+        ),
+        cellClassName: "c360-ct-grid-cell--center",
+      },
+      {
         field: "region",
         headerName: CONTACTS_DT_COLUMN_LABELS.region,
         flex: 1,
@@ -454,62 +461,53 @@ export function ContactsDataTable({
         cellClassName: "c360-ct-grid-cell--center",
       },
       {
-        field: "emailStatus",
-        headerName: CONTACTS_DT_COLUMN_LABELS.status,
-        flex: 0,
-        width: 120,
-        minWidth: 104,
+        field: "company",
+        headerName: CONTACTS_DT_COLUMN_LABELS.company,
+        flex: 1.25,
+        minWidth: 200,
         sortable: false,
         filterable: false,
         renderCell: (params: GridRenderCellParams<Contact>) => {
-          const tone = emailStatusTone(params.row.emailStatus);
+          const row = params.row;
+          const openDrawer = !embedded ? onOpenCompanyDrawer : undefined;
+          if (density === "compact") {
+            return (
+              <ContactsGridCompanyCellCompact
+                contact={row}
+                onOpenCompanyDrawer={openDrawer}
+              />
+            );
+          }
           return (
-            <span
-              className={cn(
-                "c360-contacts-dt__pill",
-                `c360-contacts-dt__pill--${tone}`,
-              )}
-            >
-              <span className="c360-contacts-dt__pill-dot" aria-hidden />
-              {emailStatusLabel(params.row.emailStatus)}
-            </span>
+            <ContactsGridCompanyCellComfortable
+              contact={row}
+              onOpenCompanyDrawer={openDrawer}
+            />
           );
         },
-        cellClassName: "c360-ct-grid-cell--center",
-      },
-      {
-        field: "company",
-        headerName: CONTACTS_DT_COLUMN_LABELS.company,
-        flex: 1,
-        minWidth: 140,
-        sortable: false,
-        filterable: false,
-        renderCell: (params: GridRenderCellParams<Contact>) => (
-          <span
-            className="c360-contacts-dt__muted c360-contacts-dt__truncate c360-min-w-0"
-            title={params.row.company || undefined}
-          >
-            {params.row.company || "—"}
-          </span>
-        ),
-        cellClassName: "c360-ct-grid-cell--center",
+        cellClassName:
+          density === "compact"
+            ? "c360-ct-grid-cell--center"
+            : "c360-ct-grid-cell--top",
       },
       {
         field: "email",
         headerName: CONTACTS_DT_COLUMN_LABELS.email,
         flex: 1,
-        minWidth: 160,
+        minWidth: 220,
         sortable: false,
         filterable: false,
-        renderCell: (params: GridRenderCellParams<Contact>) => (
-          <span
-            className="c360-contacts-dt__email c360-text-xs c360-min-w-0 c360-truncate"
-            title={params.row.email || undefined}
-          >
-            {params.row.email || "—"}
-          </span>
-        ),
-        cellClassName: "c360-ct-grid-cell--center",
+        renderCell: (params: GridRenderCellParams<Contact>) => {
+          const row = params.row;
+          if (density === "compact") {
+            return <ContactsGridEmailCellCompact contact={row} />;
+          }
+          return <ContactsGridEmailCellComfortable contact={row} />;
+        },
+        cellClassName:
+          density === "compact"
+            ? "c360-ct-grid-cell--center"
+            : "c360-ct-grid-cell--top",
       },
       {
         field: "createdAt",
@@ -538,7 +536,40 @@ export function ContactsDataTable({
         headerAlign: "right",
         renderCell: (params: GridRenderCellParams<Contact>) => (
           <div className="c360-hs-grid-actions-row c360-flex c360-items-center c360-justify-end c360-gap-1">
-            <Link href={contactDetailRoute(params.row.id)}>
+            <Link
+              href={contactDetailRoute(params.row.id)}
+              onMouseDown={() => {
+                stashContactRowForDetail(params.row);
+              }}
+              onClick={() => {
+                stashContactRowForDetail(params.row);
+                // #region agent log
+                fetch(
+                  "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-Debug-Session-Id": "c73258",
+                    },
+                    body: JSON.stringify({
+                      sessionId: "c73258",
+                      runId: "contact-detail",
+                      hypothesisId: "E6",
+                      location: "ContactsDataTable.tsx:viewClick",
+                      message: "contact View clicked from table",
+                      data: {
+                        contactId: params.row.id,
+                        companyId: params.row.companyId ?? null,
+                        name: params.row.name,
+                      },
+                      timestamp: Date.now(),
+                    }),
+                  },
+                ).catch(() => {});
+                // #endregion
+              }}
+            >
               <Button
                 variant="ghost"
                 size="sm"
@@ -570,25 +601,6 @@ export function ContactsDataTable({
         ),
         cellClassName: "c360-ct-grid-cell--center",
       };
-      const departmentsCol: GridColDef<Contact> = {
-        field: "departmentsJoined",
-        headerName: "Departments",
-        flex: 1,
-        minWidth: 120,
-        sortable: false,
-        filterable: false,
-        valueGetter: (_v, row) =>
-          row.departments?.length ? row.departments.join(", ") : "",
-        renderCell: (params: GridRenderCellParams<Contact>) => (
-          <span
-            className="c360-contacts-dt__muted c360-text-xs c360-min-w-0 c360-truncate"
-            title={params.value ? String(params.value) : undefined}
-          >
-            {params.value ? String(params.value) : "—"}
-          </span>
-        ),
-        cellClassName: "c360-ct-grid-cell--center",
-      };
       const stageCol: GridColDef<Contact> = {
         field: "stage",
         headerName: "Stage",
@@ -606,9 +618,9 @@ export function ContactsDataTable({
       };
       const titleIdx = cols.findIndex((c) => c.field === "title");
       if (titleIdx >= 0) {
-        cols.splice(titleIdx + 1, 0, seniorityCol, departmentsCol, stageCol);
+        cols.splice(titleIdx + 1, 0, seniorityCol, stageCol);
       } else {
-        cols.unshift(seniorityCol, departmentsCol, stageCol);
+        cols.unshift(seniorityCol, stageCol);
       }
 
       const phoneCol: GridColDef<Contact> = {
@@ -686,7 +698,7 @@ export function ContactsDataTable({
       }
     }
     return cols;
-  }, [density, embedded, onToggleExpand]);
+  }, [density, embedded, onToggleExpand, onOpenCompanyDrawer]);
 
   const columnsMenu =
     showColumnPicker && onToggleColumn != null ? (

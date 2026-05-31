@@ -1,4 +1,8 @@
-import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
+import {
+  graphqlQuery,
+  graphqlMutation,
+  type GraphQLRequestOptions,
+} from "@/lib/graphqlClient";
 import type {
   VqlQueryInput,
   SchedulerJob,
@@ -249,11 +253,25 @@ export const companiesService = {
     };
   },
 
-  get: async (uuid: string) => {
-    const data = await graphqlQuery<{
-      companies: { company: CompanyRow };
-    }>(COMPANY_ONE_QUERY, { uuid });
-    return mapCompany(data.companies.company);
+  get: async (
+    uuid: string,
+    options?: GraphQLRequestOptions & { notFoundReturnsNull?: boolean },
+  ) => {
+    try {
+      const data = await graphqlQuery<{
+        companies: { company: CompanyRow };
+      }>(COMPANY_ONE_QUERY, { uuid }, options);
+      return mapCompany(data.companies.company);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (
+        options?.notFoundReturnsNull &&
+        msg.toLowerCase().includes("not found")
+      ) {
+        return null;
+      }
+      throw err;
+    }
   },
 
   create: async (input: CreateCompanyInput): Promise<Company> => {
