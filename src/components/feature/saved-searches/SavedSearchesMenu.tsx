@@ -33,6 +33,7 @@ import { parseOperationError } from "@/lib/errorParser";
 import { cn } from "@/lib/utils";
 import { useSavedSearchContactCounts } from "@/hooks/useSavedSearchContactCounts";
 import { useSavedSearchCompanyCounts } from "@/hooks/useSavedSearchCompanyCounts";
+import { useSavedSearchHireSignalJobCounts } from "@/hooks/useSavedSearchHireSignalJobCounts";
 import { SavedSearchCohortCount } from "@/components/feature/saved-searches/SavedSearchCohortCount";
 
 type Entity = "contact" | "company" | "hire_signal";
@@ -133,7 +134,20 @@ function describeSavedSearchSummary(s: SavedSearch): string {
     }
     return parts.length > 0 ? parts.join(" · ") : "Current company view";
   }
+  if (isHireSignalSavedSearchPayload(raw)) {
+    const parts: string[] = [];
+    if (raw.signalTimePreset === "new_7d") parts.push("New (7 days)");
+    return parts.length > 0 ? parts.join(" · ") : "All signals";
+  }
   return "Click to apply this view";
+}
+
+function cohortCountKind(
+  entity: Entity,
+): "contact" | "company" | "job" {
+  if (entity === "contact") return "contact";
+  if (entity === "company") return "company";
+  return "job";
 }
 
 function formatSavedSearchDate(iso: string | null | undefined): string | null {
@@ -239,9 +253,15 @@ export function SavedSearchesMenu({
   const panelCountsEnabled = presentation === "panel" && panelOpen;
   const contactCountsEnabled = entity === "contact" && panelCountsEnabled;
   const companyCountsEnabled = entity === "company" && panelCountsEnabled;
+  const hireSignalCountsEnabled = entity === "hire_signal" && panelCountsEnabled;
   const contactCounts = useSavedSearchContactCounts(list, contactCountsEnabled);
   const companyCounts = useSavedSearchCompanyCounts(list, companyCountsEnabled);
-  const cohortCountsEnabled = contactCountsEnabled || companyCountsEnabled;
+  const hireSignalCounts = useSavedSearchHireSignalJobCounts(
+    list,
+    hireSignalCountsEnabled,
+  );
+  const cohortCountsEnabled =
+    contactCountsEnabled || companyCountsEnabled || hireSignalCountsEnabled;
 
   const load = useCallback(
     async (opts?: { fresh?: boolean; silent?: boolean }) => {
@@ -420,7 +440,9 @@ export function SavedSearchesMenu({
           ? " Contact counts match each saved cohort."
           : companyCountsEnabled
             ? " Company counts match each saved cohort."
-            : null}
+            : hireSignalCountsEnabled
+              ? " Job counts match each saved view."
+              : null}
       </p>
       <ul className="c360-saved-searches-panel__list">
         {list.map((s) => {
@@ -441,17 +463,16 @@ export function SavedSearchesMenu({
                       {cohortCountsEnabled ? (
                         <>
                           {s.name} {" ("}
-                          {entity === "contact" ? (
-                            <SavedSearchCohortCount
-                              kind="contact"
-                              entry={contactCounts[s.id]}
-                            />
-                          ) : (
-                            <SavedSearchCohortCount
-                              kind="company"
-                              entry={companyCounts[s.id]}
-                            />
-                          )}
+                          <SavedSearchCohortCount
+                            kind={cohortCountKind(entity)}
+                            entry={
+                              entity === "contact"
+                                ? contactCounts[s.id]
+                                : entity === "company"
+                                  ? companyCounts[s.id]
+                                  : hireSignalCounts[s.id]
+                            }
+                          />
                           {")"}
                         </>
                       ) : (

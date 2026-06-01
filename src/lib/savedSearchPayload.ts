@@ -182,3 +182,19 @@ export function companyCountQueryFromSavedSearchFilters(
     sortBy,
   );
 }
+
+/** Saved hiring-signal view state used to resolve matching job totals. */
+export type HireSignalSavedSearchCountKey = {
+  listFilters: JobListFilters;
+  signalTimePreset: "all" | "new_7d";
+};
+
+export function hireSignalSavedSearchCountKeyFromFilters(
+  filters: unknown,
+): HireSignalSavedSearchCountKey | null {
+  if (!isHireSignalSavedSearchPayload(filters)) return null;
+  return {
+    listFilters: filters.listFilters,
+    signalTimePreset: filters.signalTimePreset,
+  };
+}

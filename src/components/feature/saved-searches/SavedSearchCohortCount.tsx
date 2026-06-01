@@ -21,6 +21,12 @@ const LABELS = {
     loading: "Counting companies…",
     error: "Company count unavailable",
   },
+  job: {
+    singular: "job",
+    plural: "jobs",
+    loading: "Counting jobs…",
+    error: "Job count unavailable",
+  },
 } as const;
 
 export function SavedSearchCohortCount({
