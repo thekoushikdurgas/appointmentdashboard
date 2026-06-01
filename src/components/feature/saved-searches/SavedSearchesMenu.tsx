@@ -142,9 +142,7 @@ function describeSavedSearchSummary(s: SavedSearch): string {
   return "Click to apply this view";
 }
 
-function cohortCountKind(
-  entity: Entity,
-): "contact" | "company" | "job" {
+function cohortCountKind(entity: Entity): "contact" | "company" | "job" {
   if (entity === "contact") return "contact";
   if (entity === "company") return "company";
   return "job";
@@ -253,7 +251,8 @@ export function SavedSearchesMenu({
   const panelCountsEnabled = presentation === "panel" && panelOpen;
   const contactCountsEnabled = entity === "contact" && panelCountsEnabled;
   const companyCountsEnabled = entity === "company" && panelCountsEnabled;
-  const hireSignalCountsEnabled = entity === "hire_signal" && panelCountsEnabled;
+  const hireSignalCountsEnabled =
+    entity === "hire_signal" && panelCountsEnabled;
   const contactCounts = useSavedSearchContactCounts(list, contactCountsEnabled);
   const companyCounts = useSavedSearchCompanyCounts(list, companyCountsEnabled);
   const hireSignalCounts = useSavedSearchHireSignalJobCounts(
@@ -290,7 +289,7 @@ export function SavedSearchesMenu({
       popoverWasOpenRef.current = isOpen;
       if (opened) void load();
     },
-    [load, typeFilter],
+    [load],
   );
 
   useEffect(() => {

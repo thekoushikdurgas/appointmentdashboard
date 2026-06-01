@@ -40,28 +40,6 @@ async function fetchHireSignalJobCount(
     offset: 0,
   });
   const parsed = parseLinkedInJobsPayload(res.hireSignal?.jobs);
-  // #region agent log
-  fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "ad0071",
-    },
-    body: JSON.stringify({
-      sessionId: "ad0071",
-      location: "useSavedSearchHireSignalJobCounts.ts:fetchHireSignalJobCount",
-      message: "hire signal saved search job count",
-      data: {
-        preset: key.signalTimePreset,
-        total: parsed.total,
-        hasJobsField: Boolean(res.hireSignal?.jobs),
-      },
-      timestamp: Date.now(),
-      hypothesisId: "C",
-      runId: "pre-fix",
-    }),
-  }).catch(() => { });
-  // #endregion
   return parsed.total;
 }
 
@@ -98,13 +76,9 @@ export function useSavedSearchHireSignalJobCounts(
       string,
       { key: HireSignalSavedSearchCountKey; ids: string[] }
     >();
-    let skippedNoKey = 0;
     for (const s of searches) {
       const key = hireSignalSavedSearchCountKeyFromFilters(s.filters);
-      if (!key) {
-        skippedNoKey += 1;
-        continue;
-      }
+      if (!key) continue;
       const sig = stableHireSignalKey(key);
       const existing = filterGroups.get(sig);
       if (existing) existing.ids.push(s.id);
@@ -119,29 +93,6 @@ export function useSavedSearchHireSignalJobCounts(
     });
 
     const groups = [...filterGroups.values()];
-    // #region agent log
-    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "ad0071",
-      },
-      body: JSON.stringify({
-        sessionId: "ad0071",
-        location: "useSavedSearchHireSignalJobCounts.ts:useEffect",
-        message: "hire signal count fetch plan",
-        data: {
-          enabled,
-          searchCount: searches.length,
-          groupCount: groups.length,
-          skippedNoKey,
-        },
-        timestamp: Date.now(),
-        hypothesisId: "B",
-        runId: "pre-fix",
-      }),
-    }).catch(() => { });
-    // #endregion
 
     const run = async () => {
       for (let i = 0; i < groups.length; i += COUNT_CONCURRENCY) {
@@ -175,7 +126,7 @@ export function useSavedSearchHireSignalJobCounts(
     return () => {
       cancelled = true;
     };
-  }, [fetchSignature, searches]);
+  }, [fetchSignature, searches, enabled]);
 
   return counts;
 }

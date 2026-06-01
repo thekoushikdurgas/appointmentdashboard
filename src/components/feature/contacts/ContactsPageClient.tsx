@@ -424,7 +424,7 @@ export default function ContactsPageClient() {
           : sortByToDraftSort(sortBy),
       selectColumns:
         advancedListDraft?.selectColumns?.length &&
-          advancedListDraft.selectColumns.length > 0
+        advancedListDraft.selectColumns.length > 0
           ? advancedListDraft.selectColumns
           : selectColumnsFromVisibleColumns(visibleColumns),
       companyPopulate:
@@ -432,7 +432,7 @@ export default function ContactsPageClient() {
         visibleColumnsNeedCompanyPopulate(visibleColumns),
       companySelectColumns:
         advancedListDraft?.companySelectColumns?.length &&
-          advancedListDraft.companySelectColumns.length > 0
+        advancedListDraft.companySelectColumns.length > 0
           ? advancedListDraft.companySelectColumns
           : visibleColumnsNeedCompanyPopulate(visibleColumns)
             ? defaultCompanySelectWhenPopulate()
@@ -803,13 +803,13 @@ export default function ContactsPageClient() {
         },
         ...(isSuperAdmin
           ? [
-            {
-              label: "Import",
-              onClick: () => setImportOpen(true),
-              icon: Upload,
-              variant: "secondary" as const,
-            },
-          ]
+              {
+                label: "Import",
+                onClick: () => setImportOpen(true),
+                icon: Upload,
+                variant: "secondary" as const,
+              },
+            ]
           : []),
         {
           label: "Map view",

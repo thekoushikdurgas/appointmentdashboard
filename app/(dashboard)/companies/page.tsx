@@ -578,12 +578,12 @@ export default function CompaniesPage() {
         },
         ...(hasAdvancedBuilderState
           ? [
-            {
-              label: "Clear advanced",
-              onClick: clearCompanyVql,
-              variant: "ghost" as const,
-            },
-          ]
+              {
+                label: "Clear advanced",
+                onClick: clearCompanyVql,
+                variant: "ghost" as const,
+              },
+            ]
           : []),
         {
           label: "Export",
@@ -593,13 +593,13 @@ export default function CompaniesPage() {
         },
         ...(isSuperAdmin
           ? [
-            {
-              label: "Import",
-              onClick: () => setImportOpen(true),
-              icon: Upload,
-              variant: "secondary" as const,
-            },
-          ]
+              {
+                label: "Import",
+                onClick: () => setImportOpen(true),
+                icon: Upload,
+                variant: "secondary" as const,
+              },
+            ]
           : []),
         {
           label: "Add company",

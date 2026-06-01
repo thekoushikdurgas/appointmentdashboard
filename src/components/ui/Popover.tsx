@@ -189,11 +189,11 @@ export function Popover({
   const popover =
     open && mounted && pos
       ? createPortal(
-        <div ref={popoverRef} className={panelClass}>
-          {content}
-        </div>,
-        document.body,
-      )
+          <div ref={popoverRef} className={panelClass}>
+            {content}
+          </div>,
+          document.body,
+        )
       : null;
 
   return (
