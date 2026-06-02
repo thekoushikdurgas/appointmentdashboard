@@ -87,7 +87,7 @@ export function RunScrapeModal({
         batch_size: 25,
       };
       if (enableEnrichment) {
-        body.openai_model = "gpt-4-turbo";
+        body.openai_model = "gpt-4o-mini";
       }
       const rs = repeatAfterHours.trim();
       if (rs !== "") {
