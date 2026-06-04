@@ -8,18 +8,9 @@ import {
   useState,
   type RefObject,
 } from "react";
-import {
-  Bell,
-  BellOff,
-  Bookmark,
-  ExternalLink,
-  Loader2,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Bell, BellOff, Bookmark, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { Popover } from "@/components/ui/Popover";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -240,7 +231,6 @@ export function SavedSearchesMenu({
   const [emailNotifyTogglingId, setEmailNotifyTogglingId] = useState<
     string | null
   >(null);
-  const [applyingId, setApplyingId] = useState<string | null>(null);
   const saveNameInputRef = useRef<HTMLInputElement>(null);
   const loadInvocationRef = useRef(0);
   const popoverOpenRef = useRef(false);
@@ -446,49 +436,35 @@ export function SavedSearchesMenu({
     load,
   ]);
 
-  const handleApply = useCallback(
-    async (s: SavedSearch) => {
-      setApplyingId(s.id);
-      try {
-        const full = await savedSearchesService.get(s.id);
-        const row = full.savedSearches.getSavedSearch;
-        const raw = row.filters;
-        if (entity === "contact" && isContactSavedSearchPayload(raw)) {
-          onApplyContact?.(raw);
-          await savedSearchesService.updateUsage(row.id);
-        } else if (entity === "company" && isCompanySavedSearchPayload(raw)) {
-          onApplyCompany?.(raw);
-          await savedSearchesService.updateUsage(row.id);
-        } else if (
-          entity === "hire_signal" &&
-          isHireSignalSavedSearchPayload(raw)
-        ) {
-          onApplyHireSignal?.(raw);
-          await savedSearchesService.updateUsage(row.id);
-        } else {
-          toast.error(
-            "This saved search uses an older format and could not be applied.",
-          );
-          return;
-        }
-        toast.success(`Applied “${row.name}”.`);
-        if (presentation === "panel") setPanelOpen(false);
-      } catch (e) {
-        toast.error(parseOperationError(e, errorDomain).userMessage);
-      } finally {
-        setApplyingId(null);
+  const handleApply = async (s: SavedSearch) => {
+    try {
+      const full = await savedSearchesService.get(s.id);
+      const row = full.savedSearches.getSavedSearch;
+      const raw = row.filters;
+      if (entity === "contact" && isContactSavedSearchPayload(raw)) {
+        onApplyContact?.(raw);
+        await savedSearchesService.updateUsage(row.id);
+      } else if (entity === "company" && isCompanySavedSearchPayload(raw)) {
+        onApplyCompany?.(raw);
+        await savedSearchesService.updateUsage(row.id);
+      } else if (
+        entity === "hire_signal" &&
+        isHireSignalSavedSearchPayload(raw)
+      ) {
+        onApplyHireSignal?.(raw);
+        await savedSearchesService.updateUsage(row.id);
+      } else {
+        toast.error(
+          "This saved search uses an older format and could not be applied.",
+        );
+        return;
       }
-    },
-    [
-      entity,
-      errorDomain,
-      onApplyCompany,
-      onApplyContact,
-      onApplyHireSignal,
-      presentation,
-      setPanelOpen,
-    ],
-  );
+      toast.success(`Applied “${row.name}”.`);
+      if (presentation === "panel") setPanelOpen(false);
+    } catch (e) {
+      toast.error(parseOperationError(e, errorDomain).userMessage);
+    }
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete saved search “${name}”?`)) return;
@@ -520,8 +496,8 @@ export function SavedSearchesMenu({
   ) : (
     <>
       <p className="c360-saved-searches-panel__hint">
-        {list.length} saved view{list.length === 1 ? "" : "s"} — use Apply to
-        load a saved filter set.
+        {list.length} saved view{list.length === 1 ? "" : "s"} — select one to
+        apply filters.
         {contactCountsEnabled
           ? " Contact counts match each saved cohort."
           : companyCountsEnabled
@@ -535,12 +511,13 @@ export function SavedSearchesMenu({
           const savedOn = formatSavedSearchDate(s.createdAt);
           const emailSubscribed = isJobEmailSubscribed(s.id);
           const emailToggling = emailNotifyTogglingId === s.id;
-          const applying = applyingId === s.id;
-          const applyBusyElsewhere =
-            applyingId != null && applyingId !== s.id;
           return (
             <li key={s.id} className="c360-saved-searches-panel__item">
-              <div className="c360-saved-searches-panel__item-main">
+              <button
+                type="button"
+                className="c360-saved-searches-panel__item-main"
+                onClick={() => void handleApply(s)}
+              >
                 <span className="c360-saved-searches-panel__item-text">
                   <div className="c360-flex c360-items-center c360-gap-2">
                     <span className="c360-saved-searches-panel__item-icon">
@@ -572,25 +549,9 @@ export function SavedSearchesMenu({
                     {savedOn ? ` · Saved ${savedOn}` : ""}
                   </span>
                 </span>
-              </div>
+              </button>
               <div className="c360-icons-container">
 
-                <Tooltip content="Apply saved search" placement="top">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="c360-btn c360-btn--icon c360-hs-grid-action-btn c360-p-2 c360-saved-searches-panel__item-apply"
-                    loading={applying}
-                    disabled={applyBusyElsewhere}
-                    aria-label={`Apply saved search ${s.name}`}
-                    onClick={() => void handleApply(s)}
-                  >
-                    {!applying ? (
-                      <ExternalLink size={16} aria-hidden />
-                    ) : null}
-                  </Button>
-                </Tooltip>
                 {showJobEmailNotify ? (
                   <button
                     type="button"
