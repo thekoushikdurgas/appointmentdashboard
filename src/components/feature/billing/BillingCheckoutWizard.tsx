@@ -307,7 +307,7 @@ export function BillingCheckoutWizard({
                     className={cn(
                       "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
                       selectedPlanId === p.id &&
-                      "c360-billing-checkout-plan-row--selected",
+                        "c360-billing-checkout-plan-row--selected",
                     )}
                   >
                     <div
@@ -361,7 +361,7 @@ export function BillingCheckoutWizard({
                   className={cn(
                     "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
                     selectedAddonId === a.id &&
-                    "c360-billing-checkout-plan-row--selected",
+                      "c360-billing-checkout-plan-row--selected",
                   )}
                 >
                   <div className="c360-flex-1">
@@ -394,14 +394,14 @@ export function BillingCheckoutWizard({
                   ${derivedAmount() != null ? derivedAmount()!.toFixed(2) : "—"}
                 </strong>
                 {derivedCredits() != null
-                  ? ` · ${derivedCredits()!.toLocaleString()} credits`
+                  ? ` · ${derivedCredits()!.toLocaleString()} daily credits (reference)`
                   : null}
               </p>
             ) : checkoutKind === "addon" && selectedAddon ? (
               <p className="c360-page-subtitle">
                 {selectedAddon.name} —{" "}
                 <strong>${selectedAddon.price.toFixed(2)}</strong> ·{" "}
-                {selectedAddon.credits.toLocaleString()} credits
+                {selectedAddon.credits.toLocaleString()} addon pool credits
               </p>
             ) : (
               <p className="c360-text-muted c360-text-sm">Nothing selected.</p>
@@ -420,12 +420,14 @@ export function BillingCheckoutWizard({
       {step === 3 && (
         <div className="c360-section-stack">
           <p className="c360-page-subtitle c360-mb-2">
-            Upload your payment receipt. Amount and credits are taken from your
-            selection:{" "}
+            Upload your payment receipt. Amount and credit reference are taken
+            from your selection:{" "}
             <strong>
               ${derivedAmount() != null ? derivedAmount()!.toFixed(2) : "—"} /{" "}
               {derivedCredits() != null
-                ? `${derivedCredits()!.toLocaleString()} credits`
+                ? checkoutKind === "plan"
+                  ? `${derivedCredits()!.toLocaleString()} daily credits`
+                  : `${derivedCredits()!.toLocaleString()} addon credits`
                 : "—"}
             </strong>
           </p>

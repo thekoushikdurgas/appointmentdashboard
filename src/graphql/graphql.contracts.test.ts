@@ -43,6 +43,8 @@ describe("GraphQL operation contracts (static)", () => {
     const s = read("services/graphql/billingService.ts");
     expect(s).toContain("subscribe(input: $input)");
     expect(s).toContain("subscriptionPlan");
+    expect(s).toContain("dailyCreditsLimit");
+    expect(s).toContain("addonCredits");
     expect(s).toContain("purchaseAddon(input: $input)");
     expect(s).toContain("package");
     expect(s).toContain("creditsAdded");
@@ -51,11 +53,9 @@ describe("GraphQL operation contracts (static)", () => {
     expect(s).toContain("upiId");
     expect(s).toContain("paymentSubmissions(status:");
     expect(s).toContain("myPaymentSubmissions(status:");
-    expect(s).toContain("approvePayment(submissionId:");
-    expect(s).toContain("declinePayment(input:");
-    expect(s).toContain("UpdatePaymentInstructionsInput");
-    expect(s).toContain("updateAddon(packageId:");
-    expect(s).not.toContain("addonId");
+    expect(s).toContain("submitPaymentProof");
+    expect(s).toContain("PLAN_PERIOD_FIELDS");
+    expect(s).not.toContain("createPlan(input:");
   });
 
   it("email service targets finder, verifier, bulk, pattern predict, and riskyCount", () => {

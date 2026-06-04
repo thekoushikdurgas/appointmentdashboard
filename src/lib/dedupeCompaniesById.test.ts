@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+/// <reference types="vitest/globals" />
 import { dedupeCompaniesById } from "@/lib/dedupeCompaniesById";
 import type { Company } from "@/services/graphql/companiesService";
 

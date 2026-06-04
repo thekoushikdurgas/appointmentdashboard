@@ -466,9 +466,11 @@ export type BatchCreateContactsInput = {
 };
 
 export type BillingInfo = {
+  addonCredits: Scalars["Int"]["output"];
   credits: Scalars["Int"]["output"];
   creditsLimit: Scalars["Int"]["output"];
   creditsUsed: Scalars["Int"]["output"];
+  dailyCreditsLimit: Scalars["Int"]["output"];
   subscriptionEndsAt?: Maybe<Scalars["DateTime"]["output"]>;
   subscriptionPeriod?: Maybe<Scalars["String"]["output"]>;
   subscriptionPlan: Scalars["String"]["output"];
@@ -482,10 +484,12 @@ export type BillingMutation = {
   cancelSubscription: CancelSubscriptionResult;
   createAddon: CreateAddonResult;
   createPlan: CreatePlanResult;
+  createPlanFeature: PlanFeatureResult;
   createPlanPeriod: CreatePlanPeriodResult;
   declinePayment: PaymentSubmission;
   deleteAddon: DeleteAddonResult;
   deletePlan: DeletePlanResult;
+  deletePlanFeature: PlanFeatureResult;
   deletePlanPeriod: DeletePlanPeriodResult;
   purchaseAddon: PurchaseAddonResult;
   submitPaymentProof: PaymentSubmission;
@@ -493,6 +497,7 @@ export type BillingMutation = {
   updateAddon: UpdateAddonResult;
   updatePaymentInstructions: PaymentInstructions;
   updatePlan: UpdatePlanResult;
+  updatePlanFeature: PlanFeatureResult;
   updatePlanPeriod: CreatePlanPeriodResult;
   uploadPaymentReceiptPhoto: PaymentReceiptUploadResult;
 };
@@ -509,9 +514,14 @@ export type BillingMutationCreatePlanArgs = {
   input: CreatePlanInput;
 };
 
+export type BillingMutationCreatePlanFeatureArgs = {
+  category: Scalars["String"]["input"];
+  input: CreatePlanFeatureInput;
+};
+
 export type BillingMutationCreatePlanPeriodArgs = {
+  category: Scalars["String"]["input"];
   input: CreatePlanPeriodInput;
-  tier: Scalars["String"]["input"];
 };
 
 export type BillingMutationDeclinePaymentArgs = {
@@ -523,12 +533,17 @@ export type BillingMutationDeleteAddonArgs = {
 };
 
 export type BillingMutationDeletePlanArgs = {
-  tier: Scalars["String"]["input"];
+  category: Scalars["String"]["input"];
+};
+
+export type BillingMutationDeletePlanFeatureArgs = {
+  category: Scalars["String"]["input"];
+  featureId: Scalars["Int"]["input"];
 };
 
 export type BillingMutationDeletePlanPeriodArgs = {
+  category: Scalars["String"]["input"];
   period: Scalars["String"]["input"];
-  tier: Scalars["String"]["input"];
 };
 
 export type BillingMutationPurchaseAddonArgs = {
@@ -553,14 +568,20 @@ export type BillingMutationUpdatePaymentInstructionsArgs = {
 };
 
 export type BillingMutationUpdatePlanArgs = {
+  category: Scalars["String"]["input"];
   input: UpdatePlanInput;
-  tier: Scalars["String"]["input"];
+};
+
+export type BillingMutationUpdatePlanFeatureArgs = {
+  category: Scalars["String"]["input"];
+  featureId: Scalars["Int"]["input"];
+  input: UpdatePlanFeatureInput;
 };
 
 export type BillingMutationUpdatePlanPeriodArgs = {
+  category: Scalars["String"]["input"];
   input: UpdatePlanPeriodInput;
   period: Scalars["String"]["input"];
-  tier: Scalars["String"]["input"];
 };
 
 export type BillingMutationUploadPaymentReceiptPhotoArgs = {
@@ -591,6 +612,10 @@ export type BillingQueryPaymentSubmissionsArgs = {
   limit?: Scalars["Int"]["input"];
   offset?: Scalars["Int"]["input"];
   status?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+export type BillingQueryPlansArgs = {
+  includeInactive?: Scalars["Boolean"]["input"];
 };
 
 export type BulkEmailFinderInput = {
@@ -1389,16 +1414,21 @@ export type CreateLogsBatchInput = {
   logs: Array<CreateLogInput>;
 };
 
+export type CreatePlanFeatureInput = {
+  label: Scalars["String"]["input"];
+  sortOrder?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
 export type CreatePlanInput = {
   category: Scalars["String"]["input"];
   isActive?: InputMaybe<Scalars["Boolean"]["input"]>;
   name: Scalars["String"]["input"];
   periods: Array<PlanPeriodInput>;
-  tier: Scalars["String"]["input"];
 };
 
 export type CreatePlanPeriodInput = {
   credits: Scalars["Int"]["input"];
+  dailyCreditsLimit: Scalars["Int"]["input"];
   period: Scalars["String"]["input"];
   price: Scalars["Float"]["input"];
   ratePerCredit: Scalars["Float"]["input"];
@@ -1407,14 +1437,14 @@ export type CreatePlanPeriodInput = {
 };
 
 export type CreatePlanPeriodResult = {
+  category: Scalars["String"]["output"];
   message: Scalars["String"]["output"];
   period: Scalars["String"]["output"];
-  tier: Scalars["String"]["output"];
 };
 
 export type CreatePlanResult = {
+  category: Scalars["String"]["output"];
   message: Scalars["String"]["output"];
-  tier: Scalars["String"]["output"];
 };
 
 export type CreateSavedSearchInput = {
@@ -1497,14 +1527,14 @@ export type DeleteNotificationsResponse = {
 };
 
 export type DeletePlanPeriodResult = {
+  category: Scalars["String"]["output"];
   message: Scalars["String"]["output"];
   period: Scalars["String"]["output"];
-  tier: Scalars["String"]["output"];
 };
 
 export type DeletePlanResult = {
+  category: Scalars["String"]["output"];
   message: Scalars["String"]["output"];
-  tier: Scalars["String"]["output"];
 };
 
 export type DeleteUserInput = {
@@ -2779,8 +2809,8 @@ export type PaymentSubmission = {
   creditsToAdd: Scalars["Int"]["output"];
   declineReason?: Maybe<Scalars["String"]["output"]>;
   id: Scalars["String"]["output"];
+  planCategory?: Maybe<Scalars["String"]["output"]>;
   planPeriod?: Maybe<Scalars["String"]["output"]>;
-  planTier?: Maybe<Scalars["String"]["output"]>;
   reviewedAt?: Maybe<Scalars["DateTime"]["output"]>;
   reviewedBy?: Maybe<Scalars["String"]["output"]>;
   screenshotDownloadUrl?: Maybe<Scalars["String"]["output"]>;
@@ -2936,8 +2966,21 @@ export type PhoneQueryVerifyPhonesBulkArgs = {
   input: BulkPhoneVerifierInput;
 };
 
+export type PlanFeature = {
+  id: Scalars["Int"]["output"];
+  label: Scalars["String"]["output"];
+  sortOrder: Scalars["Int"]["output"];
+};
+
+export type PlanFeatureResult = {
+  category: Scalars["String"]["output"];
+  id: Scalars["Int"]["output"];
+  message: Scalars["String"]["output"];
+};
+
 export type PlanPeriod = {
   credits: Scalars["Int"]["output"];
+  dailyCreditsLimit: Scalars["Int"]["output"];
   period: Scalars["String"]["output"];
   price: Scalars["Float"]["output"];
   ratePerCredit: Scalars["Float"]["output"];
@@ -2946,6 +2989,7 @@ export type PlanPeriod = {
 
 export type PlanPeriodInput = {
   credits: Scalars["Int"]["input"];
+  dailyCreditsLimit: Scalars["Int"]["input"];
   period: Scalars["String"]["input"];
   price: Scalars["Float"]["input"];
   ratePerCredit: Scalars["Float"]["input"];
@@ -3494,8 +3538,8 @@ export type SubmitPaymentProofInput = {
   addonPackageId?: InputMaybe<Scalars["String"]["input"]>;
   amount: Scalars["Float"]["input"];
   creditsToAdd: Scalars["Int"]["input"];
+  planCategory?: InputMaybe<Scalars["String"]["input"]>;
   planPeriod?: InputMaybe<Scalars["String"]["input"]>;
-  planTier?: InputMaybe<Scalars["String"]["input"]>;
   screenshotS3Key: Scalars["String"]["input"];
 };
 
@@ -3511,8 +3555,8 @@ export type SubmitPerformanceMetricInput = {
 };
 
 export type SubscribeInput = {
+  category: Scalars["String"]["input"];
   period: Scalars["String"]["input"];
-  tier: Scalars["String"]["input"];
 };
 
 export type SubscribeResult = {
@@ -3525,9 +3569,10 @@ export type SubscribeResult = {
 
 export type SubscriptionPlan = {
   category: Scalars["String"]["output"];
+  features: Array<PlanFeature>;
+  isActive: Scalars["Boolean"]["output"];
   name: Scalars["String"]["output"];
   periods: PlanPeriods;
-  tier: Scalars["String"]["output"];
 };
 
 export type TeamList = {
@@ -3721,14 +3766,19 @@ export type UpdatePaymentInstructionsInput = {
   upiId: Scalars["String"]["input"];
 };
 
+export type UpdatePlanFeatureInput = {
+  label?: InputMaybe<Scalars["String"]["input"]>;
+  sortOrder?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
 export type UpdatePlanInput = {
-  category?: InputMaybe<Scalars["String"]["input"]>;
   isActive?: InputMaybe<Scalars["Boolean"]["input"]>;
   name?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type UpdatePlanPeriodInput = {
   credits?: InputMaybe<Scalars["Int"]["input"]>;
+  dailyCreditsLimit?: InputMaybe<Scalars["Int"]["input"]>;
   price?: InputMaybe<Scalars["Float"]["input"]>;
   ratePerCredit?: InputMaybe<Scalars["Float"]["input"]>;
   savingsAmount?: InputMaybe<Scalars["Float"]["input"]>;
@@ -3736,8 +3786,8 @@ export type UpdatePlanPeriodInput = {
 };
 
 export type UpdatePlanResult = {
+  category: Scalars["String"]["output"];
   message: Scalars["String"]["output"];
-  tier: Scalars["String"]["output"];
 };
 
 export type UpdateProfileInput = {

@@ -257,7 +257,7 @@ export default function UIKitPage() {
                     id: "a2",
                     title: "How many credits do I get?",
                     content:
-                      "Starter plan includes 1,000 credits per month. Professional gives 10,000. Enterprise is unlimited.",
+                      "Starter includes a daily credit allowance (resets UTC). Professional and Enterprise raise the daily cap; add-on purchases go to a separate pool until subscription ends.",
                   },
                   {
                     id: "a3",

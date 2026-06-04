@@ -89,21 +89,6 @@ function normalizedPriceAmount(
   return raw;
 }
 
-function normalizedCreditsAmount(
-  raw: number,
-  period: BillingPeriod,
-  basis: "perMonth" | "perYear",
-): number {
-  if (basis === "perMonth") {
-    if (period === "monthly") return raw;
-    if (period === "quarterly") return raw / 3;
-    return raw / 12;
-  }
-  if (period === "monthly") return raw * 12;
-  if (period === "quarterly") return raw * 4;
-  return raw;
-}
-
 function formatMoney(n: number): string {
   const rounded = Math.round(n * 100) / 100;
   return rounded % 1 === 0
@@ -268,9 +253,7 @@ export function BillingPlanCards({
 
           const rawCr = rawCreditsForPeriod(p, effectivePeriod);
           const creditsLine =
-            rawCr != null
-              ? `${Math.round(normalizedCreditsAmount(rawCr, effectivePeriod, basis)).toLocaleString()} credits ${basis === "perMonth" ? "/ mo equiv." : "/ yr equiv."}`
-              : null;
+            rawCr != null ? `${rawCr.toLocaleString()} daily credits` : null;
 
           return (
             <div

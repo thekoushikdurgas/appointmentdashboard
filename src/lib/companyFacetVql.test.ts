@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+/// <reference types="vitest/globals" />
 import { buildCompanyFacetVqlFilter } from "@/lib/companyFacetVql";
 
 describe("buildCompanyFacetVqlFilter", () => {

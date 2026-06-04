@@ -108,8 +108,8 @@ export function useBilling() {
   }, [fetchAll]);
 
   const subscribe = useCallback(
-    async (tier: string, period: string) => {
-      const res = await billingService.subscribe({ tier, period });
+    async (category: string, period: string) => {
+      const res = await billingService.subscribe({ category, period });
       await fetchAll(true);
       return res.billing.subscribe;
     },

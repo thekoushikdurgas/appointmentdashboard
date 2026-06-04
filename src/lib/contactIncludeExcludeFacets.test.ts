@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+/// <reference types="vitest/globals" />
 import {
   CONTACT_INCLUDE_EXCLUDE_FILTER_KEYS,
   contactFacetComboboxLabels,

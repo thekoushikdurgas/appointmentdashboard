@@ -35,6 +35,11 @@ import { BillingMyPaymentRequests } from "@/components/feature/billing/BillingMy
 import type { InvoiceData } from "@/components/shared/InvoiceCard";
 import { Progress } from "@/components/ui/Progress";
 import { Alert } from "@/components/ui/Alert";
+import { isDevelopment } from "@/lib/config";
+import {
+  displayDailyCreditsFromPeriod,
+  formatBillingWalletSummary,
+} from "@/lib/billingPlanDisplay";
 
 const SUBSCRIPTION_END_WARNING_DAYS = 7;
 
@@ -93,14 +98,15 @@ export default function BillingPage() {
         const apiFeatures =
           p.features && p.features.length > 0
             ? [...p.features]
-              .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
-              .map((f) => f.label)
+                .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
+                .map((f) => f.label)
             : null;
         const features: string[] = apiFeatures ?? [];
         if (!apiFeatures) {
           if (p.category) features.push(`Category: ${p.category}`);
-          if (monthly?.credits != null)
-            features.push(`${monthly.credits.toLocaleString()} credits / month`);
+          const daily = displayDailyCreditsFromPeriod(monthly);
+          if (daily != null)
+            features.push(`${daily.toLocaleString()} daily credits`);
           if (yearly?.savings?.percentage != null)
             features.push(
               `Yearly option: save ~${yearly.savings.percentage}% vs monthly`,
@@ -117,9 +123,9 @@ export default function BillingPage() {
             yearly: yearly?.price,
           },
           creditsByPeriod: {
-            monthly: monthly?.credits,
-            quarterly: quarterly?.credits,
-            yearly: yearly?.credits,
+            monthly: displayDailyCreditsFromPeriod(monthly) ?? undefined,
+            quarterly: displayDailyCreditsFromPeriod(quarterly) ?? undefined,
+            yearly: displayDailyCreditsFromPeriod(yearly) ?? undefined,
           },
           features,
           bg: a.bg,
@@ -180,12 +186,7 @@ export default function BillingPage() {
   useEffect(() => {
     if (billingInfo) {
       setLivePlan(billingInfo.subscriptionPlan);
-      const addon = billingInfo.addonCredits ?? 0;
-      setCreditsInfo(
-        addon > 0
-          ? `${billingInfo.credits} daily · +${addon} addon`
-          : `${billingInfo.credits} daily remaining`,
-      );
+      setCreditsInfo(formatBillingWalletSummary(billingInfo));
     }
   }, [billingInfo]);
 
@@ -237,14 +238,12 @@ export default function BillingPage() {
       const r = await hookPurchaseAddon(packageId);
       toast.success(
         r
-          ? `${r.message} — ${r.creditsAdded} credits (balance ${r.totalCredits}).`
+          ? `${r.message} — ${r.creditsAdded.toLocaleString()} credits added to your addon pool.`
           : "Add-on purchased!",
       );
       await refreshBilling();
       const d = await billingService.getBillingInfo();
-      setCreditsInfo(
-        `${d.billing.billing.credits} credits · ${d.billing.billing.subscriptionStatus}`,
-      );
+      setCreditsInfo(formatBillingWalletSummary(d.billing.billing));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Purchase failed");
     } finally {
@@ -268,14 +267,14 @@ export default function BillingPage() {
           {billingInfo && billingInfo.creditsLimit > 0 && (
             <div className="c360-billing-page__credits-meter">
               <div className="c360-text-xs c360-text-muted c360-mb-1">
-                Daily plan credits ({billingInfo.creditsUsed.toLocaleString()}{" "}
-                / {billingInfo.creditsLimit.toLocaleString()} used today)
+                Daily plan credits ({billingInfo.creditsUsed.toLocaleString()} /{" "}
+                {billingInfo.creditsLimit.toLocaleString()} used today)
               </div>
               <Progress value={billingInfo.usagePercentage} />
               {(billingInfo.addonCredits ?? 0) > 0 ? (
                 <div className="c360-text-xs c360-text-muted c360-mt-1">
-                  Addon pool:{" "}
-                  {(billingInfo.addonCredits ?? 0).toLocaleString()} credits
+                  Addon pool: {(billingInfo.addonCredits ?? 0).toLocaleString()}{" "}
+                  credits
                   {billingInfo.subscriptionEndsAt
                     ? ` (until subscription ends)`
                     : ""}
@@ -288,7 +287,7 @@ export default function BillingPage() {
               <Alert
                 variant={
                   subscriptionPeriodBanner.daysLeft <=
-                    SUBSCRIPTION_END_WARNING_DAYS
+                  SUBSCRIPTION_END_WARNING_DAYS
                     ? "warning"
                     : "info"
                 }
@@ -306,14 +305,15 @@ export default function BillingPage() {
                   </strong>
                   {subscriptionPeriodBanner.daysLeft >= 0 &&
                     subscriptionPeriodBanner.daysLeft <=
-                    SUBSCRIPTION_END_WARNING_DAYS && (
+                      SUBSCRIPTION_END_WARNING_DAYS && (
                       <>
                         {" "}
                         (
                         {subscriptionPeriodBanner.daysLeft === 0
                           ? "last day"
-                          : `${subscriptionPeriodBanner.daysLeft} day${subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
-                          } left`}
+                          : `${subscriptionPeriodBanner.daysLeft} day${
+                              subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
+                            } left`}
                         ).
                       </>
                     )}
@@ -411,7 +411,9 @@ export default function BillingPage() {
             invoicePage={invoicePage}
             invoicePageSize={invoicePageSize}
             onPageChange={setInvoicePage}
-            sampleInvoice={invoices.length === 0 ? SAMPLE_INVOICE : null}
+            sampleInvoice={
+              invoices.length === 0 && isDevelopment() ? SAMPLE_INVOICE : null
+            }
           />
         </TabsContent>
 

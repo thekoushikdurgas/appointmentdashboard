@@ -297,7 +297,7 @@ export function SavedSearchesMenu({
     const opened = panelOpen && !panelWasOpenRef.current;
     panelWasOpenRef.current = panelOpen;
     if (opened) void load();
-  }, [presentation, panelOpen, load, typeFilter, entity]);
+  }, [presentation, panelOpen, load, entity]);
 
   const handleSaveNameChange = useCallback((value: string) => {
     setSaveName(value);

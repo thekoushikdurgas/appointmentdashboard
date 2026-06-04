@@ -58,6 +58,16 @@ Runs as part of `npm run ci` (after tests: `css:inventory`, then `check:best-pra
 - **Reports:** `npm run css:inventory` (also step `[0]` in `codebase_state.bat`) writes `reports/css-inventory.txt` for audits and CI artifacts.
 - **Deeper guide:** [docs/CSS.md](docs/CSS.md) — interpreting the inventory report, splitting partials, and checker thresholds.
 
+## Billing and credits
+
+Wallet fields come from `billing { billing { ... } }` via [`src/services/graphql/billingService.ts`](src/services/graphql/billingService.ts):
+
+- **`credits`** — remaining daily plan allowance (resets UTC each day).
+- **`creditsLimit` / `creditsUsed`** — daily cap and usage today.
+- **`addonCredits`** — add-on pool (spent after daily allowance; cleared on subscription expiry).
+
+Plan catalog periods expose **`dailyCreditsLimit`** (preferred for UI) and legacy bundle **`credits`**. See [../api/docs/BILLING_DAILY_CREDITS.md](../api/docs/BILLING_DAILY_CREDITS.md). Plan CRUD and payment approval queues live in **admin**, not this app.
+
 ## Internal docs (app)
 
 - `docs/DIALOG-PATTERNS.md` — Sonner vs SweetAlert policy

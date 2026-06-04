@@ -126,36 +126,6 @@ export interface PaymentSubmissionConnection {
   hasPrevious: boolean;
 }
 
-export interface CreatePlanResult {
-  message: string;
-  category: string;
-}
-
-export interface UpdatePlanResult {
-  message: string;
-  category: string;
-}
-
-export interface DeletePlanResult {
-  message: string;
-  category: string;
-}
-
-export interface CreateAddonResult {
-  message: string;
-  id: string;
-}
-
-export interface UpdateAddonResult {
-  message: string;
-  id: string;
-}
-
-export interface DeleteAddonResult {
-  message: string;
-  id: string;
-}
-
 const PLAN_PERIOD_FIELDS = `
   period
   credits
@@ -337,60 +307,6 @@ const PURCHASE_ADDON = `mutation PurchaseAddon($input: PurchaseAddonInput!) {
   }
 }`;
 
-const CREATE_PLAN = `mutation CreatePlan($input: CreatePlanInput!) {
-  billing {
-    createPlan(input: $input) {
-      message
-      category
-    }
-  }
-}`;
-
-const UPDATE_PLAN = `mutation UpdatePlan($category: String!, $input: UpdatePlanInput!) {
-  billing {
-    updatePlan(category: $category, input: $input) {
-      message
-      category
-    }
-  }
-}`;
-
-const DELETE_PLAN = `mutation DeletePlan($category: String!) {
-  billing {
-    deletePlan(category: $category) {
-      message
-      category
-    }
-  }
-}`;
-
-const CREATE_ADDON = `mutation CreateAddon($input: CreateAddonInput!) {
-  billing {
-    createAddon(input: $input) {
-      message
-      id
-    }
-  }
-}`;
-
-const UPDATE_ADDON = `mutation UpdateAddon($packageId: String!, $input: UpdateAddonInput!) {
-  billing {
-    updateAddon(packageId: $packageId, input: $input) {
-      message
-      id
-    }
-  }
-}`;
-
-const DELETE_ADDON = `mutation DeleteAddon($packageId: String!) {
-  billing {
-    deleteAddon(packageId: $packageId) {
-      message
-      id
-    }
-  }
-}`;
-
 const UPDATE_PAYMENT_INSTRUCTIONS = `mutation UpdatePaymentInstructions($input: UpdatePaymentInstructionsInput!) {
   billing {
     updatePaymentInstructions(input: $input) {
@@ -535,49 +451,6 @@ export const billingService = {
     graphqlMutation<{ billing: { purchaseAddon: PurchaseAddonResult } }>(
       PURCHASE_ADDON,
       { input },
-    ),
-
-  createPlan: (input: unknown) =>
-    graphqlMutation<{ billing: { createPlan: CreatePlanResult } }>(
-      CREATE_PLAN,
-      { input },
-    ),
-
-  updatePlan: (category: string, input: unknown) =>
-    graphqlMutation<{ billing: { updatePlan: UpdatePlanResult } }>(
-      UPDATE_PLAN,
-      { category, input },
-    ),
-
-  deletePlan: (category: string) =>
-    graphqlMutation<{ billing: { deletePlan: DeletePlanResult } }>(
-      DELETE_PLAN,
-      { category },
-    ),
-
-  createAddon: (input: {
-    id: string;
-    name: string;
-    credits: number;
-    ratePerCredit: number;
-    price: number;
-    isActive?: boolean;
-  }) =>
-    graphqlMutation<{ billing: { createAddon: CreateAddonResult } }>(
-      CREATE_ADDON,
-      { input },
-    ),
-
-  updateAddon: (packageId: string, input: unknown) =>
-    graphqlMutation<{ billing: { updateAddon: UpdateAddonResult } }>(
-      UPDATE_ADDON,
-      { packageId, input },
-    ),
-
-  deleteAddon: (packageId: string) =>
-    graphqlMutation<{ billing: { deleteAddon: DeleteAddonResult } }>(
-      DELETE_ADDON,
-      { packageId },
     ),
 
   updatePaymentInstructions: (input: {

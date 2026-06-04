@@ -29,8 +29,8 @@ export function BillingCreditSummary({
       </Card>
 
       <Card
-        title="Credit Add-on Packages"
-        subtitle="Purchase additional credits without changing your plan"
+        title="Credit add-on packages"
+        subtitle="One-time purchases added to your addon pool (used after daily plan credits; cleared when your subscription ends)"
         className="c360-mt-4"
       >
         {addons.length === 0 ? (
@@ -49,7 +49,7 @@ export function BillingCreditSummary({
                     {addon.name}
                   </p>
                   <p className="c360-page-subtitle c360-mb-3">
-                    {addon.credits.toLocaleString()} credits
+                    {addon.credits.toLocaleString()} addon pool credits
                   </p>
                   <p className="c360-font-bold c360-text-xl c360-text-primary c360-mb-4">
                     ${addon.price}
