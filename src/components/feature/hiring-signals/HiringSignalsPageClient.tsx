@@ -121,6 +121,7 @@ function HiringSignalsPageBody({
   const { activeDraftCount, resetFilters } = useHireSignalFilter();
   const isDesktop = useIsDesktop();
   const { isAdmin, isSuperAdmin } = useRole();
+  const canExportHireSignalXlsx = isAdmin || isSuperAdmin;
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
   const showRunsTab = isAdmin;
   /** Tab strip only when Runs is available (Signals is always the default view). */
@@ -284,20 +285,20 @@ function HiringSignalsPageBody({
       const parsed0 = parseStatusPayload(row.statusPayload);
       const rawPct0 =
         row.statusPayload &&
-        typeof row.statusPayload === "object" &&
-        typeof (row.statusPayload as Record<string, unknown>)
-          .progress_percent === "number"
+          typeof row.statusPayload === "object" &&
+          typeof (row.statusPayload as Record<string, unknown>)
+            .progress_percent === "number"
           ? ((row.statusPayload as Record<string, unknown>)
-              .progress_percent as number)
+            .progress_percent as number)
           : null;
       const prog0 =
         rawPct0 != null && rawPct0 > 0
           ? Math.min(100, Math.max(0, Math.round(rawPct0)))
           : deriveDisplayProgressPercent(st0.toUpperCase(), {
-              progress: parsed0.progress,
-              total: parsed0.total,
-              processed: parsed0.processed,
-            });
+            progress: parsed0.progress,
+            total: parsed0.total,
+            processed: parsed0.processed,
+          });
       setExportBanner({
         jobId: row.jobId,
         status: st0,
@@ -317,6 +318,13 @@ function HiringSignalsPageBody({
 
   const handleExportIntent = useCallback(
     async (intent: HiringSignalsExportIntent) => {
+      if (!canExportHireSignalXlsx) {
+        toast.message("Coming soon", {
+          description:
+            "XLSX export is available for admin accounts. Contact your admin or view plans.",
+        });
+        return;
+      }
       setExportBusy(true);
       try {
         let linkedinJobIds: string[] = [];
@@ -368,6 +376,7 @@ function HiringSignalsPageBody({
       }
     },
     [
+      canExportHireSignalXlsx,
       effectiveJobListFilters,
       hireSignalExportIdCap,
       isAdmin,
@@ -394,20 +403,20 @@ function HiringSignalsPageBody({
             const parsed = parseStatusPayload(row.statusPayload);
             const rawPct =
               row.statusPayload &&
-              typeof row.statusPayload === "object" &&
-              typeof (row.statusPayload as Record<string, unknown>)
-                .progress_percent === "number"
+                typeof row.statusPayload === "object" &&
+                typeof (row.statusPayload as Record<string, unknown>)
+                  .progress_percent === "number"
                 ? ((row.statusPayload as Record<string, unknown>)
-                    .progress_percent as number)
+                  .progress_percent as number)
                 : null;
             const prog =
               rawPct != null && rawPct > 0
                 ? Math.min(100, Math.max(0, Math.round(rawPct)))
                 : deriveDisplayProgressPercent(st.toUpperCase(), {
-                    progress: parsed.progress,
-                    total: parsed.total,
-                    processed: parsed.processed,
-                  });
+                  progress: parsed.progress,
+                  total: parsed.total,
+                  processed: parsed.processed,
+                });
             setExportBanner((b) =>
               b && b.jobId === exportBanner.jobId
                 ? { jobId: b.jobId, status: st, progress: prog }
@@ -503,10 +512,18 @@ function HiringSignalsPageBody({
         actions={[
           {
             label: "Export XLSX",
-            onClick: () => setExportModalOpen(true),
+            onClick: () => {
+              if (!canExportHireSignalXlsx) return;
+              setExportModalOpen(true);
+            },
             icon: Download,
             variant: "secondary",
-            disabled: loading || total === 0,
+            disabled: canExportHireSignalXlsx
+              ? loading || total === 0
+              : true,
+            title: canExportHireSignalXlsx
+              ? undefined
+              : "Coming soon — XLSX export is available for admin accounts",
           },
           {
             label: "Refresh",
@@ -517,13 +534,13 @@ function HiringSignalsPageBody({
           },
           ...(isSuperAdmin
             ? [
-                {
-                  label: "Run scrape",
-                  onClick: () => setScrapeModalOpen(true),
-                  icon: Play,
-                  variant: "primary" as const,
-                },
-              ]
+              {
+                label: "Run scrape",
+                onClick: () => setScrapeModalOpen(true),
+                icon: Play,
+                variant: "primary" as const,
+              },
+            ]
             : []),
         ]}
       />
@@ -534,6 +551,7 @@ function HiringSignalsPageBody({
       filters.globalSearchTokens,
       filters.limit,
       filters.runId,
+      canExportHireSignalXlsx,
       isDesktop,
       isSuperAdmin,
       loading,
@@ -662,7 +680,7 @@ function HiringSignalsPageBody({
                     to download when complete.
                   </p>
                   {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
-                  exportBanner.status.toUpperCase() !== "FAILED" ? (
+                    exportBanner.status.toUpperCase() !== "FAILED" ? (
                     <Progress
                       value={exportBanner.progress}
                       max={100}
@@ -727,18 +745,20 @@ function HiringSignalsPageBody({
         onClose={() => setDrawerRow(null)}
       />
 
-      <HiringSignalsExportModal
-        isOpen={exportModalOpen}
-        onClose={() => !exportBusy && setExportModalOpen(false)}
-        jobs={jobs}
-        totalMatching={total}
-        selectedKeys={selectedKeys}
-        defaultFirstN={filters.limit}
-        maxExportJobIds={hireSignalExportIdCap}
-        staffExport={isAdmin || isSuperAdmin}
-        busy={exportBusy}
-        onConfirm={(intent) => void handleExportIntent(intent)}
-      />
+      {canExportHireSignalXlsx ? (
+        <HiringSignalsExportModal
+          isOpen={exportModalOpen}
+          onClose={() => !exportBusy && setExportModalOpen(false)}
+          jobs={jobs}
+          totalMatching={total}
+          selectedKeys={selectedKeys}
+          defaultFirstN={filters.limit}
+          maxExportJobIds={hireSignalExportIdCap}
+          staffExport={isAdmin || isSuperAdmin}
+          busy={exportBusy}
+          onConfirm={(intent) => void handleExportIntent(intent)}
+        />
+      ) : null}
 
       {isSuperAdmin ? (
         <RunScrapeModal

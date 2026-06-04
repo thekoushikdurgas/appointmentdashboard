@@ -114,17 +114,14 @@
   display: flex;
   align-items: flex-start;
   gap: var(--c360-spacing-3);
-  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3)
-    var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3) var(--c360-spacing-3);
   text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
   color: inherit;
 }
 
-.c360-saved-searches-panel__item-main:hover {
-  background: var(--c360-bg-hover);
+.c360-saved-searches-panel__item-apply {
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .c360-saved-searches-panel__item-icon {

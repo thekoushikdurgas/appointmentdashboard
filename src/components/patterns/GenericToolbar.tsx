@@ -26,6 +26,8 @@ export interface ToolbarAction {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   icon?: LucideIcon;
   disabled?: boolean;
+  /** Native tooltip when the action is disabled (e.g. coming soon). */
+  title?: string;
 }
 
 export interface FilterConfig {
@@ -174,6 +176,7 @@ export function GenericToolbar({
                 variant={action.variant ?? "secondary"}
                 size="sm"
                 disabled={action.disabled}
+                title={action.title}
                 onClick={action.onClick}
                 leftIcon={Icon ? <Icon size={14} /> : undefined}
               >
