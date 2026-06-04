@@ -39,9 +39,9 @@ export function hireSignalRunsFromJson(raw: HireSignalApiJson): {
   const data = r?.data;
   const rows = Array.isArray(data)
     ? data.filter(
-        (x): x is Record<string, unknown> =>
-          !!x && typeof x === "object" && !Array.isArray(x),
-      )
+      (x): x is Record<string, unknown> =>
+        !!x && typeof x === "object" && !Array.isArray(x),
+    )
     : [];
   const total = typeof r?.total === "number" ? r.total : rows.length;
   return { rows, total };
@@ -563,9 +563,24 @@ function buildExtendedJobFilters(
         ? [filters.employmentType.trim()]
         : undefined;
   if (emp?.length) x.employmentTypes = emp;
-  if (filters.industries?.length) x.industries = filters.industries;
-  if (filters.excludedIndustries?.length)
-    x.excludedIndustries = filters.excludedIndustries;
+  const industryTokens = [
+    ...(filters.industries ?? []),
+    ...(filters.companyIndustries ?? []),
+  ]
+    .map((s) => String(s).trim())
+    .filter(Boolean);
+  if (industryTokens.length) {
+    x.industries = [...new Set(industryTokens)];
+  }
+  const excludedIndustryTokens = [
+    ...(filters.excludedIndustries ?? []),
+    ...(filters.excludedCompanyIndustries ?? []),
+  ]
+    .map((s) => String(s).trim())
+    .filter(Boolean);
+  if (excludedIndustryTokens.length) {
+    x.excludedIndustries = [...new Set(excludedIndustryTokens)];
+  }
   if (filters.excludedTitles?.length) x.excludedTitles = filters.excludedTitles;
   if (filters.excludedCompanies?.length)
     x.excludedCompanies = filters.excludedCompanies;
@@ -622,12 +637,7 @@ function buildExtendedJobFilters(
   if (filters.excludedCompanyCountries?.length) {
     x.excludedCompanyCountries = filters.excludedCompanyCountries;
   }
-  if (filters.companyIndustries?.length) {
-    x.companyIndustries = filters.companyIndustries;
-  }
-  if (filters.excludedCompanyIndustries?.length) {
-    x.excludedCompanyIndustries = filters.excludedCompanyIndustries;
-  }
+  // companyIndustries merged into industries above (wildcard job index match).
   if (filters.companyMissingWebsite) {
     x.companyMissingWebsite = true;
   }
@@ -863,7 +873,7 @@ function hireSignalJobListFilterVars(filters: JobListFilters) {
         : null,
     searchTokens:
       filters.globalSearchTokens?.length &&
-      filters.globalSearchTokens.length > 0
+        filters.globalSearchTokens.length > 0
         ? filters.globalSearchTokens
         : null,
   };
@@ -896,7 +906,7 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
     offset,
     ...hireSignalJobListFilterVars(filters),
   };
-  return graphqlQuery<{
+  const queryResult = await graphqlQuery<{
     hireSignal: { jobs: HireSignalApiJson };
   }>(
     HIRE_SIGNAL_JOBS,
@@ -905,6 +915,37 @@ export async function fetchHiringSignalJobs(filters: JobListFilters) {
     // made "next page" look stuck when combined with loading only on empty rows.
     { ...HS_GQL, cacheTtlMs: 0 },
   );
+  // #region agent log
+  {
+    const jobsRaw = queryResult.hireSignal?.jobs;
+    const env = asRecord(jobsRaw);
+    fetch(
+      "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "78fe0b",
+        },
+        body: JSON.stringify({
+          sessionId: "78fe0b",
+          hypothesisId: "A,C,D",
+          location: "hiringSignalService.ts:fetchHiringSignalJobs",
+          message: "hire signal jobs response",
+          data: {
+            extendedJobFilters: gqlVars.extendedJobFilters,
+            titles: gqlVars.titles,
+            total: env?.total,
+            success: env?.success,
+            dataLen: Array.isArray(env?.data) ? env.data.length : null,
+          },
+          timestamp: Date.now(),
+        }),
+      },
+    ).catch(() => { });
+  }
+  // #endregion
+  return queryResult;
 }
 
 export async function fetchHireSignalJobFilterOptions(
@@ -970,7 +1011,7 @@ export async function fetchHireSignalCompanyFundingFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_funding")) {
       throw new Error(
         "Funding filter requires a restarted GraphQL API (company_funding). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -992,7 +1033,7 @@ export async function fetchHireSignalCompanyCountryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_country")) {
       throw new Error(
         "Country filter requires a restarted GraphQL API (company_country). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1014,7 +1055,7 @@ export async function fetchHireSignalCompanyIndustryFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_industry")) {
       throw new Error(
         "Industry filter requires a restarted GraphQL API (company_industry). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1036,7 +1077,7 @@ export async function fetchHireSignalCompanyEmployeeSizeFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_employee_size")) {
       throw new Error(
         "Employee size filter requires a restarted GraphQL API (company_employee_size). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1058,7 +1099,7 @@ export async function fetchHireSignalCompanyRevenueFilterOptions(
     if (isStaleCompanyCohortFieldError(err, "company_revenue")) {
       throw new Error(
         "Revenue filter requires a restarted GraphQL API (company_revenue). " +
-          "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
+        "Restart contact360.io/api, then rebuild job.server for job counts in brackets.",
       );
     }
     throw err;
@@ -1132,8 +1173,8 @@ export function parseResolveCompanyCohortPayload(
     : [];
   const excludedUuids = Array.isArray(r?.excludedUuids)
     ? (r.excludedUuids as unknown[])
-        .map((x) => String(x).trim())
-        .filter(Boolean)
+      .map((x) => String(x).trim())
+      .filter(Boolean)
     : [];
   const total = typeof r?.total === "number" ? r.total : uuids.length;
   return {
@@ -1421,7 +1462,7 @@ export async function fetchLinkedinJobIdsAllMatching(
   let offset = 0;
   let totalMatching = 0;
 
-  for (;;) {
+  for (; ;) {
     const res = await fetchHiringSignalJobs({
       ...filters,
       limit: HS_EXPORT_FETCH_BATCH,
