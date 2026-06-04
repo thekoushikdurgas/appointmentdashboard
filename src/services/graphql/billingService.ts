@@ -1,10 +1,12 @@
 import { graphqlQuery, graphqlMutation } from "@/lib/graphqlClient";
 
-/** Wallet + plan; API returns unlimited-style values only for SuperAdmin. */
+/** Wallet + plan; API returns unlimited-style values for SuperAdmin/Admin. */
 export interface BillingInfoRow {
   credits: number;
   creditsUsed: number;
   creditsLimit: number;
+  addonCredits?: number;
+  dailyCreditsLimit?: number;
   subscriptionPlan: string;
   subscriptionPeriod: string | null;
   subscriptionStatus: string;
@@ -29,6 +31,7 @@ export interface SavingsRow {
 export interface PlanPeriodRow {
   period: string;
   credits: number;
+  dailyCreditsLimit: number;
   ratePerCredit: number;
   price: number;
   savings?: SavingsRow | null;
@@ -47,9 +50,8 @@ export interface PlanFeatureRow {
 }
 
 export interface SubscriptionPlanRow {
-  tier: string;
-  name: string;
   category: string;
+  name: string;
   periods: PlanPeriodsRow;
   features?: PlanFeatureRow[];
 }
@@ -103,7 +105,7 @@ export interface PaymentSubmission {
   screenshotS3Key: string;
   creditsToAdd: number;
   status: string;
-  planTier?: string | null;
+  planCategory?: string | null;
   planPeriod?: string | null;
   addonPackageId?: string | null;
   createdAt: string;
@@ -126,17 +128,17 @@ export interface PaymentSubmissionConnection {
 
 export interface CreatePlanResult {
   message: string;
-  tier: string;
+  category: string;
 }
 
 export interface UpdatePlanResult {
   message: string;
-  tier: string;
+  category: string;
 }
 
 export interface DeletePlanResult {
   message: string;
-  tier: string;
+  category: string;
 }
 
 export interface CreateAddonResult {
@@ -157,6 +159,7 @@ export interface DeleteAddonResult {
 const PLAN_PERIOD_FIELDS = `
   period
   credits
+  dailyCreditsLimit
   ratePerCredit
   price
   savings {
@@ -171,6 +174,8 @@ const BILLING_CORE = `query BillingCore {
       credits
       creditsUsed
       creditsLimit
+      addonCredits
+      dailyCreditsLimit
       subscriptionPlan
       subscriptionPeriod
       subscriptionStatus
@@ -184,9 +189,8 @@ const BILLING_CORE = `query BillingCore {
 const BILLING_PLANS = `query BillingPlans {
   billing {
     plans {
-      tier
-      name
       category
+      name
       periods {
         monthly { ${PLAN_PERIOD_FIELDS} }
         quarterly { ${PLAN_PERIOD_FIELDS} }
@@ -266,7 +270,7 @@ const MY_PAYMENT_SUBMISSIONS_QUERY = `query MyPaymentSubmissions($status: String
         screenshotS3Key
         creditsToAdd
         status
-        planTier
+        planCategory
         planPeriod
         addonPackageId
         createdAt
@@ -293,7 +297,7 @@ const PAYMENT_SUBMISSIONS_QUERY = `query PaymentSubmissions($status: String, $li
         screenshotS3Key
         creditsToAdd
         status
-        planTier
+        planCategory
         planPeriod
         addonPackageId
         createdAt
@@ -337,25 +341,25 @@ const CREATE_PLAN = `mutation CreatePlan($input: CreatePlanInput!) {
   billing {
     createPlan(input: $input) {
       message
-      tier
+      category
     }
   }
 }`;
 
-const UPDATE_PLAN = `mutation UpdatePlan($tier: String!, $input: UpdatePlanInput!) {
+const UPDATE_PLAN = `mutation UpdatePlan($category: String!, $input: UpdatePlanInput!) {
   billing {
-    updatePlan(tier: $tier, input: $input) {
+    updatePlan(category: $category, input: $input) {
       message
-      tier
+      category
     }
   }
 }`;
 
-const DELETE_PLAN = `mutation DeletePlan($tier: String!) {
+const DELETE_PLAN = `mutation DeletePlan($category: String!) {
   billing {
-    deletePlan(tier: $tier) {
+    deletePlan(category: $category) {
       message
-      tier
+      category
     }
   }
 }`;
@@ -505,15 +509,21 @@ export const billingService = {
       offset: args?.offset ?? 0,
     }),
 
-  subscribe: (input: { tier: string; period: string }) =>
+  subscribe: (input: { category: string; period: string }) =>
     graphqlMutation<{ billing: { subscribe: SubscribeResult } }>(SUBSCRIBE, {
-      input,
+      input: {
+        category: input.category.trim().toUpperCase(),
+        period: input.period,
+      },
     }),
 
-  /** @deprecated Alias for `subscribe` (tier + period). */
+  /** @deprecated Alias for `subscribe` (category + period). */
   upgradePlan: (input: { plan: string; period?: string }) =>
     graphqlMutation<{ billing: { subscribe: SubscribeResult } }>(SUBSCRIBE, {
-      input: { tier: input.plan, period: input.period ?? "monthly" },
+      input: {
+        category: input.plan.trim().toUpperCase(),
+        period: input.period ?? "monthly",
+      },
     }),
 
   cancelSubscription: () =>
@@ -533,16 +543,16 @@ export const billingService = {
       { input },
     ),
 
-  updatePlan: (tier: string, input: unknown) =>
+  updatePlan: (category: string, input: unknown) =>
     graphqlMutation<{ billing: { updatePlan: UpdatePlanResult } }>(
       UPDATE_PLAN,
-      { tier, input },
+      { category, input },
     ),
 
-  deletePlan: (tier: string) =>
+  deletePlan: (category: string) =>
     graphqlMutation<{ billing: { deletePlan: DeletePlanResult } }>(
       DELETE_PLAN,
-      { tier },
+      { category },
     ),
 
   createAddon: (input: {
@@ -605,7 +615,7 @@ export const billingService = {
     amount: number;
     screenshotS3Key: string;
     creditsToAdd: number;
-    planTier?: string | null;
+    planCategory?: string | null;
     planPeriod?: string | null;
     addonPackageId?: string | null;
   }) =>

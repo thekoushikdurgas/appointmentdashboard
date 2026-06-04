@@ -43,7 +43,7 @@ export interface BillingCheckoutWizardProps {
     amount: number;
     screenshotS3Key: string;
     creditsToAdd: number;
-    planTier?: string;
+    planCategory?: string;
     planPeriod?: string;
     addonPackageId?: string;
   }) => Promise<void>;
@@ -187,7 +187,7 @@ export function BillingCheckoutWizard({
         amount: amt,
         screenshotS3Key: screenshotKey.trim(),
         creditsToAdd: creds,
-        planTier:
+        planCategory:
           checkoutKind === "plan" && selectedPlanId
             ? selectedPlanId
             : undefined,
@@ -307,7 +307,7 @@ export function BillingCheckoutWizard({
                     className={cn(
                       "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
                       selectedPlanId === p.id &&
-                        "c360-billing-checkout-plan-row--selected",
+                      "c360-billing-checkout-plan-row--selected",
                     )}
                   >
                     <div
@@ -361,7 +361,7 @@ export function BillingCheckoutWizard({
                   className={cn(
                     "c360-flex c360-items-center c360-gap-3 c360-billing-checkout-plan-row",
                     selectedAddonId === a.id &&
-                      "c360-billing-checkout-plan-row--selected",
+                    "c360-billing-checkout-plan-row--selected",
                   )}
                 >
                   <div className="c360-flex-1">

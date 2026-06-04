@@ -20,9 +20,11 @@ interface RoleContextValue {
   role: UserRole;
   plan: SubscriptionPlan;
   credits: number;
-  /** From billing API (usage vs plan limit). */
+  /** From billing API (usage vs daily plan limit). */
   creditsUsed: number;
   creditsLimit: number;
+  addonCredits: number;
+  dailyCreditsLimit: number;
   isAdmin: boolean;
   isSuperAdmin: boolean;
   /** True for backend `ProUser` (frontend `ROLES.USER`) and `SuperAdmin`; not subscription plan. */
@@ -77,6 +79,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [creditsUsed, setCreditsUsed] = useState(0);
   const [creditsLimit, setCreditsLimit] = useState(0);
+  const [addonCredits, setAddonCredits] = useState(0);
+  const [dailyCreditsLimit, setDailyCreditsLimit] = useState(0);
 
   const role = (user?.role as UserRole) ?? ROLES.FREE;
   const plan = (user?.subscription_plan as SubscriptionPlan) ?? PLANS.FREE;
@@ -86,6 +90,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     if (!user) {
       setCreditsUsed(0);
       setCreditsLimit(0);
+      setAddonCredits(0);
+      setDailyCreditsLimit(0);
       return;
     }
     try {
@@ -94,6 +100,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       if (b) {
         setCreditsUsed(b.creditsUsed);
         setCreditsLimit(b.creditsLimit);
+        setAddonCredits(b.addonCredits ?? 0);
+        setDailyCreditsLimit(b.dailyCreditsLimit ?? b.creditsLimit);
       }
     } catch {
       /* keep previous */
@@ -129,6 +137,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
         credits,
         creditsUsed,
         creditsLimit,
+        addonCredits,
+        dailyCreditsLimit,
         isAdmin,
         isSuperAdmin,
         isPro,

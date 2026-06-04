@@ -39,7 +39,7 @@ export function BillingPaymentProofForm({
   const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [creditsToAdd, setCreditsToAdd] = useState("");
-  const [planTier, setPlanTier] = useState("");
+  const [planCategory, setPlanCategory] = useState("");
   const [planPeriod, setPlanPeriod] = useState("monthly");
   const [addonPackageId, setAddonPackageId] = useState("");
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -99,14 +99,14 @@ export function BillingPaymentProofForm({
       return;
     }
     const addon = addonPackageId.trim();
-    const tier = planTier.trim();
+    const category = planCategory.trim().toUpperCase();
     const period = planPeriod.trim();
-    if (addon && (tier || period)) {
+    if (addon && (category || period)) {
       setError("Use either add-on package or plan fields, not both.");
       return;
     }
-    if ((tier || period) && !(tier && period)) {
-      setError("Set both plan tier and period, or leave both empty.");
+    if ((category || period) && !(category && period)) {
+      setError("Set both plan category and period, or leave both empty.");
       return;
     }
     setError(null);
@@ -116,8 +116,8 @@ export function BillingPaymentProofForm({
         screenshotS3Key: screenshotKey.trim(),
         amount: amountNum,
         creditsToAdd: creditsNum,
-        planTier: tier || undefined,
-        planPeriod: tier && period ? period : undefined,
+        planCategory: category || undefined,
+        planPeriod: category && period ? period : undefined,
         addonPackageId: addon || undefined,
       });
       setSubmitted(true);
@@ -193,9 +193,9 @@ export function BillingPaymentProofForm({
           placeholder="e.g. small — leave empty if paying for a plan"
         />
         <Input
-          label="Plan tier (optional)"
-          value={planTier}
-          onChange={(e) => setPlanTier(e.target.value)}
+          label="Plan category (optional)"
+          value={planCategory}
+          onChange={(e) => setPlanCategory(e.target.value)}
           placeholder="e.g. 5k"
         />
         <Input

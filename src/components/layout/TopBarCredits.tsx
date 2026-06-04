@@ -4,7 +4,7 @@ import { useRole } from "@/context/RoleContext";
 
 /** Credits summary in the account context menu panel. */
 export function TopBarCredits() {
-  const { credits, creditsUsed, creditsLimit } = useRole();
+  const { credits, creditsUsed, creditsLimit, addonCredits } = useRole();
 
   const pct =
     creditsLimit > 0
@@ -27,10 +27,17 @@ export function TopBarCredits() {
           <div className="c360-topbar__credits-meta">
             <span className="c360-topbar__credits-usage">
               {creditsUsed.toLocaleString()} / {creditsLimit.toLocaleString()}{" "}
-              used
+              daily used
             </span>
             <span className="c360-topbar__credits-badge">{pct}%</span>
           </div>
+          {addonCredits > 0 ? (
+            <div className="c360-topbar__credits-meta">
+              <span className="c360-topbar__credits-usage">
+                +{addonCredits.toLocaleString()} addon credits
+              </span>
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="c360-topbar__credits-meta">

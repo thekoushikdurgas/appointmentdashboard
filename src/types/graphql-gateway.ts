@@ -96,10 +96,19 @@ export function normalizeGatewayRole(
 export function normalizeSubscriptionPlan(
   plan: string | null | undefined,
 ): SubscriptionPlan {
-  const p = (plan ?? "").toLowerCase();
-  if (p.includes("enterprise")) return PLANS.ENTERPRISE;
-  if (p.includes("professional") || p.includes("pro"))
+  const p = (plan ?? "").trim();
+  const upper = p.toUpperCase();
+  if (upper === "ENTERPRISE" || p.toLowerCase().includes("enterprise"))
+    return PLANS.ENTERPRISE;
+  if (
+    upper === "PROFESSIONAL" ||
+    p.toLowerCase().includes("professional") ||
+    p.toLowerCase() === "pro"
+  )
     return PLANS.PROFESSIONAL;
-  if (p.includes("starter")) return PLANS.STARTER;
+  if (upper === "BUSINESS" || p.toLowerCase().includes("business"))
+    return PLANS.ENTERPRISE;
+  if (upper === "STARTER" || p.toLowerCase().includes("starter"))
+    return PLANS.STARTER;
   return PLANS.FREE;
 }

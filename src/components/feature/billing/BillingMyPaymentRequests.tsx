@@ -101,8 +101,8 @@ export function BillingMyPaymentRequests({
                 <div className="c360-text-xs c360-text-muted">
                   {row.addonPackageId
                     ? `Add-on: ${row.addonPackageId}`
-                    : row.planTier
-                      ? `Plan: ${row.planTier} / ${row.planPeriod ?? ""}`
+                    : row.planCategory
+                      ? `Plan: ${row.planCategory} / ${row.planPeriod ?? ""}`
                       : "Credits top-up"}
                   {" · "}
                   Submitted {new Date(row.createdAt).toLocaleString()}

@@ -108,7 +108,7 @@ export default function BillingPage() {
           if (features.length === 0) features.push("See checkout for pricing");
         }
         return {
-          id: p.tier,
+          id: p.category,
           name: p.name,
           price,
           pricesByPeriod: {
@@ -125,7 +125,7 @@ export default function BillingPage() {
           bg: a.bg,
           color: a.color,
           icon: <Star size={20} />,
-          popular: /professional|pro/i.test(p.tier),
+          popular: /professional|pro/i.test(p.category),
         };
       }),
     [apiPlans],
@@ -180,7 +180,12 @@ export default function BillingPage() {
   useEffect(() => {
     if (billingInfo) {
       setLivePlan(billingInfo.subscriptionPlan);
-      setCreditsInfo(`${billingInfo.credits} / ${billingInfo.creditsLimit}`);
+      const addon = billingInfo.addonCredits ?? 0;
+      setCreditsInfo(
+        addon > 0
+          ? `${billingInfo.credits} daily · +${addon} addon`
+          : `${billingInfo.credits} daily remaining`,
+      );
     }
   }, [billingInfo]);
 
@@ -205,7 +210,7 @@ export default function BillingPage() {
     amount: number;
     screenshotS3Key: string;
     creditsToAdd: number;
-    planTier?: string;
+    planCategory?: string;
     planPeriod?: string;
     addonPackageId?: string;
   }) => {
@@ -213,7 +218,7 @@ export default function BillingPage() {
       amount: payload.amount,
       screenshotS3Key: payload.screenshotS3Key,
       creditsToAdd: payload.creditsToAdd,
-      planTier: payload.planTier,
+      planCategory: payload.planCategory,
       planPeriod: payload.planPeriod,
       addonPackageId: payload.addonPackageId,
     });
@@ -263,10 +268,19 @@ export default function BillingPage() {
           {billingInfo && billingInfo.creditsLimit > 0 && (
             <div className="c360-billing-page__credits-meter">
               <div className="c360-text-xs c360-text-muted c360-mb-1">
-                Credit usage ({billingInfo.creditsUsed.toLocaleString()} /{" "}
-                {billingInfo.creditsLimit.toLocaleString()})
+                Daily plan credits ({billingInfo.creditsUsed.toLocaleString()}{" "}
+                / {billingInfo.creditsLimit.toLocaleString()} used today)
               </div>
               <Progress value={billingInfo.usagePercentage} />
+              {(billingInfo.addonCredits ?? 0) > 0 ? (
+                <div className="c360-text-xs c360-text-muted c360-mt-1">
+                  Addon pool:{" "}
+                  {(billingInfo.addonCredits ?? 0).toLocaleString()} credits
+                  {billingInfo.subscriptionEndsAt
+                    ? ` (until subscription ends)`
+                    : ""}
+                </div>
+              ) : null}
             </div>
           )}
           {subscriptionPeriodBanner && (
