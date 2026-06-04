@@ -40,11 +40,18 @@ export interface PlanPeriodsRow {
   yearly?: PlanPeriodRow | null;
 }
 
+export interface PlanFeatureRow {
+  id: number;
+  label: string;
+  sortOrder: number;
+}
+
 export interface SubscriptionPlanRow {
   tier: string;
   name: string;
   category: string;
   periods: PlanPeriodsRow;
+  features?: PlanFeatureRow[];
 }
 
 export interface SubscribeResult {
@@ -184,6 +191,11 @@ const BILLING_PLANS = `query BillingPlans {
         monthly { ${PLAN_PERIOD_FIELDS} }
         quarterly { ${PLAN_PERIOD_FIELDS} }
         yearly { ${PLAN_PERIOD_FIELDS} }
+      }
+      features {
+        id
+        label
+        sortOrder
       }
     }
   }

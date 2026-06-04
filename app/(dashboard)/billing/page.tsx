@@ -90,15 +90,23 @@ export default function BillingPage() {
         const quarterly = p.periods?.quarterly;
         const yearly = p.periods?.yearly;
         const price = typeof monthly?.price === "number" ? monthly.price : null;
-        const features: string[] = [];
-        if (p.category) features.push(`Category: ${p.category}`);
-        if (monthly?.credits != null)
-          features.push(`${monthly.credits.toLocaleString()} credits / month`);
-        if (yearly?.savings?.percentage != null)
-          features.push(
-            `Yearly option: save ~${yearly.savings.percentage}% vs monthly`,
-          );
-        if (features.length === 0) features.push("See checkout for pricing");
+        const apiFeatures =
+          p.features && p.features.length > 0
+            ? [...p.features]
+              .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
+              .map((f) => f.label)
+            : null;
+        const features: string[] = apiFeatures ?? [];
+        if (!apiFeatures) {
+          if (p.category) features.push(`Category: ${p.category}`);
+          if (monthly?.credits != null)
+            features.push(`${monthly.credits.toLocaleString()} credits / month`);
+          if (yearly?.savings?.percentage != null)
+            features.push(
+              `Yearly option: save ~${yearly.savings.percentage}% vs monthly`,
+            );
+          if (features.length === 0) features.push("See checkout for pricing");
+        }
         return {
           id: p.tier,
           name: p.name,
@@ -266,7 +274,7 @@ export default function BillingPage() {
               <Alert
                 variant={
                   subscriptionPeriodBanner.daysLeft <=
-                  SUBSCRIPTION_END_WARNING_DAYS
+                    SUBSCRIPTION_END_WARNING_DAYS
                     ? "warning"
                     : "info"
                 }
@@ -284,15 +292,14 @@ export default function BillingPage() {
                   </strong>
                   {subscriptionPeriodBanner.daysLeft >= 0 &&
                     subscriptionPeriodBanner.daysLeft <=
-                      SUBSCRIPTION_END_WARNING_DAYS && (
+                    SUBSCRIPTION_END_WARNING_DAYS && (
                       <>
                         {" "}
                         (
                         {subscriptionPeriodBanner.daysLeft === 0
                           ? "last day"
-                          : `${subscriptionPeriodBanner.daysLeft} day${
-                              subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
-                            } left`}
+                          : `${subscriptionPeriodBanner.daysLeft} day${subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
+                          } left`}
                         ).
                       </>
                     )}
