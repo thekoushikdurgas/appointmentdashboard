@@ -114,8 +114,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--c360-spacing-3);
-  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3)
-    var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3) var(--c360-spacing-3);
   text-align: left;
   background: transparent;
   border: none;
@@ -185,6 +184,20 @@
 
 .c360-saved-searches-panel__item-count--loading .c360-spin {
   flex-shrink: 0;
+}
+
+.c360-saved-searches-panel__item-notify {
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--c360-text-muted);
+}
+
+.c360-saved-searches-panel__item-notify--active {
+  color: var(--c360-primary);
+}
+
+.c360-saved-searches-panel__item-notify:disabled {
+  opacity: 0.5;
 }
 
 .c360-saved-searches-panel__item-delete {

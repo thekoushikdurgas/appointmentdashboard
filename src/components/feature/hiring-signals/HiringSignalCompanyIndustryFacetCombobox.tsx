@@ -49,7 +49,7 @@ export interface HiringSignalCompanyIndustryFacetComboboxProps {
 }
 
 /**
- * Job posting industries from linkedin_jobs_index (`industries.keyword`) with job counts (job.server).
+ * Connectra company industries (companies_index) with job counts for job employers (job.server).
  */
 export function HiringSignalCompanyIndustryFacetCombobox({
   appliedListFilters,

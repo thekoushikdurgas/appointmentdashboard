@@ -563,23 +563,23 @@ function buildExtendedJobFilters(
         ? [filters.employmentType.trim()]
         : undefined;
   if (emp?.length) x.employmentTypes = emp;
-  const industryTokens = [
-    ...(filters.industries ?? []),
-    ...(filters.companyIndustries ?? []),
-  ]
-    .map((s) => String(s).trim())
-    .filter(Boolean);
-  if (industryTokens.length) {
-    x.industries = [...new Set(industryTokens)];
+  if (filters.industries?.length) {
+    x.industries = filters.industries.map((s) => String(s).trim()).filter(Boolean);
   }
-  const excludedIndustryTokens = [
-    ...(filters.excludedIndustries ?? []),
-    ...(filters.excludedCompanyIndustries ?? []),
-  ]
-    .map((s) => String(s).trim())
-    .filter(Boolean);
-  if (excludedIndustryTokens.length) {
-    x.excludedIndustries = [...new Set(excludedIndustryTokens)];
+  if (filters.excludedIndustries?.length) {
+    x.excludedIndustries = filters.excludedIndustries
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+  }
+  if (filters.companyIndustries?.length) {
+    x.companyIndustries = filters.companyIndustries
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+  }
+  if (filters.excludedCompanyIndustries?.length) {
+    x.excludedCompanyIndustries = filters.excludedCompanyIndustries
+      .map((s) => String(s).trim())
+      .filter(Boolean);
   }
   if (filters.excludedTitles?.length) x.excludedTitles = filters.excludedTitles;
   if (filters.excludedCompanies?.length)
@@ -637,7 +637,7 @@ function buildExtendedJobFilters(
   if (filters.excludedCompanyCountries?.length) {
     x.excludedCompanyCountries = filters.excludedCompanyCountries;
   }
-  // companyIndustries merged into industries above (wildcard job index match).
+  // companyIndustries → include_cohort_industry (Connectra company industry), not job posting text.
   if (filters.companyMissingWebsite) {
     x.companyMissingWebsite = true;
   }

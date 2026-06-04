@@ -60,6 +60,40 @@ export interface ComingSoonResponse {
   endpoint: string;
 }
 
+/** Daily hire-signal job digest (email.server client-configs). */
+export interface JobEmailNotificationConfig {
+  id: number;
+  isActive: boolean;
+  templateId?: string | null;
+  savedSearchId?: string | null;
+}
+
+const JOB_EMAIL_NOTIFICATION_CONFIG = `
+  query JobEmailNotificationConfig {
+    email {
+      jobEmailNotificationConfig {
+        id
+        isActive
+        templateId
+        savedSearchId
+      }
+    }
+  }
+`;
+
+const TOGGLE_JOB_EMAIL_NOTIFICATION = `
+  mutation ToggleJobEmailNotification($savedSearchId: ID!) {
+    email {
+      toggleJobEmailNotification(savedSearchId: $savedSearchId) {
+        id
+        isActive
+        templateId
+        savedSearchId
+      }
+    }
+  }
+`;
+
 const FIND_EMAILS = `
   query FindEmails($input: EmailFinderInput!) {
     email {
@@ -430,6 +464,16 @@ export const emailService = {
     graphqlQuery<{
       email: { predictEmailPatternBulk: EmailPatternPredictBulkResult };
     }>(PREDICT_EMAIL_PATTERN_BULK, { input: { items } }),
+
+  getJobEmailNotificationConfig: () =>
+    graphqlQuery<{
+      email: { jobEmailNotificationConfig: JobEmailNotificationConfig | null };
+    }>(JOB_EMAIL_NOTIFICATION_CONFIG),
+
+  toggleJobEmailNotification: (savedSearchId: string) =>
+    graphqlMutation<{
+      email: { toggleJobEmailNotification: JobEmailNotificationConfig };
+    }>(TOGGLE_JOB_EMAIL_NOTIFICATION, { savedSearchId }),
 
   /** @deprecated Use `findEmails`. */
   findSingle: (input: {

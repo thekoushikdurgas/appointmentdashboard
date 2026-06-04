@@ -8,7 +8,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { Bookmark, Loader2, Plus, Trash2 } from "lucide-react";
+import { Bell, BellOff, Bookmark, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
@@ -35,6 +35,10 @@ import { useSavedSearchContactCounts } from "@/hooks/useSavedSearchContactCounts
 import { useSavedSearchCompanyCounts } from "@/hooks/useSavedSearchCompanyCounts";
 import { useSavedSearchHireSignalJobCounts } from "@/hooks/useSavedSearchHireSignalJobCounts";
 import { SavedSearchCohortCount } from "@/components/feature/saved-searches/SavedSearchCohortCount";
+import {
+  emailService,
+  type JobEmailNotificationConfig,
+} from "@/services/graphql/emailService";
 
 type Entity = "contact" | "company" | "hire_signal";
 
@@ -221,6 +225,12 @@ export function SavedSearchesMenu({
   const [saveName, setSaveName] = useState("");
   const [saving, setSaving] = useState(false);
   const [internalPanelOpen, setInternalPanelOpen] = useState(false);
+  const [jobEmailConfig, setJobEmailConfig] =
+    useState<JobEmailNotificationConfig | null>(null);
+  const [jobEmailConfigLoading, setJobEmailConfigLoading] = useState(false);
+  const [emailNotifyTogglingId, setEmailNotifyTogglingId] = useState<
+    string | null
+  >(null);
   const saveNameInputRef = useRef<HTMLInputElement>(null);
   const loadInvocationRef = useRef(0);
   const popoverOpenRef = useRef(false);
@@ -261,6 +271,22 @@ export function SavedSearchesMenu({
   );
   const cohortCountsEnabled =
     contactCountsEnabled || companyCountsEnabled || hireSignalCountsEnabled;
+  const showJobEmailNotify =
+    entity === "hire_signal" && presentation === "panel";
+
+  const loadJobEmailConfig = useCallback(async () => {
+    if (!showJobEmailNotify) return;
+    setJobEmailConfigLoading(true);
+    try {
+      const res = await emailService.getJobEmailNotificationConfig();
+      setJobEmailConfig(res.email.jobEmailNotificationConfig ?? null);
+    } catch (e) {
+      toast.error(parseOperationError(e, "jobs").userMessage);
+      setJobEmailConfig(null);
+    } finally {
+      setJobEmailConfigLoading(false);
+    }
+  }, [showJobEmailNotify]);
 
   const load = useCallback(
     async (opts?: { fresh?: boolean; silent?: boolean }) => {
@@ -296,8 +322,42 @@ export function SavedSearchesMenu({
     if (presentation !== "panel") return;
     const opened = panelOpen && !panelWasOpenRef.current;
     panelWasOpenRef.current = panelOpen;
-    if (opened) void load();
-  }, [presentation, panelOpen, load, entity]);
+    if (opened) {
+      void load();
+      void loadJobEmailConfig();
+    }
+  }, [presentation, panelOpen, load, loadJobEmailConfig, entity]);
+
+  const isJobEmailSubscribed = useCallback(
+    (searchId: string) =>
+      Boolean(
+        jobEmailConfig?.isActive &&
+        jobEmailConfig.savedSearchId != null &&
+        jobEmailConfig.savedSearchId === searchId,
+      ),
+    [jobEmailConfig],
+  );
+
+  const handleToggleJobEmailNotification = useCallback(
+    async (searchId: string, searchName: string) => {
+      setEmailNotifyTogglingId(searchId);
+      try {
+        const res = await emailService.toggleJobEmailNotification(searchId);
+        const cfg = res.email.toggleJobEmailNotification;
+        setJobEmailConfig(cfg);
+        if (cfg.isActive && cfg.savedSearchId === searchId) {
+          toast.success(`Daily email enabled for “${searchName}”.`);
+        } else {
+          toast.success(`Daily email disabled for “${searchName}”.`);
+        }
+      } catch (e) {
+        toast.error(parseOperationError(e, "jobs").userMessage);
+      } finally {
+        setEmailNotifyTogglingId(null);
+      }
+    },
+    [],
+  );
 
   const handleSaveNameChange = useCallback((value: string) => {
     setSaveName(value);
@@ -411,6 +471,9 @@ export function SavedSearchesMenu({
     try {
       await savedSearchesService.delete(id, typeFilter);
       setList((prev) => prev.filter((s) => s.id !== id));
+      if (jobEmailConfig?.savedSearchId === id) {
+        setJobEmailConfig(null);
+      }
       toast.success("Deleted.");
       await load({ fresh: true, silent: true });
     } catch (e) {
@@ -446,6 +509,8 @@ export function SavedSearchesMenu({
       <ul className="c360-saved-searches-panel__list">
         {list.map((s) => {
           const savedOn = formatSavedSearchDate(s.createdAt);
+          const emailSubscribed = isJobEmailSubscribed(s.id);
+          const emailToggling = emailNotifyTogglingId === s.id;
           return (
             <li key={s.id} className="c360-saved-searches-panel__item">
               <button
@@ -485,6 +550,35 @@ export function SavedSearchesMenu({
                   </span>
                 </span>
               </button>
+              {showJobEmailNotify ? (
+                <button
+                  type="button"
+                  className={cn(
+                    "c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-notify",
+                    emailSubscribed &&
+                    "c360-saved-searches-panel__item-notify--active",
+                  )}
+                  aria-label={
+                    emailSubscribed
+                      ? `Disable daily email for ${s.name}`
+                      : `Enable daily email for ${s.name}`
+                  }
+                  aria-pressed={emailSubscribed ? "true" : "false"}
+                  disabled={jobEmailConfigLoading || emailToggling}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void handleToggleJobEmailNotification(s.id, s.name);
+                  }}
+                >
+                  {emailToggling ? (
+                    <Loader2 className="c360-spin" size={14} aria-hidden />
+                  ) : emailSubscribed ? (
+                    <Bell size={14} aria-hidden />
+                  ) : (
+                    <BellOff size={14} aria-hidden />
+                  )}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-delete"
