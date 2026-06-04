@@ -12,6 +12,24 @@ import { fetchHireSignalCompanyIndustryFilterOptions } from "@/services/graphql/
 
 const DEFAULT_PAGE_SIZE = 50;
 
+function industryFacetOptionKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function dedupeIndustryFacetOptions(
+  rows: ContactFilterData[],
+): ContactFilterData[] {
+  const seen = new Set<string>();
+  const out: ContactFilterData[] = [];
+  for (const row of rows) {
+    const key = industryFacetOptionKey(String(row.value));
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(row);
+  }
+  return out;
+}
+
 function formatCompanyIndustryLabel(raw: string): string {
   const t = raw.trim();
   if (!t) return t;
@@ -79,27 +97,30 @@ export function HiringSignalCompanyIndustryFacetCombobox({
           offset,
         });
         if (req !== loadReqRef.current) return;
-        const mapped: ContactFilterData[] = rows.map((r) => ({
-          value: r.value,
-          displayValue: formatCompanyIndustryLabel(
-            r.displayValue && r.displayValue !== r.value
-              ? r.displayValue
-              : r.value,
-          ),
-          count: typeof r.count === "number" ? r.count : undefined,
-        }));
+        const mapped: ContactFilterData[] = dedupeIndustryFacetOptions(
+          rows.map((r) => ({
+            value: r.value,
+            displayValue: formatCompanyIndustryLabel(
+              r.displayValue && r.displayValue !== r.value
+                ? r.displayValue
+                : r.value,
+            ),
+            count: typeof r.count === "number" ? r.count : undefined,
+          })),
+        );
         if (mode === "replace") {
           setOptions(sortHireSignalFacetOptionsByCount(mapped));
         } else {
           setOptions((prev) => {
-            const seen = new Set(prev.map((p) => String(p.value)));
+            const seen = new Set(
+              prev.map((p) => industryFacetOptionKey(String(p.value))),
+            );
             const out = [...prev];
             for (const m of mapped) {
-              const v = String(m.value);
-              if (!seen.has(v)) {
-                seen.add(v);
-                out.push(m);
-              }
+              const key = industryFacetOptionKey(String(m.value));
+              if (!key || seen.has(key)) continue;
+              seen.add(key);
+              out.push(m);
             }
             return sortHireSignalFacetOptionsByCount(out);
           });
