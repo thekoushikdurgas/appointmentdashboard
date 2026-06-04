@@ -114,7 +114,8 @@
   display: flex;
   align-items: flex-start;
   gap: var(--c360-spacing-3);
-  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3) var(--c360-spacing-3);
+  padding: var(--c360-spacing-3) var(--c360-spacing-2) var(--c360-spacing-3)
+    var(--c360-spacing-3);
   text-align: left;
   background: transparent;
   border: none;

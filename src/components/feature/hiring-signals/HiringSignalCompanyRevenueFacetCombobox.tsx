@@ -73,15 +73,17 @@ export function HiringSignalCompanyRevenueFacetCombobox({
   }, [appliedListFilters, draft, searchText, signalTimePreset]);
 
   useEffect(() => {
+    if (disabled) return;
     const t = setTimeout(() => {
       void runFetch();
     }, 280);
     return () => clearTimeout(t);
-  }, [searchText, runFetch]);
+  }, [searchText, runFetch, disabled]);
 
   const onOpen = useCallback(() => {
+    if (disabled) return;
     void runFetch();
-  }, [runFetch]);
+  }, [runFetch, disabled]);
 
   return (
     <div className="c360-space-y-1">
@@ -94,7 +96,7 @@ export function HiringSignalCompanyRevenueFacetCombobox({
         loadingMore={false}
         hasMore={false}
         onOpen={onOpen}
-        onLoadMore={() => {}}
+        onLoadMore={() => { }}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}

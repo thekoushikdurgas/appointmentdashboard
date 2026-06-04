@@ -145,20 +145,22 @@ export function HiringSignalCompanyIndustryFacetCombobox({
   );
 
   useEffect(() => {
+    if (disabled) return;
     const t = setTimeout(() => {
       void runFetch("replace");
     }, 280);
     return () => clearTimeout(t);
-  }, [searchText, runFetch]);
+  }, [searchText, runFetch, disabled]);
 
   const onOpen = useCallback(() => {
+    if (disabled) return;
     void runFetch("replace");
-  }, [runFetch]);
+  }, [runFetch, disabled]);
 
   const onLoadMore = useCallback(() => {
-    if (!hasMore || loading || loadingMore) return;
+    if (disabled || !hasMore || loading || loadingMore) return;
     void runFetch("append");
-  }, [hasMore, loading, loadingMore, runFetch]);
+  }, [disabled, hasMore, loading, loadingMore, runFetch]);
 
   return (
     <div className="c360-space-y-1">

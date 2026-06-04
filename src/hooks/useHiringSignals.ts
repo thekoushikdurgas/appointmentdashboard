@@ -337,7 +337,7 @@ export function useHiringSignals(
               timestamp: Date.now(),
             }),
           },
-        ).catch(() => { });
+        ).catch(() => {});
         // #endregion
 
         const res = await fetchHiringSignalJobs(fetchSnapshot);
