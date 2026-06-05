@@ -99,7 +99,9 @@ export function ConfirmModal({
           {cfg.icon}
         </div>
         <h3 className="c360-confirm-modal__title">{title}</h3>
-        {body && <p className="c360-confirm-modal__message">{body}</p>}
+        {body ? (
+          <div className="c360-confirm-modal__message">{body}</div>
+        ) : null}
       </div>
     </Modal>
   );

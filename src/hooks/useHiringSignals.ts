@@ -24,8 +24,6 @@ import {
   type JobListSortOrder,
 } from "@/services/graphql/hiringSignalService";
 import {
-  effectivePostedAfter,
-  effectivePostedBefore,
   effectivePostedBounds,
   parseLinkedInJobsPayload,
   sortJobRowsByPostedAt,

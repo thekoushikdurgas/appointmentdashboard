@@ -1955,6 +1955,7 @@ export type HireSignalMutation = {
   deleteScrapeJob: Scalars["Boolean"]["output"];
   exportSelectedJobs: SchedulerJob;
   pauseHireSignalRun: Scalars["JSON"]["output"];
+  purgeScrapeSessions: Scalars["JSON"]["output"];
   recordHireSignalJobApplied: Scalars["Boolean"]["output"];
   removeHireSignalHiddenCompany: Scalars["Boolean"]["output"];
   resumeHireSignalRun: Scalars["JSON"]["output"];
