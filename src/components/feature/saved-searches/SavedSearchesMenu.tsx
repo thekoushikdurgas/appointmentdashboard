@@ -39,6 +39,7 @@ import {
   emailService,
   type JobEmailNotificationConfig,
 } from "@/services/graphql/emailService";
+import { SavedSearchEmailNotifyModal } from "@/components/feature/saved-searches/SavedSearchEmailNotifyModal";
 
 type Entity = "contact" | "company" | "hire_signal";
 
@@ -228,9 +229,10 @@ export function SavedSearchesMenu({
   const [jobEmailConfig, setJobEmailConfig] =
     useState<JobEmailNotificationConfig | null>(null);
   const [jobEmailConfigLoading, setJobEmailConfigLoading] = useState(false);
-  const [emailNotifyTogglingId, setEmailNotifyTogglingId] = useState<
-    string | null
-  >(null);
+  const [emailNotifyModal, setEmailNotifyModal] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const saveNameInputRef = useRef<HTMLInputElement>(null);
   const loadInvocationRef = useRef(0);
   const popoverOpenRef = useRef(false);
@@ -329,32 +331,26 @@ export function SavedSearchesMenu({
   }, [presentation, panelOpen, load, loadJobEmailConfig, entity]);
 
   const isJobEmailSubscribed = useCallback(
-    (searchId: string) =>
-      Boolean(
-        jobEmailConfig?.isActive &&
-        jobEmailConfig.savedSearchId != null &&
-        jobEmailConfig.savedSearchId === searchId,
-      ),
+    (searchId: string) => {
+      if (
+        !jobEmailConfig ||
+        jobEmailConfig.savedSearchId == null ||
+        jobEmailConfig.savedSearchId !== searchId
+      ) {
+        return false;
+      }
+      return (
+        jobEmailConfig.dailyEnabled ||
+        (jobEmailConfig.newJobMode !== "off" &&
+          jobEmailConfig.newJobMode !== undefined)
+      );
+    },
     [jobEmailConfig],
   );
 
-  const handleToggleJobEmailNotification = useCallback(
-    async (searchId: string, searchName: string) => {
-      setEmailNotifyTogglingId(searchId);
-      try {
-        const res = await emailService.toggleJobEmailNotification(searchId);
-        const cfg = res.email.toggleJobEmailNotification;
-        setJobEmailConfig(cfg);
-        if (cfg.isActive && cfg.savedSearchId === searchId) {
-          toast.success(`Daily email enabled for “${searchName}”.`);
-        } else {
-          toast.success(`Daily email disabled for “${searchName}”.`);
-        }
-      } catch (e) {
-        toast.error(parseOperationError(e, "jobs").userMessage);
-      } finally {
-        setEmailNotifyTogglingId(null);
-      }
+  const openEmailNotifyModal = useCallback(
+    (searchId: string, searchName: string) => {
+      setEmailNotifyModal({ id: searchId, name: searchName });
     },
     [],
   );
@@ -510,7 +506,6 @@ export function SavedSearchesMenu({
         {list.map((s) => {
           const savedOn = formatSavedSearchDate(s.createdAt);
           const emailSubscribed = isJobEmailSubscribed(s.id);
-          const emailToggling = emailNotifyTogglingId === s.id;
           return (
             <li key={s.id} className="c360-saved-searches-panel__item">
               <button
@@ -560,21 +555,15 @@ export function SavedSearchesMenu({
                       emailSubscribed &&
                       "c360-saved-searches-panel__item-notify--active",
                     )}
-                    aria-label={
-                      emailSubscribed
-                        ? `Disable daily email for ${s.name}`
-                        : `Enable daily email for ${s.name}`
-                    }
+                    aria-label={`Email notifications for ${s.name}`}
                     aria-pressed={emailSubscribed ? "true" : "false"}
-                    disabled={jobEmailConfigLoading || emailToggling}
+                    disabled={jobEmailConfigLoading}
                     onClick={(e) => {
                       e.stopPropagation();
-                      void handleToggleJobEmailNotification(s.id, s.name);
+                      openEmailNotifyModal(s.id, s.name);
                     }}
                   >
-                    {emailToggling ? (
-                      <Loader2 className="c360-spin" size={14} aria-hidden />
-                    ) : emailSubscribed ? (
+                    {emailSubscribed ? (
                       <Bell size={14} aria-hidden />
                     ) : (
                       <BellOff size={14} aria-hidden />
@@ -713,6 +702,18 @@ export function SavedSearchesMenu({
         onSave={handleSave}
         nameInputRef={saveNameInputRef}
       />
+
+      {emailNotifyModal ? (
+        <SavedSearchEmailNotifyModal
+          isOpen
+          searchId={emailNotifyModal.id}
+          searchName={emailNotifyModal.name}
+          config={jobEmailConfig}
+          configLoading={jobEmailConfigLoading}
+          onClose={() => setEmailNotifyModal(null)}
+          onConfigUpdated={setJobEmailConfig}
+        />
+      ) : null}
     </>
   );
 }

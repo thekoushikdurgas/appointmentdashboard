@@ -60,10 +60,13 @@ export interface ComingSoonResponse {
   endpoint: string;
 }
 
-/** Daily hire-signal job digest (email.server client-configs). */
+/** Hire-signal job email notifications (email.server client-configs). */
 export interface JobEmailNotificationConfig {
   id: number;
   isActive: boolean;
+  dailyEnabled: boolean;
+  newJobMode: string;
+  newJobDelayHours?: number | null;
   templateId?: string | null;
   savedSearchId?: string | null;
 }
@@ -74,8 +77,47 @@ const JOB_EMAIL_NOTIFICATION_CONFIG = `
       jobEmailNotificationConfig {
         id
         isActive
+        dailyEnabled
+        newJobMode
+        newJobDelayHours
         templateId
         savedSearchId
+      }
+    }
+  }
+`;
+
+const SET_JOB_EMAIL_NOTIFICATION_PREFERENCES = `
+  mutation SetJobEmailNotificationPreferences(
+    $savedSearchId: ID!
+    $dailyEnabled: Boolean!
+    $newJobMode: String!
+    $newJobDelayHours: Int
+  ) {
+    email {
+      setJobEmailNotificationPreferences(
+        savedSearchId: $savedSearchId
+        dailyEnabled: $dailyEnabled
+        newJobMode: $newJobMode
+        newJobDelayHours: $newJobDelayHours
+      ) {
+        id
+        isActive
+        dailyEnabled
+        newJobMode
+        newJobDelayHours
+        templateId
+        savedSearchId
+      }
+    }
+  }
+`;
+
+const SEND_JOB_EMAIL_NOW = `
+  mutation SendJobEmailNow($savedSearchId: ID!) {
+    email {
+      sendJobEmailNow(savedSearchId: $savedSearchId) {
+        success
       }
     }
   }
@@ -87,6 +129,9 @@ const TOGGLE_JOB_EMAIL_NOTIFICATION = `
       toggleJobEmailNotification(savedSearchId: $savedSearchId) {
         id
         isActive
+        dailyEnabled
+        newJobMode
+        newJobDelayHours
         templateId
         savedSearchId
       }
@@ -474,6 +519,28 @@ export const emailService = {
     graphqlMutation<{
       email: { toggleJobEmailNotification: JobEmailNotificationConfig };
     }>(TOGGLE_JOB_EMAIL_NOTIFICATION, { savedSearchId }),
+
+  setJobEmailNotificationPreferences: (
+    savedSearchId: string,
+    prefs: {
+      dailyEnabled: boolean;
+      newJobMode: string;
+      newJobDelayHours: number | null;
+    },
+  ) =>
+    graphqlMutation<{
+      email: { setJobEmailNotificationPreferences: JobEmailNotificationConfig };
+    }>(SET_JOB_EMAIL_NOTIFICATION_PREFERENCES, {
+      savedSearchId,
+      dailyEnabled: prefs.dailyEnabled,
+      newJobMode: prefs.newJobMode,
+      newJobDelayHours: prefs.newJobDelayHours,
+    }),
+
+  sendJobEmailNow: (savedSearchId: string) =>
+    graphqlMutation<{
+      email: { sendJobEmailNow: { success: boolean } };
+    }>(SEND_JOB_EMAIL_NOW, { savedSearchId }),
 
   /** @deprecated Use `findEmails`. */
   findSingle: (input: {
