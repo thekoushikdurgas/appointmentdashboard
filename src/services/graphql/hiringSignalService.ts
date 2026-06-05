@@ -240,6 +240,14 @@ const HIRE_SIGNAL_RUN_RESUME = gql`
   }
 `;
 
+const HIRE_SIGNAL_PURGE_SESSIONS = gql`
+  mutation HireSignalPurgeSessions {
+    hireSignal {
+      purgeScrapeSessions
+    }
+  }
+`;
+
 const HIRE_SIGNAL_RUN_METRICS = gql`
   query HireSignalQueueMetrics {
     hireSignal {
@@ -1290,6 +1298,18 @@ export async function resumeHireSignalRun(runId: string) {
   return graphqlMutation<{
     hireSignal: { resumeHireSignalRun: HireSignalApiJson };
   }>(HIRE_SIGNAL_RUN_RESUME, { runId: rid }, HS_GQL);
+}
+
+export type PurgeScrapeSessionsResult = {
+  revoked?: number;
+  cancelled?: number;
+  deleted?: number;
+};
+
+export async function purgeScrapeSessions() {
+  return graphqlMutation<{
+    hireSignal: { purgeScrapeSessions: PurgeScrapeSessionsResult };
+  }>(HIRE_SIGNAL_PURGE_SESSIONS, {}, HS_GQL);
 }
 
 export async function fetchHireSignalRunMetrics() {

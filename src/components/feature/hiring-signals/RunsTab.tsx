@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { History, Play, RefreshCw } from "lucide-react";
+import { History, Play, RefreshCw, Trash2 } from "lucide-react";
 import { Pagination } from "@/components/ui/Pagination";
 import { Table, type TableColumn } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Button } from "@/components/ui/Button";
 import { Accordion } from "@/components/ui/Accordion";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Progress } from "@/components/ui/Progress";
 import { cn } from "@/lib/utils";
 import {
@@ -68,6 +69,7 @@ export function RunsTab({
     "started",
   );
   const [runsSortDir, setRunsSortDir] = useState<HireSignalRunSortDir>("desc");
+  const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
 
   const {
     runsLoading,
@@ -86,6 +88,8 @@ export function RunsTab({
     onPauseRun,
     onResumeRun,
     onDownloadCsv,
+    purgeSessionsLoading,
+    onPurgeAllSessions,
   } = useHireSignalRuns("runs", {
     satellitePage,
     runsPageSize: RUNS_PAGE_SIZE,
@@ -139,6 +143,11 @@ export function RunsTab({
     const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
     return trackedScrapeRows.slice(start, start + RUNS_PAGE_SIZE);
   }, [trackedScrapeRows, trackedPage]);
+
+  const metricsTotal = metrics ? Number(metrics.total) : 0;
+  const metricsActive = metrics
+    ? Number(metrics.pending) + Number(metrics.running) + Number(metrics.paused)
+    : 0;
 
   const renderRunDateTime = useCallback((raw: string) => {
     const s = raw.trim();
@@ -285,12 +294,12 @@ export function RunsTab({
         render: (row) => {
           const raw = String(
             row.finished_at ??
-            row.finishedAt ??
-            row.FinishedAt ??
-            row.completed_at ??
-            row.completedAt ??
-            row.CompletedAt ??
-            "",
+              row.finishedAt ??
+              row.FinishedAt ??
+              row.completed_at ??
+              row.completedAt ??
+              row.CompletedAt ??
+              "",
           );
           return renderRunDateTime(raw);
         },
@@ -504,15 +513,28 @@ export function RunsTab({
                       Reload
                     </Button>
                     {isSuperAdmin ? (
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        leftIcon={<Play size={15} />}
-                        onClick={onOpenRunScrapeModal}
-                      >
-                        Run scrape
-                      </Button>
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="c360-gap-2"
+                          disabled={purgeSessionsLoading || runsLoading}
+                          leftIcon={<Trash2 size={15} />}
+                          onClick={() => setPurgeConfirmOpen(true)}
+                        >
+                          Clear all sessions
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          leftIcon={<Play size={15} />}
+                          onClick={onOpenRunScrapeModal}
+                        >
+                          Run scrape
+                        </Button>
+                      </>
                     ) : null}
                   </div>
                 </div>
@@ -550,6 +572,43 @@ export function RunsTab({
           },
         ]}
       />
+
+      <ConfirmModal
+        isOpen={purgeConfirmOpen}
+        onClose={() => setPurgeConfirmOpen(false)}
+        title="Clear all scraper sessions?"
+        variant="danger"
+        confirmLabel="Clear all sessions"
+        processing={purgeSessionsLoading}
+        onConfirm={async () => {
+          try {
+            await onPurgeAllSessions();
+            setPurgeConfirmOpen(false);
+          } catch {
+            /* toast handled in hook */
+          }
+        }}
+      >
+        <p className="c360-m-0 c360-text-sm">
+          This will cancel all active scrapes, revoke queued worker tasks, and
+          permanently remove every session row from{" "}
+          <span className="c360-font-mono">scrape_data_index</span>.
+        </p>
+        <p className="c360-m-0 c360-mt-2 c360-text-sm c360-text-muted">
+          Scraped LinkedIn job documents and tracked Postgres scrape jobs are
+          not deleted.
+        </p>
+        {metricsTotal > 0 ? (
+          <p className="c360-m-0 c360-mt-2 c360-text-2xs c360-text-muted">
+            Current index: {metricsTotal.toLocaleString()} session
+            {metricsTotal !== 1 ? "s" : ""}
+            {metricsActive > 0
+              ? ` (${metricsActive.toLocaleString()} active)`
+              : ""}
+            .
+          </p>
+        ) : null}
+      </ConfirmModal>
     </div>
   );
 }

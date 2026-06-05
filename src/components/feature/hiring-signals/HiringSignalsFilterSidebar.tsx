@@ -6,7 +6,9 @@ import { X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import { HsFilterAccordionProvider } from "@/components/feature/hiring-signals/HsFilterAccordionContext";
+import { HsFilterSection } from "@/components/feature/hiring-signals/HsFilterSection";
+import { HS_FILTER_SECTION_IDS } from "@/components/feature/hiring-signals/hsFilterSectionIds";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import {
   DATE_POSTED_PRESET_LABELS,
@@ -273,7 +275,13 @@ const DATE_POSTED_PRESET_OPTIONS: {
 function clearDatePostedDraftFields(
   onDraftField: (
     field: HiringSignalDraftField,
-    value: string | string[] | boolean | number | null | Record<string, string[]>,
+    value:
+      | string
+      | string[]
+      | boolean
+      | number
+      | null
+      | Record<string, string[]>,
   ) => void,
 ): void {
   onDraftField("datePostedPreset", "any");
@@ -680,12 +688,14 @@ function buildHiringSignalChipBuckets(
       pk === "custom_day" && draft.postedAfter.trim()
         ? `Date posted: ${postedAtBoundToDateInputValue(draft.postedAfter)}`
         : pk === "custom_range"
-          ? `Date posted: ${[
-              postedAtBoundToDateInputValue(draft.postedAfter),
-              postedAtBoundToDateInputValue(draft.postedBefore),
-            ]
-              .filter(Boolean)
-              .join(" – ") || "Custom range"}`
+          ? `Date posted: ${
+              [
+                postedAtBoundToDateInputValue(draft.postedAfter),
+                postedAtBoundToDateInputValue(draft.postedBefore),
+              ]
+                .filter(Boolean)
+                .join(" – ") || "Custom range"
+            }`
           : `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`;
     add("datePosted", {
       key: "dpreset",
@@ -938,576 +948,596 @@ export function HiringSignalsFilterSidebar({
         </div>
       ) : null}
 
-      <div className="c360-hs-filters__sections">
-        <HiringSignalsCompanyFilters
-          appliedListFilters={appliedListFilters}
-          signalTimePreset={signalTimePreset}
-          companyCohortResolving={companyCohortResolving}
-          companyCohortMatchTotal={companyCohortMatchTotal}
-          companyCohortTruncated={companyCohortTruncated}
-          companyFilterChips={chipBuckets.companyCohort}
-        />
-
-        {isSuperAdmin ? <HiringSignalsDataQualityFilters /> : null}
-
-        <h3 className="c360-hs-filters__group-header">Job filters</h3>
-
-        <ContactsCollapsibleFilterSection
-          title="Title"
-          count={titleValues.length + exTitleCount}
-          onClear={() => {
-            onDraftField("titles", []);
-            onDraftField("excludedTitles", []);
-          }}
-        >
-          <div className="c360-space-y-3">
-            <HsFilterChipList items={chipBuckets.title} variant="section" />
-            <HiringSignalTextFacetCombobox
-              field="title"
-              label="Include job titles"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={titleValues}
-              onSelectionChange={(v) => onDraftField("titles", v)}
-            />
-            <HiringSignalTextFacetCombobox
-              field="title"
-              label="Exclude job titles"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={normalizeHiringSignalTokenList(
-                draft.excludedTitles,
-              )}
-              onSelectionChange={(v) => onDraftField("excludedTitles", v)}
-            />
-          </div>
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Location"
-          count={locationValues.length + exLocCount + countryCount}
-          onClear={() => {
-            onDraftField("locations", []);
-            onDraftField("excludedLocations", []);
-            onDraftField("countries", []);
-          }}
-        >
-          <div className="c360-space-y-3">
-            <HsFilterChipList items={chipBuckets.location} variant="section" />
-            <HiringSignalTextFacetCombobox
-              field="location"
-              label="Include locations"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={locationValues}
-              onSelectionChange={(v) => onDraftField("locations", v)}
-            />
-            <HiringSignalTextFacetCombobox
-              field="location"
-              label="Exclude locations"
-              draft={draft}
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              selectedValues={normalizeHiringSignalTokenList(
-                draft.excludedLocations,
-              )}
-              onSelectionChange={(v) => onDraftField("excludedLocations", v)}
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Country (ISO code)
-            </p>
-            <Select
-              id="hsf-country-add"
-              value=""
-              onChange={(e) => appendCountryCode(e.target.value)}
-              options={COUNTRY_ADD_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </div>
-        </ContactsCollapsibleFilterSection>
-        {onTableDensityChange ? (
-          <ContactsCollapsibleFilterSection
-            title="View"
-            count={tableDensity === "compact" ? 1 : 0}
-            defaultOpen={false}
-            onClear={() => onTableDensityChange("comfortable")}
-          >
-            <Select
-              id="hsf-view-mode"
-              value={tableDensity}
-              onChange={(e) =>
-                onTableDensityChange(
-                  e.target.value as "comfortable" | "compact",
-                )
-              }
-              options={VIEW_MODE_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </ContactsCollapsibleFilterSection>
-        ) : null}
-
-        <ContactsCollapsibleFilterSection
-          title="Date posted"
-          count={datePostedCount}
-          defaultOpen={false}
-          onClear={() => clearDatePostedDraftFields(onDraftField)}
-        >
-          <HsFilterChipList items={chipBuckets.datePosted} variant="section" />
-          {signalTimePreset === "new_7d" ? (
-            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              The Signals &quot;Today&apos;s jobs&quot; tab filters to jobs
-              posted today (local time) when no Date posted sidebar preset is
-              active; sidebar date filters override the tab window.
-            </p>
-          ) : null}
-          <Select
-            id="hsf-date-preset"
-            value={draft.datePostedPreset}
-            onChange={(e) => onDatePostedPresetChange(e.target.value)}
-            options={DATE_POSTED_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-2"
+      <HsFilterAccordionProvider>
+        <div className="c360-hs-filters__sections">
+          <HiringSignalsCompanyFilters
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            companyCohortResolving={companyCohortResolving}
+            companyCohortMatchTotal={companyCohortMatchTotal}
+            companyCohortTruncated={companyCohortTruncated}
+            companyFilterChips={chipBuckets.companyCohort}
           />
-          {draft.datePostedPreset === "custom_day" ? (
-            <div className="c360-mb-3 c360-space-y-2">
-              <label
-                htmlFor="hsf-posted-day"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Posted on this day
-              </label>
-              <Input
-                id="hsf-posted-day"
-                type="date"
-                value={postedAtBoundToDateInputValue(draft.postedAfter)}
-                onChange={(e) => {
-                  const day = e.target.value.trim();
-                  if (!day) {
+
+          {isSuperAdmin ? <HiringSignalsDataQualityFilters /> : null}
+
+          <h3 className="c360-hs-filters__group-header">Job filters</h3>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.jobTitle}
+            title="Title"
+            count={titleValues.length + exTitleCount}
+            onClear={() => {
+              onDraftField("titles", []);
+              onDraftField("excludedTitles", []);
+            }}
+          >
+            <div className="c360-space-y-3">
+              <HsFilterChipList items={chipBuckets.title} variant="section" />
+              <HiringSignalTextFacetCombobox
+                field="title"
+                label="Include job titles"
+                draft={draft}
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                selectedValues={titleValues}
+                onSelectionChange={(v) => onDraftField("titles", v)}
+              />
+              <HiringSignalTextFacetCombobox
+                field="title"
+                label="Exclude job titles"
+                draft={draft}
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                selectedValues={normalizeHiringSignalTokenList(
+                  draft.excludedTitles,
+                )}
+                onSelectionChange={(v) => onDraftField("excludedTitles", v)}
+              />
+            </div>
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.jobLocation}
+            title="Location"
+            count={locationValues.length + exLocCount + countryCount}
+            onClear={() => {
+              onDraftField("locations", []);
+              onDraftField("excludedLocations", []);
+              onDraftField("countries", []);
+            }}
+          >
+            <div className="c360-space-y-3">
+              <HsFilterChipList
+                items={chipBuckets.location}
+                variant="section"
+              />
+              <HiringSignalTextFacetCombobox
+                field="location"
+                label="Include locations"
+                draft={draft}
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                selectedValues={locationValues}
+                onSelectionChange={(v) => onDraftField("locations", v)}
+              />
+              <HiringSignalTextFacetCombobox
+                field="location"
+                label="Exclude locations"
+                draft={draft}
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                selectedValues={normalizeHiringSignalTokenList(
+                  draft.excludedLocations,
+                )}
+                onSelectionChange={(v) => onDraftField("excludedLocations", v)}
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Country (ISO code)
+              </p>
+              <Select
+                id="hsf-country-add"
+                value=""
+                onChange={(e) => appendCountryCode(e.target.value)}
+                options={COUNTRY_ADD_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </div>
+          </HsFilterSection>
+          {onTableDensityChange ? (
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.view}
+              title="View"
+              count={tableDensity === "compact" ? 1 : 0}
+              onClear={() => onTableDensityChange("comfortable")}
+            >
+              <Select
+                id="hsf-view-mode"
+                value={tableDensity}
+                onChange={(e) =>
+                  onTableDensityChange(
+                    e.target.value as "comfortable" | "compact",
+                  )
+                }
+                options={VIEW_MODE_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+          ) : null}
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.datePosted}
+            title="Date posted"
+            count={datePostedCount}
+            onClear={() => clearDatePostedDraftFields(onDraftField)}
+          >
+            <HsFilterChipList
+              items={chipBuckets.datePosted}
+              variant="section"
+            />
+            {signalTimePreset === "new_7d" ? (
+              <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                The Signals &quot;Today&apos;s jobs&quot; tab filters to jobs
+                posted today (local time) when no Date posted sidebar preset is
+                active; sidebar date filters override the tab window.
+              </p>
+            ) : null}
+            <Select
+              id="hsf-date-preset"
+              value={draft.datePostedPreset}
+              onChange={(e) => onDatePostedPresetChange(e.target.value)}
+              options={DATE_POSTED_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+              className="c360-mb-2"
+            />
+            {draft.datePostedPreset === "custom_day" ? (
+              <div className="c360-mb-3 c360-space-y-2">
+                <label
+                  htmlFor="hsf-posted-day"
+                  className="c360-block c360-text-2xs c360-text-ink-muted"
+                >
+                  Posted on this day
+                </label>
+                <Input
+                  id="hsf-posted-day"
+                  type="date"
+                  value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                  onChange={(e) => {
+                    const day = e.target.value.trim();
+                    if (!day) {
+                      setDraft((d) => ({
+                        ...d,
+                        postedAfter: "",
+                        postedBefore: "",
+                        datePostedPreset: "custom_day",
+                      }));
+                      return;
+                    }
+                    const bounds = postedBoundsFromCustomDay(day);
                     setDraft((d) => ({
                       ...d,
-                      postedAfter: "",
-                      postedBefore: "",
+                      postedAfter: bounds.postedAfter,
+                      postedBefore: bounds.postedBefore,
                       datePostedPreset: "custom_day",
                     }));
-                    return;
+                  }}
+                />
+              </div>
+            ) : null}
+            {draft.datePostedPreset === "custom_range" ? (
+              <div className="c360-mb-3 c360-space-y-2">
+                <label
+                  htmlFor="hsf-posted-after"
+                  className="c360-block c360-text-2xs c360-text-ink-muted"
+                >
+                  From (optional)
+                </label>
+                <Input
+                  id="hsf-posted-after"
+                  type="date"
+                  value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      postedAfter: e.target.value.trim(),
+                      datePostedPreset: "custom_range",
+                    }))
                   }
-                  const bounds = postedBoundsFromCustomDay(day);
-                  setDraft((d) => ({
-                    ...d,
-                    postedAfter: bounds.postedAfter,
-                    postedBefore: bounds.postedBefore,
-                    datePostedPreset: "custom_day",
-                  }));
-                }}
-              />
-            </div>
-          ) : null}
-          {draft.datePostedPreset === "custom_range" ? (
-            <div className="c360-mb-3 c360-space-y-2">
-              <label
-                htmlFor="hsf-posted-after"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                From (optional)
-              </label>
-              <Input
-                id="hsf-posted-after"
-                type="date"
-                value={postedAtBoundToDateInputValue(draft.postedAfter)}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    postedAfter: e.target.value.trim(),
-                    datePostedPreset: "custom_range",
-                  }))
-                }
-              />
-              <label
-                htmlFor="hsf-posted-before"
-                className="c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                To (optional)
-              </label>
-              <Input
-                id="hsf-posted-before"
-                type="date"
-                value={postedAtBoundToDateInputValue(draft.postedBefore)}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    postedBefore: e.target.value.trim(),
-                    datePostedPreset: "custom_range",
-                  }))
-                }
-              />
-            </div>
-          ) : null}
-        </ContactsCollapsibleFilterSection>
+                />
+                <label
+                  htmlFor="hsf-posted-before"
+                  className="c360-block c360-text-2xs c360-text-ink-muted"
+                >
+                  To (optional)
+                </label>
+                <Input
+                  id="hsf-posted-before"
+                  type="date"
+                  value={postedAtBoundToDateInputValue(draft.postedBefore)}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      postedBefore: e.target.value.trim(),
+                      datePostedPreset: "custom_range",
+                    }))
+                  }
+                />
+              </div>
+            ) : null}
+          </HsFilterSection>
 
-        <ContactsCollapsibleFilterSection
-          title="Experience level"
-          count={experienceLevelCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("seniorityPreset", "");
-            onDraftField("seniorityCustom", "");
-            onDraftField("experienceBuckets", []);
-          }}
-        >
-          <HsFilterChipList
-            items={chipBuckets.experienceLevel}
-            variant="section"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Seniority (matches ingested seniority text)
-          </p>
-          <Select
-            id="hsf-seniority-preset"
-            value={draft.seniorityPreset}
-            onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
-            options={SENIORITY_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Experience bucket (ingest-derived enum)
-          </p>
-          <Select
-            id="hsf-experience-bucket"
-            value={experienceBucketSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("experienceBuckets", v ? [v] : []);
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.experienceLevel}
+            title="Experience level"
+            count={experienceLevelCount}
+            onClear={() => {
+              onDraftField("seniorityPreset", "");
+              onDraftField("seniorityCustom", "");
+              onDraftField("experienceBuckets", []);
             }}
-            options={EXPERIENCE_BUCKET_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Job type"
-          count={employmentCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("employmentTypes", []);
-            onDraftField("employmentType", "");
-          }}
-        >
-          <HsFilterChipList items={chipBuckets.jobType} variant="section" />
-          <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
-            Employment type (substring on ingested employment_type)
-          </p>
-          <Select
-            id="hsf-emp-type"
-            value={draft.employmentType}
-            onChange={(e) => onDraftField("employmentType", e.target.value)}
-            options={EMPLOYMENT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Remote / workplace"
-          count={workplaceCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("workplaceTypes", [])}
-        >
-          <HsFilterChipList items={chipBuckets.workplace} variant="section" />
-          <Select
-            id="hsf-workplace"
-            value={workplaceSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("workplaceTypes", v ? [v] : []);
-            }}
-            options={WORKPLACE_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="LinkedIn Apply"
-          count={applyMethodCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("applyMethod", "")}
-        >
-          <HsFilterChipList
-            items={chipBuckets.linkedInApply}
-            variant="section"
-          />
-          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              className="c360-mt-0.5"
-              checked={draft.applyMethod === EASY_APPLY_METHOD}
-              onChange={(e) =>
-                onDraftField(
-                  "applyMethod",
-                  e.target.checked ? EASY_APPLY_METHOD : "",
-                )
-              }
-            />
-            <span>
-              Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
-              (substring).
-            </span>
-          </label>
-          <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              className="c360-mt-0.5"
-              checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
-              onChange={(e) =>
-                onDraftField(
-                  "applyMethod",
-                  e.target.checked ? LINKEDIN_APPLY_METHOD : "",
-                )
-              }
-            />
-            <span>
-              LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches ingested
-              apply_method (substring).
-            </span>
-          </label>
-          <label
-            htmlFor="hsf-apply-method"
-            className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
           >
-            Apply channel (fine-tune)
-          </label>
-          <Select
-            id="hsf-apply-method"
-            value={draft.applyMethod}
-            onChange={(e) => onDraftField("applyMethod", e.target.value)}
-            options={APPLY_METHOD_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Category (Topic)"
-          count={industriesCount + exIndCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("industries", []);
-            onDraftField("excludedIndustries", []);
-          }}
-        >
-          <HsFilterChipList items={chipBuckets.industries} variant="section" />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Include category (topic)
-          </p>
-          <Select
-            id="hsf-industry-include"
-            value={industryIncludeSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("industries", v ? [v] : []);
-            }}
-            options={INDUSTRY_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Exclude category (topic)
-          </p>
-          <Select
-            id="hsf-industry-exclude"
-            value={industryExcludeSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("excludedIndustries", v ? [v] : []);
-            }}
-            options={INDUSTRY_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Job function"
-          count={functionCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("functionPreset", "");
-            onDraftField("functionCustom", "");
-          }}
-        >
-          <HsFilterChipList items={chipBuckets.jobFunction} variant="section" />
-          <Select
-            id="hsf-func-preset"
-            value={draft.functionPreset}
-            onChange={(e) => onDraftField("functionPreset", e.target.value)}
-            options={FUNCTION_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Education"
-          count={eduCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("educationLevelMins", []);
-          }}
-        >
-          <HsFilterChipList
-            items={chipBuckets.roleEducation}
-            variant="section"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Minimum education (job posting mentions)
-          </p>
-          <Select
-            id="hsf-education-min"
-            value={educationMinSelectValue}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("educationLevelMins", v ? [v] : []);
-            }}
-            options={EDUCATION_MIN_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Required skills"
-          count={skillsCount}
-          defaultOpen={false}
-          onClear={() => onDraftField("skillsAll", [])}
-        >
-          <HsFilterChipList items={chipBuckets.skills} variant="section" />
-          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-            Jobs must include every listed skill in ingested tags (AND). Add
-            from the list; remove with the chips above. Duplicates are ignored.
-          </p>
-          <Select
-            id="hsf-skill-tag-add"
-            value=""
-            onChange={(e) => appendSkillTag(e.target.value)}
-            options={SKILL_TAG_ADD_SELECT_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-        </ContactsCollapsibleFilterSection>
-
-        <ContactsCollapsibleFilterSection
-          title="Compliance & preferences"
-          count={clearanceCount + h1bCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("clearanceMode", "");
-            onDraftField("h1bOnly", false);
-          }}
-        >
-          <HsFilterChipList items={chipBuckets.compliance} variant="section" />
-          <Select
-            id="hsf-clearance"
-            value={draft.clearanceMode}
-            onChange={(e) => onDraftField("clearanceMode", e.target.value)}
-            options={CLEARANCE_OPTIONS}
-            fullWidth
-            inputSize="md"
-          />
-          <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-            Clearance flags are inferred from job text (see docs).
-          </p>
-          <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
-            <input
-              type="checkbox"
-              checked={draft.h1bOnly}
-              onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
+            <HsFilterChipList
+              items={chipBuckets.experienceLevel}
+              variant="section"
             />
-            H1B / sponsorship mentioned
-          </label>
-        </ContactsCollapsibleFilterSection>
-        <ContactsCollapsibleFilterSection
-          title="Compensation"
-          count={salaryCount}
-          defaultOpen={false}
-          onClear={() => {
-            onDraftField("salaryPreset", "");
-            onDraftField("salaryMin", "");
-            onDraftField("salaryMax", "");
-          }}
-        >
-          <HsFilterChipList
-            items={chipBuckets.compensation}
-            variant="section"
-          />
-          <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-            Salary range (USD / year)
-          </p>
-          <Select
-            id="hsf-salary-preset"
-            value={draft.salaryPreset}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              onDraftField("salaryPreset", v);
-              if (v !== "custom") {
-                onDraftField("salaryMin", "");
-                onDraftField("salaryMax", "");
-              }
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Seniority (matches ingested seniority text)
+            </p>
+            <Select
+              id="hsf-seniority-preset"
+              value={draft.seniorityPreset}
+              onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
+              options={SENIORITY_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+              className="c360-mb-3"
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Experience bucket (ingest-derived enum)
+            </p>
+            <Select
+              id="hsf-experience-bucket"
+              value={experienceBucketSelectValue}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("experienceBuckets", v ? [v] : []);
+              }}
+              options={EXPERIENCE_BUCKET_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.jobType}
+            title="Job type"
+            count={employmentCount}
+            onClear={() => {
+              onDraftField("employmentTypes", []);
+              onDraftField("employmentType", "");
             }}
-            options={SALARY_RANGE_PRESET_OPTIONS}
-            fullWidth
-            inputSize="md"
-            className="c360-mb-3"
-          />
-          {draft.salaryPreset === "custom" ? (
-            <>
-              <label
-                htmlFor="hsf-salary-min"
-                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Custom minimum
-              </label>
-              <Input
-                id="hsf-salary-min"
-                type="number"
-                min={0}
-                value={draft.salaryMin}
-                onChange={(e) => onDraftField("salaryMin", e.target.value)}
-                placeholder="e.g. 80000"
-                autoComplete="off"
-                className="c360-mb-3"
+          >
+            <HsFilterChipList items={chipBuckets.jobType} variant="section" />
+            <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
+              Employment type (substring on ingested employment_type)
+            </p>
+            <Select
+              id="hsf-emp-type"
+              value={draft.employmentType}
+              onChange={(e) => onDraftField("employmentType", e.target.value)}
+              options={EMPLOYMENT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.remoteWorkplace}
+            title="Remote / workplace"
+            count={workplaceCount}
+            onClear={() => onDraftField("workplaceTypes", [])}
+          >
+            <HsFilterChipList items={chipBuckets.workplace} variant="section" />
+            <Select
+              id="hsf-workplace"
+              value={workplaceSelectValue}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("workplaceTypes", v ? [v] : []);
+              }}
+              options={WORKPLACE_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.linkedinApply}
+            title="LinkedIn Apply"
+            count={applyMethodCount}
+            onClear={() => onDraftField("applyMethod", "")}
+          >
+            <HsFilterChipList
+              items={chipBuckets.linkedInApply}
+              variant="section"
+            />
+            <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+              <input
+                type="checkbox"
+                className="c360-mt-0.5"
+                checked={draft.applyMethod === EASY_APPLY_METHOD}
+                onChange={(e) =>
+                  onDraftField(
+                    "applyMethod",
+                    e.target.checked ? EASY_APPLY_METHOD : "",
+                  )
+                }
               />
-              <label
-                htmlFor="hsf-salary-max"
-                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-              >
-                Custom maximum (optional)
-              </label>
-              <Input
-                id="hsf-salary-max"
-                type="number"
-                min={0}
-                value={draft.salaryMax}
-                onChange={(e) => onDraftField("salaryMax", e.target.value)}
-                placeholder="e.g. 150000"
-                autoComplete="off"
+              <span>
+                Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
+                (substring).
+              </span>
+            </label>
+            <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+              <input
+                type="checkbox"
+                className="c360-mt-0.5"
+                checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
+                onChange={(e) =>
+                  onDraftField(
+                    "applyMethod",
+                    e.target.checked ? LINKEDIN_APPLY_METHOD : "",
+                  )
+                }
               />
-            </>
-          ) : null}
-          <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-            Matches parsed salary fields and salary text in postings.
-          </p>
-        </ContactsCollapsibleFilterSection>
-      </div>
+              <span>
+                LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches
+                ingested apply_method (substring).
+              </span>
+            </label>
+            <label
+              htmlFor="hsf-apply-method"
+              className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+            >
+              Apply channel (fine-tune)
+            </label>
+            <Select
+              id="hsf-apply-method"
+              value={draft.applyMethod}
+              onChange={(e) => onDraftField("applyMethod", e.target.value)}
+              options={APPLY_METHOD_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.categoryTopic}
+            title="Category (Topic)"
+            count={industriesCount + exIndCount}
+            onClear={() => {
+              onDraftField("industries", []);
+              onDraftField("excludedIndustries", []);
+            }}
+          >
+            <HsFilterChipList
+              items={chipBuckets.industries}
+              variant="section"
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Include category (topic)
+            </p>
+            <Select
+              id="hsf-industry-include"
+              value={industryIncludeSelectValue}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("industries", v ? [v] : []);
+              }}
+              options={INDUSTRY_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+              className="c360-mb-3"
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Exclude category (topic)
+            </p>
+            <Select
+              id="hsf-industry-exclude"
+              value={industryExcludeSelectValue}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("excludedIndustries", v ? [v] : []);
+              }}
+              options={INDUSTRY_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.jobFunction}
+            title="Job function"
+            count={functionCount}
+            onClear={() => {
+              onDraftField("functionPreset", "");
+              onDraftField("functionCustom", "");
+            }}
+          >
+            <HsFilterChipList
+              items={chipBuckets.jobFunction}
+              variant="section"
+            />
+            <Select
+              id="hsf-func-preset"
+              value={draft.functionPreset}
+              onChange={(e) => onDraftField("functionPreset", e.target.value)}
+              options={FUNCTION_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.education}
+            title="Education"
+            count={eduCount}
+            onClear={() => {
+              onDraftField("educationLevelMins", []);
+            }}
+          >
+            <HsFilterChipList
+              items={chipBuckets.roleEducation}
+              variant="section"
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Minimum education (job posting mentions)
+            </p>
+            <Select
+              id="hsf-education-min"
+              value={educationMinSelectValue}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("educationLevelMins", v ? [v] : []);
+              }}
+              options={EDUCATION_MIN_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.requiredSkills}
+            title="Required skills"
+            count={skillsCount}
+            onClear={() => onDraftField("skillsAll", [])}
+          >
+            <HsFilterChipList items={chipBuckets.skills} variant="section" />
+            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+              Jobs must include every listed skill in ingested tags (AND). Add
+              from the list; remove with the chips above. Duplicates are
+              ignored.
+            </p>
+            <Select
+              id="hsf-skill-tag-add"
+              value=""
+              onChange={(e) => appendSkillTag(e.target.value)}
+              options={SKILL_TAG_ADD_SELECT_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+          </HsFilterSection>
+
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.compliancePreferences}
+            title="Compliance & preferences"
+            count={clearanceCount + h1bCount}
+            onClear={() => {
+              onDraftField("clearanceMode", "");
+              onDraftField("h1bOnly", false);
+            }}
+          >
+            <HsFilterChipList
+              items={chipBuckets.compliance}
+              variant="section"
+            />
+            <Select
+              id="hsf-clearance"
+              value={draft.clearanceMode}
+              onChange={(e) => onDraftField("clearanceMode", e.target.value)}
+              options={CLEARANCE_OPTIONS}
+              fullWidth
+              inputSize="md"
+            />
+            <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
+              Clearance flags are inferred from job text (see docs).
+            </p>
+            <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
+              <input
+                type="checkbox"
+                checked={draft.h1bOnly}
+                onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
+              />
+              H1B / sponsorship mentioned
+            </label>
+          </HsFilterSection>
+          <HsFilterSection
+            sectionId={HS_FILTER_SECTION_IDS.compensation}
+            title="Compensation"
+            count={salaryCount}
+            onClear={() => {
+              onDraftField("salaryPreset", "");
+              onDraftField("salaryMin", "");
+              onDraftField("salaryMax", "");
+            }}
+          >
+            <HsFilterChipList
+              items={chipBuckets.compensation}
+              variant="section"
+            />
+            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+              Salary range (USD / year)
+            </p>
+            <Select
+              id="hsf-salary-preset"
+              value={draft.salaryPreset}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                onDraftField("salaryPreset", v);
+                if (v !== "custom") {
+                  onDraftField("salaryMin", "");
+                  onDraftField("salaryMax", "");
+                }
+              }}
+              options={SALARY_RANGE_PRESET_OPTIONS}
+              fullWidth
+              inputSize="md"
+              className="c360-mb-3"
+            />
+            {draft.salaryPreset === "custom" ? (
+              <>
+                <label
+                  htmlFor="hsf-salary-min"
+                  className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+                >
+                  Custom minimum
+                </label>
+                <Input
+                  id="hsf-salary-min"
+                  type="number"
+                  min={0}
+                  value={draft.salaryMin}
+                  onChange={(e) => onDraftField("salaryMin", e.target.value)}
+                  placeholder="e.g. 80000"
+                  autoComplete="off"
+                  className="c360-mb-3"
+                />
+                <label
+                  htmlFor="hsf-salary-max"
+                  className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+                >
+                  Custom maximum (optional)
+                </label>
+                <Input
+                  id="hsf-salary-max"
+                  type="number"
+                  min={0}
+                  value={draft.salaryMax}
+                  onChange={(e) => onDraftField("salaryMax", e.target.value)}
+                  placeholder="e.g. 150000"
+                  autoComplete="off"
+                />
+              </>
+            ) : null}
+            <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
+              Matches parsed salary fields and salary text in postings.
+            </p>
+          </HsFilterSection>
+        </div>
+      </HsFilterAccordionProvider>
     </div>
   );
 }

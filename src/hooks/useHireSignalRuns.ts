@@ -10,6 +10,7 @@ import {
   fetchScrapeJobJobs,
   hireSignalRunsFromJson,
   pauseHireSignalRun,
+  purgeScrapeSessions,
   refreshHireSignalRun,
   resumeHireSignalRun,
 } from "@/services/graphql/hiringSignalService";
@@ -76,6 +77,7 @@ export function useHireSignalRuns(
   const [pauseRunId, setPauseRunId] = useState<string | null>(null);
   const [resumeRunId, setResumeRunId] = useState<string | null>(null);
   const [scrapeDownloadId, setScrapeDownloadId] = useState<string | null>(null);
+  const [purgeSessionsLoading, setPurgeSessionsLoading] = useState(false);
 
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
@@ -241,6 +243,30 @@ export function useHireSignalRuns(
     }
   }, []);
 
+  const onPurgeAllSessions = useCallback(async () => {
+    setPurgeSessionsLoading(true);
+    try {
+      const res = await purgeScrapeSessions();
+      const payload = res.hireSignal?.purgeScrapeSessions;
+      const deleted =
+        payload && typeof payload === "object" && !Array.isArray(payload)
+          ? Number((payload as Record<string, unknown>).deleted)
+          : NaN;
+      toast.success("Sessions cleared", {
+        description: Number.isFinite(deleted)
+          ? `Removed ${deleted} session row(s) from scrape_data_index.`
+          : "All satellite session rows were purged.",
+      });
+      void loadRuns();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Purge failed";
+      toast.error("Clear all sessions", { description: msg });
+      throw e;
+    } finally {
+      setPurgeSessionsLoading(false);
+    }
+  }, [loadRuns]);
+
   return {
     runsLoading,
     metrics,
@@ -258,5 +284,7 @@ export function useHireSignalRuns(
     onPauseRun,
     onResumeRun,
     onDownloadCsv,
+    purgeSessionsLoading,
+    onPurgeAllSessions,
   };
 }

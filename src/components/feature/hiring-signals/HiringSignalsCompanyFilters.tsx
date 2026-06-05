@@ -4,7 +4,8 @@ import { HiringSignalCompanyNameFacetCombobox } from "@/components/feature/hirin
 import { HiringSignalCompanyCountryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyCountryFacetCombobox";
 import { HiringSignalCompanyBucketFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyBucketFacetCombobox";
 import { HiringSignalCompanyIndustryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyIndustryFacetCombobox";
-import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import { HsFilterSection } from "@/components/feature/hiring-signals/HsFilterSection";
+import { HS_FILTER_SECTION_IDS } from "@/components/feature/hiring-signals/hsFilterSectionIds";
 import {
   HS_COMPANY_FILTER_CHIP_PREFIXES,
   HsFilterChipList,
@@ -60,7 +61,8 @@ export function HiringSignalsCompanyFilters({
         </p>
       ) : null}
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyName}
         title="Company name"
         count={
           normalizeHiringSignalTokenList(draft.companyNames).length +
@@ -100,9 +102,10 @@ export function HiringSignalsCompanyFilters({
             onSelectionChange={(v) => onDraftField("excludedCompanyNames", v)}
           />
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyCountry}
         title="Country"
         count={
           normalizeHiringSignalTokenList(draft.companyCountries).length +
@@ -147,9 +150,10 @@ export function HiringSignalsCompanyFilters({
             }
           />
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyIndustry}
         title="Industry"
         count={
           normalizeHiringSignalTokenList(draft.companyIndustries).length +
@@ -200,9 +204,10 @@ export function HiringSignalsCompanyFilters({
             <HiringSignalFilterComingSoon featureLabel="Industry" />
           )}
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyEmployeeSize}
         title="Employee size"
         count={
           normalizeHiringSignalTokenList(draft.companyEmployeeSizes).length +
@@ -258,9 +263,10 @@ export function HiringSignalsCompanyFilters({
             <HiringSignalFilterComingSoon featureLabel="Employee size" />
           )}
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyRevenue}
         title="Revenue"
         count={
           normalizeHiringSignalTokenList(draft.companyRevenue).length +
@@ -313,9 +319,10 @@ export function HiringSignalsCompanyFilters({
             <HiringSignalFilterComingSoon featureLabel="Revenue" />
           )}
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
 
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.companyFunding}
         title="Funding"
         count={
           normalizeHiringSignalTokenList(draft.companyFunding).length +
@@ -368,7 +375,7 @@ export function HiringSignalsCompanyFilters({
             <HiringSignalFilterComingSoon featureLabel="Funding" />
           )}
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
     </>
   );
 }

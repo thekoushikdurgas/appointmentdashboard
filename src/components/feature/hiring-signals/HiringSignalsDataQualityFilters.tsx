@@ -1,6 +1,7 @@
 "use client";
 
-import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
+import { HsFilterSection } from "@/components/feature/hiring-signals/HsFilterSection";
+import { HS_FILTER_SECTION_IDS } from "@/components/feature/hiring-signals/hsFilterSectionIds";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { useRole } from "@/context/RoleContext";
 
@@ -39,10 +40,10 @@ export function HiringSignalsDataQualityFilters() {
   return (
     <>
       <h3 className="c360-hs-filters__group-header">Data quality</h3>
-      <ContactsCollapsibleFilterSection
+      <HsFilterSection
+        sectionId={HS_FILTER_SECTION_IDS.dataQuality}
         title="Data Quality"
         count={activeCount}
-        defaultOpen={false}
         onClear={
           activeCount > 0
             ? () => {
@@ -173,7 +174,7 @@ export function HiringSignalsDataQualityFilters() {
             </p>
           </div>
         </div>
-      </ContactsCollapsibleFilterSection>
+      </HsFilterSection>
     </>
   );
 }

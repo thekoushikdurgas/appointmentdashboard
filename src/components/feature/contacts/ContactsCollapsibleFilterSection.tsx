@@ -11,6 +11,9 @@ export interface ContactsCollapsibleFilterSectionProps {
   count?: number;
   /** Initial expanded state (e.g. open for primary filter block). */
   defaultOpen?: boolean;
+  /** Controlled expand state — use with `onOpenChange` for accordion groups. */
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children: React.ReactNode;
   /** Active filter chips rendered at the top of the section body. */
   activeChips?: ContactFilterChip[];
@@ -24,13 +27,26 @@ export function ContactsCollapsibleFilterSection({
   title,
   count,
   defaultOpen = false,
+  isOpen: isOpenControlled,
+  onOpenChange,
   children,
   activeChips = [],
   onClear,
 }: ContactsCollapsibleFilterSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const isControlled =
+    isOpenControlled !== undefined && onOpenChange !== undefined;
+  const [isOpenUncontrolled, setIsOpenUncontrolled] = useState(defaultOpen);
+  const isOpen = isControlled ? isOpenControlled : isOpenUncontrolled;
   const contentId = useId();
   const hasActive = count !== undefined && count > 0;
+
+  const toggleOpen = () => {
+    if (isControlled) {
+      onOpenChange(!isOpenControlled);
+      return;
+    }
+    setIsOpenUncontrolled((v) => !v);
+  };
 
   return (
     <div
@@ -45,7 +61,7 @@ export function ContactsCollapsibleFilterSection({
         <button
           type="button"
           className={`${baseClass}__header-toggle`}
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={toggleOpen}
           aria-expanded={isOpen ? "true" : "false"}
           aria-controls={contentId}
         >
@@ -72,7 +88,7 @@ export function ContactsCollapsibleFilterSection({
         <button
           type="button"
           className={`${baseClass}__header-chevron`}
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={toggleOpen}
           aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
         >
           <ChevronDown
