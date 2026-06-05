@@ -77,6 +77,15 @@ video {
   --c360-spacing-3: 12px;
   --c360-spacing-4: 16px;
   --c360-spacing-5: 20px;
+
+  /* Breakpoints (reference — CSS does not support custom props in @media;
+     these exist for documentation and JS bridge only) */
+  --c360-bp-xs: 480px;
+  --c360-bp-sm: 640px;
+  --c360-bp-md: 768px;
+  --c360-bp-lg: 1024px;
+  --c360-bp-xl: 1280px;
+  --c360-bp-2xl: 1536px;
   --c360-spacing-6: 24px;
   --c360-spacing-8: 32px;
   --c360-spacing-10: 40px;
@@ -86,7 +95,8 @@ video {
   /* Border radius — kit $border-radius: 0.75rem */
   --c360-radius-sm: 6px;
   --c360-radius-md: 10px;
-  --c360-radius-lg: 0.75rem; /* cards, modals */
+  --c360-radius-lg: 0.75rem;
+  /* cards, modals */
   --c360-radius-xl: 1.25rem;
   --c360-radius-2xl: 1.5rem;
   --c360-radius-full: 9999px;
@@ -153,14 +163,22 @@ video {
   --c360-font-semibold: 600;
   --c360-font-bold: 700;
 
-  --c360-text-xs: 0.75rem; /* 12px */
-  --c360-text-sm: 0.875rem; /* 14px */
-  --c360-text-base: 1rem; /* 16px */
-  --c360-text-lg: 1.125rem; /* 18px */
-  --c360-text-xl: 1.25rem; /* 20px */
-  --c360-text-2xl: 1.5rem; /* 24px */
-  --c360-text-3xl: 1.875rem; /* 30px */
-  --c360-text-4xl: 2.25rem; /* 36px */
+  --c360-text-xs: 0.75rem;
+  /* 12px */
+  --c360-text-sm: 0.875rem;
+  /* 14px */
+  --c360-text-base: 1rem;
+  /* 16px */
+  --c360-text-lg: 1.125rem;
+  /* 18px */
+  --c360-text-xl: 1.25rem;
+  /* 20px */
+  --c360-text-2xl: 1.5rem;
+  /* 24px */
+  --c360-text-3xl: 1.875rem;
+  /* 30px */
+  --c360-text-4xl: 2.25rem;
+  /* 36px */
 
   /* Scrollbar */
   --c360-scrollbar-thumb: #d1d1d1;
@@ -214,13 +232,16 @@ video {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--c360-scrollbar-thumb);
   border-radius: var(--c360-radius-full);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--c360-scrollbar-thumb-hover);
 }
@@ -248,10 +269,12 @@ h6 {
 p {
   margin: 0;
 }
+
 a {
   color: var(--c360-primary);
   text-decoration: none;
 }
+
 a:hover {
   color: var(--c360-primary-hover);
 }
@@ -269,6 +292,7 @@ a:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -279,6 +303,7 @@ a:hover {
     opacity: 0;
     transform: translateX(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -296,6 +321,7 @@ a:hover {
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -305,6 +331,7 @@ a:hover {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }

@@ -10,7 +10,6 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
-import dynamic from "next/dynamic";
 import { MoreHorizontal, Loader2, Download } from "lucide-react";
 import type {
   GridColDef,
@@ -30,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { applyVars } from "@/lib/applyCssVars";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
 import type { MappedJob } from "@/lib/jobs/jobsMapper";
 import {
   formatJobIdShort,
@@ -38,18 +38,6 @@ import {
   canDownloadSchedulerOutput,
   schedulerOutputDownloadLabel,
 } from "@/lib/jobs/jobsUtils";
-
-const DataGrid = dynamic(
-  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
-        <span className="c360-spinner" aria-label="Loading table…" />
-      </div>
-    ),
-  },
-) as typeof import("@mui/x-data-grid").DataGrid;
 
 export const JOBS_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },

@@ -8,7 +8,10 @@ import {
   hireSignalJobsListFromJson,
   type HireSignalApiJson,
 } from "@/services/graphql/hiringSignalService";
+import { postedBoundsFromPreset } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
+
+export type SignalTimePreset = "all" | "new_7d";
 
 export {
   hiringSignalRowKey,
@@ -315,16 +318,50 @@ export function parseLinkedInJobsPayload(raw: unknown): {
   return { success: env.success, data, total: env.total };
 }
 
-export function effectivePostedAfter(
-  preset: "all" | "new_7d",
-  explicitPostedAfter: string | undefined,
-): string | undefined {
-  const trimmed = explicitPostedAfter?.trim();
+/** Toolbar "Today's jobs" tab (`new_7d`) defaults to local calendar today when no sidebar date is set. */
+export function effectivePostedBounds(
+  preset: SignalTimePreset,
+  explicit?: { postedAfter?: string; postedBefore?: string },
+): { postedAfter?: string; postedBefore?: string } {
+  const after = explicit?.postedAfter?.trim();
+  const before = explicit?.postedBefore?.trim();
   if (preset !== "new_7d") {
-    return trimmed || undefined;
+    return {
+      postedAfter: after || undefined,
+      postedBefore: before || undefined,
+    };
   }
-  if (trimmed) return trimmed;
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - 7);
-  return d.toISOString().slice(0, 10);
+  if (after || before) {
+    return {
+      postedAfter: after || undefined,
+      postedBefore: before || undefined,
+    };
+  }
+  const today = postedBoundsFromPreset("today");
+  return {
+    postedAfter: today.postedAfter,
+    postedBefore: today.postedBefore,
+  };
+}
+
+export function effectivePostedAfter(
+  preset: SignalTimePreset,
+  explicitPostedAfter: string | undefined,
+  explicitPostedBefore?: string | undefined,
+): string | undefined {
+  return effectivePostedBounds(preset, {
+    postedAfter: explicitPostedAfter,
+    postedBefore: explicitPostedBefore,
+  }).postedAfter;
+}
+
+export function effectivePostedBefore(
+  preset: SignalTimePreset,
+  explicitPostedBefore: string | undefined,
+  explicitPostedAfter?: string | undefined,
+): string | undefined {
+  return effectivePostedBounds(preset, {
+    postedAfter: explicitPostedAfter,
+    postedBefore: explicitPostedBefore,
+  }).postedBefore;
 }

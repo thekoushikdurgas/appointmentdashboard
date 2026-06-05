@@ -4,6 +4,9 @@ import { useEffect, useTransition } from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("errorBoundary");
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -14,7 +17,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const [resetPending, startReset] = useTransition();
 
   useEffect(() => {
-    console.error("[Contact360] Unhandled error:", error);
+    log.error("Unhandled error", error, { digest: error.digest });
   }, [error]);
 
   return (

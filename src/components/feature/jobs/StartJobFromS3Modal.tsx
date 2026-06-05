@@ -95,7 +95,7 @@ function ColumnMapField({
   return (
     <div className="c360-field">
       <span className="c360-label">{label}</span>
-      <div className="c360-flex c360-flex-col c360-gap-2 md:c360-flex-row md:c360-items-end">
+      <div className="c360-flex c360-flex-col c360-gap-2 c360-md-flex-row c360-md-items-end">
         <Select
           options={quickOptions}
           value={quickValue}
@@ -105,7 +105,7 @@ function ColumnMapField({
           }}
           disabled={disabled || schemaNames.length === 0}
           fullWidth
-          className="md:c360-min-w-[11rem]"
+          className="c360-md-min-w-44"
         />
         <Input
           value={value}

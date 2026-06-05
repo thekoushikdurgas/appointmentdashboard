@@ -16,7 +16,7 @@ export default function EmailPage() {
       <Tabs
         defaultValue="finder-single"
         variant="floating"
-        className="c360-tabs--email c360-tabs--floating-bottom"
+        className="c360-tabs--email c360-tabs--floating-bottom c360-email-tool-page"
       >
         <TabsList>
           <TabsTrigger value="finder-single" icon={<Search size={16} />}>

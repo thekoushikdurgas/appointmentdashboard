@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { readS3FilesCache, writeS3FilesCache } from "@/lib/s3FilesLocalCache";
 import { s3Service } from "@/services/graphql/s3Service";
-import { uploadCsvMultipartParts } from "@/lib/multipartCsvUpload";
+import { uploadCsvMultipartParts } from "@/lib/multipart";
 import { tabularContentTypeFromFilename } from "@/lib/tabularUpload";
 import { getStorageErrorMessage } from "@/lib/storageErrors";
 import type { TabularMultipartProgressCallback } from "@/lib/multipartUploadTypes";

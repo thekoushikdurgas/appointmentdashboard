@@ -9,10 +9,13 @@ import { cn } from "@/lib/utils";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import {
+  DATE_POSTED_PRESET_LABELS,
   formatSalaryUsdLabel,
+  isQuickDatePostedPreset,
   normalizeHiringSignalTokenList,
-  postedAfterISOFromPreset,
   postedAtBoundToDateInputValue,
+  postedBoundsFromCustomDay,
+  postedBoundsFromPreset,
   resolveSalaryBoundsFromDraft,
   type DatePostedPreset,
   type HiringSignalFilterDraft,
@@ -29,9 +32,11 @@ import {
   HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS,
   HIRE_SIGNAL_COMPANY_COHORT_LABELS,
 } from "@/lib/hireSignalCompanyCohort";
-import { formatCompanyEmployeeSizeBucketLabel } from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
-import { formatCompanyFundingBucketLabel } from "@/lib/hireSignalCompanyFundingBuckets";
-import { formatCompanyRevenueBucketLabel } from "@/lib/hireSignalCompanyRevenueBuckets";
+import {
+  formatCompanyEmployeesCountBucketLabel,
+  formatCompanyFundingBucketLabel,
+  formatCompanyRevenueBucketLabel,
+} from "@/lib/companyRangeBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
 
 const LINKEDIN_APPLY_METHOD = "ComplexOnsiteApply";
@@ -256,20 +261,25 @@ const DATE_POSTED_PRESET_OPTIONS: {
   label: string;
 }[] = [
   { value: "any", label: "Any time" },
-  { value: "24h", label: "Last 4 days (UTC, rolling)" },
-  { value: "7d", label: "Last 7 days (UTC)" },
-  { value: "30d", label: "Last 30 days (UTC)" },
-  { value: "custom", label: "Custom range" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "15d", label: "Last 15 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "custom_day", label: "Custom day" },
+  { value: "custom_range", label: "Custom range" },
 ];
 
-const DATE_POSTED_PRESET_LABELS: Record<
-  Exclude<DatePostedPreset, "any" | "custom">,
-  string
-> = {
-  "24h": "Last 4 days (UTC, rolling)",
-  "7d": "Last 7 days (UTC)",
-  "30d": "Last 30 days (UTC)",
-};
+function clearDatePostedDraftFields(
+  onDraftField: (
+    field: HiringSignalDraftField,
+    value: string | string[] | boolean | number | null | Record<string, string[]>,
+  ) => void,
+): void {
+  onDraftField("datePostedPreset", "any");
+  onDraftField("postedAfter", "");
+  onDraftField("postedBefore", "");
+}
 
 const VIEW_MODE_OPTIONS = [
   { value: "comfortable", label: "Comfortable" },
@@ -471,7 +481,7 @@ function buildHiringSignalChipBuckets(
     if (!t) return;
     add("companyCohort", {
       key: `co-emp-size-${i}-${t}`,
-      label: `Include employee size: ${formatCompanyEmployeeSizeBucketLabel(t)}`,
+      label: `Include employee size: ${formatCompanyEmployeesCountBucketLabel(t)}`,
       onRemove: () => {
         onDraftField(
           "companyEmployeeSizes",
@@ -485,7 +495,7 @@ function buildHiringSignalChipBuckets(
     if (!t) return;
     add("companyCohort", {
       key: `co-emp-size-ex-${i}-${t}`,
-      label: `Exclude employee size: ${formatCompanyEmployeeSizeBucketLabel(t)}`,
+      label: `Exclude employee size: ${formatCompanyEmployeesCountBucketLabel(t)}`,
       onRemove: () => {
         onDraftField(
           "excludedCompanyEmployeeSizes",
@@ -664,35 +674,27 @@ function buildHiringSignalChipBuckets(
       },
     });
   }
-  if (
-    draft.datePostedPreset === "24h" ||
-    draft.datePostedPreset === "7d" ||
-    draft.datePostedPreset === "30d"
-  ) {
+  if (draft.datePostedPreset !== "any") {
     const pk = draft.datePostedPreset;
+    const label =
+      pk === "custom_day" && draft.postedAfter.trim()
+        ? `Date posted: ${postedAtBoundToDateInputValue(draft.postedAfter)}`
+        : pk === "custom_range"
+          ? `Date posted: ${[
+              postedAtBoundToDateInputValue(draft.postedAfter),
+              postedAtBoundToDateInputValue(draft.postedBefore),
+            ]
+              .filter(Boolean)
+              .join(" – ") || "Custom range"}`
+          : `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`;
     add("datePosted", {
       key: "dpreset",
-      label: `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`,
+      label,
       onRemove: () => {
         onDraftField("datePostedPreset", "any");
         onDraftField("postedAfter", "");
+        onDraftField("postedBefore", "");
       },
-    });
-  } else if (draft.postedAfter.trim()) {
-    add("datePosted", {
-      key: "after",
-      label: `Posted after ${draft.postedAfter}`,
-      onRemove: () => {
-        onDraftField("postedAfter", "");
-        onDraftField("datePostedPreset", "any");
-      },
-    });
-  }
-  if (draft.postedBefore.trim()) {
-    add("datePosted", {
-      key: "before",
-      label: `Before ${draft.postedBefore}`,
-      onRemove: () => onDraftField("postedBefore", ""),
     });
   }
 
@@ -894,20 +896,24 @@ export function HiringSignalsFilterSidebar({
   const onDatePostedPresetChange = (raw: string) => {
     const v = raw as DatePostedPreset;
     if (v === "any") {
-      onDraftField("datePostedPreset", "any");
+      clearDatePostedDraftFields(onDraftField);
+      return;
+    }
+    if (v === "custom_day") {
+      onDraftField("datePostedPreset", "custom_day");
       onDraftField("postedAfter", "");
       onDraftField("postedBefore", "");
       return;
     }
-    if (v === "custom") {
-      onDraftField("datePostedPreset", "custom");
+    if (v === "custom_range") {
+      onDraftField("datePostedPreset", "custom_range");
       return;
     }
-    if (v === "24h" || v === "7d" || v === "30d") {
-      const iso = postedAfterISOFromPreset(v);
+    if (isQuickDatePostedPreset(v)) {
+      const bounds = postedBoundsFromPreset(v);
       onDraftField("datePostedPreset", v);
-      onDraftField("postedAfter", iso);
-      onDraftField("postedBefore", "");
+      onDraftField("postedAfter", bounds.postedAfter);
+      onDraftField("postedBefore", bounds.postedBefore);
     }
   };
 
@@ -1049,18 +1055,14 @@ export function HiringSignalsFilterSidebar({
           title="Date posted"
           count={datePostedCount}
           defaultOpen={false}
-          onClear={() => {
-            onDraftField("datePostedPreset", "any");
-            onDraftField("postedAfter", "");
-            onDraftField("postedBefore", "");
-          }}
+          onClear={() => clearDatePostedDraftFields(onDraftField)}
         >
           <HsFilterChipList items={chipBuckets.datePosted} variant="section" />
           {signalTimePreset === "new_7d" ? (
             <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              The Signals &quot;New&quot; tab also enforces jobs from at least
-              the last 7 days; the stricter window wins when combined with these
-              presets.
+              The Signals &quot;Today&apos;s jobs&quot; tab filters to jobs
+              posted today (local time) when no Date posted sidebar preset is
+              active; sidebar date filters override the tab window.
             </p>
           ) : null}
           <Select
@@ -1072,13 +1074,47 @@ export function HiringSignalsFilterSidebar({
             inputSize="md"
             className="c360-mb-2"
           />
-          {draft.datePostedPreset === "custom" ? (
+          {draft.datePostedPreset === "custom_day" ? (
+            <div className="c360-mb-3 c360-space-y-2">
+              <label
+                htmlFor="hsf-posted-day"
+                className="c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Posted on this day
+              </label>
+              <Input
+                id="hsf-posted-day"
+                type="date"
+                value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                onChange={(e) => {
+                  const day = e.target.value.trim();
+                  if (!day) {
+                    setDraft((d) => ({
+                      ...d,
+                      postedAfter: "",
+                      postedBefore: "",
+                      datePostedPreset: "custom_day",
+                    }));
+                    return;
+                  }
+                  const bounds = postedBoundsFromCustomDay(day);
+                  setDraft((d) => ({
+                    ...d,
+                    postedAfter: bounds.postedAfter,
+                    postedBefore: bounds.postedBefore,
+                    datePostedPreset: "custom_day",
+                  }));
+                }}
+              />
+            </div>
+          ) : null}
+          {draft.datePostedPreset === "custom_range" ? (
             <div className="c360-mb-3 c360-space-y-2">
               <label
                 htmlFor="hsf-posted-after"
                 className="c360-block c360-text-2xs c360-text-ink-muted"
               >
-                Posted on or after (optional)
+                From (optional)
               </label>
               <Input
                 id="hsf-posted-after"
@@ -1088,7 +1124,7 @@ export function HiringSignalsFilterSidebar({
                   setDraft((d) => ({
                     ...d,
                     postedAfter: e.target.value.trim(),
-                    datePostedPreset: "custom",
+                    datePostedPreset: "custom_range",
                   }))
                 }
               />
@@ -1096,7 +1132,7 @@ export function HiringSignalsFilterSidebar({
                 htmlFor="hsf-posted-before"
                 className="c360-block c360-text-2xs c360-text-ink-muted"
               >
-                Posted on or before (optional)
+                To (optional)
               </label>
               <Input
                 id="hsf-posted-before"
@@ -1106,7 +1142,7 @@ export function HiringSignalsFilterSidebar({
                   setDraft((d) => ({
                     ...d,
                     postedBefore: e.target.value.trim(),
-                    datePostedPreset: "custom",
+                    datePostedPreset: "custom_range",
                   }))
                 }
               />

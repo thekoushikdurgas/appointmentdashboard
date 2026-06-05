@@ -2,12 +2,15 @@
  * Best-effort async/sync operations: silent in production, debug-logged in development.
  */
 
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("bestEffort");
+
 function logBestEffortFailure(label: string, error: unknown): void {
-  if (process.env.NODE_ENV !== "development") return;
-  console.debug(`[bestEffort] ${label}`, error);
+  log.debug(label, { error });
 }
 
-/** Run sync work; failures are swallowed (dev: console.debug). */
+/** Run sync work; failures are swallowed (dev: logger debug). */
 export function swallowBestEffortSync(label: string, fn: () => void): void {
   try {
     fn();
@@ -16,7 +19,7 @@ export function swallowBestEffortSync(label: string, fn: () => void): void {
   }
 }
 
-/** Fire-and-forget async work; rejections are swallowed (dev: console.debug). */
+/** Fire-and-forget async work; rejections are swallowed (dev: logger debug). */
 export function swallowBestEffort(
   label: string,
   fn: () => void | Promise<void>,
@@ -36,7 +39,7 @@ export function swallowBestEffort(
   }
 }
 
-/** Await async work; failures are swallowed (dev: console.debug). */
+/** Await async work; failures are swallowed (dev: logger debug). */
 export async function swallowBestEffortAsync(
   label: string,
   fn: () => Promise<void>,

@@ -597,14 +597,14 @@
  * Rows that use `c360-2col-grid lg:c360-grid-cols-3`: stack as column, no gap.
  * Class name contains `:` — escape for CSS selectors.
  */
-.c360-demands-trends-page .c360-2col-grid.lg\:c360-grid-cols-3 {
+.c360-demands-trends-page .c360-2col-grid.c360-lg-grid-cols-3 {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
 /* Two-up rows (locations+daily, titles+skills): flex column, no gap (browser preview) */
-.c360-demands-trends-page .c360-2col-grid:not(.lg\:c360-grid-cols-3) {
+.c360-demands-trends-page .c360-2col-grid:not(.c360-lg-grid-cols-3) {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -825,6 +825,50 @@
   --c360-hs-toolbar-control-h: var(--c360-button-height-sm);
 }
 
+/* Two-row toolbar: full-width search, then tabs + actions */
+.c360-hs-toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  background: var(--c360-kit-toolbar-bg);
+  border: 1px solid var(--c360-kit-toolbar-border);
+  border-radius: var(--c360-radius-lg);
+  box-shadow: var(--c360-kit-shadow-soft);
+}
+
+.c360-hs-toolbar-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c360-spacing-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--c360-spacing-2) var(--c360-spacing-4);
+  border-bottom: 1px solid var(--c360-border);
+}
+
+.c360-hs-toolbar-search-row .c360-hs-global-search--toolbar-full {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.c360-hs-toolbar-run-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--c360-hs-toolbar-control-h);
+}
+
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+}
+
 .c360-page.c360-hiring-signals-page .c360-toolbar {
   border-radius: 0;
   align-items: center;
@@ -838,6 +882,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--c360-spacing-3);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .c360-page.c360-hiring-signals-page .c360-toolbar__tabs {
@@ -908,30 +954,39 @@
   }
 }
 
-/* Signals list pager lives in toolbar `meta` (between scope tabs and actions) */
-.c360-page.c360-hiring-signals-page .c360-toolbar__meta {
+/* Signals list pager lives in toolbar actions (before per-page + export) */
+.c360-page.c360-hiring-signals-page .c360-toolbar__action-prefix {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.c360-page.c360-hiring-signals-page .c360-hs-toolbar-meta>.c360-text-2xs {
-  display: inline-flex;
-  align-items: center;
-  height: var(--c360-hs-toolbar-control-h);
-  flex-shrink: 0;
-}
-
-.c360-hs-toolbar-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
   gap: var(--c360-spacing-2);
+  flex-wrap: wrap;
+}
+
+.c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar__actions {
   flex: 1 1 auto;
+  justify-content: flex-end;
   min-width: 0;
-  min-height: var(--c360-hs-toolbar-control-h);
+}
+
+@media (max-width: 767px) {
+  .c360-hs-toolbar-search-row {
+    padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  }
+
+  .c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar__leading,
+  .c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .c360-page.c360-hiring-signals-page .c360-hs-toolbar-stack .c360-toolbar__actions {
+    flex-wrap: wrap;
+  }
 }
 
 /* Origin UI search-input pattern — docs/frontend/ideas/mydesigns/seach_bar.md */
@@ -1378,9 +1433,26 @@
 }
 
 /* Runs tab — queue metrics (overrides kit `.c360-card__body { width: 50% }`) */
+.c360-hs-queue-metrics-card.c360-card {
+  box-sizing: content-box;
+  margin-top: 20px;
+}
+
 .c360-hs-queue-metrics-card .c360-card__body {
   width: 100%;
   min-width: 0;
+}
+
+/* Runs tab — satellite accordion toolbar (title + filters + actions) */
+.c360-hs-runs-sessions-toolbar {
+  padding: 10px;
+}
+
+.c360-hs-runs-sessions-toolbar__lead {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
 
 /* Runs tab — tracked scrape session cards */

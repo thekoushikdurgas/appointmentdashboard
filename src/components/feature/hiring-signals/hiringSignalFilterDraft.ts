@@ -1,5 +1,48 @@
-/** LinkedIn-style quick date window — maps to `postedAfter` (RFC3339). Preset `24h` uses a rolling 4×24h bound; `7d`/`30d` use UTC calendar days from midnight today. */
-export type DatePostedPreset = "any" | "24h" | "7d" | "30d" | "custom";
+/** Quick date windows — map to `postedAfter` / `postedBefore` (RFC3339 with local offset). */
+export type DatePostedPreset =
+  | "any"
+  | "today"
+  | "yesterday"
+  | "7d"
+  | "15d"
+  | "30d"
+  | "custom_day"
+  | "custom_range";
+
+/** Presets that auto-compute bounds via `postedBoundsFromPreset` (not custom pickers). */
+export const DATE_POSTED_QUICK_PRESETS = [
+  "today",
+  "yesterday",
+  "7d",
+  "15d",
+  "30d",
+] as const;
+
+export type DatePostedQuickPreset = (typeof DATE_POSTED_QUICK_PRESETS)[number];
+
+export function isQuickDatePostedPreset(
+  preset: DatePostedPreset,
+): preset is DatePostedQuickPreset {
+  return (DATE_POSTED_QUICK_PRESETS as readonly string[]).includes(preset);
+}
+
+export type PostedDateBounds = {
+  postedAfter: string;
+  postedBefore: string;
+};
+
+export const DATE_POSTED_PRESET_LABELS: Record<
+  Exclude<DatePostedPreset, "any">,
+  string
+> = {
+  today: "Today",
+  yesterday: "Yesterday",
+  "7d": "Last 7 days",
+  "15d": "Last 15 days",
+  "30d": "Last 30 days",
+  custom_day: "Custom day",
+  custom_range: "Custom range",
+};
 
 export type HiringSignalFilterDraft = {
   /** Role keywords / full titles — multi-select, OR within this field when applied. */
@@ -50,7 +93,7 @@ export type HiringSignalFilterDraft = {
   /** LinkedIn-style apply method token (substring match on apply_method). */
   applyMethod: string;
 
-  /** Quick date filter row — drives `postedAfter` unless `custom`. */
+  /** Quick date filter row — drives `postedAfter` / `postedBefore` unless custom pickers. */
   datePostedPreset: DatePostedPreset;
 
   /**
@@ -143,33 +186,90 @@ export const EMPTY_HIRING_SIGNAL_DRAFT: HiringSignalFilterDraft = {
 
 export type HiringSignalDraftField = keyof HiringSignalFilterDraft;
 
-/** Start of today in UTC (midnight). */
-function startOfTodayUTC(): Date {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** RFC3339 with local timezone offset (job.server accepts via `parsePostedBound`). */
+export function toLocalRFC3339(date: Date): string {
+  const y = date.getFullYear();
+  const m = pad2(date.getMonth() + 1);
+  const d = pad2(date.getDate());
+  const h = pad2(date.getHours());
+  const min = pad2(date.getMinutes());
+  const s = pad2(date.getSeconds());
+  const ms = String(date.getMilliseconds()).padStart(3, "0");
+  const offsetMin = -date.getTimezoneOffset();
+  const sign = offsetMin >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMin);
+  const offH = pad2(Math.floor(abs / 60));
+  const offM = pad2(abs % 60);
+  return `${y}-${m}-${d}T${h}:${min}:${s}.${ms}${sign}${offH}:${offM}`;
+}
+
+export function startOfLocalDay(date: Date = new Date()): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function endOfLocalDay(date: Date = new Date()): Date {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
   return d;
 }
 
 /**
- * Lower bound for quick "Date posted" presets → job.server `posted_after` (RFC3339).
- * **`24h` (UI "Last 4 days"):** rolling **4×24h** from now so rows with `postedAt` a few UTC
- * calendar days ago (but still "recent" in the grid) are not excluded by `startOfTodayUTC()−3`.
- * **`7d` / `30d`:** UTC calendar windows from start of today (inclusive day counts).
+ * Bounds for quick "Date posted" presets using the user's local calendar.
+ * Rolling windows (`7d` / `15d` / `30d`) are inclusive from local midnight (N−1) days ago through end of today.
  */
-export function postedAfterISOFromPreset(
-  preset: Exclude<DatePostedPreset, "any" | "custom">,
-): string {
-  if (preset === "24h") {
-    const ms = Date.now() - 4 * 24 * 60 * 60 * 1000;
-    return new Date(ms).toISOString();
+export function postedBoundsFromPreset(
+  preset: DatePostedQuickPreset,
+  now: Date = new Date(),
+): PostedDateBounds {
+  switch (preset) {
+    case "today":
+      return {
+        postedAfter: toLocalRFC3339(startOfLocalDay(now)),
+        postedBefore: toLocalRFC3339(endOfLocalDay(now)),
+      };
+    case "yesterday": {
+      const y = new Date(now);
+      y.setDate(y.getDate() - 1);
+      return {
+        postedAfter: toLocalRFC3339(startOfLocalDay(y)),
+        postedBefore: toLocalRFC3339(endOfLocalDay(y)),
+      };
+    }
+    case "7d":
+    case "15d":
+    case "30d": {
+      const days = preset === "7d" ? 7 : preset === "15d" ? 15 : 30;
+      const start = new Date(now);
+      start.setDate(start.getDate() - (days - 1));
+      return {
+        postedAfter: toLocalRFC3339(startOfLocalDay(start)),
+        postedBefore: toLocalRFC3339(endOfLocalDay(now)),
+      };
+    }
   }
-  const d = startOfTodayUTC();
-  if (preset === "7d") {
-    d.setUTCDate(d.getUTCDate() - 6);
-    return d.toISOString();
+}
+
+/** Map a YYYY-MM-DD picker value to local start/end of that calendar day. */
+export function postedBoundsFromCustomDay(yyyyMmDd: string): PostedDateBounds {
+  const t = yyyyMmDd.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (!m) {
+    return { postedAfter: "", postedBefore: "" };
   }
-  d.setUTCDate(d.getUTCDate() - 29);
-  return d.toISOString();
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (Number.isNaN(d.getTime())) {
+    return { postedAfter: "", postedBefore: "" };
+  }
+  return {
+    postedAfter: toLocalRFC3339(startOfLocalDay(d)),
+    postedBefore: toLocalRFC3339(endOfLocalDay(d)),
+  };
 }
 
 /** Map draft `postedAfter` / `postedBefore` (RFC3339 or YYYY-MM-DD) to `<input type="date" />` value. */

@@ -11,7 +11,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
-  effectivePostedAfter,
+  effectivePostedBounds,
   useHiringSignals,
   type LinkedInJobRow,
 } from "@/hooks/useHiringSignals";
@@ -256,14 +256,18 @@ function HiringSignalsPageBody({
     [savedSearchesTrigger, resetFilters],
   );
 
-  const effectiveJobListFilters = useMemo(
-    () => ({
+  const effectiveJobListFilters = useMemo(() => {
+    const bounds = effectivePostedBounds(signalTimePreset, {
+      postedAfter: filters.postedAfter,
+      postedBefore: filters.postedBefore,
+    });
+    return {
       ...filters,
-      postedAfter: effectivePostedAfter(signalTimePreset, filters.postedAfter),
+      postedAfter: bounds.postedAfter,
+      postedBefore: bounds.postedBefore,
       companyUuids: filters.companyUuids,
-    }),
-    [filters, signalTimePreset],
-  );
+    };
+  }, [filters, signalTimePreset]);
 
   const hireSignalExportIdCap = useMemo(
     () =>
@@ -449,101 +453,102 @@ function HiringSignalsPageBody({
 
   const signalsToolbar = useMemo(
     () => (
-      <DataToolbar
-        cssPrefix="c360-toolbar"
-        tabs={[
-          {
-            value: "all",
-            label: "All signals",
-            count: total,
-            showCountOnlyWhenActive: true,
-          },
-          {
-            value: "new",
-            label: "New (7 days)",
-            count: total,
-            showCountOnlyWhenActive: true,
-          },
-        ]}
-        activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
-        onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
-        totalCount={total}
-        meta={
-          <div className="c360-hs-toolbar-meta">
-            <HiringSignalsGlobalSearch
-              tokens={filters.globalSearchTokens ?? []}
-              disabled={loading}
-              onTokensChange={(next) => {
-                setFilters((f) => ({
-                  ...f,
-                  globalSearchTokens: next.length > 0 ? next : undefined,
-                  offset: 0,
-                }));
-              }}
-            />
-            {filters.runId?.trim() ? (
-              <span className="c360-text-2xs c360-text-muted c360-shrink-0">
-                {total.toLocaleString()} jobs match this run
-              </span>
-            ) : null}
-            {total > filters.limit ? (
-              <Pagination
-                variant="dropdown"
-                className="c360-hiring-signals-toolbar-pagination"
-                page={currentPage + 1}
-                pageSize={filters.limit}
-                total={total}
-                onPageChange={(p) => setPage(p - 1)}
-              />
-            ) : null}
-          </div>
-        }
-        filterConfig={{
-          activeCount: activeDraftCount,
-          onOpen: () => setMobileFiltersOpen(true),
-          show: !isDesktop,
-        }}
-        actionPrefix={
-          <HiringSignalsToolbarTableExtras
-            pageSize={filters.limit}
-            onPageSizeChange={setPageSize}
+      <div className="c360-hs-toolbar-stack">
+        <div className="c360-hs-toolbar-search-row">
+          <HiringSignalsGlobalSearch
+            className="c360-hs-global-search--toolbar-full"
+            tokens={filters.globalSearchTokens ?? []}
+            disabled={loading}
+            onTokensChange={(next) => {
+              setFilters((f) => ({
+                ...f,
+                globalSearchTokens: next.length > 0 ? next : undefined,
+                offset: 0,
+              }));
+            }}
           />
-        }
-        actions={[
-          {
-            label: "Export XLSX",
-            onClick: () => {
-              if (!canExportHireSignalXlsx) return;
-              setExportModalOpen(true);
+          {filters.runId?.trim() ? (
+            <span className="c360-text-2xs c360-text-muted c360-shrink-0 c360-hs-toolbar-run-hint">
+              {total.toLocaleString()} jobs match this run
+            </span>
+          ) : null}
+        </div>
+        <DataToolbar
+          cssPrefix="c360-toolbar"
+          tabs={[
+            {
+              value: "all",
+              label: "All signals",
+              count: total,
+              showCountOnlyWhenActive: true,
             },
-            icon: Download,
-            variant: "secondary",
-            disabled: canExportHireSignalXlsx
-              ? loading || total === 0
-              : true,
-            title: canExportHireSignalXlsx
-              ? undefined
-              : "Coming soon — XLSX export is available for admin accounts",
-          },
-          {
-            label: "Refresh",
-            onClick: () => void refetch(),
-            icon: RefreshCw,
-            variant: "secondary",
-            disabled: loading,
-          },
-          ...(isSuperAdmin
-            ? [
-              {
-                label: "Run scrape",
-                onClick: () => setScrapeModalOpen(true),
-                icon: Play,
-                variant: "primary" as const,
+            {
+              value: "new",
+              label: "Today's jobs",
+              count: total,
+              showCountOnlyWhenActive: true,
+            },
+          ]}
+          activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
+          onTabChange={(v) => setSignalTimePreset(v === "new" ? "new_7d" : "all")}
+          totalCount={total}
+          filterConfig={{
+            activeCount: activeDraftCount,
+            onOpen: () => setMobileFiltersOpen(true),
+            show: !isDesktop,
+          }}
+          actionPrefix={
+            <>
+              {total > filters.limit ? (
+                <Pagination
+                  variant="dropdown"
+                  className="c360-hiring-signals-toolbar-pagination"
+                  page={currentPage + 1}
+                  pageSize={filters.limit}
+                  total={total}
+                  onPageChange={(p) => setPage(p - 1)}
+                />
+              ) : null}
+              <HiringSignalsToolbarTableExtras
+                pageSize={filters.limit}
+                onPageSizeChange={setPageSize}
+              />
+            </>
+          }
+          actions={[
+            {
+              label: "Export XLSX",
+              onClick: () => {
+                if (!canExportHireSignalXlsx) return;
+                setExportModalOpen(true);
               },
-            ]
-            : []),
-        ]}
-      />
+              icon: Download,
+              variant: "secondary",
+              disabled: canExportHireSignalXlsx ? loading || total === 0 : true,
+              title: canExportHireSignalXlsx
+                ? undefined
+                : "Coming soon — XLSX export is available for admin accounts",
+            },
+            {
+              label: "Refresh",
+              onClick: () => void refetch(),
+              icon: RefreshCw,
+              variant: "secondary",
+              disabled: loading,
+            },
+            ...(isSuperAdmin
+              ? [
+                  {
+                    label: "Run scrape",
+                    onClick: () => setScrapeModalOpen(true),
+                    icon: Play,
+                    variant: "primary" as const,
+                  },
+                ]
+              : []),
+          ]}
+        />
+      </div>
     ),
     [
       activeDraftCount,

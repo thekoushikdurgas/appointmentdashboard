@@ -38,8 +38,8 @@ import {
   COMPANIES_DT_PAGE_SIZE_OPTIONS,
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
-import { CompanyPagination } from "@/components/feature/companies/CompanyPagination";
-import { stashCompanyRowForDetail } from "@/lib/companyRowSession";
+import { EntityListPagination } from "@/components/shared/EntityListPagination";
+import { stashCompanyRowForDetail } from "@/lib/rowSession";
 import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
 import {
   companySearchStringFromTokens,
@@ -542,11 +542,14 @@ export default function CompaniesPage() {
             }}
           />
           {!loading && total > 0 ? (
-            <CompanyPagination
+            <EntityListPagination
               page={page}
               total={total}
               pageSize={pageSize}
               onPageChange={setPage}
+              metaClassName="c360-contacts-toolbar-meta"
+              paginationClassName="c360-contacts-toolbar-pagination"
+              ariaLabelPrefix="Companies list pagination"
             />
           ) : null}
         </div>

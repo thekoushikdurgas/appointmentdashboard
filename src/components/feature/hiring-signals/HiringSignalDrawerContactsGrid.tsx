@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import type {
   GridColDef,
   GridRenderCellParams,
@@ -10,6 +9,7 @@ import type {
 import { toast } from "sonner";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
 import { cn } from "@/lib/utils";
 import { parseEmailServiceError } from "@/lib/emailErrors";
 import { getHiringSignalsDataGridSx } from "@/components/feature/hiring-signals/hiringSignalsDataGridTheme";
@@ -25,18 +25,6 @@ import {
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { useRole } from "@/context/RoleContext";
 import { emailService } from "@/services/graphql/emailService";
-
-const DataGrid = dynamic(
-  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[200px]">
-        <span className="c360-spinner" aria-label="Loading table…" />
-      </div>
-    ),
-  },
-) as typeof import("@mui/x-data-grid").DataGrid;
 
 export type HiringSignalContactGridRow = {
   id: string;

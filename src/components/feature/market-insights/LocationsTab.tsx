@@ -54,7 +54,7 @@ export function LocationsTab({ jobs }: { jobs: LinkedInJobRow[] }) {
           valueKey="count"
         />
       </Card>
-      <div className="c360-2col-grid lg:c360-grid-cols-3">
+      <div className="c360-2col-grid c360-lg-grid-cols-3">
         <Card title="New locations" subtitle="Late window only">
           <HeatmapTable
             rows={newR as unknown as Record<string, unknown>[]}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { uploadFileViaUploadModule } from "@/lib/multipartGatewayUpload";
+import { uploadFileViaUploadModule } from "@/lib/multipart";
 import type { CompleteUploadResponse } from "@/graphql/generated/types";
 
 export type MultipartUploadPhase =

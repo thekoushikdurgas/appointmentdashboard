@@ -3,23 +3,30 @@
 import { Pagination } from "@/components/ui/Pagination";
 import { formatCompact, formatNumber } from "@/lib/utils";
 
-/** Offset pages 1–10; page 11+ uses cursor pagination in `useCompanies`. */
-const COMPANIES_OFFSET_PAGE_CAP = 10;
-
-export interface CompanyPaginationProps {
+export interface EntityListPaginationProps {
   page: number;
   total: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  /** Offset pages 1–N; page N+1+ may use cursor pagination in list hooks. */
+  offsetPageCap?: number;
+  /** BEM block for toolbar meta wrapper (e.g. c360-contacts-toolbar-meta). */
+  metaClassName: string;
+  paginationClassName: string;
+  ariaLabelPrefix: string;
 }
 
-/** Range summary + compact page dropdown — toolbar meta on companies list. */
-export function CompanyPagination({
+/** Range summary + compact page dropdown — toolbar meta on entity lists. */
+export function EntityListPagination({
   page,
   total,
   pageSize,
   onPageChange,
-}: CompanyPaginationProps) {
+  offsetPageCap = 10,
+  metaClassName,
+  paginationClassName,
+  ariaLabelPrefix,
+}: EntityListPaginationProps) {
   if (total <= 0) return null;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -30,9 +37,13 @@ export function CompanyPagination({
   const totalExact = formatNumber(total);
 
   return (
-    <>
+    <div
+      className={metaClassName}
+      role="region"
+      aria-label={`${ariaLabelPrefix}, showing ${showingFrom}–${showingTo} of ${totalExact}`}
+    >
       <p
-        className="c360-companies-toolbar-meta__range"
+        className={`${metaClassName}__range`}
         title={
           total >= 10_000
             ? `${showingFrom}–${showingTo} of ${totalExact}`
@@ -44,14 +55,14 @@ export function CompanyPagination({
       {total > pageSize ? (
         <Pagination
           variant="dropdown"
-          className="c360-companies-toolbar-pagination"
+          className={paginationClassName}
           total={total}
           page={safePage}
           pageSize={pageSize}
           onPageChange={onPageChange}
-          pageOptionLimit={COMPANIES_OFFSET_PAGE_CAP}
+          pageOptionLimit={offsetPageCap}
         />
       ) : null}
-    </>
+    </div>
   );
 }

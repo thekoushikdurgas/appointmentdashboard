@@ -6,11 +6,62 @@ import type { ContactFilterData } from "@/graphql/generated/types";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { buildHireSignalCompanyFacetOptionBase } from "@/components/feature/hiring-signals/hireSignalCompanyFacetOptionBase";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-import { formatCompanyFundingBucketLabel } from "@/lib/hireSignalCompanyFundingBuckets";
+import {
+  formatCompanyEmployeesCountBucketLabel,
+  formatCompanyFundingBucketLabel,
+  formatCompanyRevenueBucketLabel,
+} from "@/lib/companyRangeBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
-import { fetchHireSignalCompanyFundingFilterOptions } from "@/services/graphql/hiringSignalService";
+import {
+  fetchHireSignalCompanyEmployeeSizeFilterOptions,
+  fetchHireSignalCompanyFundingFilterOptions,
+  fetchHireSignalCompanyRevenueFilterOptions,
+  type HireSignalFirmographicFacetDimension,
+} from "@/services/graphql/hiringSignalService";
 
-export interface HiringSignalCompanyFundingFacetComboboxProps {
+export type HiringSignalCompanyBucketDimension =
+  | "revenue"
+  | "funding"
+  | "employeeSize";
+
+const BUCKET_CONFIG: Record<
+  HiringSignalCompanyBucketDimension,
+  {
+    excludeSelfFirmographicDimension: HireSignalFirmographicFacetDimension;
+    fetch: typeof fetchHireSignalCompanyRevenueFilterOptions;
+    formatLabel: (id: string) => string;
+    emptyHint: string;
+    loadErrorLabel: string;
+  }
+> = {
+  revenue: {
+    excludeSelfFirmographicDimension: "revenue",
+    fetch: fetchHireSignalCompanyRevenueFilterOptions,
+    formatLabel: formatCompanyRevenueBucketLabel,
+    emptyHint:
+      "No revenue buckets loaded. Redeploy job.server with company_revenue bucket support.",
+    loadErrorLabel: "Failed to load revenue options",
+  },
+  funding: {
+    excludeSelfFirmographicDimension: "funding",
+    fetch: fetchHireSignalCompanyFundingFilterOptions,
+    formatLabel: formatCompanyFundingBucketLabel,
+    emptyHint:
+      "No funding buckets loaded. Redeploy job.server with company_funding bucket support.",
+    loadErrorLabel: "Failed to load funding options",
+  },
+  employeeSize: {
+    excludeSelfFirmographicDimension: "employeeSize",
+    fetch: fetchHireSignalCompanyEmployeeSizeFilterOptions,
+    formatLabel: formatCompanyEmployeesCountBucketLabel,
+    emptyHint:
+      "No employee size buckets loaded. Redeploy job.server with company_employee_size support.",
+    loadErrorLabel: "Failed to load employee size options",
+  },
+};
+
+export interface HiringSignalCompanyBucketFacetComboboxProps {
+  dimension: HiringSignalCompanyBucketDimension;
   appliedListFilters: JobListFilters;
   signalTimePreset: "all" | "new_7d";
   label: string;
@@ -19,17 +70,17 @@ export interface HiringSignalCompanyFundingFacetComboboxProps {
   disabled?: boolean;
 }
 
-/**
- * Fixed total_funding ranges from Connectra for job employers, with job counts (job.server).
- */
-export function HiringSignalCompanyFundingFacetCombobox({
+/** Fixed Connectra firmographic bucket ranges for job employers, with job counts. */
+export function HiringSignalCompanyBucketFacetCombobox({
+  dimension,
   appliedListFilters,
   signalTimePreset,
   label,
   selectedValues,
   onSelectionChange,
   disabled = false,
-}: HiringSignalCompanyFundingFacetComboboxProps) {
+}: HiringSignalCompanyBucketFacetComboboxProps) {
+  const config = BUCKET_CONFIG[dimension];
   const { draft } = useHireSignalFilter();
   const [searchText, setSearchText] = useState("");
   const [options, setOptions] = useState<ContactFilterData[]>([]);
@@ -46,9 +97,12 @@ export function HiringSignalCompanyFundingFacetCombobox({
         appliedListFilters,
         draft,
         signalTimePreset,
-        { excludeSelfFirmographicDimension: "funding" },
+        {
+          excludeSelfFirmographicDimension:
+            config.excludeSelfFirmographicDimension,
+        },
       );
-      const rows = await fetchHireSignalCompanyFundingFilterOptions(base, {
+      const rows = await config.fetch(base, {
         q: searchText,
         limit: 20,
         offset: 0,
@@ -56,21 +110,20 @@ export function HiringSignalCompanyFundingFacetCombobox({
       if (req !== loadReqRef.current) return;
       const mapped: ContactFilterData[] = rows.map((r) => ({
         value: r.value,
-        displayValue: formatCompanyFundingBucketLabel(r.value),
+        displayValue: config.formatLabel(r.value),
         count: typeof r.count === "number" ? r.count : undefined,
       }));
       setOptions(mapped);
     } catch (e) {
       if (req === loadReqRef.current) {
-        const msg =
-          e instanceof Error ? e.message : "Failed to load funding options";
+        const msg = e instanceof Error ? e.message : config.loadErrorLabel;
         setLoadError(msg);
         setOptions([]);
       }
     } finally {
       if (req === loadReqRef.current) setLoading(false);
     }
-  }, [appliedListFilters, draft, searchText, signalTimePreset]);
+  }, [appliedListFilters, config, draft, searchText, signalTimePreset]);
 
   useEffect(() => {
     if (disabled) return;
@@ -96,7 +149,7 @@ export function HiringSignalCompanyFundingFacetCombobox({
         loadingMore={false}
         hasMore={false}
         onOpen={onOpen}
-        onLoadMore={() => { }}
+        onLoadMore={() => {}}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}
@@ -107,10 +160,7 @@ export function HiringSignalCompanyFundingFacetCombobox({
         </p>
       ) : null}
       {!loadError && !loading && options.length === 0 ? (
-        <p className="c360-text-2xs c360-text-ink-muted">
-          No funding buckets loaded. Redeploy job.server with company_funding
-          bucket support.
-        </p>
+        <p className="c360-text-2xs c360-text-ink-muted">{config.emptyHint}</p>
       ) : null}
     </div>
   );

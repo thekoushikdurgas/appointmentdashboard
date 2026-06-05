@@ -41,7 +41,10 @@ export function HiringSignalFilterComingSoon({
       <p className="c360-hs-filter-coming-soon__eyebrow">{title}</p>
       <p className="c360-hs-filter-coming-soon__text">{blurb}</p>
       {showPlansLink ? (
-        <Link href={ROUTES.BILLING} className="c360-hs-filter-coming-soon__link">
+        <Link
+          href={ROUTES.BILLING}
+          className="c360-hs-filter-coming-soon__link"
+        >
           View plans
         </Link>
       ) : null}

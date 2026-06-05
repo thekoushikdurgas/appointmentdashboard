@@ -37,7 +37,7 @@ import {
   fetchConnectraCompany,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
-import { readStashedContactRow } from "@/lib/contactRowSession";
+import { readStashedContactRow } from "@/lib/rowSession";
 
 interface PageProps {
   params: Promise<{ uuid: string }>;

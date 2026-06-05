@@ -72,7 +72,7 @@ import {
 } from "@/lib/contactsColumnVql";
 import { VqlBuilderModal } from "@/components/vql/VqlBuilderModal";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
-import { ContactPagination } from "@/components/feature/contacts/ContactPagination";
+import { EntityListPagination } from "@/components/shared/EntityListPagination";
 import { ContactsToolbarAiSearch } from "@/components/feature/contacts/ContactsToolbarAiSearch";
 import {
   SavedSearchesMenu,
@@ -759,11 +759,14 @@ export default function ContactsPageClient() {
       meta={
         <div className="c360-contacts-toolbar-meta">
           {!loading && total > 0 ? (
-            <ContactPagination
+            <EntityListPagination
               page={page}
               total={total}
               pageSize={pageSize}
               onPageChange={setPage}
+              metaClassName="c360-contacts-toolbar-meta"
+              paginationClassName="c360-contacts-toolbar-pagination"
+              ariaLabelPrefix="Contacts list pagination"
             />
           ) : null}
           <ContactsToolbarAiSearch

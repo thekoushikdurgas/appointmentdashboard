@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import type {
   GridColDef,
   GridRenderCellParams,
@@ -9,6 +8,7 @@ import type {
 } from "@mui/x-data-grid";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
 import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import { hiringSignalRowKey } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
@@ -21,18 +21,6 @@ import {
   HiringSignalsJobTitleCellCompact,
   HiringSignalsJobTypeBadgesCell,
 } from "@/components/feature/hiring-signals/hiringSignalsGridCells";
-
-const DataGrid = dynamic(
-  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[200px]">
-        <span className="c360-spinner" aria-label="Loading table…" />
-      </div>
-    ),
-  },
-) as typeof import("@mui/x-data-grid").DataGrid;
 
 const COL = {
   title: "Title",

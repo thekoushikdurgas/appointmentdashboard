@@ -66,9 +66,8 @@ export function countFilledDraftFields(d: HiringSignalFilterDraft): number {
     }
     if (k === "salaryPreset" && !d.salaryPreset.trim()) return;
     if (
-      k === "postedAfter" &&
-      d.datePostedPreset !== "any" &&
-      d.datePostedPreset !== "custom"
+      (k === "postedAfter" || k === "postedBefore") &&
+      d.datePostedPreset !== "any"
     ) {
       return;
     }

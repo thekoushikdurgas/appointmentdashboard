@@ -18,7 +18,7 @@
  *   require_middleware: boolean — default false; if true, require middleware.ts/js or proxy.ts (Next 16)
  *   max_inline_style_files: number — Styling (point 45); max src/* files with style={{ (default 30)
  *   max_any_count: number — TypeScript (point 51); max : any / as any / any[] in src/ excl. graphql/generated (default 20)
- *   max_console_logs: number — Architecture (point 58); max console.log( in src/ (default 10)
+ *   max_console_logs: number — Architecture (point 58); max console.*( in app/ + src/ (default 10)
  *   require_coverage_script: boolean — if true, require package.json scripts.test:coverage (point 74)
  *   require_ci_script: boolean — if true, require scripts.ci to include check:best-practices (point 86)
  *   localstorage_allow_files: string[] — optional; paths (relative to app root) allowed localStorage besides tokenManager (point 59)
@@ -174,11 +174,14 @@ function countAnyAnnotationsInSrc() {
   return count;
 }
 
-/** Total console.log( occurrences in src/. */
-function countConsoleLogsInSrc() {
+/** Total console.* call occurrences in app/ and src/ (excluding logger.ts). */
+function countConsoleCallsInApp() {
   let count = 0;
-  for (const p of walkCodeFiles(["src"])) {
-    const m = readText(p).match(/\bconsole\.log\s*\(/g);
+  const re = /\bconsole\.(log|debug|info|warn|error|trace)\s*\(/g;
+  for (const p of walkCodeFiles(["app", "src"])) {
+    const rel = path.relative(ROOT, p).replace(/\\/g, "/");
+    if (rel === "src/lib/logger.ts") continue;
+    const m = readText(p).match(re);
     if (m) count += m.length;
   }
   return count;
@@ -992,16 +995,16 @@ function runAllChecks(ctx) {
     typeof config.max_console_logs === "number" && config.max_console_logs >= 0
       ? config.max_console_logs
       : 10;
-  const logCount = countConsoleLogsInSrc();
+  const logCount = countConsoleCallsInApp();
   const logsOk = logCount <= maxLogs;
   add(
     58,
     "Code Architecture",
-    `console.log( occurrences in src/ ≤ ${maxLogs} (config max_console_logs)`,
+    `console.*( occurrences in app/ + src/ ≤ ${maxLogs} (config max_console_logs)`,
     logsOk,
     logsOk
-      ? `${logCount} console.log (limit ${maxLogs})`
-      : `${logCount} console.log exceed ${maxLogs} — remove or use a logger`,
+      ? `${logCount} console.* calls (limit ${maxLogs})`
+      : `${logCount} console.* calls exceed ${maxLogs} — remove or use src/lib/logger.ts`,
     logsOk ? "info" : "warning",
   );
 

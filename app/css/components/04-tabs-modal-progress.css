@@ -17,6 +17,20 @@
   width: fit-content;
 }
 
+@media (max-width: 640px) {
+  .c360-tabs__list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .c360-tabs__list::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .c360-tabs__tab {
   display: flex;
   align-items: center;

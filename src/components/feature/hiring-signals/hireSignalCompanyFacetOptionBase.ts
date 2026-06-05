@@ -3,7 +3,7 @@ import {
   resolveSalaryBoundsFromDraft,
   type HiringSignalFilterDraft,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
-import { effectivePostedAfter } from "@/hooks/useHiringSignals";
+import { effectivePostedBounds } from "@/hooks/useHiringSignals";
 import {
   hireSignalFirmographicListFiltersFromDraft,
   omitFirmographicDimensionFromJobListFilters,
@@ -29,6 +29,7 @@ export function buildHireSignalCompanyFacetOptionBase(
   const companies = normalizeHiringSignalTokenList(draft.companies);
   const locations = normalizeHiringSignalTokenList(draft.locations);
   const draftPosted = draft.postedAfter.trim();
+  const draftPostedBefore = draft.postedBefore.trim();
   const empMulti = normalizeHiringSignalTokenList(draft.employmentTypes);
   const empLegacy = draft.employmentType.trim();
   const employmentTypes =
@@ -99,12 +100,16 @@ export function buildHireSignalCompanyFacetOptionBase(
     h1bOnly: draft.h1bOnly ? true : undefined,
     seniority,
     functionCategory,
-    postedAfter: effectivePostedAfter(
-      preset,
-      draftPosted || applied.postedAfter,
-    ),
-    postedBefore:
-      draft.postedBefore.trim() || applied.postedBefore || undefined,
+    ...(() => {
+      const bounds = effectivePostedBounds(preset, {
+        postedAfter: draftPosted || applied.postedAfter,
+        postedBefore: draftPostedBefore || applied.postedBefore,
+      });
+      return {
+        postedAfter: bounds.postedAfter,
+        postedBefore: bounds.postedBefore,
+      };
+    })(),
     ...hireSignalFirmographicListFiltersFromDraft(draft),
   };
   if (options?.excludeSelfFirmographicDimension) {

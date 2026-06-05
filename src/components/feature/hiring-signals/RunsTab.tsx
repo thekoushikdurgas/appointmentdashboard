@@ -285,12 +285,12 @@ export function RunsTab({
         render: (row) => {
           const raw = String(
             row.finished_at ??
-              row.finishedAt ??
-              row.FinishedAt ??
-              row.completed_at ??
-              row.completedAt ??
-              row.CompletedAt ??
-              "",
+            row.finishedAt ??
+            row.FinishedAt ??
+            row.completed_at ??
+            row.completedAt ??
+            row.CompletedAt ??
+            "",
           );
           return renderRunDateTime(raw);
         },
@@ -384,51 +384,13 @@ export function RunsTab({
 
   return (
     <div className="c360-flex c360-flex-col c360-gap-6 c360-px-4">
-      <div className="c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-        <div>
-          <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
-            Scraper sessions &amp; tracked jobs
-          </h2>
-          <p className="c360-m-0 c360-mt-1 c360-text-2xs c360-text-muted">
-            Manage LinkedIn job scrapes (scraper.server). Interval repeats
-            appear on each card.
-          </p>
-        </div>
-        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="c360-gap-2"
-            onClick={() => void loadRuns()}
-            disabled={runsLoading}
-            leftIcon={
-              <RefreshCw size={15} className={cn(runsLoading && "c360-spin")} />
-            }
-          >
-            Reload
-          </Button>
-          {isSuperAdmin ? (
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              leftIcon={<Play size={15} />}
-              onClick={onOpenRunScrapeModal}
-            >
-              Run scrape
-            </Button>
-          ) : null}
-        </div>
-      </div>
-
       <QueueMetricsBar metrics={metrics} loading={runsLoading} />
 
       <section className="c360-space-y-3">
         <h3 className="c360-m-0 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
           Your tracked scrapes (gateway)
         </h3>
-        <div className="c360-grid c360-grid-cols-1 c360-gap-4 md:c360-grid-cols-2">
+        <div className="c360-2col-grid c360-gap-4">
           {trackedPaged.map((row) => (
             <ScrapeSessionCard
               key={String(row.id ?? JSON.stringify(row))}
@@ -484,31 +446,75 @@ export function RunsTab({
             ),
             content: (
               <div className="c360-space-y-4 c360-pt-2">
-                <div className="c360-flex c360-flex-wrap c360-gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={
-                      satelliteFilter === "active" ? "primary" : "outline"
-                    }
-                    onClick={() => {
-                      setSatelliteFilter("active");
-                      setSatellitePage(1);
-                    }}
-                  >
-                    Active
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={satelliteFilter === "all" ? "primary" : "outline"}
-                    onClick={() => {
-                      setSatelliteFilter("all");
-                      setSatellitePage(1);
-                    }}
-                  >
-                    All
-                  </Button>
+                <div className="c360-hs-runs-sessions-toolbar c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
+                  <div className="c360-hs-runs-sessions-toolbar__lead c360-flex c360-min-w-0">
+                    <div>
+                      <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
+                        Scraper sessions &amp; tracked jobs
+                      </h2>
+                      <p className="c360-m-0 c360-mt-1 c360-text-2xs c360-text-muted">
+                        Manage LinkedIn job scrapes (scraper.server). Interval
+                        repeats appear on each card.
+                      </p>
+                    </div>
+                    <div className="c360-flex c360-flex-wrap c360-gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={
+                          satelliteFilter === "active" ? "primary" : "outline"
+                        }
+                        onClick={() => {
+                          setSatelliteFilter("active");
+                          setSatellitePage(1);
+                        }}
+                      >
+                        Active
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={
+                          satelliteFilter === "all" ? "primary" : "outline"
+                        }
+                        onClick={() => {
+                          setSatelliteFilter("all");
+                          setSatellitePage(1);
+                        }}
+                      >
+                        All
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="c360-gap-2"
+                      onClick={() => void loadRuns()}
+                      disabled={runsLoading}
+                      leftIcon={
+                        <RefreshCw
+                          size={15}
+                          className={cn(runsLoading && "c360-spin")}
+                        />
+                      }
+                    >
+                      Reload
+                    </Button>
+                    {isSuperAdmin ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        leftIcon={<Play size={15} />}
+                        onClick={onOpenRunScrapeModal}
+                      >
+                        Run scrape
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
                   <Table<Record<string, unknown>>

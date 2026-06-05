@@ -2,10 +2,8 @@
 
 import { HiringSignalCompanyNameFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyNameFacetCombobox";
 import { HiringSignalCompanyCountryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyCountryFacetCombobox";
-import { HiringSignalCompanyFundingFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyFundingFacetCombobox";
-import { HiringSignalCompanyEmployeeSizeFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyEmployeeSizeFacetCombobox";
+import { HiringSignalCompanyBucketFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyBucketFacetCombobox";
 import { HiringSignalCompanyIndustryFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyIndustryFacetCombobox";
-import { HiringSignalCompanyRevenueFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalCompanyRevenueFacetCombobox";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import {
   HS_COMPANY_FILTER_CHIP_PREFIXES,
@@ -52,8 +50,8 @@ export function HiringSignalsCompanyFilters({
         </p>
       ) : null}
       {!companyCohortResolving &&
-        cohortActive &&
-        companyCohortMatchTotal != null ? (
+      cohortActive &&
+      companyCohortMatchTotal != null ? (
         <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
           {companyCohortMatchTotal.toLocaleString()} companies match
           {companyCohortTruncated
@@ -71,9 +69,9 @@ export function HiringSignalsCompanyFilters({
         onClear={
           draft.companyNames.length > 0 || draft.excludedCompanyNames.length > 0
             ? () => {
-              onDraftField("companyNames", []);
-              onDraftField("excludedCompanyNames", []);
-            }
+                onDraftField("companyNames", []);
+                onDraftField("excludedCompanyNames", []);
+              }
             : undefined
         }
       >
@@ -112,11 +110,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyCountries.length > 0 ||
-            draft.excludedCompanyCountries.length > 0
+          draft.excludedCompanyCountries.length > 0
             ? () => {
-              onDraftField("companyCountries", []);
-              onDraftField("excludedCompanyCountries", []);
-            }
+                onDraftField("companyCountries", []);
+                onDraftField("excludedCompanyCountries", []);
+              }
             : undefined
         }
       >
@@ -159,11 +157,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyIndustries.length > 0 ||
-            draft.excludedCompanyIndustries.length > 0
+          draft.excludedCompanyIndustries.length > 0
             ? () => {
-              onDraftField("companyIndustries", []);
-              onDraftField("excludedCompanyIndustries", []);
-            }
+                onDraftField("companyIndustries", []);
+                onDraftField("excludedCompanyIndustries", []);
+              }
             : undefined
         }
       >
@@ -213,11 +211,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyEmployeeSizes.length > 0 ||
-            draft.excludedCompanyEmployeeSizes.length > 0
+          draft.excludedCompanyEmployeeSizes.length > 0
             ? () => {
-              onDraftField("companyEmployeeSizes", []);
-              onDraftField("excludedCompanyEmployeeSizes", []);
-            }
+                onDraftField("companyEmployeeSizes", []);
+                onDraftField("excludedCompanyEmployeeSizes", []);
+              }
             : undefined
         }
       >
@@ -231,16 +229,20 @@ export function HiringSignalsCompanyFilters({
           />
           {canUseAdvancedCompanyCohortFilters ? (
             <>
-              <HiringSignalCompanyEmployeeSizeFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="employeeSize"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Include employee size"
                 selectedValues={normalizeHiringSignalTokenList(
                   draft.companyEmployeeSizes,
                 )}
-                onSelectionChange={(v) => onDraftField("companyEmployeeSizes", v)}
+                onSelectionChange={(v) =>
+                  onDraftField("companyEmployeeSizes", v)
+                }
               />
-              <HiringSignalCompanyEmployeeSizeFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="employeeSize"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Exclude employee size"
@@ -266,11 +268,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyRevenue.length > 0 ||
-            draft.excludedCompanyRevenue.length > 0
+          draft.excludedCompanyRevenue.length > 0
             ? () => {
-              onDraftField("companyRevenue", []);
-              onDraftField("excludedCompanyRevenue", []);
-            }
+                onDraftField("companyRevenue", []);
+                onDraftField("excludedCompanyRevenue", []);
+              }
             : undefined
         }
       >
@@ -284,7 +286,8 @@ export function HiringSignalsCompanyFilters({
           />
           {canUseAdvancedCompanyCohortFilters ? (
             <>
-              <HiringSignalCompanyRevenueFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="revenue"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Include revenue"
@@ -293,7 +296,8 @@ export function HiringSignalsCompanyFilters({
                 )}
                 onSelectionChange={(v) => onDraftField("companyRevenue", v)}
               />
-              <HiringSignalCompanyRevenueFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="revenue"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Exclude revenue"
@@ -319,11 +323,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyFunding.length > 0 ||
-            draft.excludedCompanyFunding.length > 0
+          draft.excludedCompanyFunding.length > 0
             ? () => {
-              onDraftField("companyFunding", []);
-              onDraftField("excludedCompanyFunding", []);
-            }
+                onDraftField("companyFunding", []);
+                onDraftField("excludedCompanyFunding", []);
+              }
             : undefined
         }
       >
@@ -337,7 +341,8 @@ export function HiringSignalsCompanyFilters({
           />
           {canUseAdvancedCompanyCohortFilters ? (
             <>
-              <HiringSignalCompanyFundingFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="funding"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Include funding"
@@ -346,7 +351,8 @@ export function HiringSignalsCompanyFilters({
                 )}
                 onSelectionChange={(v) => onDraftField("companyFunding", v)}
               />
-              <HiringSignalCompanyFundingFacetCombobox
+              <HiringSignalCompanyBucketFacetCombobox
+                dimension="funding"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
                 label="Exclude funding"

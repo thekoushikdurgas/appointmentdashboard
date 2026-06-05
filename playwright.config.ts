@@ -15,5 +15,17 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://127.0.0.1:3000",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile-chrome", use: { ...devices["Pixel 5"] } },
+    { name: "ipad", use: { ...devices["iPad Pro 11"] } },
+    {
+      name: "desktop",
+      use: { viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: "wide",
+      use: { viewport: { width: 2560, height: 1440 } },
+    },
+  ],
 });

@@ -4,20 +4,21 @@ import type {
 } from "@/graphql/generated/types";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import {
-  companyEmployeeSizeTokensToVqlFilter,
-  HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD,
-} from "@/lib/hireSignalCompanyEmployeeSizeBuckets";
-import {
+  companyEmployeesCountTokensToVqlFilter,
   companyFundingTokensToVqlFilter,
-  HIRE_SIGNAL_COMPANY_FUNDING_FIELD,
-} from "@/lib/hireSignalCompanyFundingBuckets";
-import {
   companyRevenueTokensToVqlFilter,
-  HIRE_SIGNAL_COMPANY_REVENUE_FIELD,
-} from "@/lib/hireSignalCompanyRevenueBuckets";
+  COMPANY_ANNUAL_REVENUE_FIELD,
+  COMPANY_EMPLOYEES_COUNT_FIELD,
+  COMPANY_TOTAL_FUNDING_FIELD,
+} from "@/lib/companyRangeBuckets";
 
-export { HIRE_SIGNAL_COMPANY_FUNDING_FIELD };
-export { HIRE_SIGNAL_COMPANY_REVENUE_FIELD };
+export const HIRE_SIGNAL_COMPANY_FUNDING_FIELD = COMPANY_TOTAL_FUNDING_FIELD;
+export const HIRE_SIGNAL_COMPANY_REVENUE_FIELD = COMPANY_ANNUAL_REVENUE_FIELD;
+const HIRE_SIGNAL_COMPANY_EMPLOYEE_SIZE_FIELD = COMPANY_EMPLOYEES_COUNT_FIELD;
+
+function companyEmployeeSizeTokensToVqlFilter(tokens: string[]) {
+  return companyEmployeesCountTokensToVqlFilter(tokens);
+}
 
 /** Legacy Connectra facet keys (none — all firmographics use dedicated UI). */
 export const HIRE_SIGNAL_COMPANY_COHORT_FACET_KEYS = [] as const;

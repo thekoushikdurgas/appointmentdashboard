@@ -289,7 +289,7 @@ export function DemandsTrendsPage({
             </Card>
           </div>
 
-          <div className="c360-2col-grid lg:c360-grid-cols-3">
+          <div className="c360-2col-grid c360-lg-grid-cols-3">
             <Card title="Country">
               <div className="c360-hs-chart c360-hs-chart--pie">
                 {countryDonut.length === 0 ? (
@@ -328,7 +328,7 @@ export function DemandsTrendsPage({
             </Card>
           </div>
 
-          <div className="c360-2col-grid lg:c360-grid-cols-3">
+          <div className="c360-2col-grid c360-lg-grid-cols-3">
             <Card title="Education (min)">
               <HorizontalBarChart data={education} height={260} />
             </Card>

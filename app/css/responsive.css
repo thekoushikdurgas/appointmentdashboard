@@ -57,6 +57,9 @@
 
   .c360-page {
     padding: var(--c360-spacing-4);
+    padding-bottom: calc(
+      var(--c360-spacing-4) + 80px + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .c360-page-header {
@@ -136,6 +139,70 @@
 @media (min-width: 1536px) {
   :root {
     --c360-content-max-width: 1400px;
+  }
+}
+
+/* ─── Responsive utilities ───────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .c360-md-flex-row {
+    flex-direction: row;
+  }
+
+  .c360-md-items-end {
+    align-items: flex-end;
+  }
+
+  .c360-md-grid-cols-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .c360-md-min-w-44 {
+    min-width: 11rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .c360-lg-grid-cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* ─── Route audit — mobile refinements (Phase 5.6) ─────────────────────── */
+@media (max-width: 767px) {
+  /* Dashboard: stat cards already stack via .c360-dashboard-layout__stats */
+
+  /* Billing: stack header aside under title */
+  .c360-billing-page__header-aside {
+    align-items: flex-start;
+    width: 100%;
+    margin-top: var(--c360-spacing-3);
+  }
+
+  .c360-billing-page__credits-meter {
+    max-width: 100%;
+  }
+
+  /* Profile / settings: single-column form grids */
+  .c360-profile-form-grid,
+  .c360-settings-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Email / phone tool pages: full-width fields */
+  .c360-email-tool-page .c360-field,
+  .c360-phone-tool-page .c360-field {
+    width: 100%;
+  }
+
+  /* Auth: respect safe area on small viewports */
+  .c360-auth-layout {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Campaign wizard: stack toolbar actions */
+  .c360-campaign-wizard .c360-toolbar__actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 }
 

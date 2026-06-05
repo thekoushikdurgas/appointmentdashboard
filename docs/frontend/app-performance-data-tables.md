@@ -6,13 +6,15 @@ All primary list surfaces use `@mui/x-data-grid`, which **virtualizes rows** int
 
 ## Code splitting
 
-`DataGrid` is loaded with `next/dynamic` (`ssr: false`) in:
+`DataGrid` is loaded with `next/dynamic` (`ssr: false`) via the shared wrapper `src/components/ui/C360DataGrid.tsx`, used by:
 
 - `src/components/feature/contacts/ContactsDataTable.tsx`
 - `src/components/feature/companies/CompaniesDataTable.tsx`
 - `src/components/feature/files/FilesDataTable.tsx`
 - `src/components/feature/jobs/JobsDataTable.tsx`
 - `src/components/feature/hiring-signals/HiringSignalsDataTable.tsx`
+- `src/components/feature/hiring-signals/HiringSignalDrawerContactsGrid.tsx`
+- `src/components/feature/hiring-signals/HiringSignalDrawerJobsGrid.tsx`
 
 The component is cast to `typeof import("@mui/x-data-grid").DataGrid` so row generics (`Contact`, `Company`, etc.) stay type-safe.
 

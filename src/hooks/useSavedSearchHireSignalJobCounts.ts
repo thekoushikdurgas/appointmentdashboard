@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  effectivePostedAfter,
+  effectivePostedBounds,
   parseLinkedInJobsPayload,
 } from "@/lib/jobs/hiringSignalJobRows";
 import {
@@ -32,10 +32,10 @@ async function fetchHireSignalJobCount(
 ): Promise<number> {
   const res = await fetchHiringSignalJobs({
     ...key.listFilters,
-    postedAfter: effectivePostedAfter(
-      key.signalTimePreset,
-      key.listFilters.postedAfter,
-    ),
+    ...effectivePostedBounds(key.signalTimePreset, {
+      postedAfter: key.listFilters.postedAfter,
+      postedBefore: key.listFilters.postedBefore,
+    }),
     limit: 1,
     offset: 0,
   });

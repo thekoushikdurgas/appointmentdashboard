@@ -1597,6 +1597,9 @@ export type EmailMutation = {
   createEmailVerifierS3Job: EmailS3JobResponse;
   importFromGoogleSheet: EmailS3JobResponse;
   learnPatternsFromS3: EmailS3JobResponse;
+  sendJobEmailNow: SendJobEmailNowResult;
+  setJobEmailNotificationPreferences: JobEmailNotificationConfig;
+  toggleJobEmailNotification: JobEmailNotificationConfig;
 };
 
 export type EmailMutationAddEmailPatternArgs = {
@@ -1621,6 +1624,21 @@ export type EmailMutationImportFromGoogleSheetArgs = {
 
 export type EmailMutationLearnPatternsFromS3Args = {
   input: EmailPatternS3Input;
+};
+
+export type EmailMutationSendJobEmailNowArgs = {
+  savedSearchId: Scalars["ID"]["input"];
+};
+
+export type EmailMutationSetJobEmailNotificationPreferencesArgs = {
+  dailyEnabled: Scalars["Boolean"]["input"];
+  newJobDelayHours?: InputMaybe<Scalars["Int"]["input"]>;
+  newJobMode: Scalars["String"]["input"];
+  savedSearchId: Scalars["ID"]["input"];
+};
+
+export type EmailMutationToggleJobEmailNotificationArgs = {
+  savedSearchId: Scalars["ID"]["input"];
 };
 
 export type EmailPatternAddInput = {
@@ -1717,6 +1735,7 @@ export type EmailQuery = {
   exportEmails: EmailS3JobResponse;
   findEmails: EmailFinderResponse;
   findEmailsBulk: BulkEmailFinderResponse;
+  jobEmailNotificationConfig?: Maybe<JobEmailNotificationConfig>;
   predictEmailPattern: EmailPatternPredictResult;
   predictEmailPatternBulk: EmailPatternPredictBulkResult;
   verifyEmailsBulk: BulkEmailVerifierResponse;
@@ -2192,6 +2211,16 @@ export type InvoicePaginationInput = {
 export type JobConnection = {
   jobs: Array<SchedulerJob>;
   pageInfo: PageInfo;
+};
+
+export type JobEmailNotificationConfig = {
+  dailyEnabled: Scalars["Boolean"]["output"];
+  id: Scalars["Int"]["output"];
+  isActive: Scalars["Boolean"]["output"];
+  newJobDelayHours?: Maybe<Scalars["Int"]["output"]>;
+  newJobMode: Scalars["String"]["output"];
+  savedSearchId?: Maybe<Scalars["ID"]["output"]>;
+  templateId?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type JobMutation = {
@@ -3478,6 +3507,10 @@ export type ScrapeSalesNavigatorHtmlResponse = {
   savedContacts?: Maybe<Scalars["JSON"]["output"]>;
   success: Scalars["Boolean"]["output"];
   warnings: Array<Scalars["String"]["output"]>;
+};
+
+export type SendJobEmailNowResult = {
+  success: Scalars["Boolean"]["output"];
 };
 
 export type SendMessageInput = {

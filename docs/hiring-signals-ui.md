@@ -10,8 +10,7 @@ The former **Hiring signals → Overview** block (stats bar, charts, latest sate
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Sort: Most recent      | `listSort` legacy on saved payloads (`recent`); defaults `sortKey`/`sortOrder` in [`useHiringSignals`](contact360.io/app/src/hooks/useHiringSignals.ts) | `sortKey` / `sortOrder` and `extendedJobFilters` `sortField` / `sortOrder` via [`buildExtendedJobFilters`](contact360.io/app/src/services/graphql/hiringSignalService.ts) | `sort_field` / `sort_order` (`posted_at` desc; matches job.server `List` default) |
 | Sort: Most relevant    | `listSort` (disabled in UI)                                                                                                                             | —                                                                                                                                                                         | **Not supported** (needs ranking design)                                          |
-| Date posted presets    | `datePostedPreset`, `postedAfter`                                                                                                                       | `postedAfter`                                                                                                                                                             | `posted_after` (RFC3339 or date)                                                  |
-| Posted on or before    | `postedBefore`                                                                                                                                          | `postedBefore`                                                                                                                                                            | `posted_before`                                                                   |
+| Date posted presets    | `datePostedPreset`, `postedAfter`, `postedBefore`                                                                                                       | `postedAfter`, `postedBefore`                                                                                                                                             | `posted_after`, `posted_before` (RFC3339 with local offset, or YYYY-MM-DD for custom range) |
 | Experience: seniority  | `seniorityPreset`, `seniorityCustom`                                                                                                                    | `seniority`                                                                                                                                                               | `seniority` (regex on `seniority_level`)                                          |
 | Experience: buckets    | `experienceBuckets`                                                                                                                                     | `experienceBuckets`                                                                                                                                                       | `experience_bucket` `$in`                                                         |
 | Company                | `companies`, `excludedCompanies`                                                                                                                        | `companies`, `excludedCompanies`                                                                                                                                          | `company`, `excluded_company`                                                     |
@@ -26,13 +25,28 @@ The former **Hiring signals → Overview** block (stats bar, charts, latest sate
 | Education              | `educationLevelMins`                                                                                                                                    | `educationLevelMins`                                                                                                                                                      | `education_level_min`                                                             |
 | **Has verifications**  | —                                                                                                                                                       | —                                                                                                                                                                         | **No field** in job documents                                                     |
 
-**Toolbar interaction:** When Signals is on **New (7d)**, `effectivePostedAfter` in [`useHiringSignals`](contact360.io/app/src/hooks/useHiringSignals.ts) merges with sidebar `postedAfter` (stricter date wins).
+**Toolbar interaction:** When Signals is on **Today&apos;s jobs** (`new_7d`), `effectivePostedBounds` in [`useHiringSignals`](contact360.io/app/src/hooks/useHiringSignals.ts) applies local calendar today (after + before) when the sidebar has no explicit date filter; sidebar date filters override the tab window.
+
+### Date posted presets (sidebar)
+
+Presets in [`hiringSignalFilterDraft.ts`](contact360.io/app/src/components/feature/hiring-signals/hiringSignalFilterDraft.ts) use the **user's local timezone** for calendar boundaries (RFC3339 with offset sent to job.server):
+
+| UI option      | `datePostedPreset` | Bounds |
+| -------------- | ------------------ | ------ |
+| Any time       | `any`              | cleared |
+| Today          | `today`            | local start → end of today |
+| Yesterday      | `yesterday`        | local start → end of yesterday |
+| Last 7 days    | `7d`               | local midnight 6 days ago → end of today (7 inclusive days) |
+| Last 15 days   | `15d`              | 15 inclusive local days |
+| Last 30 days   | `30d`              | 30 inclusive local days |
+| Custom day     | `custom_day`       | single date picker → same local day as after + before |
+| Custom range   | `custom_range`     | optional From / To (`YYYY-MM-DD`) |
 
 ## Verification checklist (manual)
 
 After **Apply filters**, each dimension should **narrow** the result set (monotonic `total`) when adding constraints, except sort (order only).
 
-1. **Date preset:** Apply **Last 7 days (UTC)** → note `total`; switch to **Last 4 days (UTC)** → `total` should be ≤ previous (same other filters).
+1. **Date preset:** Apply **Today** → note `total`; switch to **Yesterday** → `total` should differ; **Last 15 days** should be ≥ **Last 7 days** (same other filters). **Custom day** → pick a date from the Posted column → only that day's rows remain.
 2. **Seniority / function:** Pick one preset; spot-check a few rows’ `seniorityLevel` / function fields in the table or network JSON.
 3. **Company / location / title / industry:** Add a token from a known job; that job should still appear.
 4. **Employment / workplace / LinkedIn Apply:** Match values visible on job rows / `raw_payload` from ingest.

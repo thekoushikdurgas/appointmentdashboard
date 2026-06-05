@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Columns3, ExternalLink } from "lucide-react";
@@ -26,24 +25,13 @@ import {
   ContactsGridEmailCellCompact,
 } from "@/components/feature/contacts/contactsGridCells";
 import { contactDetailRoute } from "@/lib/routes";
-import { stashContactRowForDetail } from "@/lib/contactRowSession";
+import { stashContactRowForDetail } from "@/lib/rowSession";
 import { cn, getAvatarUrl } from "@/lib/utils";
 import { mapConnectraError } from "@/lib/linkedinValidation";
 import type { Contact } from "@/services/graphql/contactsService";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
-
-const DataGrid = dynamic(
-  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
-        <span className="c360-spinner" aria-label="Loading table…" />
-      </div>
-    ),
-  },
-) as typeof import("@mui/x-data-grid").DataGrid;
+import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
 
 export const CONTACTS_DT_PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },

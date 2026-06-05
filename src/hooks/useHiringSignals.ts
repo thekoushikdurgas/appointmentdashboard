@@ -25,6 +25,8 @@ import {
 } from "@/services/graphql/hiringSignalService";
 import {
   effectivePostedAfter,
+  effectivePostedBefore,
+  effectivePostedBounds,
   parseLinkedInJobsPayload,
   sortJobRowsByPostedAt,
   type LinkedInJobRow,
@@ -235,13 +237,17 @@ export function useHiringSignals(
   /** Latest merged list filters — for `refetch()` only; scheduled loads pass `listFilters` from the effect. */
   const listFiltersRef = useRef<JobListFilters | null>(null);
 
-  const listFilters = useMemo(
-    () => ({
+  const listFilters = useMemo(() => {
+    const bounds = effectivePostedBounds(signalTimePreset, {
+      postedAfter: filters.postedAfter,
+      postedBefore: filters.postedBefore,
+    });
+    return {
       ...filters,
-      postedAfter: effectivePostedAfter(signalTimePreset, filters.postedAfter),
-    }),
-    [filters, signalTimePreset],
-  );
+      postedAfter: bounds.postedAfter,
+      postedBefore: bounds.postedBefore,
+    };
+  }, [filters, signalTimePreset]);
 
   listFiltersRef.current = listFilters;
 
@@ -565,4 +571,6 @@ export {
   normalizeLinkedInJobRow,
   parseLinkedInJobsPayload,
   effectivePostedAfter,
+  effectivePostedBefore,
+  effectivePostedBounds,
 } from "@/lib/jobs/hiringSignalJobRows";

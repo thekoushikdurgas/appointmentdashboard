@@ -175,7 +175,9 @@ export function SavedSearchEmailNotifyModal({
                 checked={newJobMode === "instant"}
                 onChange={() => setNewJobMode("instant")}
               />
-              <span className="c360-text-sm">Immediately when new jobs match</span>
+              <span className="c360-text-sm">
+                Immediately when new jobs match
+              </span>
             </label>
             <label className="c360-flex c360-items-center c360-gap-2 c360-cursor-pointer">
               <input

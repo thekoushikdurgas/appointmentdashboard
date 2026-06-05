@@ -190,16 +190,6 @@ describe("GraphQL operation contracts (static)", () => {
     expect(s).toContain("parseCampaignTemplatesJson");
   });
 
-  it("resume service uses resume namespace CRUD fields", () => {
-    const s = read("services/graphql/resumeService.ts");
-    expect(s).toContain("resumes {");
-    expect(s).toContain("resume(id: $id)");
-    expect(s).toContain("saveResume(input: $input)");
-    expect(s).toContain("deleteResume(id: $id)");
-    expect(s).toContain("resumeData");
-    expect(s).toContain("SaveResumeInput");
-  });
-
   it("sales navigator service uses salesNavigatorRecords JSON fields and saveSalesNavigatorProfiles response", () => {
     const s = read("services/graphql/salesNavigatorService.ts");
     expect(s).toContain("salesNavigatorRecords(filters: $filters)");

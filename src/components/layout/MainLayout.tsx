@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, type MouseEvent } from "react";
+import dynamic from "next/dynamic";
 import Sidebar from "./Sidebar";
 import { MobileBottomDock } from "./MobileBottomDock";
 import { ShellSearchProvider } from "@/context/ShellSearchContext";
@@ -8,10 +9,6 @@ import { JobsDrawerProvider } from "@/context/JobsDrawerContext";
 import { NotificationsDrawerProvider } from "@/context/NotificationsDrawerContext";
 import { FilesDrawerProvider } from "@/context/FilesDrawerContext";
 import { ReviewDrawerProvider } from "@/context/ReviewDrawerContext";
-import { JobsDrawer } from "@/components/feature/jobs/JobsDrawer";
-import { NotificationsDrawer } from "@/components/feature/notifications/NotificationsDrawer";
-import { FilesDrawer } from "@/components/feature/files/FilesDrawer";
-import { ReviewDrawer } from "@/components/feature/reviews/ReviewDrawer";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -21,6 +18,31 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/ContextMenu";
 import { AccountMenuPanel } from "./AccountMenuPanel";
+
+const JobsDrawer = dynamic(
+  () =>
+    import("@/components/feature/jobs/JobsDrawer").then((m) => m.JobsDrawer),
+  { ssr: false },
+);
+const NotificationsDrawer = dynamic(
+  () =>
+    import("@/components/feature/notifications/NotificationsDrawer").then(
+      (m) => m.NotificationsDrawer,
+    ),
+  { ssr: false },
+);
+const FilesDrawer = dynamic(
+  () =>
+    import("@/components/feature/files/FilesDrawer").then((m) => m.FilesDrawer),
+  { ssr: false },
+);
+const ReviewDrawer = dynamic(
+  () =>
+    import("@/components/feature/reviews/ReviewDrawer").then(
+      (m) => m.ReviewDrawer,
+    ),
+  { ssr: false },
+);
 
 interface MainLayoutProps {
   children: React.ReactNode;

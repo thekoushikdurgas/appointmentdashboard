@@ -6,7 +6,7 @@ import {
   mapCompanyContactRow,
   type Company,
 } from "@/services/graphql/companiesService";
-import { readStashedCompanyRow } from "@/lib/companyRowSession";
+import { readStashedCompanyRow } from "@/lib/rowSession";
 import type { Contact } from "@/services/graphql/contactsService";
 import {
   contactListOrderByFromSortBy,

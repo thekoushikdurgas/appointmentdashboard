@@ -155,7 +155,7 @@
   gap: 5px;
 }
 
-.c360-saved-searches-panel__item-text>.c360-flex {
+.c360-saved-searches-panel__item-text > .c360-flex {
   font-size: 35px;
 }
 

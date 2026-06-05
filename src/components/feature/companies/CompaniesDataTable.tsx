@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Columns3, ExternalLink, Users } from "lucide-react";
 import type {
   GridColDef,
@@ -20,32 +19,20 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
+import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
 import { cn, formatDateTime, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import type { Company } from "@/services/graphql/companiesService";
 import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
-import { stashCompanyRowForDetail } from "@/lib/companyRowSession";
-
+import { stashCompanyRowForDetail } from "@/lib/rowSession";
 import {
+  COL_ID_TO_FIELD,
   COMPANIES_DT_COLUMN_IDS,
   COMPANIES_DT_COLUMN_LABELS,
   COMPANIES_DT_DEFAULT_COLUMNS,
   COMPANIES_DT_PAGE_SIZE_OPTIONS,
-  COL_ID_TO_FIELD,
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
-
-const DataGrid = dynamic(
-  () => import("@mui/x-data-grid").then((mod) => mod.DataGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="c360-flex c360-items-center c360-justify-center c360-min-h-[240px]">
-        <span className="c360-spinner" aria-label="Loading table…" />
-      </div>
-    ),
-  },
-) as typeof import("@mui/x-data-grid").DataGrid;
 
 export {
   COMPANIES_DT_COLUMN_IDS,
