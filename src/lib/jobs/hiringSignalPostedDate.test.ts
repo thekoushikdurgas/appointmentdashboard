@@ -3,7 +3,24 @@ import {
   formatHireSignalPostedDate,
   formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
+  normalizeHireSignalPostedAtIso,
+  parseHireSignalCalendarParts,
 } from "./hiringSignalPostedDate";
+
+describe("parseHireSignalCalendarParts", () => {
+  it("parses YYYY-MM-DD and UTC midnight without rollover", () => {
+    expect(parseHireSignalCalendarParts("2026-05-31")).toEqual({
+      y: 2026,
+      m: 5,
+      d: 31,
+    });
+    expect(parseHireSignalCalendarParts("2026-05-31T00:00:00.000Z")).toEqual({
+      y: 2026,
+      m: 5,
+      d: 31,
+    });
+  });
+});
 
 describe("isHireSignalPostedDateOnly", () => {
   it("detects YYYY-MM-DD from OpenSearch time_posted", () => {
@@ -52,5 +69,25 @@ describe("formatHireSignalPostedParts", () => {
     const { date, time } = formatHireSignalPostedParts("2026-05-22");
     expect(date).toMatch(/2026|22|May/i);
     expect(time).toBeNull();
+  });
+
+  it("formats UTC-midnight calendar stamp as the same calendar day", () => {
+    const { date, time } = formatHireSignalPostedParts("2026-05-31T00:00:00Z");
+    expect(date).toMatch(/31.*May|May.*31/i);
+    expect(time).toBeNull();
+  });
+});
+
+describe("normalizeHireSignalPostedAtIso", () => {
+  it("collapses UTC midnight to YYYY-MM-DD", () => {
+    expect(normalizeHireSignalPostedAtIso("2026-05-31T00:00:00Z")).toBe(
+      "2026-05-31",
+    );
+    expect(normalizeHireSignalPostedAtIso("2026-05-31")).toBe("2026-05-31");
+  });
+
+  it("preserves real timestamps", () => {
+    const iso = "2026-05-31T14:18:40.294Z";
+    expect(normalizeHireSignalPostedAtIso(iso)).toBe(iso);
   });
 });

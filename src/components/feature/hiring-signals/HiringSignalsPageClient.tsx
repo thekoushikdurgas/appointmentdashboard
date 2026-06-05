@@ -39,7 +39,6 @@ import { JobConnectraModal } from "@/components/feature/hiring-signals/JobConnec
 import { CompanyDrawerPanel } from "@/components/feature/hiring-signals/CompanyDrawerPanel";
 import { companyDrawerAnchorFromJob } from "@/lib/companyDrawerAnchor";
 import { cn } from "@/lib/utils";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import {
   deriveDisplayProgressPercent,
   isSuccessfulTerminalJobStatus,
@@ -118,8 +117,7 @@ function HiringSignalsPageBody({
     companyCohortTruncated,
   } = hiring;
 
-  const { activeDraftCount, resetFilters } = useHireSignalFilter();
-  const isDesktop = useIsDesktop();
+  const { resetFilters } = useHireSignalFilter();
   const { isAdmin, isSuperAdmin } = useRole();
   const canExportHireSignalXlsx = isAdmin || isSuperAdmin;
   /** Runs tab — admin + superadmin; scrape queueing is super-admin only (toolbar + modal). */
@@ -139,7 +137,6 @@ function HiringSignalsPageBody({
   >(() => [...HS_DT_DEFAULT_COLUMNS]);
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [runsReloadTick, setRunsReloadTick] = useState(0);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
@@ -494,11 +491,6 @@ function HiringSignalsPageBody({
             setSignalTimePreset(v === "new" ? "new_7d" : "all")
           }
           totalCount={total}
-          filterConfig={{
-            activeCount: activeDraftCount,
-            onOpen: () => setMobileFiltersOpen(true),
-            show: !isDesktop,
-          }}
           actionPrefix={
             <>
               {total > filters.limit ? (
@@ -553,13 +545,11 @@ function HiringSignalsPageBody({
       </div>
     ),
     [
-      activeDraftCount,
       currentPage,
       filters.globalSearchTokens,
       filters.limit,
       filters.runId,
       canExportHireSignalXlsx,
-      isDesktop,
       isSuperAdmin,
       loading,
       refetch,
@@ -617,35 +607,23 @@ function HiringSignalsPageBody({
           <DataPageLayout
             className="c360-hiring-signals-page"
             showFilters
-            mobileFiltersOpen={mobileFiltersOpen}
-            onMobileFiltersClose={() => setMobileFiltersOpen(false)}
             filtersAriaLabel="Hiring signal filters"
-            filterDrawerTitleId="c360-hs-filter-drawer-title"
-            filtersPeekRail
-            filtersPeekScope="hiring-signals"
-            filtersPinExtra={hireSignalFiltersPinExtra}
             toolbar={signalsToolbar}
             filters={
-              <>
-                {!isDesktop ? (
-                  <div className="c360-data-layout__filters-mobile-saved c360-data-layout__filters-mobile-saved--actions">
-                    {hireSignalFiltersPinExtra}
-                  </div>
-                ) : null}
-                <HiringSignalsFilterSidebar
-                  drawerTitleId="c360-hs-filter-drawer-title"
-                  appliedListFilters={effectiveJobListFilters}
-                  signalTimePreset={signalTimePreset}
-                  appliedRunId={filters.runId}
-                  runScopedJobTotal={filters.runId?.trim() ? total : undefined}
-                  onClearRunId={clearRunFilter}
-                  tableDensity={tableDensity}
-                  onTableDensityChange={setTableDensity}
-                  companyCohortResolving={companyCohortResolving}
-                  companyCohortMatchTotal={companyCohortMatchTotal}
-                  companyCohortTruncated={companyCohortTruncated}
-                />
-              </>
+              <HiringSignalsFilterSidebar
+                drawerTitleId="c360-hs-filter-drawer-title"
+                headerActions={hireSignalFiltersPinExtra}
+                appliedListFilters={effectiveJobListFilters}
+                signalTimePreset={signalTimePreset}
+                appliedRunId={filters.runId}
+                runScopedJobTotal={filters.runId?.trim() ? total : undefined}
+                onClearRunId={clearRunFilter}
+                tableDensity={tableDensity}
+                onTableDensityChange={setTableDensity}
+                companyCohortResolving={companyCohortResolving}
+                companyCohortMatchTotal={companyCohortMatchTotal}
+                companyCohortTruncated={companyCohortTruncated}
+              />
             }
           >
             <SavedSearchesMenu {...hireSignalSavedSearchMenuProps} />

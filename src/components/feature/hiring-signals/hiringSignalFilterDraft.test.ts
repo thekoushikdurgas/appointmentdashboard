@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import {
   endOfLocalDay,
+  postedAtBoundToDateInputValue,
   postedBoundsFromCustomDay,
   postedBoundsFromPreset,
   startOfLocalDay,
@@ -72,6 +73,21 @@ describe("postedBoundsFromCustomDay", () => {
       postedAfter: "",
       postedBefore: "",
     });
+  });
+});
+
+describe("postedAtBoundToDateInputValue", () => {
+  it("preserves calendar day from RFC3339 with positive offset (not UTC slice)", () => {
+    expect(postedAtBoundToDateInputValue("2026-05-31T00:00:00.000+05:30")).toBe(
+      "2026-05-31",
+    );
+    expect(postedAtBoundToDateInputValue("2026-05-30T00:00:00.000+05:30")).toBe(
+      "2026-05-30",
+    );
+  });
+
+  it("passes through YYYY-MM-DD", () => {
+    expect(postedAtBoundToDateInputValue("2026-05-28")).toBe("2026-05-28");
   });
 });
 

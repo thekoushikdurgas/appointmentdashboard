@@ -11,7 +11,6 @@ import { ChevronDown } from "lucide-react";
 import { Popover } from "@/components/ui/Popover";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { cn } from "@/lib/utils";
-import { useDataFiltersPeek } from "@/context/DataFiltersPeekContext";
 /** Shared shape for contact / company filter facet rows. */
 export type FilterComboboxOption = {
   value: string;
@@ -53,9 +52,6 @@ export function FilterCombobox({
   disabled = false,
   className,
 }: FilterComboboxProps) {
-  const peek = useDataFiltersPeek();
-  const peekRef = useRef(peek);
-  peekRef.current = peek;
   const [panelOpen, setPanelOpen] = useState(false);
   const panelOpenRef = useRef(false);
   const [focusIndex, setFocusIndex] = useState(-1);
@@ -69,20 +65,8 @@ export function FilterCombobox({
 
   panelOpenRef.current = panelOpen;
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      setPanelOpen(open);
-      peek?.notifyFilterOverlayOpen(open);
-    },
-    [peek],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (panelOpenRef.current) {
-        peekRef.current?.notifyFilterOverlayOpen(false);
-      }
-    };
+  const handleOpenChange = useCallback((open: boolean) => {
+    setPanelOpen(open);
   }, []);
 
   useEffect(() => {
@@ -145,7 +129,7 @@ export function FilterCombobox({
       ? "Any"
       : selectedValues.length === 1
         ? (options.find((o) => String(o.value) === selectedValues[0])
-            ?.displayValue ?? selectedValues[0])
+          ?.displayValue ?? selectedValues[0])
         : `${selectedValues.length} selected`;
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
@@ -173,7 +157,13 @@ export function FilterCombobox({
   }, [focusIndex]);
 
   return (
-    <div className={cn("c360-filter-combobox", className)}>
+    <div
+      className={cn(
+        "c360-filter-combobox",
+        panelOpen && "c360-filter-combobox--open",
+        className,
+      )}
+    >
       <span className="c360-text-xs c360-text-muted c360-mb-1 c360-block">
         {label}
       </span>
@@ -264,7 +254,7 @@ export function FilterCombobox({
                       "c360-text-sm",
                       "c360-cursor-pointer",
                       focusIndex === idx &&
-                        "c360-filter-combobox__option--focus",
+                      "c360-filter-combobox__option--focus",
                     )}
                   >
                     <Checkbox

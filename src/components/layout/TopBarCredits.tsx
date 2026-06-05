@@ -2,8 +2,14 @@
 
 import { useRole } from "@/context/RoleContext";
 
-/** Credits summary in the account context menu panel. */
-export function TopBarCredits() {
+export type TopBarCreditsVariant = "popover" | "sidebar";
+
+export interface TopBarCreditsProps {
+  variant?: TopBarCreditsVariant;
+}
+
+/** Credits summary in the account context menu panel or sidebar footer. */
+export function TopBarCredits({ variant = "popover" }: TopBarCreditsProps) {
   const { credits, creditsUsed, creditsLimit, addonCredits } = useRole();
 
   const pct =
@@ -12,7 +18,13 @@ export function TopBarCredits() {
       : null;
 
   return (
-    <div className="c360-topbar__credits c360-topbar__credits--popover">
+    <div
+      className={
+        variant === "sidebar"
+          ? "c360-topbar__credits c360-topbar__credits--sidebar"
+          : "c360-topbar__credits c360-topbar__credits--popover"
+      }
+    >
       <div className="c360-topbar__credits-head">
         <span className="c360-topbar__credits-label">Credits</span>
       </div>

@@ -7,6 +7,11 @@ import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { buildHireSignalCompanyFacetOptionBase } from "@/components/feature/hiring-signals/hireSignalCompanyFacetOptionBase";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+import {
+  mapHireSignalFacetRows,
+  mergeAndSortHireSignalFacetOptions,
+} from "@/components/feature/hiring-signals/hireSignalFacetOptions";
+import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
 import { fetchHireSignalCompanyCountryFilterOptions } from "@/services/graphql/hiringSignalService";
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -79,30 +84,15 @@ export function HiringSignalCompanyCountryFacetCombobox({
           offset,
         });
         if (req !== loadReqRef.current) return;
-        const mapped: ContactFilterData[] = rows.map((r) => ({
-          value: r.value,
-          displayValue: formatCompanyCountryLabel(
-            r.displayValue && r.displayValue !== r.value
-              ? r.displayValue
-              : r.value,
-          ),
-          count: typeof r.count === "number" ? r.count : undefined,
-        }));
+        const mapped = mapHireSignalFacetRows(rows, (value) =>
+          formatCompanyCountryLabel(value),
+        );
         if (mode === "replace") {
-          setOptions(mapped);
+          setOptions(sortHireSignalFacetOptionsByCount(mapped));
         } else {
-          setOptions((prev) => {
-            const seen = new Set(prev.map((p) => String(p.value)));
-            const out = [...prev];
-            for (const m of mapped) {
-              const v = String(m.value);
-              if (!seen.has(v)) {
-                seen.add(v);
-                out.push(m);
-              }
-            }
-            return out;
-          });
+          setOptions((prev) =>
+            mergeAndSortHireSignalFacetOptions(prev, mapped),
+          );
         }
         setHasMore(rows.length === DEFAULT_PAGE_SIZE);
       } catch (e) {

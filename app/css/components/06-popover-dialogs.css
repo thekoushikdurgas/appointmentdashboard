@@ -19,12 +19,15 @@
 .c360-popover__panel--bottom {
   transform: none;
 }
+
 .c360-popover__panel--top {
   transform: translateY(-100%);
 }
+
 .c360-popover__panel--left {
   transform: translateX(-100%);
 }
+
 .c360-popover__panel--right {
   transform: none;
 }
@@ -65,7 +68,7 @@
   left: auto;
   width: 100%;
   max-width: 100%;
-  margin-top: var(--c360-spacing-2);
+  margin-top: 0;
   transform: none;
   box-sizing: border-box;
 }
@@ -88,12 +91,15 @@
 .c360-tooltip__panel--top {
   transform: translate(-50%, -100%);
 }
+
 .c360-tooltip__panel--bottom {
   transform: translateX(-50%);
 }
+
 .c360-tooltip__panel--left {
   transform: translate(-100%, -50%);
 }
+
 .c360-tooltip__panel--right {
   transform: translateY(-50%);
 }
@@ -138,10 +144,12 @@
   padding: 5px 12px;
   font-size: var(--c360-text-xs);
 }
+
 .c360-btn-group__btn--md {
   padding: 7px 16px;
   font-size: var(--c360-text-sm);
 }
+
 .c360-btn-group__btn--lg {
   padding: 10px 20px;
   font-size: var(--c360-text-base);
@@ -193,10 +201,12 @@
   background: var(--c360-danger-light);
   color: var(--c360-danger);
 }
+
 .c360-confirm-modal__icon--warning {
   background: var(--c360-warning-light);
   color: var(--c360-warning);
 }
+
 .c360-confirm-modal__icon--info {
   background: var(--c360-primary-light);
   color: var(--c360-primary);
@@ -224,6 +234,7 @@
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -279,18 +290,22 @@
   background: var(--c360-success-light);
   color: var(--c360-success);
 }
+
 .c360-sweet-alert__icon--error {
   background: var(--c360-danger-light);
   color: var(--c360-danger);
 }
+
 .c360-sweet-alert__icon--warning {
   background: var(--c360-warning-light);
   color: var(--c360-warning);
 }
+
 .c360-sweet-alert__icon--info {
   background: var(--c360-primary-light);
   color: var(--c360-primary);
 }
+
 .c360-sweet-alert__icon--confirm {
   background: var(--c360-warning-light);
   color: var(--c360-warning);
@@ -343,7 +358,7 @@
   overflow: hidden;
 }
 
-.c360-filter-combobox__panel-inner > .c360-input {
+.c360-filter-combobox__panel-inner>.c360-input {
   align-self: stretch;
   width: 100%;
   box-sizing: border-box;
@@ -398,4 +413,105 @@
 
 .c360-filter-combobox__option .c360-checkbox {
   flex-shrink: 0;
+}
+
+/* ─── Filter sidebar: connected inline dropdowns (expand in document flow) ─── */
+.c360-data-layout__filters {
+  --c360-filter-inline-radius: var(--c360-radius-md);
+}
+
+.c360-data-layout__filters .c360-filter-combobox .c360-popover-root--inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* Open combobox: trigger + panel read as one control */
+.c360-data-layout__filters .c360-filter-combobox--open .c360-filter-combobox__trigger {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: color-mix(in srgb,
+      var(--c360-border-strong) 45%,
+      transparent);
+}
+
+.c360-data-layout__filters .c360-filter-combobox__panel.c360-popover__panel--inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  padding: var(--c360-spacing-2);
+  border: 1px solid var(--c360-border-strong);
+  border-top: none;
+  border-radius: 0 0 var(--c360-filter-inline-radius) var(--c360-filter-inline-radius);
+  background: var(--c360-bg-elevated);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.c360-data-layout__filters .c360-filter-combobox__panel-inner {
+  max-height: min(16rem, 38vh);
+  gap: var(--c360-spacing-2);
+}
+
+.c360-data-layout__filters .c360-filter-combobox__list {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.c360-data-layout__filters .c360-filter-combobox__option {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Radix Select — inline menu attached below trigger */
+.c360-data-layout__filters .c360-select-wrap--inline-menu .c360-select-wrap,
+.c360-data-layout__filters .c360-select-wrap--inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.c360-data-layout__filters .c360-select__trigger[data-state="open"],
+.c360-data-layout__filters .c360-select__trigger--open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: color-mix(in srgb,
+      var(--c360-border-strong) 45%,
+      transparent);
+}
+
+.c360-data-layout__filters .c360-select__content--inline {
+  position: static !important;
+  transform: none !important;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  border-top: none;
+  border-radius: 0 0 var(--c360-filter-inline-radius) var(--c360-filter-inline-radius);
+  box-shadow: none;
+  max-height: min(16rem, 38vh);
+  z-index: auto;
+}
+
+.c360-data-layout__filters .c360-select__content--inline .c360-select__viewport {
+  min-width: 100%;
+  width: 100%;
+  max-height: min(14rem, 34vh);
+  overflow-y: auto;
+}
+
+.c360-data-layout__filters .c360-select__content--inline .c360-select__scroll-btn {
+  display: none;
 }

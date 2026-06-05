@@ -170,22 +170,41 @@ export function HiringSignalsJobTypeBadgesCell({
   );
 }
 
-export function HiringSignalsJobPostedCell({ row }: { row: LinkedInJobRow }) {
+export function HiringSignalsJobPostedCell({
+  row,
+  showTime = true,
+}: {
+  row: LinkedInJobRow;
+  /** When false (compact table view), only the calendar date is shown; time stays in the tooltip. */
+  showTime?: boolean;
+}) {
   const raw = row.postedAt?.trim() ?? "";
   if (!raw) {
     return (
       <span className="c360-hs-grid-meta-text c360-hs-grid-posted">—</span>
     );
   }
-  const { date, time } = formatHireSignalPostedParts(raw);
+  const { date } = formatHireSignalPostedParts(raw);
+  const clockRaw = row.postedClockAt?.trim() ?? "";
+  const clockParts = clockRaw ? formatHireSignalPostedParts(clockRaw) : null;
+  const time =
+    clockParts?.time ??
+    (isHireSignalPostedDateOnly(raw)
+      ? null
+      : formatHireSignalPostedParts(raw).time);
   const dateOnly = isHireSignalPostedDateOnly(raw);
-  const title = dateOnly
-    ? `Posted date: ${raw} (no time stored in index)`
+  let title = dateOnly
+    ? `Posted date: ${raw}${clockRaw ? ` · indexed ${clockRaw}` : ""}`
     : raw;
+  if (!showTime && time) {
+    title = `${title} · ${time}`;
+  }
   return (
     <span className="c360-hs-grid-posted" title={title}>
       <span className="c360-hs-grid-posted__date">{date}</span>
-      {time ? <span className="c360-hs-grid-posted__time">{time}</span> : null}
+      {showTime && time ? (
+        <span className="c360-hs-grid-posted__time">{time}</span>
+      ) : null}
     </span>
   );
 }

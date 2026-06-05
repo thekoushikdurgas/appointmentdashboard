@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, type ReactNode } from "react";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import { ContactFilterSortSelect } from "@/components/feature/contacts/ContactFilterBar";
 import { Input } from "@/components/ui/Input";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Select } from "@/components/ui/Select";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyFilterSection } from "@/hooks/useCompanyFilters";
 import { CompanyIncludeExcludeFacetFilter } from "@/components/feature/companies/CompanyIncludeExcludeFacetFilter";
@@ -64,7 +64,7 @@ export interface CompaniesFilterSidebarProps {
   onRefreshFilters?: () => void | Promise<void>;
   filtersRefreshing?: boolean;
   drawerTitleId?: string;
-  onCloseDrawer?: () => void;
+  headerActions?: ReactNode;
   viewMode?: "list" | "card";
   onViewModeChange?: (mode: "list" | "card") => void;
   tableDensity?: "comfortable" | "compact";
@@ -97,7 +97,7 @@ export function CompaniesFilterSidebar({
   onRefreshFilters,
   filtersRefreshing = false,
   drawerTitleId = "c360-companies-filter-drawer-title",
-  onCloseDrawer,
+  headerActions,
   viewMode = "list",
   onViewModeChange,
   tableDensity = "comfortable",
@@ -261,6 +261,7 @@ export function CompaniesFilterSidebar({
           </p>
         </div>
         <div className="c360-contacts-filters__head-actions">
+          {headerActions}
           {totalActiveCount > 0 ? (
             <Button
               type="button"
@@ -286,17 +287,6 @@ export function CompaniesFilterSidebar({
                 className={cn(filtersRefreshing && "c360-spin")}
                 aria-hidden
               />
-            </button>
-          ) : null}
-          {onCloseDrawer ? (
-            <button
-              type="button"
-              className="c360-contacts-filters__icon-btn"
-              title="Close filters"
-              aria-label="Close filters"
-              onClick={onCloseDrawer}
-            >
-              <X size={18} aria-hidden />
             </button>
           ) : null}
         </div>
@@ -339,7 +329,11 @@ export function CompaniesFilterSidebar({
         defaultOpen
         onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
       >
-        <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
+        <ContactFilterSortSelect
+          sortBy={sortBy}
+          onSortChange={onSortChange}
+          menuVariant="inline"
+        />
       </ContactsCollapsibleFilterSection>
 
       {filtersLoading ? (
@@ -383,6 +377,7 @@ export function CompaniesFilterSidebar({
             options={VIEW_MODE_OPTIONS}
             fullWidth
             inputSize="md"
+            menuVariant="inline"
             className="c360-mb-2"
           />
           {viewMode === "list" && onTableDensityChange ? (
@@ -401,6 +396,7 @@ export function CompaniesFilterSidebar({
                 options={TABLE_DENSITY_OPTIONS}
                 fullWidth
                 inputSize="md"
+                menuVariant="inline"
               />
             </>
           ) : null}

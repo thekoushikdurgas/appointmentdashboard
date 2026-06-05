@@ -5,6 +5,10 @@ import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import type { ContactFilterData } from "@/graphql/generated/types";
 import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
 import { buildHireSignalCompanyFacetOptionBase } from "@/components/feature/hiring-signals/hireSignalCompanyFacetOptionBase";
+import {
+  mapHireSignalFacetRows,
+  mergeAndSortHireSignalFacetOptions,
+} from "@/components/feature/hiring-signals/hireSignalFacetOptions";
 import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
@@ -14,20 +18,6 @@ const DEFAULT_PAGE_SIZE = 50;
 
 function industryFacetOptionKey(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function dedupeIndustryFacetOptions(
-  rows: ContactFilterData[],
-): ContactFilterData[] {
-  const seen = new Set<string>();
-  const out: ContactFilterData[] = [];
-  for (const row of rows) {
-    const key = industryFacetOptionKey(String(row.value));
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push(row);
-  }
-  return out;
 }
 
 function formatCompanyIndustryLabel(raw: string): string {
@@ -97,33 +87,17 @@ export function HiringSignalCompanyIndustryFacetCombobox({
           offset,
         });
         if (req !== loadReqRef.current) return;
-        const mapped: ContactFilterData[] = dedupeIndustryFacetOptions(
-          rows.map((r) => ({
-            value: r.value,
-            displayValue: formatCompanyIndustryLabel(
-              r.displayValue && r.displayValue !== r.value
-                ? r.displayValue
-                : r.value,
-            ),
-            count: typeof r.count === "number" ? r.count : undefined,
-          })),
+        const mapped = mapHireSignalFacetRows(rows, (value) =>
+          formatCompanyIndustryLabel(value),
         );
         if (mode === "replace") {
           setOptions(sortHireSignalFacetOptionsByCount(mapped));
         } else {
-          setOptions((prev) => {
-            const seen = new Set(
-              prev.map((p) => industryFacetOptionKey(String(p.value))),
-            );
-            const out = [...prev];
-            for (const m of mapped) {
-              const key = industryFacetOptionKey(String(m.value));
-              if (!key || seen.has(key)) continue;
-              seen.add(key);
-              out.push(m);
-            }
-            return sortHireSignalFacetOptionsByCount(out);
-          });
+          setOptions((prev) =>
+            mergeAndSortHireSignalFacetOptions(prev, mapped, (row) =>
+              industryFacetOptionKey(String(row.value)),
+            ),
+          );
         }
         setHasMore(rows.length === DEFAULT_PAGE_SIZE);
       } catch (e) {

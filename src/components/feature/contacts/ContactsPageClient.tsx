@@ -84,8 +84,6 @@ import {
   type ContactSavedSearchPayload,
 } from "@/lib/savedSearchPayload";
 import type { VqlQueryInput } from "@/graphql/generated/types";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
-import { getContactsToolbarActiveCount } from "@/lib/contactsFilterMetrics";
 import {
   contactFacetExcludeDraftCondition,
   contactFacetIncludeDraftCondition,
@@ -288,8 +286,6 @@ export default function ContactsPageClient() {
     if (!error) return null;
     return parseOperationError(error, "contacts").userMessage;
   }, [error]);
-  const isDesktop = useIsDesktop();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
   );
@@ -309,10 +305,6 @@ export default function ContactsPageClient() {
   useEffect(() => {
     writeContactsSortPreference(sortBy);
   }, [sortBy]);
-
-  useEffect(() => {
-    if (isDesktop) setMobileFiltersOpen(false);
-  }, [isDesktop]);
 
   const toggleColumn = useCallback((id: ContactsDataTableColumnId) => {
     setVisibleColumns((prev) => {
@@ -461,28 +453,6 @@ export default function ContactsPageClient() {
     (id) => !visibleColumns.includes(id),
   ).length;
 
-  const toolbarActiveCount = useMemo(
-    () =>
-      getContactsToolbarActiveCount({
-        activeTab,
-        facetValues,
-        excludedFacetValues,
-        search,
-        advancedVqlRuleCount,
-        sortBy,
-        hiddenColumnCount,
-      }),
-    [
-      activeTab,
-      facetValues,
-      excludedFacetValues,
-      search,
-      advancedVqlRuleCount,
-      sortBy,
-      hiddenColumnCount,
-    ],
-  );
-
   const handleRefreshFilters = useCallback(async () => {
     setFiltersRefreshing(true);
     try {
@@ -616,16 +586,6 @@ export default function ContactsPageClient() {
     [filtersRefreshing, handleRefreshFilters],
   );
 
-  const filtersPinExtra = useMemo(
-    () => (
-      <>
-        {savedSearchesTrigger}
-        {filtersRefreshButton}
-      </>
-    ),
-    [savedSearchesTrigger, filtersRefreshButton],
-  );
-
   const handleAiSearch = useCallback(() => {
     if (CONTACTS_AI_SEARCH_ENABLED) {
       setAiSearching(true);
@@ -674,51 +634,45 @@ export default function ContactsPageClient() {
 
   const filtersSidebar = useMemo(
     () => (
-      <>
-        {!isDesktop ? (
-          <div className="c360-data-layout__filters-mobile-saved c360-data-layout__filters-mobile-saved--actions">
+      <ContactsFilterSidebar
+        search={search}
+        onSearchChange={setSearch}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        filterSections={filterSections}
+        filtersLoading={filtersLoading}
+        filtersError={filtersError}
+        facetValues={facetValues}
+        excludedFacetValues={excludedFacetValues}
+        onFacetChange={handleFacetChange}
+        onExcludedFacetChange={handleExcludedFacetChange}
+        onSectionExpand={loadFilterData}
+        onLoadMoreFacet={loadMoreFilterData}
+        setFacetSearch={setFilterSearch}
+        activeTab={activeTab}
+        onActiveTabChange={setActiveTab}
+        advancedVqlRuleCount={advancedVqlRuleCount}
+        onClearVql={clearVqlQuery}
+        onOpenAdvanced={() => setVqlOpen(true)}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumn}
+        sortChipLabel={sortChipLabel}
+        hiddenColumnCount={hiddenColumnCount}
+        onResetVisibleColumns={resetVisibleColumns}
+        filterDrawerTitleId="c360-filter-drawer-title"
+        headerActions={
+          <>
             {savedSearchesTrigger}
             {filtersRefreshButton}
-          </div>
-        ) : null}
-        <ContactsFilterSidebar
-          search={search}
-          onSearchChange={setSearch}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          filterSections={filterSections}
-          filtersLoading={filtersLoading}
-          filtersError={filtersError}
-          facetValues={facetValues}
-          excludedFacetValues={excludedFacetValues}
-          onFacetChange={handleFacetChange}
-          onExcludedFacetChange={handleExcludedFacetChange}
-          onSectionExpand={loadFilterData}
-          onLoadMoreFacet={loadMoreFilterData}
-          setFacetSearch={setFilterSearch}
-          activeTab={activeTab}
-          onActiveTabChange={setActiveTab}
-          advancedVqlRuleCount={advancedVqlRuleCount}
-          onClearVql={clearVqlQuery}
-          onOpenAdvanced={() => setVqlOpen(true)}
-          visibleColumns={visibleColumns}
-          onToggleColumn={toggleColumn}
-          sortChipLabel={sortChipLabel}
-          hiddenColumnCount={hiddenColumnCount}
-          onResetVisibleColumns={resetVisibleColumns}
-          filterDrawerTitleId="c360-filter-drawer-title"
-          onCloseDrawer={
-            isDesktop ? undefined : () => setMobileFiltersOpen(false)
-          }
-          tableDensity={tableDensity}
-          onTableDensityChange={setTableDensity}
-        />
-      </>
+          </>
+        }
+        tableDensity={tableDensity}
+        onTableDensityChange={setTableDensity}
+      />
     ),
     [
       filtersRefreshButton,
       savedSearchesTrigger,
-      isDesktop,
       search,
       sortBy,
       filterSections,
@@ -778,11 +732,6 @@ export default function ContactsPageClient() {
           />
         </div>
       }
-      filterConfig={{
-        activeCount: toolbarActiveCount,
-        onOpen: () => setMobileFiltersOpen(true),
-        show: !isDesktop,
-      }}
       actionPrefix={
         <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
           <span className="c360-contacts-dt__toolbar-label">Show</span>
@@ -834,13 +783,7 @@ export default function ContactsPageClient() {
     <DataPageLayout
       filters={filtersSidebar}
       toolbar={toolbarEl}
-      mobileFiltersOpen={mobileFiltersOpen}
-      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
       filtersAriaLabel="Contact filters"
-      filterDrawerTitleId="c360-filter-drawer-title"
-      filtersPeekRail
-      filtersPeekScope="contacts"
-      filtersPinExtra={filtersPinExtra}
       className="c360-contacts-page"
     >
       <SavedSearchesMenu {...contactSavedSearchMenuProps} />

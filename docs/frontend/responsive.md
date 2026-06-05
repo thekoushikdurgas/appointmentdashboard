@@ -46,9 +46,14 @@ import {
 
 Mobile pages use extra bottom padding on `.c360-page` so content is not covered by the dock (80px + safe-area inset).
 
-## Filter drawer (`DataPageLayout`)
+## Filter sidebars (`DataPageLayout`)
 
-On viewports below 1024px, entity list filters (contacts, companies, hiring signals) collapse into a drawer. `useIsDesktop()` gates inline vs drawer filter UI in page clients.
+Entity list filters (contacts, companies, hiring signals, activities, demands, market insights) are always rendered inline via `DataPageLayout`:
+
+- **Desktop (≥1024px):** ~300px sticky left column beside the main content.
+- **Below 1024px:** filters stack full width above the table; the filter list scrolls with the page (no mobile drawer or toolbar **Filters** button).
+
+Filter `Select` and `FilterCombobox` controls use document-flow inline menus inside the sidebar (no Radix portal poppers).
 
 ## Table strategy
 

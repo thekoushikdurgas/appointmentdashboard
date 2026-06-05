@@ -9,6 +9,10 @@ import {
   type HireSignalApiJson,
 } from "@/services/graphql/hiringSignalService";
 import { postedBoundsFromPreset } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
+import {
+  isHireSignalPostedDateOnly,
+  normalizeHireSignalPostedAtIso,
+} from "@/lib/jobs/hiringSignalPostedDate";
 import { isPlaceholderDocumentId } from "@/lib/jobs/hiringSignalRowKeys";
 
 export type SignalTimePreset = "all" | "new_7d";
@@ -58,6 +62,8 @@ export type LinkedInJobRow = {
   location: string;
   country: string;
   postedAt: string;
+  /** ISO clock time for Posted column when `postedAt` is a calendar day (from `posted_at` or ingest). */
+  postedClockAt: string;
   employmentType: string;
   /** Mongo `function_category_v2` / gateway camelCase. */
   functionCategory: string;
@@ -135,13 +141,15 @@ function extractCompanyLogoFromRawPayload(
   return "";
 }
 
-/** Prefer real posted time; fall back to ingest/update when job.server omits `postedAt`. */
+/** Prefer LinkedIn calendar date; fall back to ISO posted_at / ingest timestamps. */
 function resolvePostedAtIso(o: Record<string, unknown>): string {
+  const calendar = pickStr(o.time_posted ?? o.timePosted ?? "").trim();
+  if (calendar) {
+    return normalizeHireSignalPostedAtIso(calendar);
+  }
   const top = pickStr(
     o.posted_at ??
       o.postedAt ??
-      o.time_posted ??
-      o.timePosted ??
       o.created_at ??
       o.createdAt ??
       o.listed_at ??
@@ -151,14 +159,14 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
       "",
   ).trim();
   if (top) {
-    // Keep calendar dates as YYYY-MM-DD (OpenSearch `time_posted` has no time-of-day).
-    if (/^\d{4}-\d{2}-\d{2}$/.test(top)) {
-      return top;
-    }
-    return top;
+    return normalizeHireSignalPostedAtIso(top);
   }
   const raw = asRecord(o.raw_payload ?? o.rawPayload);
   if (raw) {
+    const fromRawCalendar = pickStr(
+      raw.time_posted ?? raw.timePosted ?? "",
+    ).trim();
+    if (fromRawCalendar) return normalizeHireSignalPostedAtIso(fromRawCalendar);
     const fromRaw = pickStr(
       raw.posted_at ??
         raw.postedAt ??
@@ -168,11 +176,29 @@ function resolvePostedAtIso(o: Record<string, unknown>): string {
         raw.listed_at ??
         "",
     ).trim();
-    if (fromRaw) return fromRaw;
+    if (fromRaw) return normalizeHireSignalPostedAtIso(fromRaw);
   }
-  return pickStr(
-    o.ingested_at ?? o.ingestedAt ?? o.updated_at ?? o.updatedAt ?? "",
-  ).trim();
+  return normalizeHireSignalPostedAtIso(
+    pickStr(
+      o.ingested_at ?? o.ingestedAt ?? o.updated_at ?? o.updatedAt ?? "",
+    ).trim(),
+  );
+}
+
+/** Clock time for Posted column when the listing date is calendar-only (`time_posted`). */
+function resolvePostedClockIso(o: Record<string, unknown>): string {
+  const posted = pickStr(o.posted_at ?? o.postedAt ?? "").trim();
+  if (posted && !isHireSignalPostedDateOnly(posted)) {
+    return posted;
+  }
+  const raw = asRecord(o.raw_payload ?? o.rawPayload);
+  if (raw) {
+    const fromRaw = pickStr(raw.posted_at ?? raw.postedAt ?? "").trim();
+    if (fromRaw && !isHireSignalPostedDateOnly(fromRaw)) {
+      return fromRaw;
+    }
+  }
+  return pickStr(o.ingested_at ?? o.ingestedAt ?? "").trim();
 }
 
 /**
@@ -245,6 +271,7 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     pickStr(o.company_logo_url ?? o.companyLogoUrl ?? o.company_logo).trim() ||
     extractCompanyLogoFromRawPayload(rawPayload);
   const postedAt = resolvePostedAtIso(o);
+  const postedClockAt = resolvePostedClockIso(o);
   const title =
     resolveJobTitleSortPrimary(o, rawPayload) || pickStr(o.title).trim();
   return {
@@ -259,6 +286,7 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     location: pickStr(o.location ?? o.formatted_location),
     country: pickStr(o.country ?? o.country_code),
     postedAt,
+    postedClockAt,
     employmentType: pickStr(
       o.employment_type ?? o.employmentType ?? o.job_type,
     ),

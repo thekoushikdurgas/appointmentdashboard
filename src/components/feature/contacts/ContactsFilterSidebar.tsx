@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import { ContactsCollapsibleFilterSection } from "@/components/feature/contacts/ContactsCollapsibleFilterSection";
 import {
   buildEmailSearchChip,
@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
-import { X } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import type { FilterSection } from "@/hooks/useContactFilters";
 import { ContactIncludeExcludeFacetFilter } from "@/components/feature/contacts/ContactIncludeExcludeFacetFilter";
@@ -67,9 +66,10 @@ export interface ContactsFilterSidebarProps {
   sortChipLabel?: string | null;
   hiddenColumnCount: number;
   onResetVisibleColumns: () => void;
-  /** Mobile drawer: close control + `id` for `aria-labelledby` on dialog. */
+  /** `id` on the filter panel title (`h2`) for screen-reader labelling. */
   filterDrawerTitleId?: string;
-  onCloseDrawer?: () => void;
+  /** Saved searches, refresh, and other header actions (always visible in sidebar). */
+  headerActions?: ReactNode;
   /** Table row density — mirrors the toolbar view-mode select. */
   tableDensity?: "comfortable" | "compact";
   onTableDensityChange?: (density: "comfortable" | "compact") => void;
@@ -101,7 +101,7 @@ export function ContactsFilterSidebar({
   hiddenColumnCount,
   onResetVisibleColumns,
   filterDrawerTitleId,
-  onCloseDrawer,
+  headerActions,
   tableDensity = "comfortable",
   onTableDensityChange,
 }: ContactsFilterSidebarProps) {
@@ -242,6 +242,7 @@ export function ContactsFilterSidebar({
           </p>
         </div>
         <div className="c360-contacts-filters__head-actions">
+          {headerActions}
           {totalActiveCount > 0 ? (
             <Button
               type="button"
@@ -253,17 +254,6 @@ export function ContactsFilterSidebar({
               CLEAR
             </Button>
           ) : null}
-          {onCloseDrawer ? (
-            <button
-              type="button"
-              className="c360-contacts-filters__icon-btn"
-              title="Close filters"
-              aria-label="Close filters"
-              onClick={onCloseDrawer}
-            >
-              <X size={18} aria-hidden />
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -274,7 +264,11 @@ export function ContactsFilterSidebar({
         activeChips={sortSectionChips}
         onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
       >
-        <ContactFilterSortSelect sortBy={sortBy} onSortChange={onSortChange} />
+        <ContactFilterSortSelect
+          sortBy={sortBy}
+          onSortChange={onSortChange}
+          menuVariant="inline"
+        />
       </ContactsCollapsibleFilterSection>
 
       {onTableDensityChange ? (
@@ -294,6 +288,7 @@ export function ContactsFilterSidebar({
             options={VIEW_MODE_OPTIONS}
             fullWidth
             inputSize="md"
+            menuVariant="inline"
           />
         </ContactsCollapsibleFilterSection>
       ) : null}

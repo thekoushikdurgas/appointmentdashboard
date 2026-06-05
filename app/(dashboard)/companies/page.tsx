@@ -63,7 +63,6 @@ import {
 } from "@/lib/vqlDraft";
 import type { VqlFilterInput, VqlQueryInput } from "@/graphql/generated/types";
 import { toast } from "sonner";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import { Skeleton } from "@/components/shared/Skeleton";
 import {
   tryLocalStorageGet,
@@ -137,8 +136,6 @@ export default function CompaniesPage() {
     refresh,
     applyVqlQuery,
   } = useCompanies();
-  const isDesktop = useIsDesktop();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
     "comfortable",
@@ -175,10 +172,6 @@ export default function CompaniesPage() {
   useEffect(() => {
     setVisibleColumns(loadVisibleColumns());
   }, []);
-
-  useEffect(() => {
-    if (isDesktop) setMobileFiltersOpen(false);
-  }, [isDesktop]);
 
   const handleFacetChange = useCallback((key: string, values: string[]) => {
     setFacetValues((prev) => ({ ...prev, [key]: values }));
@@ -286,34 +279,6 @@ export default function CompaniesPage() {
 
   const sortChipLabel =
     sortBy !== "newest" ? `Sort: ${SORT_LABELS[sortBy] ?? sortBy}` : null;
-
-  const toolbarActiveCount = useMemo(() => {
-    const facetKeys = new Set([
-      ...Object.keys(facetValues),
-      ...Object.keys(excludedFacetValues),
-    ]);
-    let n = 0;
-    for (const k of facetKeys) {
-      if (
-        (facetValues[k]?.length ?? 0) > 0 ||
-        (excludedFacetValues[k]?.length ?? 0) > 0
-      ) {
-        n += 1;
-      }
-    }
-    if (search.trim()) n += 1;
-    if (advancedVqlRuleCount > 0) n += 1;
-    if (sortBy !== "newest") n += 1;
-    if (hiddenColumnCount > 0) n += 1;
-    return n;
-  }, [
-    facetValues,
-    excludedFacetValues,
-    search,
-    advancedVqlRuleCount,
-    sortBy,
-    hiddenColumnCount,
-  ]);
 
   const toggleColumn = useCallback((id: CompaniesDataTableColumnId) => {
     setVisibleColumns((prev) => {
@@ -449,50 +414,40 @@ export default function CompaniesPage() {
 
   const filtersSidebar = useMemo(
     () => (
-      <>
-        {!isDesktop ? (
-          <div className="c360-data-layout__filters-mobile-saved">
-            {savedSearchesTrigger}
-          </div>
-        ) : null}
-        <CompaniesFilterSidebar
-          search={search}
-          onSearchChange={setSearch}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          filterSections={filterSections}
-          filtersLoading={filtersLoading}
-          filtersError={filtersError}
-          facetValues={facetValues}
-          excludedFacetValues={excludedFacetValues}
-          onFacetChange={handleFacetChange}
-          onExcludedFacetChange={handleExcludedFacetChange}
-          onSectionExpand={loadFilterData}
-          onLoadMoreFacet={loadMoreFilterData}
-          setFacetSearch={setFilterSearch}
-          advancedVqlRuleCount={advancedVqlRuleCount}
-          onClearVql={clearCompanyVql}
-          onOpenAdvanced={() => setVqlOpen(true)}
-          visibleColumns={visibleColumns}
-          onToggleColumn={toggleColumn}
-          sortChipLabel={sortChipLabel}
-          hiddenColumnCount={hiddenColumnCount}
-          onResetVisibleColumns={resetVisibleColumns}
-          onRefreshFilters={handleRefreshFilters}
-          filtersRefreshing={filtersRefreshing}
-          drawerTitleId="c360-companies-filter-drawer-title"
-          onCloseDrawer={
-            isDesktop ? undefined : () => setMobileFiltersOpen(false)
-          }
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          tableDensity={tableDensity}
-          onTableDensityChange={setTableDensity}
-        />
-      </>
+      <CompaniesFilterSidebar
+        search={search}
+        onSearchChange={setSearch}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        filterSections={filterSections}
+        filtersLoading={filtersLoading}
+        filtersError={filtersError}
+        facetValues={facetValues}
+        excludedFacetValues={excludedFacetValues}
+        onFacetChange={handleFacetChange}
+        onExcludedFacetChange={handleExcludedFacetChange}
+        onSectionExpand={loadFilterData}
+        onLoadMoreFacet={loadMoreFilterData}
+        setFacetSearch={setFilterSearch}
+        advancedVqlRuleCount={advancedVqlRuleCount}
+        onClearVql={clearCompanyVql}
+        onOpenAdvanced={() => setVqlOpen(true)}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumn}
+        sortChipLabel={sortChipLabel}
+        hiddenColumnCount={hiddenColumnCount}
+        onResetVisibleColumns={resetVisibleColumns}
+        onRefreshFilters={handleRefreshFilters}
+        filtersRefreshing={filtersRefreshing}
+        drawerTitleId="c360-companies-filter-drawer-title"
+        headerActions={savedSearchesTrigger}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        tableDensity={tableDensity}
+        onTableDensityChange={setTableDensity}
+      />
     ),
     [
-      isDesktop,
       savedSearchesTrigger,
       search,
       setSearch,
@@ -554,11 +509,6 @@ export default function CompaniesPage() {
           ) : null}
         </div>
       }
-      filterConfig={{
-        activeCount: toolbarActiveCount,
-        onOpen: () => setMobileFiltersOpen(true),
-        show: !isDesktop,
-      }}
       actionPrefix={
         <div className="c360-toolbar__page-size c360-flex c360-items-center c360-gap-2">
           <span className="c360-contacts-dt__toolbar-label">Show</span>
@@ -618,13 +568,7 @@ export default function CompaniesPage() {
     <DataPageLayout
       filters={filtersSidebar}
       toolbar={toolbarEl}
-      mobileFiltersOpen={mobileFiltersOpen}
-      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
       filtersAriaLabel="Company filters"
-      filterDrawerTitleId="c360-companies-filter-drawer-title"
-      filtersPeekRail
-      filtersPeekScope="companies"
-      filtersPinExtra={savedSearchesTrigger}
       className="c360-companies-page"
     >
       <SavedSearchesMenu {...companySavedSearchMenuProps} />

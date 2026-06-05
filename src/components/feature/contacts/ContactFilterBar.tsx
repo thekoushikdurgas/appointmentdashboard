@@ -55,10 +55,12 @@ export function ContactFilterSortSelect({
   sortBy,
   onSortChange,
   className,
+  menuVariant = "portal",
 }: {
   sortBy: string;
   onSortChange: (sort: string) => void;
   className?: string;
+  menuVariant?: "portal" | "inline";
 }) {
   return (
     <Select
@@ -66,6 +68,7 @@ export function ContactFilterSortSelect({
       onChange={(e) => onSortChange(e.target.value)}
       options={SORT_OPTIONS}
       fullWidth={false}
+      menuVariant={menuVariant}
       className={cn("c360-contact-filter-select", className)}
     />
   );

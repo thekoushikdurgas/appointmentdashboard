@@ -12,7 +12,6 @@ import {
   PieChart,
   RefreshCw,
   Bookmark,
-  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -49,7 +48,6 @@ import { useRole } from "@/context/RoleContext";
 import { FeatureUsageCard } from "@/components/feature/usage/FeatureUsageCard";
 import { FeatureOverviewPanel } from "@/components/feature/usage/FeatureOverviewPanel";
 import { cn, formatNumber } from "@/lib/utils";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 
 const PAGE_SIZE = 20;
 
@@ -137,15 +135,6 @@ function buildAnalyticsFromItems(items: ActivityRow[]): AnalyticsDataPoint[] {
   return Object.values(buckets).slice(-7);
 }
 
-function activityFilterActiveCount(values: ActivityFiltersBarValues): number {
-  let n = 0;
-  if (values.serviceType.trim() !== "") n += 1;
-  if (values.actionType.trim() !== "") n += 1;
-  if (values.status.trim() !== "") n += 1;
-  if (values.startDate || values.endDate) n += 1;
-  return n;
-}
-
 function successRatePercent(byStatus: unknown): number | null {
   if (!byStatus || typeof byStatus !== "object") return null;
   const o = byStatus as Record<string, unknown>;
@@ -188,20 +177,8 @@ export default function ActivitiesPage() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [resetProcessing, setResetProcessing] = useState(false);
 
-  const isDesktop = useIsDesktop();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
   const showActivityFilters =
     activeTab !== "usage" && activeTab !== "saved_searches";
-
-  useEffect(() => {
-    if (isDesktop) setMobileFiltersOpen(false);
-  }, [isDesktop]);
-
-  const activityFilterCount = useMemo(
-    () => activityFilterActiveCount(filterForm),
-    [filterForm],
-  );
 
   const { overview, loading: overviewLoading } = useFeatureOverview(
     activeTab === "usage" &&
@@ -323,12 +300,9 @@ export default function ActivitiesPage() {
         onChange={setFilterForm}
         onClear={() => setFilterForm({ ...EMPTY_FILTERS })}
         disabled={loading}
-        onCloseDrawer={
-          isDesktop ? undefined : () => setMobileFiltersOpen(false)
-        }
       />
     ),
-    [filterForm, loading, isDesktop],
+    [filterForm, loading],
   );
 
   const feedItems: FeedActivityItem[] = useMemo(
@@ -430,12 +404,7 @@ export default function ActivitiesPage() {
       className="c360-dashboard-layout c360-dashboard-layout--activities"
       filters={filtersSidebar}
       showFilters={showActivityFilters}
-      mobileFiltersOpen={mobileFiltersOpen}
-      onMobileFiltersClose={() => setMobileFiltersOpen(false)}
       filtersAriaLabel="Activity filters"
-      filterDrawerTitleId="c360-activities-filter-drawer-title"
-      filtersPeekRail
-      filtersPeekScope="activities"
     >
       <div className="c360-dashboard-layout__activities-main">
         {error && activeTab !== "usage" && activeTab !== "saved_searches" && (
@@ -453,25 +422,6 @@ export default function ActivitiesPage() {
             </div>
             <div className="c360-flex c360-flex-nowrap c360-justify-between c360-items-center c360-gap-3">
               <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-3 c360-min-w-0">
-                {!isDesktop && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    leftIcon={<Filter size={16} aria-hidden />}
-                    onClick={() => setMobileFiltersOpen(true)}
-                    aria-label={
-                      activityFilterCount > 0
-                        ? `Open filters, ${activityFilterCount} active`
-                        : "Open filters"
-                    }
-                  >
-                    Filters
-                    {activityFilterCount > 0 ? (
-                      <span className="c360-ml-1">({activityFilterCount})</span>
-                    ) : null}
-                  </Button>
-                )}
                 <p className="c360-text-sm c360-text-muted c360-m-0">
                   Showing{" "}
                   <strong>

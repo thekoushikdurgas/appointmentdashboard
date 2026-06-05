@@ -7,11 +7,14 @@
   }
 
   .c360-data-layout {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .c360-data-layout__filters {
     position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
     max-height: none;
   }
 

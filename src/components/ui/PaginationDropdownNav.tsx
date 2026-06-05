@@ -7,8 +7,7 @@ import {
   ChevronRight,
   ChevronUp,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDataFiltersPeek } from "@/context/DataFiltersPeekContext";
+import { useCallback, useMemo, useState } from "react";
 import { getPaginationBounds } from "@/lib/paginationBounds";
 import { cn } from "@/lib/utils";
 
@@ -52,10 +51,6 @@ function PaginationPageMenu({
   pageOptionLimit?: number;
   onPageChange: (page: number) => void;
 }) {
-  const peek = useDataFiltersPeek();
-  const peekRef = useRef(peek);
-  peekRef.current = peek;
-  const menuOpenRef = useRef(false);
   const [open, setOpen] = useState(false);
 
   const options = useMemo(
@@ -63,21 +58,8 @@ function PaginationPageMenu({
     [totalPages, page, pageOptionLimit],
   );
 
-  const handleOpenChange = useCallback(
-    (next: boolean) => {
-      setOpen(next);
-      menuOpenRef.current = next;
-      peek?.notifyFilterOverlayOpen(next);
-    },
-    [peek],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (menuOpenRef.current) {
-        peekRef.current?.notifyFilterOverlayOpen(false);
-      }
-    };
+  const handleOpenChange = useCallback((next: boolean) => {
+    setOpen(next);
   }, []);
 
   return (

@@ -444,7 +444,10 @@ export function HiringSignalsDataTable({
         valueGetter: (_value, row) =>
           row.postedAt ? new Date(row.postedAt) : null,
         renderCell: (params: GridRenderCellParams<LinkedInJobRow>) => (
-          <HiringSignalsJobPostedCell row={params.row} />
+          <HiringSignalsJobPostedCell
+            row={params.row}
+            showTime={density !== "compact"}
+          />
         ),
         cellClassName: "c360-hs-grid-cell--center",
       },

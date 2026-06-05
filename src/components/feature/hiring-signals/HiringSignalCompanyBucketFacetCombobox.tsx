@@ -12,6 +12,8 @@ import {
   formatCompanyRevenueBucketLabel,
 } from "@/lib/companyRangeBuckets";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+import { mapHireSignalFacetRows } from "@/components/feature/hiring-signals/hireSignalFacetOptions";
+import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
 import {
   fetchHireSignalCompanyEmployeeSizeFilterOptions,
   fetchHireSignalCompanyFundingFilterOptions,
@@ -108,12 +110,10 @@ export function HiringSignalCompanyBucketFacetCombobox({
         offset: 0,
       });
       if (req !== loadReqRef.current) return;
-      const mapped: ContactFilterData[] = rows.map((r) => ({
-        value: r.value,
-        displayValue: config.formatLabel(r.value),
-        count: typeof r.count === "number" ? r.count : undefined,
-      }));
-      setOptions(mapped);
+      const mapped = mapHireSignalFacetRows(rows, (value) =>
+        config.formatLabel(value),
+      );
+      setOptions(sortHireSignalFacetOptionsByCount(mapped));
     } catch (e) {
       if (req === loadReqRef.current) {
         const msg = e instanceof Error ? e.message : config.loadErrorLabel;
@@ -149,7 +149,7 @@ export function HiringSignalCompanyBucketFacetCombobox({
         loadingMore={false}
         hasMore={false}
         onOpen={onOpen}
-        onLoadMore={() => {}}
+        onLoadMore={() => { }}
         searchText={searchText}
         onSearchChange={setSearchText}
         disabled={disabled}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { RefreshCw } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -18,8 +18,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import type {
   HiringSignalIndexStats,
   LinkedInJobRow,
@@ -97,10 +95,6 @@ export function DemandsTrendsPage({
     statsLoading,
     analyticsMatchCappedAt,
   } = hiring;
-  const { activeDraftCount } = useHireSignalFilter();
-  const isDesktop = useIsDesktop();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
   const kpi: HiringDashboardKpis | null = useMemo(() => {
     const med = buildMedianSalary(jobs);
     const listTotal = typeof total === "number" ? total : jobs.length;
@@ -184,11 +178,6 @@ export function DemandsTrendsPage({
       activeTab="demands"
       onTabChange={() => {}}
       totalCount={toolbarMatchTotal}
-      filterConfig={{
-        activeCount: activeDraftCount,
-        onOpen: () => setMobileFiltersOpen(true),
-        show: !isDesktop,
-      }}
       actions={[
         {
           label: "Refresh",
@@ -214,12 +203,7 @@ export function DemandsTrendsPage({
       <DataPageLayout
         className="c360-demands-trends-page"
         showFilters
-        mobileFiltersOpen={mobileFiltersOpen}
-        onMobileFiltersClose={() => setMobileFiltersOpen(false)}
         filtersAriaLabel="Hiring signal filters"
-        filterDrawerTitleId="c360-demands-filter-drawer-title"
-        filtersPeekRail
-        filtersPeekScope="hiring-signals"
         toolbar={toolbar}
         filters={
           <HiringSignalsFilterSidebar

@@ -24,17 +24,16 @@ import {
   BarChart2,
   PanelLeft,
   PanelRight,
-  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { SIDEBAR_SECTIONS, ROUTES } from "@/lib/constants";
 import type { SidebarSectionConfig } from "@/lib/constants";
-import { usePathname } from "next/navigation";
 import { useRole } from "@/context/RoleContext";
 import { SidebarSearch } from "@/components/shared/SidebarSearch";
 import { SidebarNav } from "./SidebarNav";
 import { SidebarQuickActions } from "./SidebarQuickActions";
+import { SidebarAccountFooter } from "./SidebarAccountFooter";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -84,7 +83,6 @@ export default function Sidebar({
   showDesktopCollapseToggle = false,
   onToggleCollapse,
 }: SidebarProps) {
-  const pathname = usePathname();
   const { isSuperAdmin, isAdmin } = useRole();
   const prefersReducedMotion = useReducedMotion();
   const finePointer = useStateFinePointer();
@@ -99,9 +97,6 @@ export default function Sidebar({
   }, [isAdmin, isSuperAdmin]);
 
   const iconFor = (key: string) => ICON_MAP[key];
-
-  const settingsActive =
-    pathname === ROUTES.SETTINGS || pathname.startsWith(`${ROUTES.SETTINGS}/`);
 
   const peekActive =
     peekAllowed &&
@@ -201,27 +196,10 @@ export default function Sidebar({
         </div>
 
         <div className="c360-sidebar__footer">
-          <Link
-            href={ROUTES.SETTINGS}
-            className={cn(
-              "c360-sidebar__footer-link",
-              "c360-sidebar__item",
-              "c360-sidebar__item--leaf",
-              railCollapsed && "c360-sidebar__item--collapsed-icon",
-              settingsActive && "c360-sidebar__item--active",
-            )}
-            onClick={onMobileClose}
-            title="Settings"
-            aria-label="Settings"
-            aria-current={settingsActive ? "page" : undefined}
-          >
-            <Settings
-              size={railCollapsed ? 20 : 16}
-              className="c360-sidebar__item-icon"
-              aria-hidden
-            />
-            <span className="c360-sidebar__item-label">Settings</span>
-          </Link>
+          <SidebarAccountFooter
+            railCollapsed={railCollapsed}
+            onMobileClose={onMobileClose}
+          />
         </div>
       </aside>
     </>

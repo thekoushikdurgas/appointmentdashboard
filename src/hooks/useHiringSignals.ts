@@ -318,32 +318,6 @@ export function useHiringSignals(
 
         setResolvedCompanyUuids(undefined);
 
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "78fe0b",
-            },
-            body: JSON.stringify({
-              sessionId: "78fe0b",
-              hypothesisId: "A,B,D",
-              location: "useHiringSignals.ts:runLoad:pre-fetch",
-              message: "hire signal fetch snapshot",
-              data: {
-                draftCompanyIndustries: draftForCohort.companyIndustries,
-                snapshotCompanyIndustries: fetchSnapshot.companyIndustries,
-                snapshotIndustries: fetchSnapshot.industries,
-                firmographicKey: firmographicKeyAtFetch,
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
-
         const res = await fetchHiringSignalJobs(fetchSnapshot);
         if (gen !== hireSignalLoadGenRef.current) {
           return;

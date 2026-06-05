@@ -7,8 +7,6 @@ import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { useHireSignalFilter } from "@/context/HireSignalFilterContext";
-import { useIsDesktop } from "@/hooks/common/useBreakpoint";
 import type {
   HiringSignalIndexStats,
   LinkedInJobRow,
@@ -74,9 +72,6 @@ export function MarketInsightsPage({
 
   const toolbarMatchTotal =
     typeof total === "number" && total > 0 ? total : jobs.length;
-  const { activeDraftCount } = useHireSignalFilter();
-  const isDesktop = useIsDesktop();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tab, setTab] = useState("overview");
   const [drawerRow, setDrawerRow] = useState<LinkedInJobRow | null>(null);
 
@@ -101,11 +96,6 @@ export function MarketInsightsPage({
         activeTab="overview"
         onTabChange={() => {}}
         totalCount={toolbarMatchTotal}
-        filterConfig={{
-          activeCount: activeDraftCount,
-          onOpen: () => setMobileFiltersOpen(true),
-          show: !isDesktop,
-        }}
         actions={[
           {
             label: "Refresh",
@@ -117,7 +107,7 @@ export function MarketInsightsPage({
         ]}
       />
     ),
-    [activeDraftCount, isDesktop, toolbarMatchTotal, loading, refetch],
+    [toolbarMatchTotal, loading, refetch],
   );
 
   return (
@@ -131,12 +121,7 @@ export function MarketInsightsPage({
       <DataPageLayout
         className="c360-market-insights-page"
         showFilters
-        mobileFiltersOpen={mobileFiltersOpen}
-        onMobileFiltersClose={() => setMobileFiltersOpen(false)}
         filtersAriaLabel="Hiring signal filters"
-        filterDrawerTitleId="c360-market-filter-drawer-title"
-        filtersPeekRail
-        filtersPeekScope="hiring-signals"
         toolbar={toolbar}
         filters={
           <HiringSignalsFilterSidebar

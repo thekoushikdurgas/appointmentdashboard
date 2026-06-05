@@ -805,7 +805,7 @@
 
 .c360-page.c360-hiring-signals-page
   > .c360-data-layout
-  > .c360-data-layout__filters:not(.c360-data-layout__filters--peek-rail) {
+  > .c360-data-layout__filters {
   min-width: 260px;
   max-width: 300px;
   width: 300px;
@@ -970,20 +970,30 @@
   box-sizing: border-box;
 }
 
-/* Peek rail filter aside: square corners (flush with chrome; overrides layout peek peel radius) */
 .c360-page.c360-hiring-signals-page
   > .c360-data-layout
-  > .c360-data-layout__filters.c360-data-layout__filters--peek-rail {
+  > .c360-data-layout__filters {
   border-radius: 0;
+  padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-@media (hover: hover) {
-  .c360-page.c360-hiring-signals-page
-    > .c360-data-layout
-    > .c360-data-layout__filters.c360-data-layout__filters--peek-rail:not(
-      .c360-data-layout__filters--peek-pinned
-    ):is(:hover, :focus-within) {
-    border-radius: 0;
+/* Center Signals/Runs pill over main content, not over the filter column */
+@media (min-width: 1024px) {
+  .c360-tabs--hiring-signals.c360-tabs--floating-bottom
+    .c360-tabs__list--floating-wrap {
+    left: calc(50% + min(150px, 12vw));
+    right: auto;
+    transform: translateX(-50%);
+    width: min-content;
+    max-width: calc(100vw - var(--c360-sidebar-width) - 340px);
+  }
+
+  .c360-main.c360-main--collapsed
+    .c360-tabs--hiring-signals.c360-tabs--floating-bottom
+    .c360-tabs__list--floating-wrap {
+    max-width: calc(
+      100vw - var(--c360-sidebar-width-collapsed) - 340px
+    );
   }
 }
 
@@ -1249,6 +1259,18 @@
   padding: 0;
 }
 
+.c360-hs-filters .c360-contacts-filter-section__content .c360-space-y-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+}
+
+.c360-hs-filters .c360-contacts-filter-section__header-toggle {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
 .c360-hs-filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1257,7 +1279,28 @@
 }
 
 .c360-hs-filter-chips--section {
-  margin-bottom: 0.5rem;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.c360-hs-filters .c360-filter-combobox {
+  gap: 5px;
+}
+
+.c360-hs-filters .c360-filter-combobox__panel-inner {
+  gap: 5px;
+}
+
+.c360-hs-filters .c360-filter-combobox__trigger {
+  border-radius: 5px;
+}
+
+.c360-hs-filters .c360-filter-combobox__list {
+  border-radius: 5px;
+  padding-left: 0;
 }
 
 .c360-hs-filters__run-row .c360-hs-filter-chips--run {

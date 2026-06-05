@@ -51,6 +51,7 @@
 .c360-input--error {
   border-color: var(--c360-danger);
 }
+
 .c360-input--error:focus {
   box-shadow: 0 0 0 3px rgba(247, 43, 80, 0.2);
 }
@@ -211,6 +212,28 @@ textarea.c360-input {
   box-shadow: var(--c360-shadow-lg);
 }
 
+.c360-select-wrap--inline-menu .c360-select-wrap,
+.c360-select-wrap--inline {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.c360-select__content--inline {
+  position: static !important;
+  transform: none !important;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  box-shadow: none;
+  z-index: auto;
+}
+
+.c360-select__content--inline .c360-select__viewport {
+  min-width: 100%;
+  width: 100%;
+}
+
 .c360-select__viewport {
   padding: var(--c360-spacing-1);
   min-width: var(--radix-select-trigger-width);
@@ -240,15 +263,30 @@ textarea.c360-input {
 .c360-select__item {
   position: relative;
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
   cursor: pointer;
   user-select: none;
   align-items: center;
   border-radius: var(--c360-radius-sm);
-  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2)
-    2rem;
+  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2) 2rem;
   font-size: var(--c360-text-sm);
   color: var(--c360-text);
   outline: none;
+}
+
+.c360-select__item:hover,
+.c360-select__item:focus-visible {
+  background: var(--c360-bg-secondary);
+}
+
+.c360-select__item:disabled {
+  pointer-events: none;
+  opacity: 0.45;
 }
 
 .c360-select__item[data-disabled] {

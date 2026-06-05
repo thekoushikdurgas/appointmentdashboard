@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
 import {
   ACTIVITY_ACTION_OPTIONS,
   ACTIVITY_SERVICE_OPTIONS,
@@ -32,7 +31,6 @@ export interface ActivitiesFilterSidebarProps {
   onClear: () => void;
   disabled?: boolean;
   filterDrawerTitleId?: string;
-  onCloseDrawer?: () => void;
 }
 
 export function ActivitiesFilterSidebar({
@@ -41,7 +39,6 @@ export function ActivitiesFilterSidebar({
   onClear,
   disabled,
   filterDrawerTitleId = "c360-activities-filter-drawer-title",
-  onCloseDrawer,
 }: ActivitiesFilterSidebarProps) {
   const patch = useCallback(
     (partial: Partial<ActivityFiltersBarValues>) =>
@@ -138,17 +135,6 @@ export function ActivitiesFilterSidebar({
               Clear
             </Button>
           ) : null}
-          {onCloseDrawer ? (
-            <button
-              type="button"
-              className="c360-contacts-filters__icon-btn"
-              title="Close filters"
-              aria-label="Close filters"
-              onClick={onCloseDrawer}
-            >
-              <X size={18} aria-hidden />
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -188,6 +174,7 @@ export function ActivitiesFilterSidebar({
               disabled={disabled}
               fullWidth
               inputSize="md"
+              menuVariant="inline"
             />
           </div>
         </ContactsCollapsibleFilterSection>
@@ -207,6 +194,7 @@ export function ActivitiesFilterSidebar({
               disabled={disabled}
               fullWidth
               inputSize="md"
+              menuVariant="inline"
             />
           </div>
         </ContactsCollapsibleFilterSection>
@@ -226,6 +214,7 @@ export function ActivitiesFilterSidebar({
               disabled={disabled}
               fullWidth
               inputSize="md"
+              menuVariant="inline"
             />
           </div>
         </ContactsCollapsibleFilterSection>

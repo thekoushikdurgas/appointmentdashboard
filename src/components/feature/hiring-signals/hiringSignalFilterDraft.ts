@@ -277,9 +277,15 @@ export function postedAtBoundToDateInputValue(raw: string): string {
   const t = raw.trim();
   if (!t) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  // RFC3339 with explicit offset: calendar day is the local date encoded in the string.
+  const withOffset = /^(\d{4}-\d{2}-\d{2})T/.exec(t);
+  if (withOffset && /[+-]\d{2}:\d{2}$/.test(t)) {
+    return withOffset[1];
+  }
   const ms = Date.parse(t);
   if (Number.isNaN(ms)) return "";
-  return new Date(ms).toISOString().slice(0, 10);
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 /** Trim, drop empty, dedupe (preserve order). */
