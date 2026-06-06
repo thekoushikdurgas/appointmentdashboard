@@ -50,6 +50,11 @@
   gap: var(--c360-spacing-3);
 }
 
+/* Override kit `.c360-card__body { width: 50% }` so inbox card fills drawer */
+.c360-notifications-workspace .c360-card > .c360-card__body {
+  width: 100%;
+}
+
 @media (max-width: 1023px) {
   .c360-notifications-drawer {
     width: 100vw;

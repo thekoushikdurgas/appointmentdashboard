@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { CreditCard, LogOut, Settings, User } from "lucide-react";
+import { Coins, CreditCard, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
-import { ROUTES } from "@/lib/routes";
+import { profileTabRoute, ROUTES } from "@/lib/routes";
 import { ContextMenuItem } from "@/components/ui/ContextMenu";
 import { TopBarCredits } from "./TopBarCredits";
+import { SidebarQuickActions } from "./SidebarQuickActions";
 import { cn } from "@/lib/utils";
 
 export type AccountMenuContentMode =
@@ -18,6 +19,8 @@ export type AccountMenuContentMode =
 export interface AccountMenuContentProps {
   onNavigate?: () => void;
   mode: AccountMenuContentMode;
+  /** When false, only the profile row is shown (collapsed sidebar rail). */
+  accountBodyExpanded?: boolean;
 }
 
 export interface AccountMenuPanelProps {
@@ -32,8 +35,7 @@ const NAV_LINKS: readonly {
   icon: LucideIcon;
 }[] = [
   { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
-  { href: ROUTES.PROFILE, label: "Profile", icon: User },
-  { href: ROUTES.SETTINGS, label: "Settings", icon: Settings },
+  { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
 ];
 
 function formatRoleLabel(role: string): string {
@@ -87,6 +89,7 @@ function AccountAvatar({
 export function AccountMenuContent({
   onNavigate,
   mode,
+  accountBodyExpanded = true,
 }: AccountMenuContentProps) {
   const { user, logout } = useAuth();
   const { role } = useRole();
@@ -163,7 +166,17 @@ export function AccountMenuContent({
     );
   }
 
-  const navLinks = NAV_LINKS.map(({ href, label, icon: Icon }) => {
+  const navLinksForMode =
+    mode === "sidebar-full"
+      ? NAV_LINKS.filter(
+          ({ href }) =>
+            href !== ROUTES.PROFILE &&
+            href !== profileTabRoute("settings") &&
+            href !== ROUTES.BILLING,
+        )
+      : NAV_LINKS;
+
+  const navLinks = navLinksForMode.map(({ href, label, icon: Icon }) => {
     if (mode === "context") {
       return (
         <ContextMenuItem key={href} asChild>
@@ -220,42 +233,141 @@ export function AccountMenuContent({
       <button
         type="button"
         className="c360-sidebar-account__sign-out-btn"
+        aria-label="Log out"
         onClick={handleLogout}
       >
         <LogOut size={16} aria-hidden />
-        Log out
       </button>
     );
 
+  if (mode === "sidebar-full" && !accountBodyExpanded) {
+    const railBtnClass = cn(
+      "c360-sidebar__item",
+      "c360-sidebar__item--leaf",
+      "c360-sidebar__item--collapsed-icon",
+      "c360-sidebar-account-compact__btn",
+    );
+
+    return (
+      <div className="c360-sidebar-account c360-sidebar-account--rail">
+        <div
+          className="c360-sidebar-account__rail-stack"
+          role="group"
+          aria-label="Quick actions and account"
+        >
+          <SidebarQuickActions
+            railCollapsed
+            integrated
+            onMobileClose={onNavigate}
+          />
+          <div className="c360-sidebar-account__rail-divider" aria-hidden />
+          <Link
+            href={ROUTES.PROFILE}
+            className={cn(
+              railBtnClass,
+              "c360-sidebar-account-compact__btn--profile",
+            )}
+            title={displayName}
+            aria-label={`${displayName}, ${roleLabel}`}
+            onClick={() => onNavigate?.()}
+          >
+            <AccountAvatar
+              displayName={displayName}
+              avatarUrl={user?.avatar_url}
+              size="sm"
+            />
+          </Link>
+          <Link
+            href={ROUTES.BILLING}
+            className={railBtnClass}
+            title="Billing"
+            aria-label="Billing"
+            onClick={() => onNavigate?.()}
+          >
+            <Coins size={18} className="c360-sidebar__item-icon" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            className={cn(
+              railBtnClass,
+              "c360-sidebar-account-compact__btn--sign-out",
+            )}
+            title="Log out"
+            aria-label="Log out"
+            onClick={handleLogout}
+          >
+            <LogOut size={18} className="c360-sidebar__item-icon" aria-hidden />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (mode === "sidebar-full") {
+    const profileSection = (
+      <div className="c360-sidebar-account__profile">
+        <div className="c360-sidebar-account__profile-avatar">
+          <Link
+            href={ROUTES.PROFILE}
+            className="c360-sidebar-account__profile-link"
+            title={displayName}
+            aria-label={`${displayName}, ${roleLabel}`}
+            onClick={() => onNavigate?.()}
+          >
+            <AccountAvatar
+              displayName={displayName}
+              avatarUrl={user?.avatar_url}
+              size="md"
+            />
+            <span className="c360-sidebar-account__identity">
+              <span className="c360-sidebar-account__name">{displayName}</span>
+              <span className="c360-sidebar-account__role-badge">
+                {roleLabel}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="c360-sidebar-account__sign-out-btn"
+              aria-label="Log out"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} aria-hidden />
+            </button>
+          </Link>
+        </div>
+        <div className="c360-sidebar-account__profile-main">
+          <div className="c360-sidebar-account__profile-credits">
+            <TopBarCredits variant="profile" />
+          </div>
+          <Link
+            href={ROUTES.BILLING}
+            className="c360-sidebar-account__sign-out-btn c360-sidebar-account__billing-btn"
+            aria-label="Billing"
+            title="Billing"
+            onClick={() => onNavigate?.()}
+          >
+            <Coins size={16} aria-hidden />
+          </Link>
+        </div>
+      </div>
+    );
+
     return (
       <div className="c360-sidebar-account">
-        <Link
-          href={ROUTES.PROFILE}
-          className="c360-sidebar-account__profile"
-          onClick={() => onNavigate?.()}
-        >
-          <AccountAvatar
-            displayName={displayName}
-            avatarUrl={user?.avatar_url}
-          />
-          <span className="c360-sidebar-account__identity">
-            <span className="c360-sidebar-account__name">{displayName}</span>
-            <span className="c360-sidebar-account__role-badge">
-              {roleLabel}
-            </span>
-          </span>
-        </Link>
+        <SidebarQuickActions railCollapsed={false} onMobileClose={onNavigate} />
 
-        <div className="c360-sidebar-account__credits-panel">
-          <TopBarCredits variant="sidebar" />
-        </div>
+        {navLinks.length > 0 ? (
+          <div className="c360-sidebar-account__body">
+            <nav
+              className="c360-sidebar-account__nav"
+              aria-label="Account links"
+            >
+              {navLinks}
+            </nav>
+          </div>
+        ) : null}
 
-        <nav className="c360-sidebar-account__nav" aria-label="Account links">
-          {navLinks}
-        </nav>
-
-        <div className="c360-sidebar-account__sign-out-wrap">{signOut}</div>
+        {profileSection}
       </div>
     );
   }

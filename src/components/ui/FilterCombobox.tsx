@@ -129,7 +129,7 @@ export function FilterCombobox({
       ? "Any"
       : selectedValues.length === 1
         ? (options.find((o) => String(o.value) === selectedValues[0])
-          ?.displayValue ?? selectedValues[0])
+            ?.displayValue ?? selectedValues[0])
         : `${selectedValues.length} selected`;
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
@@ -254,7 +254,7 @@ export function FilterCombobox({
                       "c360-text-sm",
                       "c360-cursor-pointer",
                       focusIndex === idx &&
-                      "c360-filter-combobox__option--focus",
+                        "c360-filter-combobox__option--focus",
                     )}
                   >
                     <Checkbox

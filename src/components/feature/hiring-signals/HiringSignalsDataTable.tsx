@@ -3,9 +3,13 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   type Dispatch,
   type SetStateAction,
 } from "react";
+import { useViewportFillHeight } from "@/hooks/useViewportFillHeight";
+import { Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import type {
   GridColDef,
   GridColumnVisibilityModel,
@@ -148,14 +152,66 @@ function jobListFiltersRestrictResults(f: JobListFilters): boolean {
   );
 }
 
-function HiringSignalsNoRowsOverlay({ filtered }: { filtered: boolean }) {
+function HiringSignalsNoRowsOverlay({
+  filtered,
+  todaysJobsTab,
+  onViewAllSignals,
+  onClearPostedRange,
+}: {
+  filtered: boolean;
+  todaysJobsTab?: boolean;
+  onViewAllSignals?: () => void;
+  onClearPostedRange?: () => void;
+}) {
+  const title = todaysJobsTab
+    ? "No jobs posted today"
+    : filtered
+      ? "No jobs match your filters"
+      : "No jobs yet";
+
+  const hint = todaysJobsTab
+    ? "Today's jobs shows roles with a posted date of today. Try all signals or adjust the date posted filter in the sidebar."
+    : filtered
+      ? "Clear or broaden filters in the sidebar to see more results."
+      : "Run a scrape from job.server or check that your filters are not too narrow.";
+
+  const showViewAll = Boolean(todaysJobsTab && onViewAllSignals);
+  const showClearDates =
+    Boolean(filtered && onClearPostedRange) && !todaysJobsTab;
+
   return (
-    <div className="c360-flex c360-h-full c360-min-h-[120px] c360-items-center c360-justify-center c360-px-4">
-      <p className="c360-table__empty c360-m-0 c360-text-sm c360-text-ink-muted">
-        {filtered
-          ? "No jobs match the current filters. Clear or broaden filters to see more results."
-          : "No job rows yet. Run a scrape from job.server or check filters."}
-      </p>
+    <div className="c360-hs-empty-overlay">
+      <div className="c360-hs-empty-overlay__inner">
+        <span className="c360-hs-empty-overlay__icon" aria-hidden>
+          <Briefcase size={28} strokeWidth={1.5} />
+        </span>
+        <p className="c360-hs-empty-overlay__title">{title}</p>
+        <p className="c360-hs-empty-overlay__hint">{hint}</p>
+        {showViewAll || showClearDates ? (
+          <div className="c360-hs-empty-overlay__actions">
+            {showViewAll ? (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={onViewAllSignals}
+              >
+                View all signals
+              </Button>
+            ) : null}
+            {showClearDates ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onClearPostedRange}
+              >
+                Clear date filter
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -213,6 +269,10 @@ export interface HiringSignalsDataTableProps {
   onColumnVisibilityResolved?: (
     columns: HiringSignalsDataTableColumnId[],
   ) => void;
+  /** Toolbar "Today's jobs" tab — shapes empty-state copy and primary CTA. */
+  todaysJobsTab?: boolean;
+  onViewAllSignals?: () => void;
+  onClearPostedRange?: () => void;
   className?: string;
 }
 
@@ -231,12 +291,25 @@ export function HiringSignalsDataTable({
   setListFilters,
   totalRowCount,
   onColumnVisibilityResolved,
+  todaysJobsTab,
+  onViewAllSignals,
+  onClearPostedRange,
   className,
 }: HiringSignalsDataTableProps) {
+  const tablePanelRef = useRef<HTMLDivElement>(null);
+  useViewportFillHeight(tablePanelRef);
+
   const filteredEmpty = jobListFiltersRestrictResults(listFilters);
   const NoRowsOverlay = useCallback(
-    () => <HiringSignalsNoRowsOverlay filtered={filteredEmpty} />,
-    [filteredEmpty],
+    () => (
+      <HiringSignalsNoRowsOverlay
+        filtered={filteredEmpty}
+        todaysJobsTab={todaysJobsTab}
+        onViewAllSignals={onViewAllSignals}
+        onClearPostedRange={onClearPostedRange}
+      />
+    ),
+    [filteredEmpty, onClearPostedRange, onViewAllSignals, todaysJobsTab],
   );
 
   const vis = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -485,12 +558,18 @@ export function HiringSignalsDataTable({
   const showLoadingOverlay = Boolean(loading);
 
   return (
-    <div className={cn("c360-w-full c360-min-w-0", className)}>
+    <div
+      ref={tablePanelRef}
+      className={cn(
+        "c360-hs-signals-table-panel c360-w-full c360-min-w-0",
+        className,
+      )}
+    >
       <C360DataTableShell>
         <C360MuiThemeProvider>
           <div
             className={cn(
-              "c360-hs-data-grid c360-min-h-[320px] c360-w-full",
+              "c360-hs-data-grid c360-w-full",
               density === "compact" && "c360-hs-data-grid--compact",
             )}
           >
@@ -526,7 +605,6 @@ export function HiringSignalsDataTable({
               }}
               showColumnVerticalBorder
               sx={getHiringSignalsDataGridSx(density)}
-              autoHeight
             />
           </div>
         </C360MuiThemeProvider>

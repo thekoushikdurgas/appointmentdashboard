@@ -653,6 +653,17 @@
   width: 300px;
 }
 
+.c360-page.c360-contacts-page
+  > .c360-data-layout
+  > .c360-data-layout__filters--collapsed,
+.c360-page.c360-companies-page
+  > .c360-data-layout
+  > .c360-data-layout__filters--collapsed {
+  min-width: 0;
+  max-width: 3.05rem;
+  width: 3.05rem;
+}
+
 .c360-page.c360-contacts-page > .c360-data-layout > .c360-data-layout__content,
 .c360-page.c360-companies-page
   > .c360-data-layout

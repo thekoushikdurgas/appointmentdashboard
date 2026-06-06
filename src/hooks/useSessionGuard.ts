@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
 import { ROLES } from "@/lib/constants";
+import { saveReturnRoute } from "@/lib/returnRoute";
 
 interface SessionGuardOptions {
   redirectTo?: string;
@@ -22,6 +23,7 @@ export function useSessionGuard({
     if (loading) return;
 
     if (!user) {
+      saveReturnRoute();
       router.replace(redirectTo);
     }
   }, [user, loading, redirectTo, router]);

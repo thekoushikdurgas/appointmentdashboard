@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/Button";
@@ -90,7 +91,19 @@ function localDateTimeToIso(local: string): string | undefined {
 }
 
 function buildActivityDescription(a: ActivityRow): string {
-  const base = `${humanizeToken(a.serviceType)} · ${humanizeToken(a.actionType)}`;
+  const params = a.requestParams as Record<string, unknown> | null | undefined;
+  const route =
+    params && typeof params.route === "string" ? params.route : null;
+  const entityType =
+    params && typeof params.entityType === "string" ? params.entityType : null;
+
+  let base = `${humanizeToken(a.serviceType)} · ${humanizeToken(a.actionType)}`;
+  if (route) {
+    base = `${base} — ${route}`;
+  } else if (entityType) {
+    base = `${base} — ${humanizeToken(entityType)}`;
+  }
+
   if (a.resultCount > 0) {
     return `${base} — ${a.resultCount} results`;
   }
@@ -403,6 +416,7 @@ export default function ActivitiesPage() {
     <DataPageLayout
       className="c360-dashboard-layout c360-dashboard-layout--activities"
       filters={filtersSidebar}
+      filtersPanelStorageKey={STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_ACTIVITIES}
       showFilters={showActivityFilters}
       filtersAriaLabel="Activity filters"
     >

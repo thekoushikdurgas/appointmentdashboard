@@ -12,11 +12,22 @@ interface SidebarQuickActionsProps {
   /** Collapsed icon rail: tighter vertical stack */
   railCollapsed: boolean;
   onMobileClose?: () => void;
+  /** Match footer account rail buttons (no toolbar wrapper). */
+  integrated?: boolean;
 }
+
+const railActionClass = cn(
+  "c360-sidebar__item",
+  "c360-sidebar__item--leaf",
+  "c360-sidebar__item--collapsed-icon",
+  "c360-sidebar-account-compact__btn",
+  "c360-sidebar-account__rail-action",
+);
 
 export function SidebarQuickActions({
   railCollapsed,
   onMobileClose,
+  integrated = false,
 }: SidebarQuickActionsProps) {
   const { openJobsDrawer } = useJobsDrawer();
   const { openNotificationsDrawer, unreadCount } = useNotificationsDrawer();
@@ -24,21 +35,16 @@ export function SidebarQuickActions({
   const { openReviewDrawer } = useReviewDrawer();
 
   const wrap = () => onMobileClose?.();
+  const useRailButtons = railCollapsed && integrated;
+  const buttonClass = useRailButtons
+    ? railActionClass
+    : "c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn";
 
-  return (
-    <div
-      className={cn(
-        "c360-sidebar__quick-actions",
-        railCollapsed && "c360-sidebar__quick-actions--rail",
-      )}
-      data-rail-collapsed={railCollapsed ? "true" : "false"}
-      role="toolbar"
-      aria-label="Quick actions"
-      {...(railCollapsed ? { "aria-orientation": "vertical" as const } : {})}
-    >
+  const actions = (
+    <>
       <button
         type="button"
-        className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn"
+        className={buttonClass}
         title="Review tickets"
         aria-label="Open review tickets"
         onClick={() => {
@@ -46,11 +52,15 @@ export function SidebarQuickActions({
           wrap();
         }}
       >
-        <MessageSquare size={railCollapsed ? 16 : 18} aria-hidden />
+        <MessageSquare
+          size={18}
+          className={useRailButtons ? "c360-sidebar__item-icon" : undefined}
+          aria-hidden
+        />
       </button>
       <button
         type="button"
-        className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn"
+        className={buttonClass}
         title="Notifications"
         aria-label={
           unreadCount > 0
@@ -63,7 +73,11 @@ export function SidebarQuickActions({
         }}
       >
         <span className="c360-topbar-notif-wrap">
-          <Bell size={railCollapsed ? 16 : 18} aria-hidden />
+          <Bell
+            size={18}
+            className={useRailButtons ? "c360-sidebar__item-icon" : undefined}
+            aria-hidden
+          />
           {unreadCount > 0 ? (
             <Badge color="red" className="c360-topbar-notif-badge" aria-hidden>
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -73,7 +87,7 @@ export function SidebarQuickActions({
       </button>
       <button
         type="button"
-        className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn"
+        className={buttonClass}
         title="Jobs"
         aria-label="Open jobs"
         onClick={() => {
@@ -81,11 +95,15 @@ export function SidebarQuickActions({
           wrap();
         }}
       >
-        <Briefcase size={railCollapsed ? 16 : 18} aria-hidden />
+        <Briefcase
+          size={18}
+          className={useRailButtons ? "c360-sidebar__item-icon" : undefined}
+          aria-hidden
+        />
       </button>
       <button
         type="button"
-        className="c360-btn c360-btn--ghost c360-btn--icon c360-sidebar__quick-btn"
+        className={buttonClass}
         title="Files"
         aria-label="Open files"
         onClick={() => {
@@ -93,8 +111,31 @@ export function SidebarQuickActions({
           wrap();
         }}
       >
-        <FolderOpen size={railCollapsed ? 16 : 18} aria-hidden />
+        <FolderOpen
+          size={18}
+          className={useRailButtons ? "c360-sidebar__item-icon" : undefined}
+          aria-hidden
+        />
       </button>
+    </>
+  );
+
+  if (useRailButtons) {
+    return actions;
+  }
+
+  return (
+    <div
+      className={cn(
+        "c360-sidebar__quick-actions",
+        railCollapsed && "c360-sidebar__quick-actions--rail",
+      )}
+      data-rail-collapsed={railCollapsed ? "true" : "false"}
+      role="toolbar"
+      aria-label="Quick actions"
+      {...(railCollapsed ? { "aria-orientation": "vertical" as const } : {})}
+    >
+      {actions}
     </div>
   );
 }

@@ -47,6 +47,8 @@ export interface GatewayAuthPayload {
   user: GatewayUserInfo;
   twoFactorRequired?: boolean;
   challengeToken?: string | null;
+  emailVerificationRequired?: boolean;
+  verificationChallengeToken?: string | null;
 }
 
 /** `auth { me }` — User + nested UserProfile. */

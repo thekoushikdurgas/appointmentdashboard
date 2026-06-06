@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { RefreshCw } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/shared/DonutChart";
@@ -203,11 +204,11 @@ export function DemandsTrendsPage({
       <DataPageLayout
         className="c360-demands-trends-page"
         showFilters
+        filtersPanelStorageKey={STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_DEMANDS}
         filtersAriaLabel="Hiring signal filters"
         toolbar={toolbar}
         filters={
           <HiringSignalsFilterSidebar
-            drawerTitleId="c360-demands-filter-drawer-title"
             appliedListFilters={filters}
             signalTimePreset={signalTimePreset}
             appliedRunId={filters.runId}

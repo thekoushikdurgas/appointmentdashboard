@@ -27,6 +27,8 @@ import {
   COMPANIES_DT_COLUMN_LABELS,
   type CompaniesDataTableColumnId,
 } from "@/components/feature/companies/companiesTableModel";
+import { FilterSidebarBody } from "@/components/layouts/FilterSidebarBody";
+import { FilterSidebarHeader } from "@/components/layouts/FilterSidebarHeader";
 
 const VIEW_MODE_OPTIONS = [
   { value: "list", label: "List" },
@@ -244,36 +246,13 @@ export function CompaniesFilterSidebar({
 
   return (
     <div className="c360-contacts-filters c360-companies-filters">
-      <div className="c360-contacts-filters__head-row">
-        <div className="c360-contacts-filters__head-text">
-          <div className="c360-contacts-filters__head">
-            <h2 id={drawerTitleId} className="c360-contacts-filters__title">
-              Filters
-            </h2>
-            {totalActiveCount > 0 ? (
-              <span className="c360-contacts-filters__head-count" aria-hidden>
-                {totalActiveCount}
-              </span>
-            ) : null}
-          </div>
-          <p className="c360-contacts-filters__subtitle">
-            {totalActiveCount} active
-          </p>
-        </div>
-        <div className="c360-contacts-filters__head-actions">
-          {headerActions}
-          {totalActiveCount > 0 ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="c360-contacts-filters__clear-text"
-              onClick={clearAll}
-            >
-              CLEAR
-            </Button>
-          ) : null}
-          {onRefreshFilters ? (
+      <FilterSidebarHeader
+        titleId={drawerTitleId}
+        activeCount={totalActiveCount}
+        headerActions={headerActions}
+        onClear={clearAll}
+        railActions={
+          onRefreshFilters ? (
             <button
               type="button"
               className="c360-contacts-filters__icon-btn"
@@ -288,271 +267,280 @@ export function CompaniesFilterSidebar({
                 aria-hidden
               />
             </button>
-          ) : null}
-        </div>
-      </div>
+          ) : null
+        }
+      />
 
-      <div className="c360-contacts-filters__search">
-        <Input
-          type="search"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search companies…"
-          aria-label="Search companies"
-          className="c360-contacts-filters__search-input"
-        />
-      </div>
-
-      {chips.length > 0 ? (
-        <div
-          className="c360-contacts-filters__chips"
-          aria-label="Active filters"
-        >
-          {chips.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              className="c360-contacts-filters__chip"
-              title="Remove filter"
-              onClick={c.onRemove}
-            >
-              <span>{c.label}</span>
-              <span aria-hidden>×</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <ContactsCollapsibleFilterSection
-        title="Sort"
-        count={sortActiveCount}
-        defaultOpen
-        onClear={sortActiveCount > 0 ? () => onSortChange("newest") : undefined}
-      >
-        <ContactFilterSortSelect
-          sortBy={sortBy}
-          onSortChange={onSortChange}
-          menuVariant="inline"
-        />
-      </ContactsCollapsibleFilterSection>
-
-      {filtersLoading ? (
-        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-          Loading filter definitions…
-        </p>
-      ) : null}
-      {filtersError ? (
-        <p className="c360-mb-2 c360-text-2xs c360-text-danger">
-          Could not load filters: {filtersError}
-        </p>
-      ) : null}
-      {!filtersLoading && !filtersError && filterSections.length === 0 ? (
-        <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-          No company filters available. Use refresh above or check the API.
-        </p>
-      ) : null}
-
-      {onViewModeChange ? (
-        <ContactsCollapsibleFilterSection
-          title="View"
-          count={
-            viewMode === "card"
-              ? 1
-              : viewMode === "list" && tableDensity === "compact"
-                ? 1
-                : 0
-          }
-          defaultOpen={false}
-          onClear={() => {
-            onViewModeChange("list");
-            onTableDensityChange?.("comfortable");
-          }}
-        >
-          <Select
-            id="companies-view-mode"
-            value={viewMode}
-            onChange={(e) =>
-              onViewModeChange(e.target.value as "list" | "card")
-            }
-            options={VIEW_MODE_OPTIONS}
-            fullWidth
-            inputSize="md"
-            menuVariant="inline"
-            className="c360-mb-2"
+      <FilterSidebarBody>
+        <div className="c360-contacts-filters__search">
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search companies…"
+            aria-label="Search companies"
+            className="c360-contacts-filters__search-input"
           />
-          {viewMode === "list" && onTableDensityChange ? (
-            <>
-              <p className="c360-m-0 c360-mb-2 c360-text-2xs c360-text-ink-muted">
-                Row density (list)
-              </p>
-              <Select
-                id="companies-table-density"
-                value={tableDensity}
-                onChange={(e) =>
-                  onTableDensityChange(
-                    e.target.value as "comfortable" | "compact",
-                  )
-                }
-                options={TABLE_DENSITY_OPTIONS}
-                fullWidth
-                inputSize="md"
-                menuVariant="inline"
-              />
-            </>
-          ) : null}
-        </ContactsCollapsibleFilterSection>
-      ) : null}
-
-      {filterSections.map((section) => {
-        const key = section.filterKey;
-        const useRangeBuckets =
-          isCompanyRangeBucketFacet(key) && onExcludedFacetChange != null;
-        const useIncludeExclude =
-          isCompanyIncludeExcludeFacet(key) && onExcludedFacetChange != null;
-
-        if (useRangeBuckets) {
-          const included = facetValues[key] ?? [];
-          const excluded = excludedFacetValues[key] ?? [];
-          const active = included.length + excluded.length;
-          const { include: includeLabel, exclude: excludeLabel } =
-            companyRangeBucketComboboxLabels(key);
-          return (
-            <ContactsCollapsibleFilterSection
-              key={key}
-              title={section.displayName}
-              count={active}
-              defaultOpen={active > 0}
-              onClear={
-                active > 0
-                  ? () => {
-                      onFacetChange(key, []);
-                      onExcludedFacetChange(key, []);
-                    }
-                  : undefined
-              }
-            >
-              <CompanyRangeBucketFacetFilter
-                section={section}
-                includeLabel={includeLabel}
-                excludeLabel={excludeLabel}
-                includedValues={included}
-                excludedValues={excluded}
-                onIncludedChange={(next) => onFacetChange(key, next)}
-                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
-                onSectionExpand={onSectionExpand}
-                onLoadMoreFacet={onLoadMoreFacet}
-                setFacetSearch={setFacetSearch}
-              />
-            </ContactsCollapsibleFilterSection>
-          );
-        }
-
-        if (useIncludeExclude) {
-          const included = facetValues[key] ?? [];
-          const excluded = excludedFacetValues[key] ?? [];
-          const active = included.length + excluded.length;
-          const { include: includeLabel, exclude: excludeLabel } =
-            companyFacetComboboxLabels(key, section.displayName);
-          return (
-            <ContactsCollapsibleFilterSection
-              key={key}
-              title={section.displayName}
-              count={active}
-              defaultOpen={active > 0}
-              onClear={
-                active > 0
-                  ? () => {
-                      onFacetChange(key, []);
-                      onExcludedFacetChange(key, []);
-                    }
-                  : undefined
-              }
-            >
-              <CompanyIncludeExcludeFacetFilter
-                section={section}
-                includeLabel={includeLabel}
-                excludeLabel={excludeLabel}
-                includedValues={included}
-                excludedValues={excluded}
-                onIncludedChange={(next) => onFacetChange(key, next)}
-                onExcludedChange={(next) => onExcludedFacetChange(key, next)}
-                onSectionExpand={onSectionExpand}
-                onLoadMoreFacet={onLoadMoreFacet}
-                setFacetSearch={setFacetSearch}
-              />
-            </ContactsCollapsibleFilterSection>
-          );
-        }
-
-        const vals = facetValues[key] ?? [];
-        const has = vals.length > 0;
-        return (
-          <ContactsCollapsibleFilterSection
-            key={key}
-            title={section.displayName}
-            count={has ? vals.length : 0}
-            defaultOpen={has}
-            onClear={has ? () => onFacetChange(key, []) : undefined}
-          >
-            <FilterCombobox
-              label={section.displayName}
-              options={section.options}
-              selectedValues={vals}
-              onSelectionChange={(next) => onFacetChange(key, next)}
-              loading={section.loading}
-              loadingMore={section.loadingMore}
-              hasMore={section.hasMore}
-              onOpen={() => onSectionExpand(key)}
-              onLoadMore={() => onLoadMoreFacet(key)}
-              searchText={section.searchText}
-              onSearchChange={(text) => setFacetSearch(key, text)}
-            />
-          </ContactsCollapsibleFilterSection>
-        );
-      })}
-
-      <ContactsCollapsibleFilterSection
-        title="Columns"
-        count={hiddenColumnCount}
-        defaultOpen={false}
-      >
-        <div className="c360-contacts-filters__columns-inner">
-          {COMPANIES_DT_COLUMN_IDS.map((id) => (
-            <Checkbox
-              key={id}
-              size="sm"
-              label={COMPANIES_DT_COLUMN_LABELS[id]}
-              checked={visibleColumns.includes(id)}
-              onChange={() => onToggleColumn(id)}
-              disabled={
-                visibleColumns.includes(id) && visibleColumns.length === 1
-              }
-            />
-          ))}
         </div>
-        <p className="c360-contacts-filters__columns-hint c360-text-xs c360-text-muted">
-          At least one data column stays visible.
-        </p>
-      </ContactsCollapsibleFilterSection>
 
-      <div className="c360-contacts-filters__advanced">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="c360-contacts-filters__advanced-btn"
-          onClick={onOpenAdvanced}
-        >
-          {advancedVqlRuleCount > 0
-            ? "Edit advanced filter"
-            : "Advanced filter"}
-        </Button>
-        {advancedVqlRuleCount > 0 ? (
-          <Button type="button" variant="ghost" size="sm" onClick={onClearVql}>
-            Clear advanced
-          </Button>
+        {chips.length > 0 ? (
+          <div
+            className="c360-contacts-filters__chips"
+            aria-label="Active filters"
+          >
+            {chips.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className="c360-contacts-filters__chip"
+                title="Remove filter"
+                onClick={c.onRemove}
+              >
+                <span>{c.label}</span>
+                <span aria-hidden>×</span>
+              </button>
+            ))}
+          </div>
         ) : null}
-      </div>
+
+        <ContactsCollapsibleFilterSection
+          title="Sort"
+          count={sortActiveCount}
+          defaultOpen
+          onClear={
+            sortActiveCount > 0 ? () => onSortChange("newest") : undefined
+          }
+        >
+          <ContactFilterSortSelect
+            sortBy={sortBy}
+            onSortChange={onSortChange}
+            menuVariant="inline"
+          />
+        </ContactsCollapsibleFilterSection>
+
+        {filtersLoading ? (
+          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+            Loading filter definitions…
+          </p>
+        ) : null}
+        {filtersError ? (
+          <p className="c360-mb-2 c360-text-2xs c360-text-danger">
+            Could not load filters: {filtersError}
+          </p>
+        ) : null}
+        {!filtersLoading && !filtersError && filterSections.length === 0 ? (
+          <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+            No company filters available. Use refresh above or check the API.
+          </p>
+        ) : null}
+
+        {onViewModeChange ? (
+          <ContactsCollapsibleFilterSection
+            title="View"
+            count={
+              viewMode === "card"
+                ? 1
+                : viewMode === "list" && tableDensity === "compact"
+                  ? 1
+                  : 0
+            }
+            defaultOpen={false}
+            onClear={() => {
+              onViewModeChange("list");
+              onTableDensityChange?.("comfortable");
+            }}
+          >
+            <Select
+              id="companies-view-mode"
+              value={viewMode}
+              onChange={(e) =>
+                onViewModeChange(e.target.value as "list" | "card")
+              }
+              options={VIEW_MODE_OPTIONS}
+              fullWidth
+              inputSize="md"
+              menuVariant="inline"
+              className="c360-mb-2"
+            />
+            {viewMode === "list" && onTableDensityChange ? (
+              <>
+                <p className="c360-m-0 c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                  Row density (list)
+                </p>
+                <Select
+                  id="companies-table-density"
+                  value={tableDensity}
+                  onChange={(e) =>
+                    onTableDensityChange(
+                      e.target.value as "comfortable" | "compact",
+                    )
+                  }
+                  options={TABLE_DENSITY_OPTIONS}
+                  fullWidth
+                  inputSize="md"
+                  menuVariant="inline"
+                />
+              </>
+            ) : null}
+          </ContactsCollapsibleFilterSection>
+        ) : null}
+
+        {filterSections.map((section) => {
+          const key = section.filterKey;
+          const useRangeBuckets =
+            isCompanyRangeBucketFacet(key) && onExcludedFacetChange != null;
+          const useIncludeExclude =
+            isCompanyIncludeExcludeFacet(key) && onExcludedFacetChange != null;
+
+          if (useRangeBuckets) {
+            const included = facetValues[key] ?? [];
+            const excluded = excludedFacetValues[key] ?? [];
+            const active = included.length + excluded.length;
+            const { include: includeLabel, exclude: excludeLabel } =
+              companyRangeBucketComboboxLabels(key);
+            return (
+              <ContactsCollapsibleFilterSection
+                key={key}
+                title={section.displayName}
+                count={active}
+                defaultOpen={active > 0}
+                onClear={
+                  active > 0
+                    ? () => {
+                        onFacetChange(key, []);
+                        onExcludedFacetChange(key, []);
+                      }
+                    : undefined
+                }
+              >
+                <CompanyRangeBucketFacetFilter
+                  section={section}
+                  includeLabel={includeLabel}
+                  excludeLabel={excludeLabel}
+                  includedValues={included}
+                  excludedValues={excluded}
+                  onIncludedChange={(next) => onFacetChange(key, next)}
+                  onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                  onSectionExpand={onSectionExpand}
+                  onLoadMoreFacet={onLoadMoreFacet}
+                  setFacetSearch={setFacetSearch}
+                />
+              </ContactsCollapsibleFilterSection>
+            );
+          }
+
+          if (useIncludeExclude) {
+            const included = facetValues[key] ?? [];
+            const excluded = excludedFacetValues[key] ?? [];
+            const active = included.length + excluded.length;
+            const { include: includeLabel, exclude: excludeLabel } =
+              companyFacetComboboxLabels(key, section.displayName);
+            return (
+              <ContactsCollapsibleFilterSection
+                key={key}
+                title={section.displayName}
+                count={active}
+                defaultOpen={active > 0}
+                onClear={
+                  active > 0
+                    ? () => {
+                        onFacetChange(key, []);
+                        onExcludedFacetChange(key, []);
+                      }
+                    : undefined
+                }
+              >
+                <CompanyIncludeExcludeFacetFilter
+                  section={section}
+                  includeLabel={includeLabel}
+                  excludeLabel={excludeLabel}
+                  includedValues={included}
+                  excludedValues={excluded}
+                  onIncludedChange={(next) => onFacetChange(key, next)}
+                  onExcludedChange={(next) => onExcludedFacetChange(key, next)}
+                  onSectionExpand={onSectionExpand}
+                  onLoadMoreFacet={onLoadMoreFacet}
+                  setFacetSearch={setFacetSearch}
+                />
+              </ContactsCollapsibleFilterSection>
+            );
+          }
+
+          const vals = facetValues[key] ?? [];
+          const has = vals.length > 0;
+          return (
+            <ContactsCollapsibleFilterSection
+              key={key}
+              title={section.displayName}
+              count={has ? vals.length : 0}
+              defaultOpen={has}
+              onClear={has ? () => onFacetChange(key, []) : undefined}
+            >
+              <FilterCombobox
+                label={section.displayName}
+                options={section.options}
+                selectedValues={vals}
+                onSelectionChange={(next) => onFacetChange(key, next)}
+                loading={section.loading}
+                loadingMore={section.loadingMore}
+                hasMore={section.hasMore}
+                onOpen={() => onSectionExpand(key)}
+                onLoadMore={() => onLoadMoreFacet(key)}
+                searchText={section.searchText}
+                onSearchChange={(text) => setFacetSearch(key, text)}
+              />
+            </ContactsCollapsibleFilterSection>
+          );
+        })}
+
+        <ContactsCollapsibleFilterSection
+          title="Columns"
+          count={hiddenColumnCount}
+          defaultOpen={false}
+        >
+          <div className="c360-contacts-filters__columns-inner">
+            {COMPANIES_DT_COLUMN_IDS.map((id) => (
+              <Checkbox
+                key={id}
+                size="sm"
+                label={COMPANIES_DT_COLUMN_LABELS[id]}
+                checked={visibleColumns.includes(id)}
+                onChange={() => onToggleColumn(id)}
+                disabled={
+                  visibleColumns.includes(id) && visibleColumns.length === 1
+                }
+              />
+            ))}
+          </div>
+          <p className="c360-contacts-filters__columns-hint c360-text-xs c360-text-muted">
+            At least one data column stays visible.
+          </p>
+        </ContactsCollapsibleFilterSection>
+
+        <div className="c360-contacts-filters__advanced">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="c360-contacts-filters__advanced-btn"
+            onClick={onOpenAdvanced}
+          >
+            {advancedVqlRuleCount > 0
+              ? "Edit advanced filter"
+              : "Advanced filter"}
+          </Button>
+          {advancedVqlRuleCount > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onClearVql}
+            >
+              Clear advanced
+            </Button>
+          ) : null}
+        </div>
+      </FilterSidebarBody>
     </div>
   );
 }

@@ -1,8 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/context/AuthContext";
+import { RouteTracker } from "@/hooks/useRouteTracker";
+import { RouteActivityTracker } from "@/hooks/useRouteActivityTracker";
 
 const AUTH_ROUTES = [
   "/login",
@@ -17,9 +20,7 @@ interface ConditionalLayoutProps {
   children: React.ReactNode;
 }
 
-export default function ConditionalLayout({
-  children,
-}: ConditionalLayoutProps) {
+function ConditionalLayoutInner({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const { loading } = useAuth();
 
@@ -38,5 +39,21 @@ export default function ConditionalLayout({
     );
   }
 
-  return <MainLayout>{children}</MainLayout>;
+  return (
+    <>
+      <RouteTracker />
+      <RouteActivityTracker />
+      <MainLayout>{children}</MainLayout>
+    </>
+  );
+}
+
+export default function ConditionalLayout({
+  children,
+}: ConditionalLayoutProps) {
+  return (
+    <Suspense fallback={children}>
+      <ConditionalLayoutInner>{children}</ConditionalLayoutInner>
+    </Suspense>
+  );
 }

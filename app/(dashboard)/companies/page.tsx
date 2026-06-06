@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -567,6 +568,7 @@ export default function CompaniesPage() {
   return (
     <DataPageLayout
       filters={filtersSidebar}
+      filtersPanelStorageKey={STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_COMPANIES}
       toolbar={toolbarEl}
       filtersAriaLabel="Company filters"
       className="c360-companies-page"

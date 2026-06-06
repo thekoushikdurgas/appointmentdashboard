@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useLoginForm } from "@/hooks/useLoginForm";
+import { useOtpLoginForm } from "@/hooks/useOtpLoginForm";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 import { AuthBrandHeader } from "@/components/feature/auth/AuthBrandHeader";
 import {
@@ -12,8 +13,12 @@ import {
   type AuthTab,
 } from "@/components/feature/auth/AuthTabList";
 import { AuthLoginForm } from "@/components/feature/auth/AuthLoginForm";
+import { AuthOtpLoginForm } from "@/components/feature/auth/AuthOtpLoginForm";
 import { AuthRegisterForm } from "@/components/feature/auth/AuthRegisterForm";
 import { AuthLoginFallback } from "@/components/feature/auth/AuthLoginFallback";
+import { EmailOtpModal } from "@/components/feature/auth/EmailOtpModal";
+
+type LoginMethod = "password" | "otp";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -22,6 +27,7 @@ function LoginPageContent() {
   const [activeTab, setActiveTab] = useState<AuthTab>(
     rawTab === "register" ? "register" : "login",
   );
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
 
   useEffect(() => {
     setActiveTab(searchParams.get("tab") === "register" ? "register" : "login");
@@ -36,10 +42,25 @@ function LoginPageContent() {
 
   useAuthRedirect();
 
-  const { login, register } = useAuth();
+  const {
+    login,
+    register,
+    requestLoginOtp,
+    emailVerificationChallenge,
+    loginOtpChallenge,
+    verifyEmailOtp,
+    resendEmailOtp,
+    dismissEmailOtp,
+    otpModalError,
+    otpModalLoading,
+  } = useAuth();
 
   const loginForm = useLoginForm({ login });
+  const otpLoginForm = useOtpLoginForm({ requestLoginOtp });
   const registerForm = useRegisterForm({ register });
+
+  const otpChallenge = emailVerificationChallenge ?? loginOtpChallenge;
+  const otpPurpose = emailVerificationChallenge ? "registration" : "login";
 
   const subtitle = useMemo(
     () =>
@@ -50,23 +71,64 @@ function LoginPageContent() {
   );
 
   return (
-    <div className="c360-auth-card" suppressHydrationWarning>
-      <AuthBrandHeader subtitle={subtitle} />
-      <AuthTabList active={activeTab} onChange={switchTab} />
+    <>
+      <div className="c360-auth-card" suppressHydrationWarning>
+        <AuthBrandHeader subtitle={subtitle} />
+        <AuthTabList active={activeTab} onChange={switchTab} />
 
-      {activeTab === "login" && (
-        <AuthLoginForm
-          form={loginForm}
-          onSwitchToRegister={() => switchTab("register")}
+        {activeTab === "login" && (
+          <>
+            <div className="c360-auth-method-toggle">
+              <button
+                type="button"
+                className={`c360-auth-method-toggle__btn${loginMethod === "password" ? " c360-auth-method-toggle__btn--active" : ""}`}
+                onClick={() => setLoginMethod("password")}
+              >
+                Password
+              </button>
+              <button
+                type="button"
+                className={`c360-auth-method-toggle__btn${loginMethod === "otp" ? " c360-auth-method-toggle__btn--active" : ""}`}
+                onClick={() => setLoginMethod("otp")}
+              >
+                Email code
+              </button>
+            </div>
+
+            {loginMethod === "password" ? (
+              <AuthLoginForm
+                form={loginForm}
+                onSwitchToRegister={() => switchTab("register")}
+              />
+            ) : (
+              <AuthOtpLoginForm
+                form={otpLoginForm}
+                onSwitchToPassword={() => setLoginMethod("password")}
+              />
+            )}
+          </>
+        )}
+        {activeTab === "register" && (
+          <AuthRegisterForm
+            form={registerForm}
+            onSwitchToLogin={() => switchTab("login")}
+          />
+        )}
+      </div>
+
+      {otpChallenge && (
+        <EmailOtpModal
+          isOpen
+          email={otpChallenge.email}
+          purpose={otpPurpose}
+          loading={otpModalLoading}
+          error={otpModalError}
+          onVerify={verifyEmailOtp}
+          onResend={resendEmailOtp}
+          onClose={dismissEmailOtp}
         />
       )}
-      {activeTab === "register" && (
-        <AuthRegisterForm
-          form={registerForm}
-          onSwitchToLogin={() => switchTab("login")}
-        />
-      )}
-    </div>
+    </>
   );
 }
 

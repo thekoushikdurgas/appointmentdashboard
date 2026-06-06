@@ -50,8 +50,8 @@ Mobile pages use extra bottom padding on `.c360-page` so content is not covered 
 
 Entity list filters (contacts, companies, hiring signals, activities, demands, market insights) are always rendered inline via `DataPageLayout`:
 
-- **Desktop (≥1024px):** ~300px sticky left column beside the main content.
-- **Below 1024px:** filters stack full width above the table; the filter list scrolls with the page (no mobile drawer or toolbar **Filters** button).
+- **Desktop (≥1024px):** ~300px sticky left column beside the main content. The filter header includes a **pin** control only: pinned keeps the full panel open; unpinned collapses to a **~49px (3.05rem) icon rail** (filter icon, active-count badge, pin, and icon-only actions such as refresh). **Hover peek** on the collapsed rail temporarily expands the full panel when unpinned (mirrors [mydesigns sidebar](../../docs/frontend/ideas/mydesigns/done/sidebar.md)); leaving the column collapses it again. Peek state is not persisted. Filter sections and header labels slide left (`x: -20`) and fade with staggered reveals via framer-motion (`filterSidebarMotion`, `FilterSidebarHeader`, `DataPageLayout`, `FilterSidebarBody`). `prefers-reduced-motion` falls back to CSS grid transitions. Pin/expanded preference is stored per page in `localStorage` (`STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_*`).
+- **Below 1024px:** filters stack full width above the table; the filter list scrolls with the page (no mobile drawer or toolbar **Filters** button). Pin/collapse controls are hidden and the panel stays expanded.
 
 Filter `Select` and `FilterCombobox` controls use document-flow inline menus inside the sidebar (no Radix portal poppers).
 

@@ -2,13 +2,13 @@
 
 import { useRole } from "@/context/RoleContext";
 
-export type TopBarCreditsVariant = "popover" | "sidebar";
+export type TopBarCreditsVariant = "popover" | "profile";
 
 export interface TopBarCreditsProps {
   variant?: TopBarCreditsVariant;
 }
 
-/** Credits summary in the account context menu panel or sidebar footer. */
+/** Credits summary in the account context menu panel or sidebar footer profile. */
 export function TopBarCredits({ variant = "popover" }: TopBarCreditsProps) {
   const { credits, creditsUsed, creditsLimit, addonCredits } = useRole();
 
@@ -17,17 +17,18 @@ export function TopBarCredits({ variant = "popover" }: TopBarCreditsProps) {
       ? Math.min(100, Math.round((creditsUsed / creditsLimit) * 100))
       : null;
 
+  const rootClass =
+    variant === "profile"
+      ? "c360-topbar__credits c360-topbar__credits--profile"
+      : "c360-topbar__credits c360-topbar__credits--popover";
+
   return (
-    <div
-      className={
-        variant === "sidebar"
-          ? "c360-topbar__credits c360-topbar__credits--sidebar"
-          : "c360-topbar__credits c360-topbar__credits--popover"
-      }
-    >
-      <div className="c360-topbar__credits-head">
-        <span className="c360-topbar__credits-label">Credits</span>
-      </div>
+    <div className={rootClass}>
+      {variant === "popover" ? (
+        <div className="c360-topbar__credits-head">
+          <span className="c360-topbar__credits-label">Credits</span>
+        </div>
+      ) : null}
       {creditsLimit > 0 && pct !== null ? (
         <>
           <progress

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { User, Shield, Key, Monitor, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Key, Monitor, Settings, Shield, User, Users } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Alert } from "@/components/ui/Alert";
 import { useAuth } from "@/context/AuthContext";
@@ -13,9 +14,9 @@ import { ProfileSecurityTab } from "@/components/feature/profile/ProfileSecurity
 import { ProfileApiKeysTab } from "@/components/feature/profile/ProfileApiKeysTab";
 import { ProfileSessionsTab } from "@/components/feature/profile/ProfileSessionsTab";
 import { ProfileTeamTab } from "@/components/feature/profile/ProfileTeamTab";
+import { ProfileSettingsTab } from "@/components/feature/profile/ProfileSettingsTab";
+import { isProfileTab, type ProfileTab } from "@/lib/profileTabs";
 import type { CreateApiKeyInput } from "@/graphql/generated/types";
-
-type ProfileTab = "general" | "security" | "apikeys" | "sessions" | "team";
 
 const TABS: Array<{ id: ProfileTab; label: string; icon: React.ReactNode }> = [
   { id: "general", label: "General", icon: <User size={16} /> },
@@ -23,9 +24,15 @@ const TABS: Array<{ id: ProfileTab; label: string; icon: React.ReactNode }> = [
   { id: "apikeys", label: "API Keys", icon: <Key size={16} /> },
   { id: "sessions", label: "Sessions", icon: <Monitor size={16} /> },
   { id: "team", label: "Team", icon: <Users size={16} /> },
+  { id: "settings", label: "Settings", icon: <Settings size={16} /> },
 ];
 
 export default function ProfilePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlTab = searchParams.get("tab");
+  const initialTab: ProfileTab = isProfileTab(urlTab) ? urlTab : "general";
+
   const { user } = useAuth();
   const {
     apiKeys,
@@ -44,7 +51,7 @@ export default function ProfilePage() {
     removeTeamMember,
   } = useProfile();
 
-  const [activeTab, setActiveTab] = useState<ProfileTab>("general");
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
 
   const {
@@ -70,6 +77,25 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
   const [inviting, setInviting] = useState(false);
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (isProfileTab(t)) setActiveTab(t);
+    else if (!t) setActiveTab("general");
+  }, [searchParams]);
+
+  const handleTabChange = useCallback(
+    (v: string) => {
+      const next = isProfileTab(v) ? v : "general";
+      setActiveTab(next);
+      const p = new URLSearchParams(searchParams.toString());
+      if (next === "general") p.delete("tab");
+      else p.set("tab", next);
+      const qs = p.toString();
+      router.replace(qs ? `/profile?${qs}` : "/profile", { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   const handleCreateApiKey = async (input: CreateApiKeyInput) => {
     setCreatingKey(true);
@@ -122,7 +148,7 @@ export default function ProfilePage() {
 
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as ProfileTab)}
+        onValueChange={handleTabChange}
         variant="floating"
         className="c360-tabs--profile c360-tabs--floating-bottom"
       >
@@ -199,6 +225,10 @@ export default function ProfilePage() {
             onUpdateRole={handleUpdateRole}
             onRemoveMember={(id) => void removeTeamMember(id)}
           />
+        </TabsContent>
+
+        <TabsContent value="settings" className="c360-mt-6">
+          <ProfileSettingsTab />
         </TabsContent>
       </Tabs>
     </DashboardPageLayout>

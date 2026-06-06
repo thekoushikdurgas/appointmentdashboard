@@ -3,11 +3,15 @@ import {
   Activity,
   Briefcase,
   Building2,
+  CreditCard,
+  KeyRound,
   Mail,
   MessageSquare,
+  Navigation,
   Search,
   Share2,
   Upload,
+  User,
   Users,
 } from "lucide-react";
 
@@ -25,6 +29,17 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   sales_navigator: Search,
   jobs: Briefcase,
   imports: Upload,
+  auth: KeyRound,
+  billing: CreditCard,
+  profile: User,
+  phone: Mail,
+  hire_signal: Briefcase,
+  campaigns: Mail,
+  saved_searches: Search,
+  notifications: Activity,
+  navigation: Navigation,
+  files: Upload,
+  resume: User,
 };
 
 export function activityServiceIcon(serviceType: string): LucideIcon {
@@ -50,6 +65,9 @@ export function activityIconAccent(serviceType: string): string {
     return "var(--c360-warning)";
   if (k === "jobs" || k.includes("job")) return "var(--c360-warning)";
   if (k === "imports" || k.includes("import")) return "var(--c360-success)";
+  if (k === "auth" || k.includes("auth")) return "var(--c360-warning)";
+  if (k === "billing" || k.includes("billing")) return "var(--c360-accent)";
+  if (k === "navigation" || k.includes("nav")) return "var(--c360-info)";
   return "var(--c360-primary)";
 }
 

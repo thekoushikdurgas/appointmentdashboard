@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { useSearchParams } from "next/navigation";
-import { History, RefreshCw, Play, Zap, Download } from "lucide-react";
+import { Download, FilterX, History, Play, RefreshCw, Zap } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { Pagination } from "@/components/ui/Pagination";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
@@ -138,9 +139,7 @@ function HiringSignalsPageBody({
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [runsReloadTick, setRunsReloadTick] = useState(0);
   const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
-  const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">(
-    "comfortable",
-  );
+  const [tableDensity] = useState<"comfortable" | "compact">("compact");
   const [exportBusy, setExportBusy] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportBanner, setExportBanner] = useState<{
@@ -241,9 +240,9 @@ function HiringSignalsPageBody({
         {savedSearchesTrigger}
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          className="c360-contacts-filters__clear-text"
+          leftIcon={<FilterX size={14} aria-hidden />}
           onClick={resetFilters}
         >
           Clear
@@ -563,7 +562,7 @@ function HiringSignalsPageBody({
   );
 
   return (
-    <DashboardPageLayout>
+    <DashboardPageLayout className="c360-dashboard-layout--hiring-signals">
       {error ? (
         <p className="c360-mb-4 c360-text-sm c360-text-danger" role="alert">
           {error}
@@ -579,7 +578,6 @@ function HiringSignalsPageBody({
         className={cn(
           "c360-tabs--hiring-signals",
           showTabList && "c360-tabs--floating-bottom",
-          "c360-mb-4",
         )}
       >
         {showTabList ? (
@@ -607,99 +605,111 @@ function HiringSignalsPageBody({
           <DataPageLayout
             className="c360-hiring-signals-page"
             showFilters
+            filtersPanelStorageKey={
+              STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_HIRING_SIGNALS
+            }
             filtersAriaLabel="Hiring signal filters"
             toolbar={signalsToolbar}
             filters={
               <HiringSignalsFilterSidebar
-                drawerTitleId="c360-hs-filter-drawer-title"
                 headerActions={hireSignalFiltersPinExtra}
                 appliedListFilters={effectiveJobListFilters}
                 signalTimePreset={signalTimePreset}
                 appliedRunId={filters.runId}
                 runScopedJobTotal={filters.runId?.trim() ? total : undefined}
                 onClearRunId={clearRunFilter}
-                tableDensity={tableDensity}
-                onTableDensityChange={setTableDensity}
                 companyCohortResolving={companyCohortResolving}
                 companyCohortMatchTotal={companyCohortMatchTotal}
                 companyCohortTruncated={companyCohortTruncated}
               />
             }
           >
-            <SavedSearchesMenu {...hireSignalSavedSearchMenuProps} />
-            {exportBanner ? (
-              <Alert
-                variant={
-                  exportBanner.status.toUpperCase() === "FAILED"
-                    ? "danger"
-                    : isSuccessfulTerminalJobStatus(exportBanner.status)
-                      ? "success"
-                      : "info"
+            <div className="c360-hs-signals-body">
+              <SavedSearchesMenu {...hireSignalSavedSearchMenuProps} />
+              {exportBanner ? (
+                <Alert
+                  variant={
+                    exportBanner.status.toUpperCase() === "FAILED"
+                      ? "danger"
+                      : isSuccessfulTerminalJobStatus(exportBanner.status)
+                        ? "success"
+                        : "info"
+                  }
+                  title="Latest XLSX export"
+                  className="c360-mb-3"
+                  onClose={() => setExportBanner(null)}
+                >
+                  <div className="c360-flex c360-flex-col c360-gap-2">
+                    <p className="c360-m-0 c360-text-sm">
+                      Job{" "}
+                      <span className="c360-font-mono c360-text-2xs">
+                        {exportBanner.jobId.length > 20
+                          ? `${exportBanner.jobId.slice(0, 10)}…${exportBanner.jobId.slice(-6)}`
+                          : exportBanner.jobId}
+                      </span>{" "}
+                      — status{" "}
+                      <strong className="c360-font-medium">
+                        {exportBanner.status}
+                      </strong>
+                      .{" "}
+                      <button
+                        type="button"
+                        className="c360-inline c360-border-0 c360-bg-transparent c360-p-0 c360-text-primary c360-underline"
+                        onClick={() =>
+                          openJobsDrawer({ jobFamily: "hire_signal" })
+                        }
+                      >
+                        Open Jobs
+                      </button>{" "}
+                      to download when complete.
+                    </p>
+                    {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
+                    exportBanner.status.toUpperCase() !== "FAILED" ? (
+                      <Progress
+                        value={exportBanner.progress}
+                        max={100}
+                        size="sm"
+                        color="primary"
+                        label="Export progress"
+                        showValue
+                        indeterminate={
+                          exportBanner.progress <= 0 &&
+                          !["FAILED", "CANCELLED", "CANCELED"].includes(
+                            exportBanner.status.toUpperCase(),
+                          )
+                        }
+                      />
+                    ) : null}
+                  </div>
+                </Alert>
+              ) : null}
+              <HiringSignalsDataTable
+                rows={jobs}
+                loading={loading}
+                onOpenDescription={setJd}
+                onOpenCompany={setCompanyRow}
+                onOpenConnectra={setConnectraRow}
+                onOpenCompanyDrawer={(row) => setDrawerRow(row)}
+                selectedKeys={selectedKeys}
+                onSelectionChange={setSelectedKeys}
+                density={tableDensity}
+                visibleColumns={visibleColumns}
+                listFilters={effectiveJobListFilters}
+                setListFilters={setFilters}
+                totalRowCount={total}
+                onColumnVisibilityResolved={handleGridColumnVisibilityResolved}
+                todaysJobsTab={signalTimePreset === "new_7d"}
+                onViewAllSignals={() => setSignalTimePreset("all")}
+                onClearPostedRange={() =>
+                  setFilters((f) => ({
+                    ...f,
+                    postedAfter: undefined,
+                    postedBefore: undefined,
+                    offset: 0,
+                  }))
                 }
-                title="Latest XLSX export"
-                className="c360-mb-3"
-                onClose={() => setExportBanner(null)}
-              >
-                <div className="c360-flex c360-flex-col c360-gap-2">
-                  <p className="c360-m-0 c360-text-sm">
-                    Job{" "}
-                    <span className="c360-font-mono c360-text-2xs">
-                      {exportBanner.jobId.length > 20
-                        ? `${exportBanner.jobId.slice(0, 10)}…${exportBanner.jobId.slice(-6)}`
-                        : exportBanner.jobId}
-                    </span>{" "}
-                    — status{" "}
-                    <strong className="c360-font-medium">
-                      {exportBanner.status}
-                    </strong>
-                    .{" "}
-                    <button
-                      type="button"
-                      className="c360-inline c360-border-0 c360-bg-transparent c360-p-0 c360-text-primary c360-underline"
-                      onClick={() =>
-                        openJobsDrawer({ jobFamily: "hire_signal" })
-                      }
-                    >
-                      Open Jobs
-                    </button>{" "}
-                    to download when complete.
-                  </p>
-                  {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
-                  exportBanner.status.toUpperCase() !== "FAILED" ? (
-                    <Progress
-                      value={exportBanner.progress}
-                      max={100}
-                      size="sm"
-                      color="primary"
-                      label="Export progress"
-                      showValue
-                      indeterminate={
-                        exportBanner.progress <= 0 &&
-                        !["FAILED", "CANCELLED", "CANCELED"].includes(
-                          exportBanner.status.toUpperCase(),
-                        )
-                      }
-                    />
-                  ) : null}
-                </div>
-              </Alert>
-            ) : null}
-            <HiringSignalsDataTable
-              rows={jobs}
-              loading={loading}
-              onOpenDescription={setJd}
-              onOpenCompany={setCompanyRow}
-              onOpenConnectra={setConnectraRow}
-              onOpenCompanyDrawer={(row) => setDrawerRow(row)}
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
-              density={tableDensity}
-              visibleColumns={visibleColumns}
-              listFilters={effectiveJobListFilters}
-              setListFilters={setFilters}
-              totalRowCount={total}
-              onColumnVisibilityResolved={handleGridColumnVisibilityResolved}
-            />
+              />
+            </div>
           </DataPageLayout>
         </TabsContent>
       </Tabs>

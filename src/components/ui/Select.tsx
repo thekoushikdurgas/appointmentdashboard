@@ -34,7 +34,9 @@ export function selectOptionDisplayLabel(opt: SelectOption): string {
 }
 
 /** Sort non-empty-value options by count desc, then label; preserve leading empty-value rows. */
-export function sortSelectOptionsByCount(options: SelectOption[]): SelectOption[] {
+export function sortSelectOptionsByCount(
+  options: SelectOption[],
+): SelectOption[] {
   const leading = options.filter((o) => o.value === "");
   const rest = options.filter((o) => o.value !== "");
   const hasCounts = rest.some((o) => typeof o.count === "number");
@@ -293,9 +295,7 @@ function InlineSelectBody({
           onClick={() => !disabled && setOpen((v) => !v)}
         >
           <span
-            className={cn(
-              !logicalValue && placeholder && "c360-text-muted",
-            )}
+            className={cn(!logicalValue && placeholder && "c360-text-muted")}
           >
             {displayLabel}
           </span>

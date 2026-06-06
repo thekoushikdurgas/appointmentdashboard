@@ -20,7 +20,9 @@ export function mapHireSignalFacetRows(
   return rows.map((r) => {
     const value = String(r.value ?? "").trim();
     const displayValue = formatLabel
-      ? formatLabel(r.displayValue && r.displayValue !== r.value ? r.displayValue : value)
+      ? formatLabel(
+          r.displayValue && r.displayValue !== r.value ? r.displayValue : value,
+        )
       : (r.displayValue ?? value);
     return {
       value,
@@ -35,7 +37,9 @@ export function mergeAndSortHireSignalFacetOptions(
   prev: ContactFilterData[],
   next: ContactFilterData[],
   keyFn: (row: ContactFilterData) => string = (row) =>
-    String(row.value ?? "").trim().toLowerCase(),
+    String(row.value ?? "")
+      .trim()
+      .toLowerCase(),
 ): ContactFilterData[] {
   const seen = new Set<string>();
   const out: ContactFilterData[] = [];

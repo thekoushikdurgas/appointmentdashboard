@@ -22,12 +22,24 @@ export const API_URL = _apiBase.replace(/\/$/, "");
  * http://localhost:3000 in ALLOWED_ORIGINS). next.config.ts rewrites `/graphql` to
  * GRAPHQL_UPSTREAM_URL (defaults to http://api.contact360.io when unset in examples).
  */
-function resolveGraphqlUrl(): string {
+export function resolveGraphqlUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_GRAPHQL_URL?.trim();
   if (explicit) return explicit.replace(/\/$/, "");
-  // if (process.env.NODE_ENV === "development") {
-  //   return "http://localhost:8000/graphql";
-  // }
+
+  if (process.env.NODE_ENV === "development") {
+    // Browser: same-origin proxy (next.config rewrites /graphql → upstream).
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/graphql`;
+    }
+    // SSR / server actions: bypass Next rewrite and hit upstream directly.
+    const upstream = (
+      process.env.GRAPHQL_UPSTREAM_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://127.0.0.1:8000"
+    ).replace(/\/$/, "");
+    return `${upstream}/graphql`;
+  }
+
   return `${API_URL}/graphql`;
 }
 

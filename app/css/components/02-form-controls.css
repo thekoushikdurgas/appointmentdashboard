@@ -273,7 +273,8 @@ textarea.c360-input {
   user-select: none;
   align-items: center;
   border-radius: var(--c360-radius-sm);
-  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2) 2rem;
+  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2)
+    2rem;
   font-size: var(--c360-text-sm);
   color: var(--c360-text);
   outline: none;

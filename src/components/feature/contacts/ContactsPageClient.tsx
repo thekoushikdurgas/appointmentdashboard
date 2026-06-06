@@ -13,6 +13,7 @@ import {
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -782,6 +783,7 @@ export default function ContactsPageClient() {
   return (
     <DataPageLayout
       filters={filtersSidebar}
+      filtersPanelStorageKey={STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_CONTACTS}
       toolbar={toolbarEl}
       filtersAriaLabel="Contact filters"
       className="c360-contacts-page"

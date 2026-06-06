@@ -15,6 +15,17 @@ export const ACTIVITY_SERVICE_OPTIONS = [
   { value: "sales_navigator", label: "Sales Navigator" },
   { value: "jobs", label: "Jobs" },
   { value: "imports", label: "Imports" },
+  { value: "auth", label: "Auth" },
+  { value: "billing", label: "Billing" },
+  { value: "profile", label: "Profile" },
+  { value: "phone", label: "Phone" },
+  { value: "hire_signal", label: "Hiring signals" },
+  { value: "campaigns", label: "Campaigns" },
+  { value: "saved_searches", label: "Saved searches" },
+  { value: "notifications", label: "Notifications" },
+  { value: "navigation", label: "Navigation" },
+  { value: "files", label: "Files" },
+  { value: "resume", label: "Resume" },
 ];
 
 export const ACTIVITY_ACTION_OPTIONS = [
@@ -32,6 +43,15 @@ export const ACTIVITY_ACTION_OPTIONS = [
   { value: "generate", label: "Generate" },
   { value: "parse", label: "Parse" },
   { value: "scrape", label: "Scrape" },
+  { value: "login", label: "Login" },
+  { value: "logout", label: "Logout" },
+  { value: "register", label: "Register" },
+  { value: "view", label: "View" },
+  { value: "subscribe", label: "Subscribe" },
+  { value: "reset_password", label: "Reset password" },
+  { value: "enable_2fa", label: "Enable 2FA" },
+  { value: "apply", label: "Apply" },
+  { value: "download", label: "Download" },
 ];
 
 export const ACTIVITY_STATUS_OPTIONS = [

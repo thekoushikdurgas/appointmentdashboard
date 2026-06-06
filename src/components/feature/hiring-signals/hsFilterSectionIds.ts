@@ -9,7 +9,6 @@ export const HS_FILTER_SECTION_IDS = {
   dataQuality: "data-quality",
   jobTitle: "job-title",
   jobLocation: "job-location",
-  view: "view",
   datePosted: "date-posted",
   experienceLevel: "experience-level",
   jobType: "job-type",

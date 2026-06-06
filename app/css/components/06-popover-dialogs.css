@@ -358,7 +358,7 @@
   overflow: hidden;
 }
 
-.c360-filter-combobox__panel-inner>.c360-input {
+.c360-filter-combobox__panel-inner > .c360-input {
   align-self: stretch;
   width: 100%;
   box-sizing: border-box;
@@ -428,15 +428,20 @@
 }
 
 /* Open combobox: trigger + panel read as one control */
-.c360-data-layout__filters .c360-filter-combobox--open .c360-filter-combobox__trigger {
+.c360-data-layout__filters
+  .c360-filter-combobox--open
+  .c360-filter-combobox__trigger {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  border-bottom-color: color-mix(in srgb,
-      var(--c360-border-strong) 45%,
-      transparent);
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--c360-border-strong) 45%,
+    transparent
+  );
 }
 
-.c360-data-layout__filters .c360-filter-combobox__panel.c360-popover__panel--inline {
+.c360-data-layout__filters
+  .c360-filter-combobox__panel.c360-popover__panel--inline {
   position: relative;
   top: auto;
   left: auto;
@@ -446,7 +451,8 @@
   padding: var(--c360-spacing-2);
   border: 1px solid var(--c360-border-strong);
   border-top: none;
-  border-radius: 0 0 var(--c360-filter-inline-radius) var(--c360-filter-inline-radius);
+  border-radius: 0 0 var(--c360-filter-inline-radius)
+    var(--c360-filter-inline-radius);
   background: var(--c360-bg-elevated);
   box-shadow: none;
   box-sizing: border-box;
@@ -487,9 +493,11 @@
 .c360-data-layout__filters .c360-select__trigger--open {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  border-bottom-color: color-mix(in srgb,
-      var(--c360-border-strong) 45%,
-      transparent);
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--c360-border-strong) 45%,
+    transparent
+  );
 }
 
 .c360-data-layout__filters .c360-select__content--inline {
@@ -499,19 +507,24 @@
   max-width: 100%;
   margin-top: 0;
   border-top: none;
-  border-radius: 0 0 var(--c360-filter-inline-radius) var(--c360-filter-inline-radius);
+  border-radius: 0 0 var(--c360-filter-inline-radius)
+    var(--c360-filter-inline-radius);
   box-shadow: none;
   max-height: min(16rem, 38vh);
   z-index: auto;
 }
 
-.c360-data-layout__filters .c360-select__content--inline .c360-select__viewport {
+.c360-data-layout__filters
+  .c360-select__content--inline
+  .c360-select__viewport {
   min-width: 100%;
   width: 100%;
   max-height: min(14rem, 34vh);
   overflow-y: auto;
 }
 
-.c360-data-layout__filters .c360-select__content--inline .c360-select__scroll-btn {
+.c360-data-layout__filters
+  .c360-select__content--inline
+  .c360-select__scroll-btn {
   display: none;
 }

@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { AUTH_REFRESH_MUTATION } from "@/graphql/authOperations";
 import type { GatewayAuthPayload } from "@/types/graphql-gateway";
+import { saveReturnRoute } from "@/lib/returnRoute";
 
 export interface GraphQLRequestOptions {
   skipAuth?: boolean;
@@ -107,6 +108,24 @@ const GRAPHQL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 
 const MAX_RETRY_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY = 1000;
+
+function isTransientFetchError(error: unknown): boolean {
+  const errName = error instanceof Error ? error.name : "";
+  const msg =
+    error instanceof Error ? error.message.toLowerCase() : String(error);
+  const isAbort =
+    errName === "AbortError" ||
+    msg.includes("aborted") ||
+    msg.includes("abort");
+  if (isAbort) return false;
+  return (
+    error instanceof TypeError ||
+    msg.includes("fetch") ||
+    msg.includes("enotfound") ||
+    msg.includes("econnrefused") ||
+    msg.includes("network error")
+  );
+}
 
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
@@ -204,100 +223,117 @@ export async function graphqlRequest<T = unknown>(
     notFoundReturnsNull = false,
   } = options;
 
-  try {
-    let token: string | null = null;
-    if (!skipAuth) {
-      token = getAccessToken();
-      if (token && isTokenExpired(token) && !skipRefresh) {
-        token = await handleTokenRefresh();
-      }
-    }
-
-    const client = createGraphQLClient(token);
-
+  let lastError: unknown;
+  for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
     try {
-      const result = await client.request<T>(query, variables);
-      return result;
-    } catch (error: unknown) {
-      if (error && typeof error === "object" && "response" in error) {
-        const gqlError = error as {
-          response?: { errors?: GraphQLErrorResponse[]; data?: T };
-        };
-        const errors = gqlError.response?.errors ?? [];
+      let token: string | null = null;
+      if (!skipAuth) {
+        token = getAccessToken();
+        if (token && isTokenExpired(token) && !skipRefresh) {
+          token = await handleTokenRefresh();
+        }
+      }
 
-        const authError = errors.find(
-          (e) =>
-            e.extensions?.code === "UNAUTHORIZED" ||
-            e.extensions?.statusCode === 401,
-        );
+      const client = createGraphQLClient(token);
 
-        if (authError && !skipAuth && !skipRefresh && token) {
-          const newToken = await handleTokenRefresh();
-          if (newToken) {
-            const retryClient = createGraphQLClient(newToken);
-            try {
-              const retryResult = await retryClient.request<T>(
-                query,
-                variables,
-              );
-              return retryResult;
-            } catch {
+      try {
+        const result = await client.request<T>(query, variables);
+        return result;
+      } catch (error: unknown) {
+        if (error && typeof error === "object" && "response" in error) {
+          const gqlError = error as {
+            response?: { errors?: GraphQLErrorResponse[]; data?: T };
+          };
+          const errors = gqlError.response?.errors ?? [];
+
+          const authError = errors.find(
+            (e) =>
+              e.extensions?.code === "UNAUTHORIZED" ||
+              e.extensions?.statusCode === 401,
+          );
+
+          if (authError && !skipAuth && !skipRefresh && token) {
+            const newToken = await handleTokenRefresh();
+            if (newToken) {
+              const retryClient = createGraphQLClient(newToken);
+              try {
+                const retryResult = await retryClient.request<T>(
+                  query,
+                  variables,
+                );
+                return retryResult;
+              } catch {
+                clearTokens();
+                if (typeof window !== "undefined") {
+                  saveReturnRoute();
+                  window.location.href = "/login";
+                }
+                throw new Error("Session expired. Please login again.");
+              }
+            } else {
               clearTokens();
-              if (typeof window !== "undefined")
+              if (typeof window !== "undefined") {
+                saveReturnRoute();
                 window.location.href = "/login";
+              }
               throw new Error("Session expired. Please login again.");
             }
-          } else {
-            clearTokens();
-            if (typeof window !== "undefined") window.location.href = "/login";
-            throw new Error("Session expired. Please login again.");
           }
-        }
 
-        if (errors.length > 0) {
-          const parsed = parseGraphQLError(errors);
-          const apiError = new Error(parsed.message) as Error & {
-            parsedError?: ParsedGraphQLError;
-          };
-          apiError.parsedError = parsed;
-          // Suppress toasts for service-unavailable errors (job.server circuit open,
-          // DocsAI down, etc.) to avoid flooding the UI with transient 503s.
-          const isUnavailable =
-            parsed.status === 503 ||
-            parsed.message.toLowerCase().includes("service unavailable") ||
-            parsed.message.toLowerCase().includes("circuit open") ||
-            parsed.message.toLowerCase().includes("request timeout");
-          if (notFoundReturnsNull && parsed.isNotFoundError) {
-            if (gqlError.response?.data) return gqlError.response.data as T;
-            return null as T;
+          if (errors.length > 0) {
+            const parsed = parseGraphQLError(errors);
+            const apiError = new Error(parsed.message) as Error & {
+              parsedError?: ParsedGraphQLError;
+            };
+            apiError.parsedError = parsed;
+            // Suppress toasts for service-unavailable errors (job.server circuit open,
+            // DocsAI down, etc.) to avoid flooding the UI with transient 503s.
+            const isUnavailable =
+              parsed.status === 503 ||
+              parsed.message.toLowerCase().includes("service unavailable") ||
+              parsed.message.toLowerCase().includes("circuit open") ||
+              parsed.message.toLowerCase().includes("request timeout");
+            if (notFoundReturnsNull && parsed.isNotFoundError) {
+              if (gqlError.response?.data) return gqlError.response.data as T;
+              return null as T;
+            }
+            if (showToastOnError && !isUnavailable) toast.error(parsed.message);
+            throw apiError;
           }
-          if (showToastOnError && !isUnavailable) toast.error(parsed.message);
-          throw apiError;
-        }
 
-        if (gqlError.response?.data) return gqlError.response.data as T;
+          if (gqlError.response?.data) return gqlError.response.data as T;
+        }
+        throw error;
       }
-      throw error;
+    } catch (error) {
+      lastError = error;
+      if (isTransientFetchError(error) && attempt < MAX_RETRY_ATTEMPTS - 1) {
+        await sleep(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
+        continue;
+      }
+      break;
     }
-  } catch (error) {
-    const msg =
-      error instanceof Error ? error.message.toLowerCase() : String(error);
-    const isNetworkError =
-      error instanceof TypeError ||
-      msg.includes("fetch") ||
-      msg.includes("enotfound") ||
-      msg.includes("econnrefused") ||
-      msg.includes("network error");
-    if (isNetworkError) {
-      const networkError = new Error(
-        "Network Error: Unable to reach the API. Check your connection.",
-      );
-      networkError.name = "NetworkError";
-      if (options.showToastOnError !== false) toast.error(networkError.message);
-      throw networkError;
-    }
-    throw error;
   }
+
+  const error = lastError;
+  const errName = error instanceof Error ? error.name : "";
+  const msg =
+    error instanceof Error ? error.message.toLowerCase() : String(error);
+  const isAbort =
+    errName === "AbortError" ||
+    msg.includes("aborted") ||
+    msg.includes("abort");
+  const isNetworkError = isTransientFetchError(error);
+  if (isAbort) throw error;
+  if (isNetworkError) {
+    const networkError = new Error(
+      "Network Error: Unable to reach the API. Check your connection.",
+    );
+    networkError.name = "NetworkError";
+    if (showToastOnError !== false) toast.error(networkError.message);
+    throw networkError;
+  }
+  throw error;
 }
 
 /**

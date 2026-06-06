@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/constants";
+import { saveReturnRoute } from "@/lib/returnRoute";
 import { WebVitalsReporter } from "@/components/shared/WebVitalsReporter";
 
 export default function DashboardLayout({
@@ -21,6 +22,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!loading && !user) {
+      saveReturnRoute();
       router.replace(ROUTES.LOGIN);
     }
   }, [user, loading, router]);

@@ -11,6 +11,8 @@ const AUTH_PAYLOAD_BODY = `
   user { ${AUTH_PAYLOAD_USER_FIELDS} }
   twoFactorRequired
   challengeToken
+  emailVerificationRequired
+  verificationChallengeToken
 `;
 
 export const AUTH_LOGIN_MUTATION = `
@@ -109,6 +111,54 @@ export const AUTH_RESET_PASSWORD_MUTATION = `
   mutation AuthResetPassword($input: ResetPasswordInput!) {
     auth {
       resetPassword(input: $input)
+    }
+  }
+`;
+
+export const AUTH_VERIFY_REGISTRATION_OTP_MUTATION = `
+  mutation AuthVerifyRegistrationOtp($input: VerifyRegistrationOtpInput!) {
+    auth {
+      verifyRegistrationOtp(input: $input) {
+        ${AUTH_PAYLOAD_BODY}
+      }
+    }
+  }
+`;
+
+export const AUTH_RESEND_REGISTRATION_OTP_MUTATION = `
+  mutation AuthResendRegistrationOtp($input: ResendRegistrationOtpInput!) {
+    auth {
+      resendRegistrationOtp(input: $input)
+    }
+  }
+`;
+
+export const AUTH_REQUEST_LOGIN_OTP_MUTATION = `
+  mutation AuthRequestLoginOtp($input: RequestLoginOtpInput!) {
+    auth {
+      requestLoginOtp(input: $input) {
+        success
+        challengeToken
+        email
+      }
+    }
+  }
+`;
+
+export const AUTH_COMPLETE_LOGIN_OTP_MUTATION = `
+  mutation AuthCompleteLoginOtp($input: CompleteLoginOtpInput!) {
+    auth {
+      completeLoginOtp(input: $input) {
+        ${AUTH_PAYLOAD_BODY}
+      }
+    }
+  }
+`;
+
+export const AUTH_RESEND_LOGIN_OTP_MUTATION = `
+  mutation AuthResendLoginOtp($input: ResendLoginOtpInput!) {
+    auth {
+      resendLoginOtp(input: $input)
     }
   }
 `;

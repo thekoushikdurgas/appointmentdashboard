@@ -16,7 +16,8 @@ export const ROUTES = {
   AI_CHAT: "/ai-chat",
   BILLING: "/billing",
   PROFILE: "/profile",
-  SETTINGS: "/settings",
+  /** @deprecated Use `profileTabRoute("settings")` — settings merged into Profile tab. */
+  SETTINGS: "/profile?tab=settings",
   CAMPAIGNS: "/campaigns",
   CAMPAIGNS_NEW: "/campaigns/new",
   CAMPAIGNS_TEMPLATES: "/campaigns/templates",
@@ -24,6 +25,9 @@ export const ROUTES = {
   RESUME: "/resume",
   FORBIDDEN: "/403",
 } as const;
+
+export { profileTabRoute } from "@/lib/profileTabs";
+export type { ProfileTab } from "@/lib/profileTabs";
 
 /** Deep link: Activities page with a given tab (and optional feature for Usage drill-down). */
 export function activitiesTabRoute(

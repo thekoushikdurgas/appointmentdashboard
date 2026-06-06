@@ -13,7 +13,8 @@ export function SidebarAccountFooter({
 }: SidebarAccountFooterProps) {
   return (
     <AccountMenuContent
-      mode={railCollapsed ? "sidebar-compact" : "sidebar-full"}
+      mode="sidebar-full"
+      accountBodyExpanded={!railCollapsed}
       onNavigate={onMobileClose}
     />
   );

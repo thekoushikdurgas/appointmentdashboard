@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
         destination: "/ai-chat",
         permanent: false,
       },
+      {
+        source: "/settings",
+        destination: "/profile?tab=settings",
+        permanent: false,
+      },
     ];
   },
 

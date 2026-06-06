@@ -25,6 +25,9 @@ import {
   type HiringSignalDraftField,
 } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { HiringSignalTextFacetCombobox } from "@/components/feature/hiring-signals/HiringSignalTextFacetCombobox";
+import { HiringSignalFilterComingSoon } from "@/components/feature/hiring-signals/HiringSignalFilterComingSoon";
+import { FilterSidebarBody } from "@/components/layouts/FilterSidebarBody";
+import { FilterSidebarHeader } from "@/components/layouts/FilterSidebarHeader";
 import { HiringSignalsCompanyFilters } from "@/components/feature/hiring-signals/HiringSignalsCompanyFilters";
 import { HiringSignalsDataQualityFilters } from "@/components/feature/hiring-signals/HiringSignalsDataQualityFilters";
 import {
@@ -223,17 +226,6 @@ const SKILL_TAG_FILTER_OPTIONS = [
   { value: "data science", label: "Data science" },
 ];
 
-const SALARY_RANGE_PRESET_OPTIONS = [
-  { value: "", label: "Any" },
-  { value: "50000", label: "$50k+" },
-  { value: "80000", label: "$80k+" },
-  { value: "100000", label: "$100k+" },
-  { value: "120000", label: "$120k+" },
-  { value: "150000", label: "$150k+" },
-  { value: "200000", label: "$200k+" },
-  { value: "custom", label: "Custom range…" },
-];
-
 const SKILL_TAG_ADD_SELECT_OPTIONS = [
   { value: "", label: "Add required skill…" },
   ...SKILL_TAG_FILTER_OPTIONS,
@@ -263,15 +255,15 @@ const DATE_POSTED_PRESET_OPTIONS: {
   value: DatePostedPreset;
   label: string;
 }[] = [
-    { value: "any", label: "Any time" },
-    { value: "today", label: "Today" },
-    { value: "yesterday", label: "Yesterday" },
-    { value: "7d", label: "Last 7 days" },
-    { value: "15d", label: "Last 15 days" },
-    { value: "30d", label: "Last 30 days" },
-    { value: "custom_day", label: "Custom day" },
-    { value: "custom_range", label: "Custom range" },
-  ];
+  { value: "any", label: "Any time" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "15d", label: "Last 15 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "custom_day", label: "Custom day" },
+  { value: "custom_range", label: "Custom range" },
+];
 
 function clearDatePostedDraftFields(
   onDraftField: (
@@ -289,11 +281,6 @@ function clearDatePostedDraftFields(
   onDraftField("postedAfter", "");
   onDraftField("postedBefore", "");
 }
-
-const VIEW_MODE_OPTIONS = [
-  { value: "comfortable", label: "Comfortable" },
-  { value: "compact", label: "Compact" },
-];
 
 const FUNCTION_PRESET_OPTIONS = [
   { value: "", label: "Any" },
@@ -689,13 +676,14 @@ function buildHiringSignalChipBuckets(
       pk === "custom_day" && draft.postedAfter.trim()
         ? `Date posted: ${postedAtBoundToDateInputValue(draft.postedAfter)}`
         : pk === "custom_range"
-          ? `Date posted: ${[
-            postedAtBoundToDateInputValue(draft.postedAfter),
-            postedAtBoundToDateInputValue(draft.postedBefore),
-          ]
-            .filter(Boolean)
-            .join(" – ") || "Custom range"
-          }`
+          ? `Date posted: ${
+              [
+                postedAtBoundToDateInputValue(draft.postedAfter),
+                postedAtBoundToDateInputValue(draft.postedBefore),
+              ]
+                .filter(Boolean)
+                .join(" – ") || "Custom range"
+            }`
           : `Date posted: ${DATE_POSTED_PRESET_LABELS[pk]}`;
     add("datePosted", {
       key: "dpreset",
@@ -727,12 +715,8 @@ export interface HiringSignalsFilterSidebarProps {
   runScopedJobTotal?: number;
   onClearRunId?: () => void;
   className?: string;
-  drawerTitleId?: string;
   /** Saved searches, clear, and other header actions. */
   headerActions?: React.ReactNode;
-  /** Table row density — mirrors the toolbar view-mode select. */
-  tableDensity?: "comfortable" | "compact";
-  onTableDensityChange?: (density: "comfortable" | "compact") => void;
   companyCohortResolving?: boolean;
   companyCohortMatchTotal?: number | null;
   companyCohortTruncated?: boolean;
@@ -745,10 +729,7 @@ export function HiringSignalsFilterSidebar({
   runScopedJobTotal,
   onClearRunId,
   className,
-  drawerTitleId = "c360-hs-filter-drawer-title",
   headerActions,
-  tableDensity = "comfortable",
-  onTableDensityChange,
   companyCohortResolving = false,
   companyCohortMatchTotal = null,
   companyCohortTruncated = false,
@@ -777,13 +758,16 @@ export function HiringSignalsFilterSidebar({
     [draft, onDraftField],
   );
 
-  const draftChipCount = useMemo(
-    () => Object.values(chipBuckets).reduce((n, arr) => n + arr.length, 0),
-    [chipBuckets],
-  );
+  const totalActiveCount = useMemo(() => {
+    let n = 0;
+    for (const items of Object.values(chipBuckets)) {
+      n += items.length;
+    }
+    if (appliedRunId?.trim() && onClearRunId) n += 1;
+    return n;
+  }, [chipBuckets, appliedRunId, onClearRunId]);
 
   const hasRunChip = Boolean(appliedRunId?.trim() && onClearRunId);
-  const totalChips = draftChipCount + (hasRunChip ? 1 : 0);
 
   const runIdTrimmed = appliedRunId?.trim() ?? "";
   const runChip =
@@ -793,7 +777,7 @@ export function HiringSignalsFilterSidebar({
           Run: {runIdTrimmed.slice(0, 12)}
           {runIdTrimmed.length > 12 ? "…" : ""}
           {typeof runScopedJobTotal === "number" &&
-            Number.isFinite(runScopedJobTotal) ? (
+          Number.isFinite(runScopedJobTotal) ? (
             <> · {runScopedJobTotal.toLocaleString()} jobs</>
           ) : null}
         </span>
@@ -823,7 +807,7 @@ export function HiringSignalsFilterSidebar({
   const workplaceCount = normalizedWorkplaceTypes.length;
   const workplaceSelectValue =
     normalizedWorkplaceTypes.length === 1 &&
-      WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
+    WORKPLACE_OPTIONS.some((o) => o.value === normalizedWorkplaceTypes[0])
       ? normalizedWorkplaceTypes[0]
       : "";
   const normalizedExperienceBuckets = normalizeHiringSignalTokenList(
@@ -831,9 +815,9 @@ export function HiringSignalsFilterSidebar({
   );
   const experienceBucketSelectValue =
     normalizedExperienceBuckets.length === 1 &&
-      EXPERIENCE_BUCKET_OPTIONS.some(
-        (o) => o.value === normalizedExperienceBuckets[0],
-      )
+    EXPERIENCE_BUCKET_OPTIONS.some(
+      (o) => o.value === normalizedExperienceBuckets[0],
+    )
       ? normalizedExperienceBuckets[0]
       : "";
   const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
@@ -841,15 +825,15 @@ export function HiringSignalsFilterSidebar({
   );
   const educationMinSelectValue =
     normalizedEducationLevelMins.length === 1 &&
-      EDUCATION_MIN_OPTIONS.some(
-        (o) => o.value === normalizedEducationLevelMins[0],
-      )
+    EDUCATION_MIN_OPTIONS.some(
+      (o) => o.value === normalizedEducationLevelMins[0],
+    )
       ? normalizedEducationLevelMins[0]
       : "";
   const normalizedIndustries = normalizeHiringSignalTokenList(draft.industries);
   const industryIncludeSelectValue =
     normalizedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
+    INDUSTRY_FILTER_OPTIONS.some((o) => o.value === normalizedIndustries[0])
       ? normalizedIndustries[0]
       : "";
   const normalizedExcludedIndustries = normalizeHiringSignalTokenList(
@@ -857,9 +841,9 @@ export function HiringSignalsFilterSidebar({
   );
   const industryExcludeSelectValue =
     normalizedExcludedIndustries.length === 1 &&
-      INDUSTRY_FILTER_OPTIONS.some(
-        (o) => o.value === normalizedExcludedIndustries[0],
-      )
+    INDUSTRY_FILTER_OPTIONS.some(
+      (o) => o.value === normalizedExcludedIndustries[0],
+    )
       ? normalizedExcludedIndustries[0]
       : "";
   const industriesCount = normalizeHiringSignalTokenList(
@@ -877,8 +861,8 @@ export function HiringSignalsFilterSidebar({
   const salaryBounds = resolveSalaryBoundsFromDraft(draft);
   const salaryCount =
     draft.salaryPreset.trim() ||
-      salaryBounds.salaryMin != null ||
-      salaryBounds.salaryMax != null
+    salaryBounds.salaryMin != null ||
+    salaryBounds.salaryMax != null
       ? 1
       : 0;
   const expBucketCount = normalizeHiringSignalTokenList(
@@ -892,7 +876,7 @@ export function HiringSignalsFilterSidebar({
   const applyMethodCount = draft.applyMethod.trim() ? 1 : 0;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
-      draft.clearanceMode.trim() === "only"
+    draft.clearanceMode.trim() === "only"
       ? 1
       : 0;
   const h1bCount = draft.h1bOnly ? 1 : 0;
@@ -932,659 +916,585 @@ export function HiringSignalsFilterSidebar({
 
   return (
     <div className={cn("c360-contacts-filters c360-hs-filters", className)}>
-      <div className="c360-contacts-filters__head-row">
-        <div className="c360-contacts-filters__head-text">
-          <div className="c360-contacts-filters__head">
-            <h2 id={drawerTitleId} className="c360-contacts-filters__title">
-              Refine signals
-            </h2>
-          </div>
-          <p className="c360-contacts-filters__subtitle">{totalChips} active</p>
-        </div>
-        {headerActions ? (
-          <div className="c360-contacts-filters__head-actions">
-            {headerActions}
+      <FilterSidebarHeader
+        activeCount={totalActiveCount}
+        headerActions={headerActions}
+        showHeadText={false}
+      />
+
+      <FilterSidebarBody>
+        {hasRunChip ? (
+          <div className="c360-hs-filters__run-row c360-mb-2">
+            <div className="c360-hs-filter-chips c360-hs-filter-chips--run">
+              {runChip}
+            </div>
           </div>
         ) : null}
-      </div>
 
-      {hasRunChip ? (
-        <div className="c360-hs-filters__run-row c360-mb-2">
-          <div className="c360-hs-filter-chips c360-hs-filter-chips--run">
-            {runChip}
-          </div>
-        </div>
-      ) : null}
+        <HsFilterAccordionProvider>
+          <div className="c360-hs-filters__sections">
+            <HiringSignalsCompanyFilters
+              appliedListFilters={appliedListFilters}
+              signalTimePreset={signalTimePreset}
+              companyCohortResolving={companyCohortResolving}
+              companyCohortMatchTotal={companyCohortMatchTotal}
+              companyCohortTruncated={companyCohortTruncated}
+              companyFilterChips={chipBuckets.companyCohort}
+            />
 
-      <HsFilterAccordionProvider>
-        <div className="c360-hs-filters__sections">
-          <HiringSignalsCompanyFilters
-            appliedListFilters={appliedListFilters}
-            signalTimePreset={signalTimePreset}
-            companyCohortResolving={companyCohortResolving}
-            companyCohortMatchTotal={companyCohortMatchTotal}
-            companyCohortTruncated={companyCohortTruncated}
-            companyFilterChips={chipBuckets.companyCohort}
-          />
+            {isSuperAdmin ? <HiringSignalsDataQualityFilters /> : null}
 
-          {isSuperAdmin ? <HiringSignalsDataQualityFilters /> : null}
+            <h3 className="c360-hs-filters__group-header">Job filters</h3>
 
-          <h3 className="c360-hs-filters__group-header">Job filters</h3>
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.jobTitle}
+              title="Title"
+              count={titleValues.length + exTitleCount}
+              onClear={() => {
+                onDraftField("titles", []);
+                onDraftField("excludedTitles", []);
+              }}
+            >
+              <div className="c360-space-y-3">
+                <HsFilterChipList items={chipBuckets.title} variant="section" />
+                <HiringSignalTextFacetCombobox
+                  field="title"
+                  label="Include job titles"
+                  draft={draft}
+                  appliedListFilters={appliedListFilters}
+                  signalTimePreset={signalTimePreset}
+                  selectedValues={titleValues}
+                  onSelectionChange={(v) => onDraftField("titles", v)}
+                />
+                <HiringSignalTextFacetCombobox
+                  field="title"
+                  label="Exclude job titles"
+                  draft={draft}
+                  appliedListFilters={appliedListFilters}
+                  signalTimePreset={signalTimePreset}
+                  selectedValues={normalizeHiringSignalTokenList(
+                    draft.excludedTitles,
+                  )}
+                  onSelectionChange={(v) => onDraftField("excludedTitles", v)}
+                />
+              </div>
+            </HsFilterSection>
 
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.jobTitle}
-            title="Title"
-            count={titleValues.length + exTitleCount}
-            onClear={() => {
-              onDraftField("titles", []);
-              onDraftField("excludedTitles", []);
-            }}
-          >
-            <div className="c360-space-y-3">
-              <HsFilterChipList items={chipBuckets.title} variant="section" />
-              <HiringSignalTextFacetCombobox
-                field="title"
-                label="Include job titles"
-                draft={draft}
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                selectedValues={titleValues}
-                onSelectionChange={(v) => onDraftField("titles", v)}
-              />
-              <HiringSignalTextFacetCombobox
-                field="title"
-                label="Exclude job titles"
-                draft={draft}
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.excludedTitles,
-                )}
-                onSelectionChange={(v) => onDraftField("excludedTitles", v)}
-              />
-            </div>
-          </HsFilterSection>
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.jobLocation}
+              title="Location"
+              count={locationValues.length + exLocCount + countryCount}
+              onClear={() => {
+                onDraftField("locations", []);
+                onDraftField("excludedLocations", []);
+                onDraftField("countries", []);
+              }}
+            >
+              <div className="c360-space-y-3">
+                <HsFilterChipList
+                  items={chipBuckets.location}
+                  variant="section"
+                />
+                <HiringSignalTextFacetCombobox
+                  field="location"
+                  label="Include locations"
+                  draft={draft}
+                  appliedListFilters={appliedListFilters}
+                  signalTimePreset={signalTimePreset}
+                  selectedValues={locationValues}
+                  onSelectionChange={(v) => onDraftField("locations", v)}
+                />
+                <HiringSignalTextFacetCombobox
+                  field="location"
+                  label="Exclude locations"
+                  draft={draft}
+                  appliedListFilters={appliedListFilters}
+                  signalTimePreset={signalTimePreset}
+                  selectedValues={normalizeHiringSignalTokenList(
+                    draft.excludedLocations,
+                  )}
+                  onSelectionChange={(v) =>
+                    onDraftField("excludedLocations", v)
+                  }
+                />
+                <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                  Country (ISO code)
+                </p>
+                <HiringSignalCountedSelect
+                  field="job_country"
+                  appliedListFilters={appliedListFilters}
+                  signalTimePreset={signalTimePreset}
+                  id="hsf-country-add"
+                  value=""
+                  onChange={(e) => appendCountryCode(e.target.value)}
+                  staticOptions={COUNTRY_ADD_SELECT_OPTIONS}
+                  fullWidth
+                  inputSize="md"
+                />
+              </div>
+            </HsFilterSection>
 
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.jobLocation}
-            title="Location"
-            count={locationValues.length + exLocCount + countryCount}
-            onClear={() => {
-              onDraftField("locations", []);
-              onDraftField("excludedLocations", []);
-              onDraftField("countries", []);
-            }}
-          >
-            <div className="c360-space-y-3">
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.datePosted}
+              title="Date posted"
+              count={datePostedCount}
+              onClear={() => clearDatePostedDraftFields(onDraftField)}
+            >
               <HsFilterChipList
-                items={chipBuckets.location}
+                items={chipBuckets.datePosted}
                 variant="section"
               />
-              <HiringSignalTextFacetCombobox
-                field="location"
-                label="Include locations"
-                draft={draft}
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                selectedValues={locationValues}
-                onSelectionChange={(v) => onDraftField("locations", v)}
-              />
-              <HiringSignalTextFacetCombobox
-                field="location"
-                label="Exclude locations"
-                draft={draft}
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.excludedLocations,
-                )}
-                onSelectionChange={(v) => onDraftField("excludedLocations", v)}
-              />
-              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-                Country (ISO code)
-              </p>
-              <HiringSignalCountedSelect
-                field="job_country"
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                id="hsf-country-add"
-                value=""
-                onChange={(e) => appendCountryCode(e.target.value)}
-                staticOptions={COUNTRY_ADD_SELECT_OPTIONS}
-                fullWidth
-                inputSize="md"
-              />
-            </div>
-          </HsFilterSection>
-          {onTableDensityChange ? (
-            <HsFilterSection
-              sectionId={HS_FILTER_SECTION_IDS.view}
-              title="View"
-              count={tableDensity === "compact" ? 1 : 0}
-              onClear={() => onTableDensityChange("comfortable")}
-            >
+              {signalTimePreset === "new_7d" ? (
+                <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                  The Signals &quot;Today&apos;s jobs&quot; tab filters to jobs
+                  posted today (local time) when no Date posted sidebar preset
+                  is active; sidebar date filters override the tab window.
+                </p>
+              ) : null}
               <Select
                 menuVariant="inline"
-                id="hsf-view-mode"
-                value={tableDensity}
+                id="hsf-date-preset"
+                value={draft.datePostedPreset}
+                onChange={(e) => onDatePostedPresetChange(e.target.value)}
+                options={DATE_POSTED_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-2"
+              />
+              {draft.datePostedPreset === "custom_day" ? (
+                <div className="c360-mb-3 c360-space-y-2">
+                  <label
+                    htmlFor="hsf-posted-day"
+                    className="c360-block c360-text-2xs c360-text-ink-muted"
+                  >
+                    Posted on this day
+                  </label>
+                  <Input
+                    id="hsf-posted-day"
+                    type="date"
+                    value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                    onChange={(e) => {
+                      const day = e.target.value.trim();
+                      if (!day) {
+                        setDraft((d) => ({
+                          ...d,
+                          postedAfter: "",
+                          postedBefore: "",
+                          datePostedPreset: "custom_day",
+                        }));
+                        return;
+                      }
+                      const bounds = postedBoundsFromCustomDay(day);
+                      setDraft((d) => ({
+                        ...d,
+                        postedAfter: bounds.postedAfter,
+                        postedBefore: bounds.postedBefore,
+                        datePostedPreset: "custom_day",
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
+              {draft.datePostedPreset === "custom_range" ? (
+                <div className="c360-mb-3 c360-space-y-2">
+                  <label
+                    htmlFor="hsf-posted-after"
+                    className="c360-block c360-text-2xs c360-text-ink-muted"
+                  >
+                    From (optional)
+                  </label>
+                  <Input
+                    id="hsf-posted-after"
+                    type="date"
+                    value={postedAtBoundToDateInputValue(draft.postedAfter)}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        postedAfter: e.target.value.trim(),
+                        datePostedPreset: "custom_range",
+                      }))
+                    }
+                  />
+                  <label
+                    htmlFor="hsf-posted-before"
+                    className="c360-block c360-text-2xs c360-text-ink-muted"
+                  >
+                    To (optional)
+                  </label>
+                  <Input
+                    id="hsf-posted-before"
+                    type="date"
+                    value={postedAtBoundToDateInputValue(draft.postedBefore)}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        postedBefore: e.target.value.trim(),
+                        datePostedPreset: "custom_range",
+                      }))
+                    }
+                  />
+                </div>
+              ) : null}
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.experienceLevel}
+              title="Experience level"
+              count={experienceLevelCount}
+              onClear={() => {
+                onDraftField("seniorityPreset", "");
+                onDraftField("seniorityCustom", "");
+                onDraftField("experienceBuckets", []);
+              }}
+            >
+              <HsFilterChipList
+                items={chipBuckets.experienceLevel}
+                variant="section"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Seniority (matches ingested seniority text)
+              </p>
+              <HiringSignalCountedSelect
+                field="seniority"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-seniority-preset"
+                value={draft.seniorityPreset}
                 onChange={(e) =>
-                  onTableDensityChange(
-                    e.target.value as "comfortable" | "compact",
-                  )
+                  onDraftField("seniorityPreset", e.target.value)
                 }
-                options={VIEW_MODE_OPTIONS}
+                staticOptions={SENIORITY_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-3"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Experience bucket (ingest-derived enum)
+              </p>
+              <HiringSignalCountedSelect
+                field="experience_bucket"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-experience-bucket"
+                value={experienceBucketSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("experienceBuckets", v ? [v] : []);
+                }}
+                staticOptions={EXPERIENCE_BUCKET_SELECT_OPTIONS}
                 fullWidth
                 inputSize="md"
               />
             </HsFilterSection>
-          ) : null}
 
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.datePosted}
-            title="Date posted"
-            count={datePostedCount}
-            onClear={() => clearDatePostedDraftFields(onDraftField)}
-          >
-            <HsFilterChipList
-              items={chipBuckets.datePosted}
-              variant="section"
-            />
-            {signalTimePreset === "new_7d" ? (
-              <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-                The Signals &quot;Today&apos;s jobs&quot; tab filters to jobs
-                posted today (local time) when no Date posted sidebar preset is
-                active; sidebar date filters override the tab window.
-              </p>
-            ) : null}
-            <Select
-              menuVariant="inline"
-              id="hsf-date-preset"
-              value={draft.datePostedPreset}
-              onChange={(e) => onDatePostedPresetChange(e.target.value)}
-              options={DATE_POSTED_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
-              className="c360-mb-2"
-            />
-            {draft.datePostedPreset === "custom_day" ? (
-              <div className="c360-mb-3 c360-space-y-2">
-                <label
-                  htmlFor="hsf-posted-day"
-                  className="c360-block c360-text-2xs c360-text-ink-muted"
-                >
-                  Posted on this day
-                </label>
-                <Input
-                  id="hsf-posted-day"
-                  type="date"
-                  value={postedAtBoundToDateInputValue(draft.postedAfter)}
-                  onChange={(e) => {
-                    const day = e.target.value.trim();
-                    if (!day) {
-                      setDraft((d) => ({
-                        ...d,
-                        postedAfter: "",
-                        postedBefore: "",
-                        datePostedPreset: "custom_day",
-                      }));
-                      return;
-                    }
-                    const bounds = postedBoundsFromCustomDay(day);
-                    setDraft((d) => ({
-                      ...d,
-                      postedAfter: bounds.postedAfter,
-                      postedBefore: bounds.postedBefore,
-                      datePostedPreset: "custom_day",
-                    }));
-                  }}
-                />
-              </div>
-            ) : null}
-            {draft.datePostedPreset === "custom_range" ? (
-              <div className="c360-mb-3 c360-space-y-2">
-                <label
-                  htmlFor="hsf-posted-after"
-                  className="c360-block c360-text-2xs c360-text-ink-muted"
-                >
-                  From (optional)
-                </label>
-                <Input
-                  id="hsf-posted-after"
-                  type="date"
-                  value={postedAtBoundToDateInputValue(draft.postedAfter)}
-                  onChange={(e) =>
-                    setDraft((d) => ({
-                      ...d,
-                      postedAfter: e.target.value.trim(),
-                      datePostedPreset: "custom_range",
-                    }))
-                  }
-                />
-                <label
-                  htmlFor="hsf-posted-before"
-                  className="c360-block c360-text-2xs c360-text-ink-muted"
-                >
-                  To (optional)
-                </label>
-                <Input
-                  id="hsf-posted-before"
-                  type="date"
-                  value={postedAtBoundToDateInputValue(draft.postedBefore)}
-                  onChange={(e) =>
-                    setDraft((d) => ({
-                      ...d,
-                      postedBefore: e.target.value.trim(),
-                      datePostedPreset: "custom_range",
-                    }))
-                  }
-                />
-              </div>
-            ) : null}
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.experienceLevel}
-            title="Experience level"
-            count={experienceLevelCount}
-            onClear={() => {
-              onDraftField("seniorityPreset", "");
-              onDraftField("seniorityCustom", "");
-              onDraftField("experienceBuckets", []);
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.experienceLevel}
-              variant="section"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Seniority (matches ingested seniority text)
-            </p>
-            <HiringSignalCountedSelect
-              field="seniority"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-seniority-preset"
-              value={draft.seniorityPreset}
-              onChange={(e) => onDraftField("seniorityPreset", e.target.value)}
-              staticOptions={SENIORITY_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
-              className="c360-mb-3"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Experience bucket (ingest-derived enum)
-            </p>
-            <HiringSignalCountedSelect
-              field="experience_bucket"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-experience-bucket"
-              value={experienceBucketSelectValue}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("experienceBuckets", v ? [v] : []);
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.jobType}
+              title="Job type"
+              count={employmentCount}
+              onClear={() => {
+                onDraftField("employmentTypes", []);
+                onDraftField("employmentType", "");
               }}
-              staticOptions={EXPERIENCE_BUCKET_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.jobType}
-            title="Job type"
-            count={employmentCount}
-            onClear={() => {
-              onDraftField("employmentTypes", []);
-              onDraftField("employmentType", "");
-            }}
-          >
-            <HsFilterChipList items={chipBuckets.jobType} variant="section" />
-            <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
-              Employment type (substring on ingested employment_type)
-            </p>
-            <HiringSignalCountedSelect
-              field="employment_type"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-emp-type"
-              value={draft.employmentType}
-              onChange={(e) => onDraftField("employmentType", e.target.value)}
-              staticOptions={EMPLOYMENT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.remoteWorkplace}
-            title="Remote / workplace"
-            count={workplaceCount}
-            onClear={() => onDraftField("workplaceTypes", [])}
-          >
-            <HsFilterChipList items={chipBuckets.workplace} variant="section" />
-            <HiringSignalCountedSelect
-              field="workplace_type"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-workplace"
-              value={workplaceSelectValue}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("workplaceTypes", v ? [v] : []);
-              }}
-              staticOptions={WORKPLACE_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.linkedinApply}
-            title="LinkedIn Apply"
-            count={applyMethodCount}
-            onClear={() => onDraftField("applyMethod", "")}
-          >
-            <HsFilterChipList
-              items={chipBuckets.linkedInApply}
-              variant="section"
-            />
-            <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-              <input
-                type="checkbox"
-                className="c360-mt-0.5"
-                checked={draft.applyMethod === EASY_APPLY_METHOD}
-                onChange={(e) =>
-                  onDraftField(
-                    "applyMethod",
-                    e.target.checked ? EASY_APPLY_METHOD : "",
-                  )
-                }
-              />
-              <span>
-                Easy apply ({EASY_APPLY_METHOD}) — matches ingested apply_method
-                (substring).
-              </span>
-            </label>
-            <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
-              <input
-                type="checkbox"
-                className="c360-mt-0.5"
-                checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
-                onChange={(e) =>
-                  onDraftField(
-                    "applyMethod",
-                    e.target.checked ? LINKEDIN_APPLY_METHOD : "",
-                  )
-                }
-              />
-              <span>
-                LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches
-                ingested apply_method (substring).
-              </span>
-            </label>
-            <label
-              htmlFor="hsf-apply-method"
-              className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
             >
-              Apply channel (fine-tune)
-            </label>
-            <HiringSignalCountedSelect
-              field="apply_method"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-apply-method"
-              value={draft.applyMethod}
-              onChange={(e) => onDraftField("applyMethod", e.target.value)}
-              staticOptions={APPLY_METHOD_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.categoryTopic}
-            title="Category (Topic)"
-            count={industriesCount + exIndCount}
-            onClear={() => {
-              onDraftField("industries", []);
-              onDraftField("excludedIndustries", []);
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.industries}
-              variant="section"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Include category (topic)
-            </p>
-            <HiringSignalCountedSelect
-              field="job_industry"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-industry-include"
-              value={industryIncludeSelectValue}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("industries", v ? [v] : []);
-              }}
-              staticOptions={INDUSTRY_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-              className="c360-mb-3"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Exclude category (topic)
-            </p>
-            <HiringSignalCountedSelect
-              field="job_industry"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-industry-exclude"
-              value={industryExcludeSelectValue}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("excludedIndustries", v ? [v] : []);
-              }}
-              staticOptions={INDUSTRY_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.jobFunction}
-            title="Job function"
-            count={functionCount}
-            onClear={() => {
-              onDraftField("functionPreset", "");
-              onDraftField("functionCustom", "");
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.jobFunction}
-              variant="section"
-            />
-            <HiringSignalCountedSelect
-              field="function_category"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-func-preset"
-              value={draft.functionPreset}
-              onChange={(e) => onDraftField("functionPreset", e.target.value)}
-              staticOptions={FUNCTION_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.education}
-            title="Education"
-            count={eduCount}
-            onClear={() => {
-              onDraftField("educationLevelMins", []);
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.roleEducation}
-              variant="section"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Minimum education (job posting mentions)
-            </p>
-            <HiringSignalCountedSelect
-              field="education_level_min"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-education-min"
-              value={educationMinSelectValue}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("educationLevelMins", v ? [v] : []);
-              }}
-              staticOptions={EDUCATION_MIN_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.requiredSkills}
-            title="Required skills"
-            count={skillsCount}
-            onClear={() => onDraftField("skillsAll", [])}
-          >
-            <HsFilterChipList items={chipBuckets.skills} variant="section" />
-            <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
-              Jobs must include every listed skill in ingested tags (AND). Add
-              from the list; remove with the chips above. Duplicates are
-              ignored.
-            </p>
-            <HiringSignalCountedSelect
-              field="skill_tag"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-skill-tag-add"
-              value=""
-              onChange={(e) => appendSkillTag(e.target.value)}
-              staticOptions={SKILL_TAG_ADD_SELECT_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-          </HsFilterSection>
-
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.compliancePreferences}
-            title="Compliance & preferences"
-            count={clearanceCount + h1bCount}
-            onClear={() => {
-              onDraftField("clearanceMode", "");
-              onDraftField("h1bOnly", false);
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.compliance}
-              variant="section"
-            />
-            <HiringSignalCountedSelect
-              field="clearance_mode"
-              appliedListFilters={appliedListFilters}
-              signalTimePreset={signalTimePreset}
-              id="hsf-clearance"
-              value={draft.clearanceMode}
-              onChange={(e) => onDraftField("clearanceMode", e.target.value)}
-              staticOptions={CLEARANCE_OPTIONS}
-              fullWidth
-              inputSize="md"
-            />
-            <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-              Clearance flags are inferred from job text (see docs).
-            </p>
-            <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
-              <input
-                type="checkbox"
-                checked={draft.h1bOnly}
-                onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
+              <HsFilterChipList items={chipBuckets.jobType} variant="section" />
+              <p className="c360-mb-1 c360-text-2xs c360-text-ink-muted">
+                Employment type (substring on ingested employment_type)
+              </p>
+              <HiringSignalCountedSelect
+                field="employment_type"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-emp-type"
+                value={draft.employmentType}
+                onChange={(e) => onDraftField("employmentType", e.target.value)}
+                staticOptions={EMPLOYMENT_OPTIONS}
+                fullWidth
+                inputSize="md"
               />
-              H1B / sponsorship mentioned
-            </label>
-          </HsFilterSection>
-          <HsFilterSection
-            sectionId={HS_FILTER_SECTION_IDS.compensation}
-            title="Compensation"
-            count={salaryCount}
-            onClear={() => {
-              onDraftField("salaryPreset", "");
-              onDraftField("salaryMin", "");
-              onDraftField("salaryMax", "");
-            }}
-          >
-            <HsFilterChipList
-              items={chipBuckets.compensation}
-              variant="section"
-            />
-            <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
-              Salary range (USD / year)
-            </p>
-            <Select
-              menuVariant="inline"
-              id="hsf-salary-preset"
-              value={draft.salaryPreset}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                onDraftField("salaryPreset", v);
-                if (v !== "custom") {
-                  onDraftField("salaryMin", "");
-                  onDraftField("salaryMax", "");
-                }
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.remoteWorkplace}
+              title="Remote / workplace"
+              count={workplaceCount}
+              onClear={() => onDraftField("workplaceTypes", [])}
+            >
+              <HsFilterChipList
+                items={chipBuckets.workplace}
+                variant="section"
+              />
+              <HiringSignalCountedSelect
+                field="workplace_type"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-workplace"
+                value={workplaceSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("workplaceTypes", v ? [v] : []);
+                }}
+                staticOptions={WORKPLACE_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.linkedinApply}
+              title="LinkedIn Apply"
+              count={applyMethodCount}
+              onClear={() => onDraftField("applyMethod", "")}
+            >
+              <HsFilterChipList
+                items={chipBuckets.linkedInApply}
+                variant="section"
+              />
+              <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  className="c360-mt-0.5"
+                  checked={draft.applyMethod === EASY_APPLY_METHOD}
+                  onChange={(e) =>
+                    onDraftField(
+                      "applyMethod",
+                      e.target.checked ? EASY_APPLY_METHOD : "",
+                    )
+                  }
+                />
+                <span>
+                  Easy apply ({EASY_APPLY_METHOD}) — matches ingested
+                  apply_method (substring).
+                </span>
+              </label>
+              <label className="c360-mb-2 c360-flex c360-items-start c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  className="c360-mt-0.5"
+                  checked={draft.applyMethod === LINKEDIN_APPLY_METHOD}
+                  onChange={(e) =>
+                    onDraftField(
+                      "applyMethod",
+                      e.target.checked ? LINKEDIN_APPLY_METHOD : "",
+                    )
+                  }
+                />
+                <span>
+                  LinkedIn-hosted apply ({LINKEDIN_APPLY_METHOD}) — matches
+                  ingested apply_method (substring).
+                </span>
+              </label>
+              <label
+                htmlFor="hsf-apply-method"
+                className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
+              >
+                Apply channel (fine-tune)
+              </label>
+              <HiringSignalCountedSelect
+                field="apply_method"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-apply-method"
+                value={draft.applyMethod}
+                onChange={(e) => onDraftField("applyMethod", e.target.value)}
+                staticOptions={APPLY_METHOD_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.categoryTopic}
+              title="Category (Topic)"
+              count={industriesCount + exIndCount}
+              onClear={() => {
+                onDraftField("industries", []);
+                onDraftField("excludedIndustries", []);
               }}
-              options={SALARY_RANGE_PRESET_OPTIONS}
-              fullWidth
-              inputSize="md"
-              className="c360-mb-3"
-            />
-            {draft.salaryPreset === "custom" ? (
-              <>
-                <label
-                  htmlFor="hsf-salary-min"
-                  className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-                >
-                  Custom minimum
-                </label>
-                <Input
-                  id="hsf-salary-min"
-                  type="number"
-                  min={0}
-                  value={draft.salaryMin}
-                  onChange={(e) => onDraftField("salaryMin", e.target.value)}
-                  placeholder="e.g. 80000"
-                  autoComplete="off"
-                  className="c360-mb-3"
+            >
+              <HsFilterChipList
+                items={chipBuckets.industries}
+                variant="section"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Include category (topic)
+              </p>
+              <HiringSignalCountedSelect
+                field="job_industry"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-industry-include"
+                value={industryIncludeSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("industries", v ? [v] : []);
+                }}
+                staticOptions={INDUSTRY_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+                className="c360-mb-3"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Exclude category (topic)
+              </p>
+              <HiringSignalCountedSelect
+                field="job_industry"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-industry-exclude"
+                value={industryExcludeSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("excludedIndustries", v ? [v] : []);
+                }}
+                staticOptions={INDUSTRY_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.jobFunction}
+              title="Job function"
+              count={functionCount}
+              onClear={() => {
+                onDraftField("functionPreset", "");
+                onDraftField("functionCustom", "");
+              }}
+            >
+              <HsFilterChipList
+                items={chipBuckets.jobFunction}
+                variant="section"
+              />
+              <HiringSignalCountedSelect
+                field="function_category"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-func-preset"
+                value={draft.functionPreset}
+                onChange={(e) => onDraftField("functionPreset", e.target.value)}
+                staticOptions={FUNCTION_PRESET_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.education}
+              title="Education"
+              count={eduCount}
+              onClear={() => {
+                onDraftField("educationLevelMins", []);
+              }}
+            >
+              <HsFilterChipList
+                items={chipBuckets.roleEducation}
+                variant="section"
+              />
+              <p className="c360-mb-1 c360-text-2xs c360-font-medium c360-text-ink-muted">
+                Minimum education (job posting mentions)
+              </p>
+              <HiringSignalCountedSelect
+                field="education_level_min"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-education-min"
+                value={educationMinSelectValue}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  onDraftField("educationLevelMins", v ? [v] : []);
+                }}
+                staticOptions={EDUCATION_MIN_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.requiredSkills}
+              title="Required skills"
+              count={skillsCount}
+              onClear={() => onDraftField("skillsAll", [])}
+            >
+              <HsFilterChipList items={chipBuckets.skills} variant="section" />
+              <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
+                Jobs must include every listed skill in ingested tags (AND). Add
+                from the list; remove with the chips above. Duplicates are
+                ignored.
+              </p>
+              <HiringSignalCountedSelect
+                field="skill_tag"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-skill-tag-add"
+                value=""
+                onChange={(e) => appendSkillTag(e.target.value)}
+                staticOptions={SKILL_TAG_ADD_SELECT_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+            </HsFilterSection>
+
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.compliancePreferences}
+              title="Compliance & preferences"
+              count={clearanceCount + h1bCount}
+              onClear={() => {
+                onDraftField("clearanceMode", "");
+                onDraftField("h1bOnly", false);
+              }}
+            >
+              <HsFilterChipList
+                items={chipBuckets.compliance}
+                variant="section"
+              />
+              <HiringSignalCountedSelect
+                field="clearance_mode"
+                appliedListFilters={appliedListFilters}
+                signalTimePreset={signalTimePreset}
+                id="hsf-clearance"
+                value={draft.clearanceMode}
+                onChange={(e) => onDraftField("clearanceMode", e.target.value)}
+                staticOptions={CLEARANCE_OPTIONS}
+                fullWidth
+                inputSize="md"
+              />
+              <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
+                Clearance flags are inferred from job text (see docs).
+              </p>
+              <label className="c360-mt-3 c360-flex c360-items-center c360-gap-2 c360-text-2xs">
+                <input
+                  type="checkbox"
+                  checked={draft.h1bOnly}
+                  onChange={(e) => onDraftField("h1bOnly", e.target.checked)}
                 />
-                <label
-                  htmlFor="hsf-salary-max"
-                  className="c360-mb-1 c360-block c360-text-2xs c360-text-ink-muted"
-                >
-                  Custom maximum (optional)
-                </label>
-                <Input
-                  id="hsf-salary-max"
-                  type="number"
-                  min={0}
-                  value={draft.salaryMax}
-                  onChange={(e) => onDraftField("salaryMax", e.target.value)}
-                  placeholder="e.g. 150000"
-                  autoComplete="off"
+                H1B / sponsorship mentioned
+              </label>
+            </HsFilterSection>
+            <HsFilterSection
+              sectionId={HS_FILTER_SECTION_IDS.compensation}
+              title="Compensation"
+              count={salaryCount}
+              onClear={
+                salaryCount > 0
+                  ? () => {
+                      onDraftField("salaryPreset", "");
+                      onDraftField("salaryMin", "");
+                      onDraftField("salaryMax", "");
+                    }
+                  : undefined
+              }
+            >
+              <div className="c360-space-y-3">
+                <HsFilterChipList
+                  items={chipBuckets.compensation}
+                  variant="section"
                 />
-              </>
-            ) : null}
-            <p className="c360-mt-2 c360-text-2xs c360-text-ink-muted">
-              Matches parsed salary fields and salary text in postings.
-            </p>
-          </HsFilterSection>
-        </div>
-      </HsFilterAccordionProvider>
+                <HiringSignalFilterComingSoon featureLabel="Compensation" />
+              </div>
+            </HsFilterSection>
+          </div>
+        </HsFilterAccordionProvider>
+      </FilterSidebarBody>
     </div>
   );
 }

@@ -813,10 +813,215 @@
 
 .c360-page.c360-hiring-signals-page
   > .c360-data-layout
+  > .c360-data-layout__filters--collapsed {
+  min-width: 0;
+  max-width: 3.05rem;
+  width: 3.05rem;
+  overflow: hidden;
+}
+
+.c360-page.c360-hiring-signals-page
+  > .c360-data-layout
+  > .c360-data-layout__filters--peek {
+  min-width: 260px;
+  max-width: 300px;
+  width: 300px;
+}
+
+.c360-page.c360-hiring-signals-page
+  > .c360-data-layout
   > .c360-data-layout__content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   gap: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fill viewport: main → dashboard → tabs → signals data layout → table shell */
+.c360-shell .c360-main:has(.c360-dashboard-layout--hiring-signals) {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.c360-shell .c360-main:has(.c360-dashboard-layout--hiring-signals) > main {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c360-page.c360-dashboard-layout.c360-dashboard-layout--hiring-signals {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-main
+  > main
+  > .c360-page.c360-dashboard-layout:has(.c360-tabs--hiring-signals) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-tabs--hiring-signals {
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.c360-tabs--hiring-signals .c360-tabs__panel {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-page.c360-hiring-signals-page {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Override global `.c360-data-layout { min-height: calc(100vh - …) }` — stay viewport-bound */
+.c360-page.c360-hiring-signals-page > .c360-data-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.c360-hs-signals-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel {
+  flex: 1 1 0;
+  min-height: var(--c360-viewport-fill-h, 0);
+  height: var(--c360-viewport-fill-h, auto);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel .c360-data-table-shell {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel .c360-data-table-shell__scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel .c360-hs-data-grid {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel .c360-hs-data-grid .MuiDataGrid-root {
+  height: 100% !important;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.c360-hs-signals-table-panel .c360-hs-data-grid .MuiDataGrid-main {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c360-hs-signals-table-panel .c360-hs-data-grid .MuiDataGrid-virtualScroller {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto !important;
+}
+
+.c360-hs-signals-table-panel .c360-hs-data-grid .MuiDataGrid-overlayWrapper {
+  min-height: 0;
+}
+
+/* Empty state — centered in full-height grid viewport */
+.c360-hs-empty-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 12rem;
+  padding: var(--c360-spacing-6) var(--c360-spacing-4);
+  box-sizing: border-box;
+}
+
+.c360-hs-empty-overlay__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-2);
+  max-width: 28rem;
+  text-align: center;
+}
+
+.c360-hs-empty-overlay__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: var(--c360-spacing-1);
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-bg-subtle, var(--c360-bg));
+  color: var(--c360-text-muted);
+}
+
+.c360-hs-empty-overlay__title {
+  margin: 0;
+  font-size: var(--c360-text-base);
+  font-weight: 600;
+  color: var(--c360-text);
+}
+
+.c360-hs-empty-overlay__hint {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  line-height: 1.5;
+  color: var(--c360-text-muted);
+}
+
+.c360-hs-empty-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c360-spacing-2);
+  margin-top: var(--c360-spacing-2);
 }
 
 /* Sticky signals toolbar: stays visible under fixed topbar while scrolling the list */
@@ -991,9 +1196,7 @@
   .c360-main.c360-main--collapsed
     .c360-tabs--hiring-signals.c360-tabs--floating-bottom
     .c360-tabs__list--floating-wrap {
-    max-width: calc(
-      100vw - var(--c360-sidebar-width-collapsed) - 340px
-    );
+    max-width: calc(100vw - var(--c360-sidebar-width-collapsed) - 340px);
   }
 }
 
@@ -1211,19 +1414,19 @@
 }
 
 .c360-hs-filters .c360-contacts-filters__head-row {
-  flex-direction: row;
+  text-align: center;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
-  text-align: center;
+  gap: 20px;
+  /* display: flex; */
 }
 
-.c360-hs-filters .c360-contacts-filters__head-text {
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  padding-top: 5px;
-  padding-bottom: 5px;
+.c360-hs-filters
+  .c360-contacts-filters__head-row:not(
+    .c360-contacts-filters__head-row--collapsed
+  ) {
+  justify-content: flex-end;
 }
 
 .c360-hs-filters__group-header {

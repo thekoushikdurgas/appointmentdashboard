@@ -108,3 +108,80 @@
   font-size: var(--c360-text-sm);
   color: var(--c360-text-muted);
 }
+
+/* Email OTP modal (registration + passwordless login) */
+.c360-otp-modal__intro {
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  text-align: center;
+  margin-bottom: var(--c360-spacing-4);
+}
+
+.c360-otp-modal__email {
+  font-weight: 600;
+  color: var(--c360-text);
+}
+
+.c360-otp-pin {
+  display: flex;
+  justify-content: center;
+  gap: var(--c360-spacing-2);
+  margin: var(--c360-spacing-4) 0;
+}
+
+.c360-otp-pin__input {
+  width: 3rem;
+  height: 3rem;
+  text-align: center;
+  font-size: var(--c360-text-xl);
+  font-weight: 600;
+  border: 1px solid var(--c360-border);
+  border-radius: var(--c360-radius-md);
+  background: var(--c360-surface);
+  color: var(--c360-text);
+}
+
+.c360-otp-pin__input:focus {
+  outline: none;
+  border-color: var(--c360-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c360-primary) 25%, transparent);
+}
+
+.c360-otp-modal__error {
+  margin-top: var(--c360-spacing-2);
+}
+
+.c360-otp-modal__resend {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--c360-spacing-4);
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+}
+
+.c360-auth-method-toggle {
+  display: flex;
+  gap: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-4);
+  padding: var(--c360-spacing-1);
+  background: var(--c360-surface-muted);
+  border-radius: var(--c360-radius-md);
+}
+
+.c360-auth-method-toggle__btn {
+  flex: 1;
+  padding: var(--c360-spacing-2) var(--c360-spacing-3);
+  border: none;
+  border-radius: var(--c360-radius-sm);
+  background: transparent;
+  color: var(--c360-text-muted);
+  font-size: var(--c360-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.c360-auth-method-toggle__btn--active {
+  background: var(--c360-surface);
+  color: var(--c360-text);
+  box-shadow: var(--c360-shadow-sm);
+}

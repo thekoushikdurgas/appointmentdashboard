@@ -32,6 +32,7 @@ import {
   writeTTLCache,
   clearTTLCache,
 } from "@/lib/ttlLocalStorageCache";
+import { consumePostLoginRoute } from "@/lib/returnRoute";
 
 const ME_CACHE_KEY = "c360:auth:me:v1";
 const ME_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -45,7 +46,6 @@ export interface AuthUser {
   is_verified?: boolean;
   subscription_plan?: string;
   credits_remaining?: number;
-  /** From `me.profile` — drives General tab and header avatar. */
   job_title?: string | null;
   bio?: string | null;
   timezone?: string | null;
@@ -53,7 +53,6 @@ export interface AuthUser {
 }
 
 export interface AuthLoginOptions {
-  /** When true (default), sends best-effort `geolocation` on login for gateway audit. */
   attachClientGeo?: boolean;
   geolocation?: GeolocationInput | GatewayGeolocationInput | null;
 }
@@ -67,10 +66,24 @@ export interface TwoFactorChallenge {
   email: string;
 }
 
+export interface EmailVerificationChallenge {
+  challengeToken: string;
+  email: string;
+}
+
+export interface LoginOtpChallenge {
+  challengeToken: string;
+  email: string;
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   twoFactorChallenge: TwoFactorChallenge | null;
+  emailVerificationChallenge: EmailVerificationChallenge | null;
+  loginOtpChallenge: LoginOtpChallenge | null;
+  otpModalError: string | null;
+  otpModalLoading: boolean;
   login: (
     email: string,
     password: string,
@@ -83,6 +96,10 @@ interface AuthContextValue {
     password: string,
     options?: AuthRegisterOptions,
   ) => Promise<void>;
+  requestLoginOtp: (email: string) => Promise<void>;
+  verifyEmailOtp: (code: string) => Promise<void>;
+  resendEmailOtp: () => Promise<void>;
+  dismissEmailOtp: () => void;
   logout: () => Promise<void>;
   refreshUser: (forceRefetch?: boolean) => Promise<void>;
 }
@@ -118,12 +135,40 @@ function mergeGeo(
   return undefined;
 }
 
+function seedGatewayUserFromAuth(user: {
+  id: string;
+  email: string;
+  fullName: string;
+}): GatewayUser {
+  return {
+    uuid: user.id,
+    email: user.email,
+    name: user.fullName ?? null,
+    isActive: true,
+    lastSignInAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+    bucket: null,
+    profile: null,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [twoFactorChallenge, setTwoFactorChallenge] =
     useState<TwoFactorChallenge | null>(null);
+  const [emailVerificationChallenge, setEmailVerificationChallenge] =
+    useState<EmailVerificationChallenge | null>(null);
+  const [loginOtpChallenge, setLoginOtpChallenge] =
+    useState<LoginOtpChallenge | null>(null);
+  const [otpModalError, setOtpModalError] = useState<string | null>(null);
+  const [otpModalLoading, setOtpModalLoading] = useState(false);
   const router = useRouter();
+
+  const navigateAfterAuth = useCallback(() => {
+    router.push(consumePostLoginRoute());
+  }, [router]);
 
   const refreshUser = useCallback(async (forceRefetch = false) => {
     try {
@@ -133,16 +178,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // FIX (Hypothesis A+B): Stale-while-revalidate.
-      // Serve any cached entry (even if slightly stale) IMMEDIATELY so loading
-      // resolves in <5ms, then fire a background network refresh to keep data fresh.
       const stale = readTTLCache<GatewayUser>(ME_CACHE_KEY);
       if (stale) {
         setUser(mapGatewayUserToAuthUser(stale));
         if (!forceRefetch) {
           return;
         }
-        // forceRefetch=true: user already set from stale, refresh silently in background
       }
 
       const data = await graphqlQuery<MeResponse>(
@@ -160,22 +201,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch {
-      // On error: do NOT clear the user — stale user state is better than logged out.
-      // Only clear if there is genuinely no token at all.
       if (!isAuthenticated()) setUser(null);
     }
   }, []);
 
+  const finishAuthSession = useCallback(
+    (result: {
+      tokens: { accessToken: string; refreshToken: string };
+      user: { id: string; email: string; fullName: string };
+    }) => {
+      const seed = seedGatewayUserFromAuth(result.user);
+      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+      writeTTLCache(ME_CACHE_KEY, seed, ME_CACHE_TTL_MS);
+      setUser(mapGatewayUserToAuthUser(seed));
+      refreshUser(true).catch(() => undefined);
+      navigateAfterAuth();
+    },
+    [navigateAfterAuth, refreshUser],
+  );
+
   useEffect(() => {
-    // FIX (Hypothesis A): If we have a valid token and any cached user, unblock
-    // loading IMMEDIATELY (synchronously before the async refresh), so DashboardLayout
-    // never shows a spinner on cold load with a valid session.
     if (isAuthenticated()) {
       const instant = readTTLCache<GatewayUser>(ME_CACHE_KEY);
       if (instant) {
         setUser(mapGatewayUserToAuthUser(instant));
         setLoading(false);
-        // Still run a background refresh to keep data fresh — but loading is already false
         refreshUser(true).catch(() => undefined);
         return;
       }
@@ -201,29 +251,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // FIX (Hypothesis C): Write a seed GatewayUser to the TTL cache immediately
-      // from the login payload. This means: (1) no cold-start 1465ms AUTH_ME_QUERY
-      // on next page reload, (2) refreshUser(true) below finds stale data and serves
-      // the user from cache instantly before firing its background network call.
-      const seedGatewayUser: import("@/types/graphql-gateway").GatewayUser = {
-        uuid: result.user.id,
-        email: result.user.email,
-        name: result.user.fullName ?? null,
-        isActive: true,
-        lastSignInAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-        bucket: null,
-        profile: null,
-      };
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      writeTTLCache(ME_CACHE_KEY, seedGatewayUser, ME_CACHE_TTL_MS);
-      setUser(mapGatewayUserToAuthUser(seedGatewayUser));
-      // Background refresh to get full profile (credits, plan, etc.) — non-blocking
-      refreshUser(true).catch(() => undefined);
-      router.push(ROUTES.DASHBOARD);
+      finishAuthSession(result);
     },
-    [router, refreshUser],
+    [router, finishAuthSession],
   );
 
   const completeTwoFactorLogin = useCallback(
@@ -234,24 +264,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         code,
       );
       setTwoFactorChallenge(null);
-      const seed2FA: import("@/types/graphql-gateway").GatewayUser = {
-        uuid: result.user.id,
-        email: result.user.email,
-        name: result.user.fullName ?? null,
-        isActive: true,
-        lastSignInAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-        bucket: null,
-        profile: null,
-      };
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      writeTTLCache(ME_CACHE_KEY, seed2FA, ME_CACHE_TTL_MS);
-      setUser(mapGatewayUserToAuthUser(seed2FA));
-      refreshUser(true).catch(() => undefined);
-      router.push(ROUTES.DASHBOARD);
+      finishAuthSession(result);
     },
-    [twoFactorChallenge, router, refreshUser],
+    [twoFactorChallenge, finishAuthSession],
   );
 
   const register = useCallback(
@@ -270,25 +285,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             null,
         },
       );
-      const seedReg: import("@/types/graphql-gateway").GatewayUser = {
-        uuid: result.user.id,
-        email: result.user.email,
-        name: result.user.fullName ?? null,
-        isActive: true,
-        lastSignInAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-        bucket: null,
-        profile: null,
-      };
-      setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-      writeTTLCache(ME_CACHE_KEY, seedReg, ME_CACHE_TTL_MS);
-      setUser(mapGatewayUserToAuthUser(seedReg));
-      refreshUser(true).catch(() => undefined);
-      router.push(ROUTES.DASHBOARD);
+
+      if (
+        result.emailVerificationRequired &&
+        result.verificationChallengeToken
+      ) {
+        setEmailVerificationChallenge({
+          challengeToken: result.verificationChallengeToken,
+          email,
+        });
+        setOtpModalError(null);
+        return;
+      }
+
+      finishAuthSession(result);
     },
-    [router, refreshUser],
+    [finishAuthSession],
   );
+
+  const requestLoginOtp = useCallback(async (email: string) => {
+    setOtpModalError(null);
+    const payload = await authService.requestLoginOtp(email);
+    if (payload.challengeToken && payload.email) {
+      setLoginOtpChallenge({
+        challengeToken: payload.challengeToken,
+        email: payload.email,
+      });
+      return;
+    }
+    toast.success(
+      "If an account exists for that email, a sign-in code has been sent.",
+    );
+  }, []);
+
+  const verifyEmailOtp = useCallback(
+    async (code: string) => {
+      setOtpModalLoading(true);
+      setOtpModalError(null);
+      try {
+        if (emailVerificationChallenge) {
+          const result = await authService.verifyRegistrationOtp(
+            emailVerificationChallenge.challengeToken,
+            code,
+          );
+          setEmailVerificationChallenge(null);
+          finishAuthSession(result);
+          return;
+        }
+        if (loginOtpChallenge) {
+          const result = await authService.completeLoginOtp(
+            loginOtpChallenge.challengeToken,
+            code,
+          );
+          setLoginOtpChallenge(null);
+          finishAuthSession(result);
+          return;
+        }
+        throw new Error("No active verification challenge.");
+      } catch (err) {
+        setOtpModalError(
+          err instanceof Error ? err.message : "Invalid verification code.",
+        );
+        throw err;
+      } finally {
+        setOtpModalLoading(false);
+      }
+    },
+    [emailVerificationChallenge, loginOtpChallenge, finishAuthSession],
+  );
+
+  const resendEmailOtp = useCallback(async () => {
+    setOtpModalError(null);
+    try {
+      if (emailVerificationChallenge) {
+        await authService.resendRegistrationOtp(
+          emailVerificationChallenge.challengeToken,
+        );
+        toast.success("Verification code sent.");
+        return;
+      }
+      if (loginOtpChallenge) {
+        await authService.resendLoginOtp(loginOtpChallenge.challengeToken);
+        toast.success("Sign-in code sent.");
+        return;
+      }
+    } catch (err) {
+      setOtpModalError(
+        err instanceof Error ? err.message : "Could not resend code.",
+      );
+      throw err;
+    }
+  }, [emailVerificationChallenge, loginOtpChallenge]);
+
+  const dismissEmailOtp = useCallback(() => {
+    setEmailVerificationChallenge(null);
+    setLoginOtpChallenge(null);
+    setOtpModalError(null);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -315,9 +408,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         twoFactorChallenge,
+        emailVerificationChallenge,
+        loginOtpChallenge,
+        otpModalError,
+        otpModalLoading,
         login,
         completeTwoFactorLogin,
         register,
+        requestLoginOtp,
+        verifyEmailOtp,
+        resendEmailOtp,
+        dismissEmailOtp,
         logout,
         refreshUser,
       }}

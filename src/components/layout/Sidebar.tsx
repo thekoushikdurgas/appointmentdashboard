@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -32,7 +32,6 @@ import type { SidebarSectionConfig } from "@/lib/constants";
 import { useRole } from "@/context/RoleContext";
 import { SidebarSearch } from "@/components/shared/SidebarSearch";
 import { SidebarNav } from "./SidebarNav";
-import { SidebarQuickActions } from "./SidebarQuickActions";
 import { SidebarAccountFooter } from "./SidebarAccountFooter";
 import { cn } from "@/lib/utils";
 
@@ -109,6 +108,22 @@ export default function Sidebar({
     if (!collapsed) onPeekChange?.(false);
   }, [collapsed, onPeekChange]);
 
+  /** Keep collapsed/expanded rail pinned to viewport height (belt-and-suspenders with CSS dvh). */
+  useLayoutEffect(() => {
+    const aside = document.getElementById("c360-app-sidebar");
+    if (!aside || typeof window === "undefined") return;
+
+    const syncRailHeight = () => {
+      const viewportH = window.innerHeight;
+      aside.style.height = `${viewportH}px`;
+      aside.style.minHeight = `${viewportH}px`;
+    };
+
+    syncRailHeight();
+    window.addEventListener("resize", syncRailHeight);
+    return () => window.removeEventListener("resize", syncRailHeight);
+  }, [collapsed, peekOpen, mobileOpen]);
+
   const handlePeekEnter = () => {
     if (peekActive) onPeekChange?.(true);
   };
@@ -178,11 +193,6 @@ export default function Sidebar({
         <div className="c360-sidebar__search">
           <SidebarSearch collapsed={railCollapsed} />
         </div>
-
-        <SidebarQuickActions
-          railCollapsed={railCollapsed}
-          onMobileClose={onMobileClose}
-        />
 
         <div className="c360-sidebar__main">
           <nav className="c360-sidebar__nav" aria-label="Primary navigation">

@@ -1,6 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { DataFiltersPanelProvider } from "@/context/DataFiltersPanelContext";
+import { useOptionalDataFiltersPanelContext } from "@/context/DataFiltersPanelContext";
+import { FilterSidebarPeekProvider } from "@/context/FilterSidebarPeekContext";
+import {
+  resolveFilterSidebarAnimateState,
+  filterAsideVariants,
+  filterSidebarTransition,
+} from "@/components/layouts/filterSidebarMotion";
 import { cn } from "@/lib/utils";
 
 export interface DataPageLayoutProps {
@@ -15,6 +24,8 @@ export interface DataPageLayoutProps {
    */
   filterDrawerTitleId?: string;
   showFilters?: boolean;
+  /** localStorage key for desktop filter panel pin/collapse (per page). */
+  filtersPanelStorageKey?: string;
   /** Primary toolbar row (tabs + actions) — appointment-d1-style. */
   toolbar?: ReactNode;
   /** Compact metadata under toolbar (counts, sort hint). */
@@ -23,7 +34,92 @@ export interface DataPageLayoutProps {
   pagination?: ReactNode;
 }
 
-export default function DataPageLayout({
+function DataPageLayoutFiltersAside({
+  filters,
+  filtersAriaLabel,
+}: {
+  filters: ReactNode;
+  filtersAriaLabel: string;
+}) {
+  const panel = useOptionalDataFiltersPanelContext();
+  const prefersReducedMotion = useReducedMotion();
+  const [isHoverPeeking, setIsHoverPeeking] = useState(false);
+
+  const collapsed = Boolean(panel?.collapseEnabled && panel.expanded === false);
+  const pinned = Boolean(panel?.pinned);
+  const peekEligible = Boolean(panel?.collapseEnabled && collapsed && !pinned);
+
+  const effectiveAnimateState = resolveFilterSidebarAnimateState({
+    expanded: !collapsed,
+    pinned,
+    isHoverPeeking: peekEligible && isHoverPeeking,
+  });
+
+  const motionEnabled = Boolean(
+    panel?.collapseEnabled && !prefersReducedMotion,
+  );
+
+  const setHoverPeeking = useCallback((value: boolean) => {
+    setIsHoverPeeking(value);
+  }, []);
+
+  const handleAsideMouseEnter = useCallback(() => {
+    if (peekEligible) setIsHoverPeeking(true);
+  }, [peekEligible]);
+
+  const handleAsideMouseLeave = useCallback(() => {
+    setIsHoverPeeking(false);
+  }, []);
+
+  const asideClassName = cn(
+    "c360-data-layout__filters",
+    motionEnabled && "c360-data-layout__filters--motion",
+    effectiveAnimateState === "collapsed" &&
+      "c360-data-layout__filters--collapsed",
+    peekEligible && isHoverPeeking && "c360-data-layout__filters--peek",
+  );
+
+  const filterContent = (
+    <FilterSidebarPeekProvider
+      isHoverPeeking={peekEligible && isHoverPeeking}
+      effectiveAnimateState={effectiveAnimateState}
+      peekEligible={peekEligible}
+      setHoverPeeking={setHoverPeeking}
+    >
+      {filters}
+    </FilterSidebarPeekProvider>
+  );
+
+  if (motionEnabled) {
+    return (
+      <motion.aside
+        className={asideClassName}
+        aria-label={filtersAriaLabel}
+        initial={false}
+        animate={effectiveAnimateState}
+        variants={filterAsideVariants}
+        transition={filterSidebarTransition}
+        onMouseEnter={handleAsideMouseEnter}
+        onMouseLeave={handleAsideMouseLeave}
+      >
+        {filterContent}
+      </motion.aside>
+    );
+  }
+
+  return (
+    <aside
+      className={asideClassName}
+      aria-label={filtersAriaLabel}
+      onMouseEnter={handleAsideMouseEnter}
+      onMouseLeave={handleAsideMouseLeave}
+    >
+      {filterContent}
+    </aside>
+  );
+}
+
+function DataPageLayoutInner({
   filters,
   children,
   className,
@@ -62,12 +158,10 @@ export default function DataPageLayout({
           toolbar && "c360-data-layout--with-toolbar",
         )}
       >
-        <aside
-          className="c360-data-layout__filters"
-          aria-label={filtersAriaLabel}
-        >
-          {filters}
-        </aside>
+        <DataPageLayoutFiltersAside
+          filters={filters}
+          filtersAriaLabel={filtersAriaLabel}
+        />
         <div className="c360-data-layout__content">
           {toolbar ? (
             <div className="c360-data-layout__toolbar">{toolbar}</div>
@@ -83,4 +177,21 @@ export default function DataPageLayout({
       </div>
     </div>
   );
+}
+
+export default function DataPageLayout({
+  filtersPanelStorageKey,
+  ...rest
+}: DataPageLayoutProps) {
+  const showFilterPanel = rest.showFilters !== false && rest.filters;
+
+  if (showFilterPanel && filtersPanelStorageKey) {
+    return (
+      <DataFiltersPanelProvider storageKey={filtersPanelStorageKey}>
+        <DataPageLayoutInner {...rest} />
+      </DataFiltersPanelProvider>
+    );
+  }
+
+  return <DataPageLayoutInner {...rest} />;
 }

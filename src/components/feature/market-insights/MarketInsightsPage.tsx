@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { DataToolbar } from "@/components/patterns/DataToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import type {
@@ -121,11 +122,13 @@ export function MarketInsightsPage({
       <DataPageLayout
         className="c360-market-insights-page"
         showFilters
+        filtersPanelStorageKey={
+          STORAGE_KEYS.DATA_FILTERS_PEEK_PINNED_MARKET_INSIGHTS
+        }
         filtersAriaLabel="Hiring signal filters"
         toolbar={toolbar}
         filters={
           <HiringSignalsFilterSidebar
-            drawerTitleId="c360-market-filter-drawer-title"
             appliedListFilters={filters}
             signalTimePreset={signalTimePreset}
             appliedRunId={filters.runId}
