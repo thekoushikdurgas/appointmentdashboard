@@ -4,12 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EMPTY_HIRING_SIGNAL_DRAFT } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { HiringSignalFilterDraft } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import { useSearchParams } from "next/navigation";
-import { Download, FilterX, History, Play, RefreshCw, Zap } from "lucide-react";
+import { FilterX, History, Zap } from "lucide-react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
 import { STORAGE_KEYS } from "@/lib/constants";
-import { Pagination } from "@/components/ui/Pagination";
-import { DataToolbar } from "@/components/patterns/DataToolbar";
+import { HiringSignalsListToolbar } from "@/components/feature/hiring-signals/HiringSignalsListToolbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   effectivePostedBounds,
@@ -25,7 +24,6 @@ import { RunsTab } from "@/components/feature/hiring-signals/RunsTab";
 import { HiringSignalsFilterSidebar } from "@/components/feature/hiring-signals/HiringSignalsFilterSidebar";
 import {
   HiringSignalsDataTable,
-  HiringSignalsToolbarTableExtras,
   HS_DT_COLUMN_IDS,
   HS_DT_DEFAULT_COLUMNS,
   type HiringSignalsDataTableColumnId,
@@ -66,7 +64,6 @@ import {
   SavedSearchesMenu,
   SavedSearchesTriggerButton,
 } from "@/components/feature/saved-searches/SavedSearchesMenu";
-import { HiringSignalsGlobalSearch } from "@/components/feature/hiring-signals/HiringSignalsGlobalSearch";
 import {
   HIRE_SIGNAL_SAVED_SEARCH_VERSION,
   type HireSignalSavedSearchPayload,
@@ -139,7 +136,6 @@ function HiringSignalsPageBody({
   const [mainTab, setMainTab] = useState<"signals" | "runs">("signals");
   const [runsReloadTick, setRunsReloadTick] = useState(0);
   const [savedSearchesPanelOpen, setSavedSearchesPanelOpen] = useState(false);
-  const [tableDensity] = useState<"comfortable" | "compact">("compact");
   const [exportBusy, setExportBusy] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportBanner, setExportBanner] = useState<{
@@ -285,20 +281,20 @@ function HiringSignalsPageBody({
       const parsed0 = parseStatusPayload(row.statusPayload);
       const rawPct0 =
         row.statusPayload &&
-        typeof row.statusPayload === "object" &&
-        typeof (row.statusPayload as Record<string, unknown>)
-          .progress_percent === "number"
+          typeof row.statusPayload === "object" &&
+          typeof (row.statusPayload as Record<string, unknown>)
+            .progress_percent === "number"
           ? ((row.statusPayload as Record<string, unknown>)
-              .progress_percent as number)
+            .progress_percent as number)
           : null;
       const prog0 =
         rawPct0 != null && rawPct0 > 0
           ? Math.min(100, Math.max(0, Math.round(rawPct0)))
           : deriveDisplayProgressPercent(st0.toUpperCase(), {
-              progress: parsed0.progress,
-              total: parsed0.total,
-              processed: parsed0.processed,
-            });
+            progress: parsed0.progress,
+            total: parsed0.total,
+            processed: parsed0.processed,
+          });
       setExportBanner({
         jobId: row.jobId,
         status: st0,
@@ -403,20 +399,20 @@ function HiringSignalsPageBody({
             const parsed = parseStatusPayload(row.statusPayload);
             const rawPct =
               row.statusPayload &&
-              typeof row.statusPayload === "object" &&
-              typeof (row.statusPayload as Record<string, unknown>)
-                .progress_percent === "number"
+                typeof row.statusPayload === "object" &&
+                typeof (row.statusPayload as Record<string, unknown>)
+                  .progress_percent === "number"
                 ? ((row.statusPayload as Record<string, unknown>)
-                    .progress_percent as number)
+                  .progress_percent as number)
                 : null;
             const prog =
               rawPct != null && rawPct > 0
                 ? Math.min(100, Math.max(0, Math.round(rawPct)))
                 : deriveDisplayProgressPercent(st.toUpperCase(), {
-                    progress: parsed.progress,
-                    total: parsed.total,
-                    processed: parsed.processed,
-                  });
+                  progress: parsed.progress,
+                  total: parsed.total,
+                  processed: parsed.processed,
+                });
             setExportBanner((b) =>
               b && b.jobId === exportBanner.jobId
                 ? { jobId: b.jobId, status: st, progress: prog }
@@ -447,118 +443,31 @@ function HiringSignalsPageBody({
     setVisibleColumns(loadHireSignalVisibleColumns());
   }, []);
 
-  const signalsToolbar = useMemo(
-    () => (
-      <div className="c360-hs-toolbar-stack">
-        <div className="c360-hs-toolbar-search-row">
-          <HiringSignalsGlobalSearch
-            className="c360-hs-global-search--toolbar-full"
-            tokens={filters.globalSearchTokens ?? []}
-            disabled={loading}
-            onTokensChange={(next) => {
-              setFilters((f) => ({
-                ...f,
-                globalSearchTokens: next.length > 0 ? next : undefined,
-                offset: 0,
-              }));
-            }}
-          />
-          {filters.runId?.trim() ? (
-            <span className="c360-text-2xs c360-text-muted c360-shrink-0 c360-hs-toolbar-run-hint">
-              {total.toLocaleString()} jobs match this run
-            </span>
-          ) : null}
-        </div>
-        <DataToolbar
-          cssPrefix="c360-toolbar"
-          tabs={[
-            {
-              value: "all",
-              label: "All signals",
-              count: total,
-              showCountOnlyWhenActive: true,
-            },
-            {
-              value: "new",
-              label: "Today's jobs",
-              count: total,
-              showCountOnlyWhenActive: true,
-            },
-          ]}
-          activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
-          onTabChange={(v) =>
-            setSignalTimePreset(v === "new" ? "new_7d" : "all")
-          }
-          totalCount={total}
-          actionPrefix={
-            <>
-              {total > filters.limit ? (
-                <Pagination
-                  variant="dropdown"
-                  className="c360-hiring-signals-toolbar-pagination"
-                  page={currentPage + 1}
-                  pageSize={filters.limit}
-                  total={total}
-                  onPageChange={(p) => setPage(p - 1)}
-                />
-              ) : null}
-              <HiringSignalsToolbarTableExtras
-                pageSize={filters.limit}
-                onPageSizeChange={setPageSize}
-              />
-            </>
-          }
-          actions={[
-            {
-              label: "Export XLSX",
-              onClick: () => {
-                if (!canExportHireSignalXlsx) return;
-                setExportModalOpen(true);
-              },
-              icon: Download,
-              variant: "secondary",
-              disabled: canExportHireSignalXlsx ? loading || total === 0 : true,
-              title: canExportHireSignalXlsx
-                ? undefined
-                : "Coming soon — XLSX export is available for admin accounts",
-            },
-            {
-              label: "Refresh",
-              onClick: () => void refetch(),
-              icon: RefreshCw,
-              variant: "secondary",
-              disabled: loading,
-            },
-            ...(isSuperAdmin
-              ? [
-                  {
-                    label: "Run scrape",
-                    onClick: () => setScrapeModalOpen(true),
-                    icon: Play,
-                    variant: "primary" as const,
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </div>
-    ),
-    [
-      currentPage,
-      filters.globalSearchTokens,
-      filters.limit,
-      filters.runId,
-      canExportHireSignalXlsx,
-      isSuperAdmin,
-      loading,
-      refetch,
-      setFilters,
-      setPage,
-      setPageSize,
-      setSignalTimePreset,
-      signalTimePreset,
-      total,
-    ],
+  const signalsToolbar = (
+    <HiringSignalsListToolbar
+      globalSearchTokens={filters.globalSearchTokens}
+      runId={filters.runId}
+      loading={loading}
+      total={total}
+      pageSize={filters.limit}
+      currentPage={currentPage}
+      signalTimePreset={signalTimePreset}
+      canExportHireSignalXlsx={canExportHireSignalXlsx}
+      isSuperAdmin={isSuperAdmin}
+      onGlobalSearchTokensChange={(next) => {
+        setFilters((f) => ({
+          ...f,
+          globalSearchTokens: next.length > 0 ? next : undefined,
+          offset: 0,
+        }));
+      }}
+      onSignalTimePresetChange={setSignalTimePreset}
+      onPageChange={setPage}
+      onPageSizeChange={setPageSize}
+      onExportClick={() => setExportModalOpen(true)}
+      onRefresh={() => void refetch()}
+      onRunScrapeClick={() => setScrapeModalOpen(true)}
+    />
   );
 
   return (
@@ -591,7 +500,7 @@ function HiringSignalsPageBody({
           </TabsList>
         ) : null}
         {showRunsTab ? (
-          <TabsContent value="runs">
+          <TabsContent value="runs" className="c360-hs-runs-tab-panel">
             <RunsTab
               isAdmin={isAdmin}
               isSuperAdmin={isSuperAdmin}
@@ -664,7 +573,7 @@ function HiringSignalsPageBody({
                       to download when complete.
                     </p>
                     {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
-                    exportBanner.status.toUpperCase() !== "FAILED" ? (
+                      exportBanner.status.toUpperCase() !== "FAILED" ? (
                       <Progress
                         value={exportBanner.progress}
                         max={100}
@@ -692,7 +601,6 @@ function HiringSignalsPageBody({
                 onOpenCompanyDrawer={(row) => setDrawerRow(row)}
                 selectedKeys={selectedKeys}
                 onSelectionChange={setSelectedKeys}
-                density={tableDensity}
                 visibleColumns={visibleColumns}
                 listFilters={effectiveJobListFilters}
                 setListFilters={setFilters}
@@ -721,7 +629,6 @@ function HiringSignalsPageBody({
           companyName={companyRow.companyName || "Company"}
           isOpen={!!companyRow}
           onClose={() => setCompanyRow(null)}
-          density={tableDensity}
         />
       ) : null}
       {connectraRow ? (
@@ -729,7 +636,6 @@ function HiringSignalsPageBody({
           job={connectraRow}
           isOpen={!!connectraRow}
           onClose={() => setConnectraRow(null)}
-          density={tableDensity}
         />
       ) : null}
 

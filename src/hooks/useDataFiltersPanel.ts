@@ -68,6 +68,11 @@ export function useDataFiltersPanel(storageKey: string) {
     setState((prev) => nextDataFiltersPanelStateAfterTogglePin(prev));
   }, []);
 
+  /** Pin and expand the filter sidebar (toolbar Filters button). */
+  const openFilters = useCallback(() => {
+    setState({ pinned: true, expanded: true });
+  }, []);
+
   const effectiveExpanded = collapseEnabled ? state.expanded : true;
 
   return {
@@ -75,5 +80,6 @@ export function useDataFiltersPanel(storageKey: string) {
     expanded: effectiveExpanded,
     collapseEnabled,
     togglePin,
+    openFilters,
   };
 }

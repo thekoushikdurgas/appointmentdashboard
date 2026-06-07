@@ -25,6 +25,7 @@ describe("filterSidebarMotion", () => {
   it("defines collapsed aside width as icon rail", () => {
     expect(filterAsideVariants.collapsed).toMatchObject({
       width: FILTER_SIDEBAR_COLLAPSED_WIDTH_PX,
+      maxWidth: FILTER_SIDEBAR_COLLAPSED_WIDTH_PX,
     });
     expect(FILTER_SIDEBAR_COLLAPSED_WIDTH_PX).toBe(49);
     expect(FILTER_SIDEBAR_COLLAPSED_WIDTH_PX).toBeLessThan(

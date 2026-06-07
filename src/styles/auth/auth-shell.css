@@ -159,29 +159,40 @@
   color: var(--c360-text-muted);
 }
 
-.c360-auth-method-toggle {
-  display: flex;
-  gap: var(--c360-spacing-2);
-  margin-bottom: var(--c360-spacing-4);
-  padding: var(--c360-spacing-1);
-  background: var(--c360-surface-muted);
-  border-radius: var(--c360-radius-md);
-}
-
-.c360-auth-method-toggle__btn {
-  flex: 1;
-  padding: var(--c360-spacing-2) var(--c360-spacing-3);
-  border: none;
-  border-radius: var(--c360-radius-sm);
-  background: transparent;
-  color: var(--c360-text-muted);
+.c360-otp-pin-block__intro {
   font-size: var(--c360-text-sm);
-  font-weight: 500;
-  cursor: pointer;
+  color: var(--c360-text-muted);
+  margin-bottom: var(--c360-spacing-3);
 }
 
-.c360-auth-method-toggle__btn--active {
-  background: var(--c360-surface);
-  color: var(--c360-text);
-  box-shadow: var(--c360-shadow-sm);
+.c360-auth-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c360-spacing-2);
+  margin-bottom: var(--c360-spacing-1);
+}
+
+.c360-auth-field-header__action {
+  font-size: var(--c360-text-xs);
+  white-space: nowrap;
+}
+
+.c360-auth-otp-hint {
+  margin: 0;
+  font-size: var(--c360-text-sm);
+  color: var(--c360-text-muted);
+  line-height: 1.5;
+}
+
+.c360-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

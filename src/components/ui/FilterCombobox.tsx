@@ -169,7 +169,6 @@ export function FilterCombobox({
       </span>
       <Popover
         inline
-        width={320}
         align="start"
         placement="bottom"
         onOpenChange={handleOpenChange}

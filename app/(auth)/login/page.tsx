@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
@@ -12,13 +12,13 @@ import {
   AuthTabList,
   type AuthTab,
 } from "@/components/feature/auth/AuthTabList";
-import { AuthLoginForm } from "@/components/feature/auth/AuthLoginForm";
-import { AuthOtpLoginForm } from "@/components/feature/auth/AuthOtpLoginForm";
+import {
+  AuthLoginForm,
+  type LoginMethod,
+} from "@/components/feature/auth/AuthLoginForm";
 import { AuthRegisterForm } from "@/components/feature/auth/AuthRegisterForm";
 import { AuthLoginFallback } from "@/components/feature/auth/AuthLoginFallback";
 import { EmailOtpModal } from "@/components/feature/auth/EmailOtpModal";
-
-type LoginMethod = "password" | "otp";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -59,8 +59,15 @@ function LoginPageContent() {
   const otpLoginForm = useOtpLoginForm({ requestLoginOtp });
   const registerForm = useRegisterForm({ register });
 
-  const otpChallenge = emailVerificationChallenge ?? loginOtpChallenge;
-  const otpPurpose = emailVerificationChallenge ? "registration" : "login";
+  const switchToOtp = useCallback(() => {
+    otpLoginForm.setEmail(loginForm.email);
+    setLoginMethod("otp");
+  }, [loginForm.email, otpLoginForm]);
+
+  const switchToPassword = useCallback(() => {
+    loginForm.setEmail(otpLoginForm.email);
+    setLoginMethod("password");
+  }, [otpLoginForm.email, loginForm]);
 
   const subtitle = useMemo(
     () =>
@@ -77,36 +84,20 @@ function LoginPageContent() {
         <AuthTabList active={activeTab} onChange={switchTab} />
 
         {activeTab === "login" && (
-          <>
-            <div className="c360-auth-method-toggle">
-              <button
-                type="button"
-                className={`c360-auth-method-toggle__btn${loginMethod === "password" ? " c360-auth-method-toggle__btn--active" : ""}`}
-                onClick={() => setLoginMethod("password")}
-              >
-                Password
-              </button>
-              <button
-                type="button"
-                className={`c360-auth-method-toggle__btn${loginMethod === "otp" ? " c360-auth-method-toggle__btn--active" : ""}`}
-                onClick={() => setLoginMethod("otp")}
-              >
-                Email code
-              </button>
-            </div>
-
-            {loginMethod === "password" ? (
-              <AuthLoginForm
-                form={loginForm}
-                onSwitchToRegister={() => switchTab("register")}
-              />
-            ) : (
-              <AuthOtpLoginForm
-                form={otpLoginForm}
-                onSwitchToPassword={() => setLoginMethod("password")}
-              />
-            )}
-          </>
+          <AuthLoginForm
+            form={loginForm}
+            otpForm={otpLoginForm}
+            loginMethod={loginMethod}
+            onSwitchToOtp={switchToOtp}
+            onSwitchToPassword={switchToPassword}
+            onSwitchToRegister={() => switchTab("register")}
+            loginOtpActive={!!loginOtpChallenge}
+            loginOtpEmail={loginOtpChallenge?.email}
+            otpLoading={otpModalLoading}
+            otpError={otpModalError}
+            onVerifyOtp={verifyEmailOtp}
+            onResendOtp={resendEmailOtp}
+          />
         )}
         {activeTab === "register" && (
           <AuthRegisterForm
@@ -116,11 +107,11 @@ function LoginPageContent() {
         )}
       </div>
 
-      {otpChallenge && (
+      {emailVerificationChallenge && (
         <EmailOtpModal
           isOpen
-          email={otpChallenge.email}
-          purpose={otpPurpose}
+          email={emailVerificationChallenge.email}
+          purpose="registration"
           loading={otpModalLoading}
           error={otpModalError}
           onVerify={verifyEmailOtp}

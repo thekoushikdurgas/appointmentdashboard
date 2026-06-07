@@ -34,9 +34,9 @@ const NAV_LINKS: readonly {
   label: string;
   icon: LucideIcon;
 }[] = [
-  { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
-  { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
-];
+    { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
+    { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
+  ];
 
 function formatRoleLabel(role: string): string {
   if (!role.trim()) return "Member";
@@ -169,11 +169,11 @@ export function AccountMenuContent({
   const navLinksForMode =
     mode === "sidebar-full"
       ? NAV_LINKS.filter(
-          ({ href }) =>
-            href !== ROUTES.PROFILE &&
-            href !== profileTabRoute("settings") &&
-            href !== ROUTES.BILLING,
-        )
+        ({ href }) =>
+          href !== ROUTES.PROFILE &&
+          href !== profileTabRoute("settings") &&
+          href !== ROUTES.BILLING,
+      )
       : NAV_LINKS;
 
   const navLinks = navLinksForMode.map(({ href, label, icon: Icon }) => {
@@ -262,6 +262,15 @@ export function AccountMenuContent({
           />
           <div className="c360-sidebar-account__rail-divider" aria-hidden />
           <Link
+            href={ROUTES.BILLING}
+            className={railBtnClass}
+            title="Billing"
+            aria-label="Billing"
+            onClick={() => onNavigate?.()}
+          >
+            <Coins size={18} className="c360-sidebar__item-icon" aria-hidden />
+          </Link>
+          <Link
             href={ROUTES.PROFILE}
             className={cn(
               railBtnClass,
@@ -276,15 +285,6 @@ export function AccountMenuContent({
               avatarUrl={user?.avatar_url}
               size="sm"
             />
-          </Link>
-          <Link
-            href={ROUTES.BILLING}
-            className={railBtnClass}
-            title="Billing"
-            aria-label="Billing"
-            onClick={() => onNavigate?.()}
-          >
-            <Coins size={18} className="c360-sidebar__item-icon" aria-hidden />
           </Link>
           <button
             type="button"
@@ -306,6 +306,20 @@ export function AccountMenuContent({
   if (mode === "sidebar-full") {
     const profileSection = (
       <div className="c360-sidebar-account__profile">
+        <div className="c360-sidebar-account__profile-main">
+          <div className="c360-sidebar-account__profile-credits">
+            <TopBarCredits variant="profile" />
+          </div>
+          <Link
+            href={ROUTES.BILLING}
+            className="c360-sidebar-account__sign-out-btn c360-sidebar-account__billing-btn"
+            aria-label="Billing"
+            title="Billing"
+            onClick={() => onNavigate?.()}
+          >
+            <Coins size={16} aria-hidden />
+          </Link>
+        </div>
         <div className="c360-sidebar-account__profile-avatar">
           <Link
             href={ROUTES.PROFILE}
@@ -333,20 +347,6 @@ export function AccountMenuContent({
             >
               <LogOut size={16} aria-hidden />
             </button>
-          </Link>
-        </div>
-        <div className="c360-sidebar-account__profile-main">
-          <div className="c360-sidebar-account__profile-credits">
-            <TopBarCredits variant="profile" />
-          </div>
-          <Link
-            href={ROUTES.BILLING}
-            className="c360-sidebar-account__sign-out-btn c360-sidebar-account__billing-btn"
-            aria-label="Billing"
-            title="Billing"
-            onClick={() => onNavigate?.()}
-          >
-            <Coins size={16} aria-hidden />
           </Link>
         </div>
       </div>

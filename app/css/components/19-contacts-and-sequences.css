@@ -949,6 +949,9 @@
   gap: var(--c360-spacing-1);
   padding: var(--c360-spacing-2);
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .c360-contacts-filters .c360-filter-combobox {
@@ -1093,6 +1096,8 @@
   border-radius: var(--c360-radius-md);
   overflow: hidden;
   background: var(--c360-bg-elevated);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .c360-contacts-filter-section--active {
@@ -1207,6 +1212,10 @@
   padding: var(--c360-spacing-3);
   border-top: 1px solid var(--c360-border);
   background: var(--c360-bg);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .c360-contacts-filter-section__clear {

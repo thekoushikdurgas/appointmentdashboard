@@ -25,7 +25,7 @@ export const filterAsideVariants: Variants = {
   collapsed: {
     width: FILTER_SIDEBAR_COLLAPSED_WIDTH_PX,
     minWidth: 0,
-    maxWidth: FILTER_SIDEBAR_EXPANDED_WIDTH_PX,
+    maxWidth: FILTER_SIDEBAR_COLLAPSED_WIDTH_PX,
   },
 };
 
@@ -61,7 +61,6 @@ export const filterBodySlideVariants: Variants = {
   expanded: {
     opacity: 1,
     x: 0,
-    height: "auto",
     transition: {
       x: { stiffness: 1000, velocity: -100 },
       opacity: { duration: 0.2 },
