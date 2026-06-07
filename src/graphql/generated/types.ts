@@ -179,6 +179,14 @@ export type ActivityFilterInput = {
   status?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type ActivityMutation = {
+  logActivity: Scalars["Boolean"]["output"];
+};
+
+export type ActivityMutationLogActivityArgs = {
+  input: LogActivityInput;
+};
+
 export type ActivityQuery = {
   activities: ActivityConnection;
   activityStats: ActivityStats;
@@ -410,13 +418,23 @@ export type ApiMetadata = {
 };
 
 export type AuthMutation = {
+  completeLoginOtp: AuthPayload;
   completeTwoFactorLogin: AuthPayload;
   login: AuthPayload;
   logout: Scalars["Boolean"]["output"];
   refreshToken: AuthPayload;
   register: AuthPayload;
+  requestLoginOtp: LoginOtpPayload;
   requestPasswordReset: Scalars["Boolean"]["output"];
+  resendLoginOtp: Scalars["Boolean"]["output"];
+  resendRegistrationOtp: Scalars["Boolean"]["output"];
   resetPassword: Scalars["Boolean"]["output"];
+  verifyRegistrationOtp: AuthPayload;
+};
+
+export type AuthMutationCompleteLoginOtpArgs = {
+  input: CompleteLoginOtpInput;
+  pageType?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type AuthMutationCompleteTwoFactorLoginArgs = {
@@ -439,21 +457,40 @@ export type AuthMutationRegisterArgs = {
   pageType?: InputMaybe<Scalars["String"]["input"]>;
 };
 
+export type AuthMutationRequestLoginOtpArgs = {
+  input: RequestLoginOtpInput;
+};
+
 export type AuthMutationRequestPasswordResetArgs = {
   input: RequestPasswordResetInput;
+};
+
+export type AuthMutationResendLoginOtpArgs = {
+  input: ResendLoginOtpInput;
+};
+
+export type AuthMutationResendRegistrationOtpArgs = {
+  input: ResendRegistrationOtpInput;
 };
 
 export type AuthMutationResetPasswordArgs = {
   input: ResetPasswordInput;
 };
 
+export type AuthMutationVerifyRegistrationOtpArgs = {
+  input: VerifyRegistrationOtpInput;
+  pageType?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type AuthPayload = {
   accessToken: Scalars["String"]["output"];
   challengeToken?: Maybe<Scalars["String"]["output"]>;
+  emailVerificationRequired: Scalars["Boolean"]["output"];
   pages?: Maybe<Array<PageSummary>>;
   refreshToken: Scalars["String"]["output"];
   twoFactorRequired: Scalars["Boolean"]["output"];
   user: UserInfo;
+  verificationChallengeToken?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type AuthQuery = {
@@ -1022,6 +1059,11 @@ export type CompanyWithRelations = {
   company: CompanyBasic;
   contacts: Array<ContactWithRelations>;
   metadata?: Maybe<CompanyMetadataBasic>;
+};
+
+export type CompleteLoginOtpInput = {
+  challengeToken: Scalars["String"]["input"];
+  code: Scalars["String"]["input"];
 };
 
 export type CompleteTwoFactorLoginInput = {
@@ -2431,6 +2473,12 @@ export type LinkedInUpsertResponse = {
   success: Scalars["Boolean"]["output"];
 };
 
+export type LogActivityInput = {
+  entityType?: InputMaybe<Scalars["String"]["input"]>;
+  route: Scalars["String"]["input"];
+  title?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type LogConnection = {
   items: Array<LogEntry>;
   pageInfo: PageInfo;
@@ -2491,6 +2539,12 @@ export type LoginInput = {
   password: Scalars["String"]["input"];
 };
 
+export type LoginOtpPayload = {
+  challengeToken?: Maybe<Scalars["String"]["output"]>;
+  email?: Maybe<Scalars["String"]["output"]>;
+  success: Scalars["Boolean"]["output"];
+};
+
 export type MarkReadInput = {
   /** List of notification IDs to mark as read */
   notificationIds: Array<Scalars["ID"]["input"]>;
@@ -2536,6 +2590,7 @@ export type MetricAggregation = {
 export type ModelSelection = "FLASH" | "FLASH_2_0" | "PRO" | "PRO_2_5";
 
 export type Mutation = {
+  activities: ActivityMutation;
   admin: AdminMutation;
   aiChats: AiChatMutation;
   analytics: AnalyticsMutation;
@@ -3167,8 +3222,20 @@ export type RequestDangerousApprovalInput = {
   targetUserId: Scalars["ID"]["input"];
 };
 
+export type RequestLoginOtpInput = {
+  email: Scalars["String"]["input"];
+};
+
 export type RequestPasswordResetInput = {
   email: Scalars["String"]["input"];
+};
+
+export type ResendLoginOtpInput = {
+  challengeToken: Scalars["String"]["input"];
+};
+
+export type ResendRegistrationOtpInput = {
+  challengeToken: Scalars["String"]["input"];
 };
 
 export type ResetPasswordInput = {
@@ -4191,6 +4258,11 @@ export type VerifiedEmailResult = {
 export type Verify2FaResponse = {
   backupCodes?: Maybe<Array<Scalars["String"]["output"]>>;
   verified: Scalars["Boolean"]["output"];
+};
+
+export type VerifyRegistrationOtpInput = {
+  challengeToken: Scalars["String"]["input"];
+  code: Scalars["String"]["input"];
 };
 
 export type WebSearchInput = {

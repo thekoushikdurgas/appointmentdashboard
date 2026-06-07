@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/constants";
 import { saveReturnRoute } from "@/lib/returnRoute";
 import { WebVitalsReporter } from "@/components/shared/WebVitalsReporter";
+import "@/styles/auth/auth-shell.css";
 
 export default function DashboardLayout({
   children,

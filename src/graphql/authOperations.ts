@@ -63,6 +63,7 @@ export const AUTH_ME_QUERY = `
         email
         name
         isActive
+        emailVerified
         lastSignInAt
         createdAt
         updatedAt
@@ -129,6 +130,17 @@ export const AUTH_RESEND_REGISTRATION_OTP_MUTATION = `
   mutation AuthResendRegistrationOtp($input: ResendRegistrationOtpInput!) {
     auth {
       resendRegistrationOtp(input: $input)
+    }
+  }
+`;
+
+export const AUTH_REQUEST_EMAIL_VERIFICATION_MUTATION = `
+  mutation AuthRequestEmailVerification {
+    auth {
+      requestEmailVerification {
+        challengeToken
+        email
+      }
     }
   }
 `;

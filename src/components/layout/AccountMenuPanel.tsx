@@ -34,9 +34,9 @@ const NAV_LINKS: readonly {
   label: string;
   icon: LucideIcon;
 }[] = [
-    { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
-    { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
-  ];
+  { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
+  { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
+];
 
 function formatRoleLabel(role: string): string {
   if (!role.trim()) return "Member";
@@ -169,11 +169,11 @@ export function AccountMenuContent({
   const navLinksForMode =
     mode === "sidebar-full"
       ? NAV_LINKS.filter(
-        ({ href }) =>
-          href !== ROUTES.PROFILE &&
-          href !== profileTabRoute("settings") &&
-          href !== ROUTES.BILLING,
-      )
+          ({ href }) =>
+            href !== ROUTES.PROFILE &&
+            href !== profileTabRoute("settings") &&
+            href !== ROUTES.BILLING,
+        )
       : NAV_LINKS;
 
   const navLinks = navLinksForMode.map(({ href, label, icon: Icon }) => {

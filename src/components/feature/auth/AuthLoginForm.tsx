@@ -98,7 +98,9 @@ export function AuthLoginForm({
         <>
           <div className="c360-field">
             <div className="c360-auth-field-header">
-              <label className="c360-label c360-label--required">Password</label>
+              <label className="c360-label c360-label--required">
+                Password
+              </label>
               <button
                 type="button"
                 className="c360-auth-link-btn c360-auth-field-header__action"

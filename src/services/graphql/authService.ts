@@ -15,6 +15,7 @@ import {
   AUTH_RESET_PASSWORD_MUTATION,
   AUTH_VERIFY_REGISTRATION_OTP_MUTATION,
   AUTH_RESEND_REGISTRATION_OTP_MUTATION,
+  AUTH_REQUEST_EMAIL_VERIFICATION_MUTATION,
   AUTH_REQUEST_LOGIN_OTP_MUTATION,
   AUTH_COMPLETE_LOGIN_OTP_MUTATION,
   AUTH_RESEND_LOGIN_OTP_MUTATION,
@@ -148,6 +149,18 @@ export const authService = {
       { skipAuth: true, showToastOnError: false },
     );
     return data.auth.resendRegistrationOtp;
+  },
+
+  requestEmailVerification: async () => {
+    const data = await graphqlMutation<{
+      auth: {
+        requestEmailVerification: {
+          challengeToken: string;
+          email: string;
+        };
+      };
+    }>(AUTH_REQUEST_EMAIL_VERIFICATION_MUTATION, {}, { showToastOnError: true });
+    return data.auth.requestEmailVerification;
   },
 
   requestLoginOtp: async (email: string) => {

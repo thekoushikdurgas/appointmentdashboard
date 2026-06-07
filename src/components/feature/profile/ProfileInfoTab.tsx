@@ -14,6 +14,8 @@ import { resolveProfileAvatarSrc } from "@/lib/utils";
 interface ProfileInfoTabProps {
   avatarUrl?: string | null;
   isVerified: boolean;
+  verifyEmailLoading?: boolean;
+  onVerifyEmail?: () => void;
   email: string;
   fullName: string;
   jobTitle: string;
@@ -35,6 +37,8 @@ interface ProfileInfoTabProps {
 export function ProfileInfoTab({
   avatarUrl,
   isVerified,
+  verifyEmailLoading = false,
+  onVerifyEmail,
   email,
   fullName,
   jobTitle,
@@ -80,9 +84,22 @@ export function ProfileInfoTab({
             </p>
           </div>
         </div>
-        <Badge color={isVerified ? "green" : "orange"} dot>
-          {isVerified ? "Verified" : "Unverified"}
-        </Badge>
+        <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
+          <Badge color={isVerified ? "green" : "orange"} dot>
+            {isVerified ? "Verified" : "Unverified"}
+          </Badge>
+          {!isVerified && onVerifyEmail ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              loading={verifyEmailLoading}
+              onClick={onVerifyEmail}
+            >
+              Verify email
+            </Button>
+          ) : null}
+        </div>
       </div>
       {formError && (
         <Alert variant="danger" className="c360-mb-4">

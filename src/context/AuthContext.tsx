@@ -116,6 +116,7 @@ function mapGatewayUserToAuthUser(u: GatewayUser): AuthUser {
     full_name: u.name ?? undefined,
     role: normalizeGatewayRole(pr?.role),
     user_type: null,
+    is_verified: u.emailVerified ?? false,
     subscription_plan: pr?.subscriptionPlan ?? undefined,
     credits_remaining: pr?.credits,
     job_title: pr?.jobTitle ?? null,

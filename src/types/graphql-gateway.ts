@@ -75,6 +75,7 @@ export interface GatewayUser {
   email: string;
   name: string | null;
   isActive: boolean;
+  emailVerified?: boolean;
   lastSignInAt: string | null;
   createdAt: string;
   updatedAt: string | null;

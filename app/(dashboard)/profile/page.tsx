@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Key, Monitor, Settings, Shield, User, Users } from "lucide-react";
+import { toast } from "sonner";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
 import { Alert } from "@/components/ui/Alert";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +16,9 @@ import { ProfileApiKeysTab } from "@/components/feature/profile/ProfileApiKeysTa
 import { ProfileSessionsTab } from "@/components/feature/profile/ProfileSessionsTab";
 import { ProfileTeamTab } from "@/components/feature/profile/ProfileTeamTab";
 import { ProfileSettingsTab } from "@/components/feature/profile/ProfileSettingsTab";
+import { EmailOtpModal } from "@/components/feature/auth/EmailOtpModal";
+import { authService } from "@/services/graphql/authService";
+import { setTokens } from "@/lib/tokenManager";
 import { isProfileTab, type ProfileTab } from "@/lib/profileTabs";
 import type { CreateApiKeyInput } from "@/graphql/generated/types";
 
@@ -33,7 +37,7 @@ export default function ProfilePage() {
   const urlTab = searchParams.get("tab");
   const initialTab: ProfileTab = isProfileTab(urlTab) ? urlTab : "general";
 
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const {
     apiKeys,
     sessions,
@@ -77,6 +81,15 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
   const [inviting, setInviting] = useState(false);
+
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verifyChallenge, setVerifyChallenge] = useState<{
+    challengeToken: string;
+    email: string;
+  } | null>(null);
+  const [verifyRequestLoading, setVerifyRequestLoading] = useState(false);
+  const [verifyOtpLoading, setVerifyOtpLoading] = useState(false);
+  const [verifyOtpError, setVerifyOtpError] = useState<string | null>(null);
 
   useEffect(() => {
     const t = searchParams.get("tab");
@@ -127,6 +140,74 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRequestEmailVerification = useCallback(async () => {
+    setVerifyRequestLoading(true);
+    setVerifyOtpError(null);
+    try {
+      const payload = await authService.requestEmailVerification();
+      setVerifyChallenge({
+        challengeToken: payload.challengeToken,
+        email: payload.email,
+      });
+      setVerifyModalOpen(true);
+      toast.success("Verification code sent", {
+        description: `Check ${payload.email} for your 4-digit code.`,
+      });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not send verification code.",
+      );
+    } finally {
+      setVerifyRequestLoading(false);
+    }
+  }, []);
+
+  const handleVerifyProfileEmailOtp = useCallback(
+    async (code: string) => {
+      if (!verifyChallenge) return;
+      setVerifyOtpLoading(true);
+      setVerifyOtpError(null);
+      try {
+        const result = await authService.verifyRegistrationOtp(
+          verifyChallenge.challengeToken,
+          code,
+        );
+        setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+        setVerifyModalOpen(false);
+        setVerifyChallenge(null);
+        await refreshUser(true);
+        toast.success("Email verified");
+      } catch (err) {
+        setVerifyOtpError(
+          err instanceof Error ? err.message : "Invalid verification code.",
+        );
+        throw err;
+      } finally {
+        setVerifyOtpLoading(false);
+      }
+    },
+    [verifyChallenge, refreshUser],
+  );
+
+  const handleResendProfileEmailOtp = useCallback(async () => {
+    if (!verifyChallenge) return;
+    setVerifyOtpError(null);
+    try {
+      await authService.resendRegistrationOtp(verifyChallenge.challengeToken);
+      toast.success("Verification code sent");
+    } catch (err) {
+      setVerifyOtpError(
+        err instanceof Error ? err.message : "Could not resend code.",
+      );
+      throw err;
+    }
+  }, [verifyChallenge]);
+
+  const handleCloseVerifyModal = useCallback(() => {
+    setVerifyModalOpen(false);
+    setVerifyOtpError(null);
+  }, []);
+
   const handleUpdateRole = async (id: string, role: string) => {
     setUpdatingRoleId(id);
     try {
@@ -164,6 +245,8 @@ export default function ProfilePage() {
           <ProfileInfoTab
             avatarUrl={user?.avatar_url}
             isVerified={Boolean(user?.is_verified)}
+            verifyEmailLoading={verifyRequestLoading}
+            onVerifyEmail={() => void handleRequestEmailVerification()}
             email={user?.email || ""}
             fullName={fullName}
             jobTitle={jobTitle}
@@ -231,6 +314,19 @@ export default function ProfilePage() {
           <ProfileSettingsTab />
         </TabsContent>
       </Tabs>
+
+      {verifyChallenge ? (
+        <EmailOtpModal
+          isOpen={verifyModalOpen}
+          email={verifyChallenge.email}
+          purpose="registration"
+          loading={verifyOtpLoading}
+          error={verifyOtpError}
+          onVerify={handleVerifyProfileEmailOtp}
+          onResend={handleResendProfileEmailOtp}
+          onClose={handleCloseVerifyModal}
+        />
+      ) : null}
     </DashboardPageLayout>
   );
 }

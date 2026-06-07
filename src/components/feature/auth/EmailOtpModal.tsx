@@ -8,8 +8,10 @@ import {
 
 export type EmailOtpPurpose = "registration" | "login";
 
-export interface EmailOtpModalProps
-  extends Omit<EmailOtpPinInputProps, "showIntro" | "resetKey"> {
+export interface EmailOtpModalProps extends Omit<
+  EmailOtpPinInputProps,
+  "showIntro" | "resetKey"
+> {
   isOpen: boolean;
   email: string;
   purpose: EmailOtpPurpose;

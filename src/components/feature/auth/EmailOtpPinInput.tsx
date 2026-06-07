@@ -87,7 +87,9 @@ export function EmailOtpPinInput({
         type="numeric"
         placeholder=""
       >
-        <PinInput.Label className="c360-sr-only">Verification code</PinInput.Label>
+        <PinInput.Label className="c360-sr-only">
+          Verification code
+        </PinInput.Label>
         <PinInput.Control className="c360-otp-pin">
           {Array.from({ length: OTP_LENGTH }, (_, i) => (
             <PinInput.Input

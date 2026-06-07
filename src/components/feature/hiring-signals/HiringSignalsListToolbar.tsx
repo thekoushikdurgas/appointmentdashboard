@@ -121,14 +121,14 @@ export function HiringSignalsListToolbar({
         actions={[
           ...(canExportHireSignalXlsx
             ? [
-              {
-                label: "Export XLSX",
-                onClick: onExportClick,
-                icon: Download,
-                variant: "secondary" as const,
-                disabled: loading || total === 0,
-              },
-            ]
+                {
+                  label: "Export XLSX",
+                  onClick: onExportClick,
+                  icon: Download,
+                  variant: "secondary" as const,
+                  disabled: loading || total === 0,
+                },
+              ]
             : []),
           {
             label: "Refresh",
@@ -139,13 +139,13 @@ export function HiringSignalsListToolbar({
           },
           ...(isSuperAdmin
             ? [
-              {
-                label: "Run scrape",
-                onClick: onRunScrapeClick,
-                icon: Play,
-                variant: "primary" as const,
-              },
-            ]
+                {
+                  label: "Run scrape",
+                  onClick: onRunScrapeClick,
+                  icon: Play,
+                  variant: "primary" as const,
+                },
+              ]
             : []),
         ]}
       />
