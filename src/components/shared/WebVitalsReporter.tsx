@@ -26,8 +26,8 @@ export function WebVitalsReporter() {
     const send = (metric: Metric) => {
       const path =
         typeof window !== "undefined" ? window.location.pathname : "";
-      swallowBestEffort("webVitals.submit", () => {
-        void analyticsService.submitPerformanceMetric(
+      swallowBestEffort("webVitals.submit", () =>
+        analyticsService.submitPerformanceMetric(
           {
             name: metric.name,
             value: metricValueForApi(metric.name, metric.value),
@@ -39,8 +39,8 @@ export function WebVitalsReporter() {
             },
           },
           { showToastOnError: false },
-        );
-      });
+        ),
+      );
     };
 
     onCLS(send);

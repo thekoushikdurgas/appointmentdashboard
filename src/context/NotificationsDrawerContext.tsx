@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { notificationsService } from "@/services/graphql/notificationsService";
+import { isAuthenticated } from "@/lib/tokenManager";
 
 /** Sentinel href for command palette / synthetic nav (not a real list route). */
 export const NOTIFICATIONS_DRAWER_NAV_HREF = "__c360_notifications_drawer__";
@@ -42,6 +43,10 @@ export function NotificationsDrawerProvider({
   const [unreadCount, setUnreadCount] = useState(0);
 
   const refreshUnreadCount = useCallback(async () => {
+    if (!isAuthenticated()) {
+      setUnreadCount(0);
+      return;
+    }
     try {
       const res = await notificationsService.unreadCount();
       setUnreadCount(res.notifications.unreadCount.count);
