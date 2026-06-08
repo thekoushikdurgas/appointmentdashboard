@@ -8,6 +8,7 @@ export interface C360DataTableShellProps {
   className?: string;
   /** Extra classes on the inner scroll region (e.g. min-height overrides). */
   scrollClassName?: string;
+  "data-tour"?: string;
 }
 
 /**
@@ -18,9 +19,13 @@ export function C360DataTableShell({
   children,
   className,
   scrollClassName,
+  "data-tour": dataTour,
 }: C360DataTableShellProps) {
   return (
-    <div className={cn("c360-data-table-shell", className)}>
+    <div
+      className={cn("c360-data-table-shell", className)}
+      data-tour={dataTour}
+    >
       <div className={cn("c360-data-table-shell__scroll", scrollClassName)}>
         {children}
       </div>

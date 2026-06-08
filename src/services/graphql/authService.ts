@@ -159,7 +159,11 @@ export const authService = {
           email: string;
         };
       };
-    }>(AUTH_REQUEST_EMAIL_VERIFICATION_MUTATION, {}, { showToastOnError: true });
+    }>(
+      AUTH_REQUEST_EMAIL_VERIFICATION_MUTATION,
+      {},
+      { showToastOnError: true },
+    );
     return data.auth.requestEmailVerification;
   },
 

@@ -7,7 +7,7 @@ import { useFilesDrawer } from "@/context/FilesDrawerContext";
 export type OpenFilesDrawerButtonProps =
   ButtonHTMLAttributes<HTMLButtonElement>;
 
-/** Opens the global Files drawer. Use instead of linking to `/files`. */
+/** Opens the global Storage drawer. Use instead of linking to `/files`. */
 export function OpenFilesDrawerButton({
   className,
   onClick,

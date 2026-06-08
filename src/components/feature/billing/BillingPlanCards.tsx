@@ -155,7 +155,10 @@ export function BillingPlanCards({
       className="c360-billing-pricing"
       aria-labelledby="c360-billing-pricing-heading"
     >
-      <header className="c360-billing-pricing__intro">
+      <header
+        className="c360-billing-pricing__intro"
+        data-tour="billing-plans"
+      >
         <h2
           id="c360-billing-pricing-heading"
           className="c360-billing-pricing__title"
@@ -195,7 +198,7 @@ export function BillingPlanCards({
                   className={cn(
                     "c360-billing-pricing__scale-item",
                     opt === effectivePeriod &&
-                      "c360-billing-pricing__scale-item--active",
+                    "c360-billing-pricing__scale-item--active",
                   )}
                 >
                   {periodLabel(opt)}
@@ -234,22 +237,22 @@ export function BillingPlanCards({
               ? { headline: "Custom", sub: "Contact sales for a quote" }
               : raw == null
                 ? {
-                    headline: "—",
-                    sub: `No ${periodLabel(effectivePeriod).toLowerCase()} price`,
-                  }
+                  headline: "—",
+                  sub: `No ${periodLabel(effectivePeriod).toLowerCase()} price`,
+                }
                 : (() => {
-                    const n = normalizedPriceAmount(
-                      raw,
-                      effectivePeriod,
-                      basis,
-                    );
-                    const suffix = basis === "perMonth" ? "/mo" : "/yr";
-                    const billed = periodLabel(effectivePeriod);
-                    return {
-                      headline: `${formatMoney(n)}${suffix}`,
-                      sub: `Billed ${billed.toLowerCase()} · ${formatMoney(raw)} per term`,
-                    };
-                  })();
+                  const n = normalizedPriceAmount(
+                    raw,
+                    effectivePeriod,
+                    basis,
+                  );
+                  const suffix = basis === "perMonth" ? "/mo" : "/yr";
+                  const billed = periodLabel(effectivePeriod);
+                  return {
+                    headline: `${formatMoney(n)}${suffix}`,
+                    sub: `Billed ${billed.toLowerCase()} · ${formatMoney(raw)} per term`,
+                  };
+                })();
 
           const rawCr = rawCreditsForPeriod(p, effectivePeriod);
           const creditsLine =

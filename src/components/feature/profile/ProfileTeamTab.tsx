@@ -78,7 +78,7 @@ export function ProfileTeamTab({
           </div>
         ) : (
           <>
-            <div className="c360-flex c360-gap-3 c360-flex-wrap">
+            <div className="c360-flex c360-gap-3 c360-flex-nowrap c360-justify-end c360-items-end">
               <div className="c360-profile-team-invite-field">
                 <Input
                   placeholder="teammate@example.com"

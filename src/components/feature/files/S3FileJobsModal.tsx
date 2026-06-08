@@ -86,7 +86,7 @@ export function S3FileJobsModal({
     <Modal
       isOpen={isOpen && !!file.key}
       onClose={onClose}
-      title={`Jobs for file — ${file.filename}`}
+      title={`Export for file — ${file.filename}`}
       size="lg"
     >
       <div className="c360-stack c360-mb-4">
@@ -122,7 +122,7 @@ export function S3FileJobsModal({
           )}
         </div>
         <p className="c360-text-muted c360-text-xs">
-          Jobs are matched when{" "}
+          Export jobs are matched when{" "}
           <code className="c360-text-xs">requestPayload</code>,{" "}
           <code className="c360-text-xs">responsePayload</code>, or{" "}
           <code className="c360-text-xs">statusPayload</code> contains this key

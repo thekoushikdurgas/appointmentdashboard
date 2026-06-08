@@ -30,7 +30,7 @@ export interface HiringSignalFilterComingSoonProps {
  * Compact “coming soon” placeholder inside a hiring-signals filter section.
  */
 export function HiringSignalFilterComingSoon({
-  title = "Coming soon",
+  title = "Coming Soon",
   description,
   featureLabel,
   showPlansLink = true,
@@ -45,7 +45,7 @@ export function HiringSignalFilterComingSoon({
           href={ROUTES.BILLING}
           className="c360-hs-filter-coming-soon__link"
         >
-          View plans
+          View Plans
         </Link>
       ) : null}
     </div>

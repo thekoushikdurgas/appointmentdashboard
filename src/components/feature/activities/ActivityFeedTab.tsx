@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/Card";
 import { applyVars } from "@/hooks/useCSSVars";
 import { Badge } from "@/components/ui/Badge";
 import { formatRelativeTime } from "@/lib/utils";
+import { ActivityServiceIcon } from "@/components/shared/ActivityServiceIcon";
 import {
   activityIconAccent,
-  activityServiceIcon,
   activityStatusColor,
   humanizeToken,
 } from "@/lib/activityDisplay";
@@ -44,7 +44,6 @@ export function ActivityFeedTab({ activities, loading }: ActivityFeedTabProps) {
       ) : (
         <div className="c360-section-stack c360-section-stack--sm">
           {activities.map((activity) => {
-            const Icon = activityServiceIcon(activity.serviceType);
             const accent = activityIconAccent(activity.serviceType);
             const statusColor = activityStatusColor(activity.status);
             return (
@@ -55,7 +54,10 @@ export function ActivityFeedTab({ activities, loading }: ActivityFeedTabProps) {
                     applyVars(el, { "--c360-activity-accent": accent })
                   }
                 >
-                  <Icon size={16} aria-hidden />
+                  <ActivityServiceIcon
+                    serviceType={activity.serviceType}
+                    size={16}
+                  />
                 </div>
                 <div className="c360-activity-body">
                   <p className="c360-activity-desc">{activity.description}</p>

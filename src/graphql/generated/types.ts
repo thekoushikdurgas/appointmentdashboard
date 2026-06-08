@@ -424,6 +424,7 @@ export type AuthMutation = {
   logout: Scalars["Boolean"]["output"];
   refreshToken: AuthPayload;
   register: AuthPayload;
+  requestEmailVerification: EmailVerificationRequestPayload;
   requestLoginOtp: LoginOtpPayload;
   requestPasswordReset: Scalars["Boolean"]["output"];
   resendLoginOtp: Scalars["Boolean"]["output"];
@@ -1869,6 +1870,11 @@ export type EmailSatelliteJobSummary = {
   totalEmails: Scalars["Int"]["output"];
   unknownCount: Scalars["Int"]["output"];
   updatedAt?: Maybe<Scalars["String"]["output"]>;
+};
+
+export type EmailVerificationRequestPayload = {
+  challengeToken: Scalars["String"]["output"];
+  email: Scalars["String"]["output"];
 };
 
 export type EmailVerifierS3Input = {
@@ -4030,6 +4036,7 @@ export type User = {
   bucket?: Maybe<Scalars["String"]["output"]>;
   createdAt: Scalars["DateTime"]["output"];
   email: Scalars["String"]["output"];
+  emailVerified: Scalars["Boolean"]["output"];
   isActive: Scalars["Boolean"]["output"];
   lastSignInAt?: Maybe<Scalars["DateTime"]["output"]>;
   name?: Maybe<Scalars["String"]["output"]>;

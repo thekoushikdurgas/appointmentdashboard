@@ -15,6 +15,7 @@ export function HsFilterSection({ sectionId, ...rest }: HsFilterSectionProps) {
   return (
     <ContactsCollapsibleFilterSection
       {...rest}
+      sectionId={sectionId}
       isOpen={openSectionId === sectionId}
       onOpenChange={(open) => requestOpenChange(sectionId, open)}
     />

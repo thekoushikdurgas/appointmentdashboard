@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Coins, CreditCard, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
+import { BillingIcon } from "@/components/ui/BillingIcon";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/context/RoleContext";
 import { profileTabRoute, ROUTES } from "@/lib/routes";
@@ -32,11 +33,29 @@ const contextItemBase = "c360-user-context-menu__row c360-context-menu__item";
 const NAV_LINKS: readonly {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
 }[] = [
-  { href: ROUTES.BILLING, label: "Billing", icon: CreditCard },
+  { href: ROUTES.BILLING, label: "Billing" },
   { href: profileTabRoute("settings"), label: "Settings", icon: Settings },
 ];
+
+function AccountNavLinkIcon({
+  href,
+  size,
+  className,
+}: {
+  href: string;
+  size: number;
+  className?: string;
+}) {
+  if (href === ROUTES.BILLING) {
+    return <BillingIcon size={size} className={className} />;
+  }
+  const entry = NAV_LINKS.find((link) => link.href === href);
+  if (!entry?.icon) return null;
+  const Icon = entry.icon;
+  return <Icon size={size} className={className} aria-hidden />;
+}
 
 function formatRoleLabel(role: string): string {
   if (!role.trim()) return "Member";
@@ -129,7 +148,7 @@ export function AccountMenuContent({
           />
         </Link>
         {NAV_LINKS.filter(({ href }) => href !== ROUTES.PROFILE).map(
-          ({ href, label, icon: Icon }) => (
+          ({ href, label }) => (
             <Link
               key={href}
               href={href}
@@ -143,7 +162,11 @@ export function AccountMenuContent({
               aria-label={label}
               onClick={() => onNavigate?.()}
             >
-              <Icon size={18} className="c360-sidebar__item-icon" aria-hidden />
+              <AccountNavLinkIcon
+                href={href}
+                size={18}
+                className="c360-sidebar__item-icon"
+              />
             </Link>
           ),
         )}
@@ -176,7 +199,7 @@ export function AccountMenuContent({
         )
       : NAV_LINKS;
 
-  const navLinks = navLinksForMode.map(({ href, label, icon: Icon }) => {
+  const navLinks = navLinksForMode.map(({ href, label }) => {
     if (mode === "context") {
       return (
         <ContextMenuItem key={href} asChild>
@@ -185,10 +208,10 @@ export function AccountMenuContent({
             className={contextItemBase}
             onClick={() => onNavigate?.()}
           >
-            <Icon
+            <AccountNavLinkIcon
+              href={href}
               className="c360-user-context-menu__icon"
               size={16}
-              aria-hidden
             />
             {label}
           </Link>
@@ -203,10 +226,10 @@ export function AccountMenuContent({
         className="c360-sidebar-account__nav-link"
         onClick={() => onNavigate?.()}
       >
-        <Icon
+        <AccountNavLinkIcon
+          href={href}
           className="c360-sidebar-account__nav-icon"
           size={16}
-          aria-hidden
         />
         <span className="c360-sidebar-account__nav-label">{label}</span>
       </Link>
@@ -268,7 +291,7 @@ export function AccountMenuContent({
             aria-label="Billing"
             onClick={() => onNavigate?.()}
           >
-            <Coins size={18} className="c360-sidebar__item-icon" aria-hidden />
+            <BillingIcon size={18} className="c360-sidebar__item-icon" />
           </Link>
           <Link
             href={ROUTES.PROFILE}
@@ -317,7 +340,7 @@ export function AccountMenuContent({
             title="Billing"
             onClick={() => onNavigate?.()}
           >
-            <Coins size={16} aria-hidden />
+            <BillingIcon size={16} />
           </Link>
         </div>
         <div className="c360-sidebar-account__profile-avatar">

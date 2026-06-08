@@ -124,7 +124,7 @@ export function HiringSignalsExportModal({
     >
       <div className="c360-space-y-4">
         <p className="c360-m-0 c360-text-2xs c360-text-ink-muted">
-          Queue an XLSX export on the server (track in Jobs → Hiring Signals).
+          Queue an XLSX export on the server (track in Export → Hiring Signals).
         </p>
         <fieldset className="c360-m-0 c360-space-y-3 c360-border-0 c360-p-0">
           <legend className="c360-mb-2 c360-text-sm c360-font-medium c360-text-ink">

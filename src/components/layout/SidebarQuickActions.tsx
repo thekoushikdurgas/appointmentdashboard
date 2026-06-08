@@ -1,6 +1,9 @@
 "use client";
 
-import { Bell, Briefcase, FolderOpen, MessageSquare } from "lucide-react";
+import { Bell, FolderOpen, MessageSquare } from "lucide-react";
+import { ExportDrawerIcon } from "@/components/ui/ExportDrawerIcon";
+import { STORAGE_DRAWER_DISPLAY_NAME } from "@/lib/files/storageDrawerUi";
+import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
 import { Badge } from "@/components/ui/Badge";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { useNotificationsDrawer } from "@/context/NotificationsDrawerContext";
@@ -88,24 +91,23 @@ export function SidebarQuickActions({
       <button
         type="button"
         className={buttonClass}
-        title="Jobs"
-        aria-label="Open jobs"
+        title={EXPORT_DRAWER_DISPLAY_NAME}
+        aria-label={`Open ${EXPORT_DRAWER_DISPLAY_NAME.toLowerCase()}`}
         onClick={() => {
           openJobsDrawer();
           wrap();
         }}
       >
-        <Briefcase
+        <ExportDrawerIcon
           size={18}
           className={useRailButtons ? "c360-sidebar__item-icon" : undefined}
-          aria-hidden
         />
       </button>
       <button
         type="button"
         className={buttonClass}
-        title="Files"
-        aria-label="Open files"
+        title={STORAGE_DRAWER_DISPLAY_NAME}
+        aria-label={`Open ${STORAGE_DRAWER_DISPLAY_NAME.toLowerCase()}`}
         onClick={() => {
           openFilesDrawer();
           wrap();

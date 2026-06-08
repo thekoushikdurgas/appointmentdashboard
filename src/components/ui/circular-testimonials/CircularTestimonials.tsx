@@ -175,6 +175,7 @@ export function CircularTestimonials({
         variant === "dashboard" && "c360-circular-testimonials--dashboard",
         className,
       )}
+      data-tour={variant === "dashboard" ? "dashboard-hero" : undefined}
       aria-roledescription="carousel"
       aria-label="Product highlights"
       tabIndex={0}
@@ -220,7 +221,7 @@ export function CircularTestimonials({
                 className={cn(
                   "c360-circular-testimonials__name",
                   variant === "dashboard" &&
-                    "c360-circular-testimonials__name--dashboard",
+                  "c360-circular-testimonials__name--dashboard",
                 )}
               >
                 {activeTestimonial.name}
@@ -229,7 +230,7 @@ export function CircularTestimonials({
                 className={cn(
                   "c360-circular-testimonials__designation",
                   variant === "dashboard" &&
-                    "c360-circular-testimonials__designation--dashboard",
+                  "c360-circular-testimonials__designation--dashboard",
                 )}
               >
                 {activeTestimonial.designation}
@@ -238,7 +239,7 @@ export function CircularTestimonials({
                 className={cn(
                   "c360-circular-testimonials__quote",
                   variant === "dashboard" &&
-                    "c360-circular-testimonials__quote--dashboard",
+                  "c360-circular-testimonials__quote--dashboard",
                 )}
               >
                 {activeTestimonial.quote.split(" ").map((word, i) => (
@@ -270,7 +271,7 @@ export function CircularTestimonials({
                 className={cn(
                   "c360-circular-testimonials__footer",
                   variant === "dashboard" &&
-                    "c360-circular-testimonials__footer--dashboard",
+                  "c360-circular-testimonials__footer--dashboard",
                 )}
               >
                 {activeTestimonial.cta && activeTestimonial.href ? (
@@ -299,7 +300,7 @@ export function CircularTestimonials({
                   className={cn(
                     "c360-circular-testimonials__arrows",
                     variant === "dashboard" &&
-                      "c360-circular-testimonials__arrows--dashboard",
+                    "c360-circular-testimonials__arrows--dashboard",
                   )}
                 >
                   <button
@@ -307,7 +308,7 @@ export function CircularTestimonials({
                     className={cn(
                       "c360-circular-testimonials__arrow-btn",
                       variant === "dashboard" &&
-                        "c360-circular-testimonials__arrow-btn--dashboard",
+                      "c360-circular-testimonials__arrow-btn--dashboard",
                     )}
                     onClick={handlePrev}
                     aria-label="Previous slide"
@@ -319,7 +320,7 @@ export function CircularTestimonials({
                     className={cn(
                       "c360-circular-testimonials__arrow-btn",
                       variant === "dashboard" &&
-                        "c360-circular-testimonials__arrow-btn--dashboard",
+                      "c360-circular-testimonials__arrow-btn--dashboard",
                     )}
                     onClick={handleNext}
                     aria-label="Next slide"

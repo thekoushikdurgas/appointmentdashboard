@@ -18,6 +18,10 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/ContextMenu";
 import { AccountMenuPanel } from "./AccountMenuPanel";
+import {
+  OnboardingTour,
+  DEFAULT_TOUR_STEPS,
+} from "@/components/shared/OnboardingTour";
 
 const JobsDrawer = dynamic(
   () =>
@@ -170,6 +174,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <NotificationsDrawer />
             <FilesDrawer />
             <ReviewDrawer />
+            {user ? <OnboardingTour steps={DEFAULT_TOUR_STEPS} /> : null}
           </FilesDrawerProvider>
         </NotificationsDrawerProvider>
       </JobsDrawerProvider>

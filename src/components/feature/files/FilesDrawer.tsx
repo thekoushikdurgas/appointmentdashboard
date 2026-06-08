@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useFilesDrawer } from "@/context/FilesDrawerContext";
 import { FilesWorkspace } from "@/components/feature/files/FilesWorkspace";
+import { STORAGE_DRAWER_DISPLAY_NAME } from "@/lib/files/storageDrawerUi";
 
 export function FilesDrawer() {
   const { isOpen, closeFilesDrawer, openRequest } = useFilesDrawer();
@@ -33,7 +34,7 @@ export function FilesDrawer() {
           <motion.button
             type="button"
             className="c360-files-drawer-backdrop"
-            aria-label="Close files panel"
+            aria-label={`Close ${STORAGE_DRAWER_DISPLAY_NAME.toLowerCase()} panel`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -52,7 +53,7 @@ export function FilesDrawer() {
             <header className="c360-files-drawer__header">
               <div className="c360-files-drawer__header-main c360-min-w-0">
                 <h2 id="c360-files-drawer-title" className="c360-sr-only">
-                  Files
+                  {STORAGE_DRAWER_DISPLAY_NAME}
                 </h2>
                 <div
                   ref={filesStatStripHostRef}

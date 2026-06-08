@@ -6,7 +6,6 @@ export type DatePostedPreset =
   | "7d"
   | "15d"
   | "30d"
-  | "custom_day"
   | "custom_range";
 
 /** Presets that auto-compute bounds via `postedBoundsFromPreset` (not custom pickers). */
@@ -37,11 +36,10 @@ export const DATE_POSTED_PRESET_LABELS: Record<
 > = {
   today: "Today",
   yesterday: "Yesterday",
-  "7d": "Last 7 days",
-  "15d": "Last 15 days",
-  "30d": "Last 30 days",
-  custom_day: "Custom day",
-  custom_range: "Custom range",
+  "7d": "Last 7 Days",
+  "15d": "Last 15 Days",
+  "30d": "Last 30 Days",
+  custom_range: "Custom Range",
 };
 
 export type HiringSignalFilterDraft = {
@@ -253,23 +251,6 @@ export function postedBoundsFromPreset(
       };
     }
   }
-}
-
-/** Map a YYYY-MM-DD picker value to local start/end of that calendar day. */
-export function postedBoundsFromCustomDay(yyyyMmDd: string): PostedDateBounds {
-  const t = yyyyMmDd.trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
-  if (!m) {
-    return { postedAfter: "", postedBefore: "" };
-  }
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  if (Number.isNaN(d.getTime())) {
-    return { postedAfter: "", postedBefore: "" };
-  }
-  return {
-    postedAfter: toLocalRFC3339(startOfLocalDay(d)),
-    postedBefore: toLocalRFC3339(endOfLocalDay(d)),
-  };
 }
 
 /** Map draft `postedAfter` / `postedBefore` (RFC3339 or YYYY-MM-DD) to `<input type="date" />` value. */

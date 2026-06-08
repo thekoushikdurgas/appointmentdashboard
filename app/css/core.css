@@ -51,6 +51,7 @@ video {
   /* Neutral palette — kit $body-bg, $body-color, $border */
   --c360-bg: #f9f9f9;
   --c360-bg-elevated: #ffffff;
+  --c360-card-bg: #ffffff;
   /* Subtle panels / inset rows (kit secondary surface) */
   --c360-bg-secondary: #f4f5f8;
   --c360-bg-overlay: rgba(0, 0, 0, 0.5);
@@ -201,6 +202,7 @@ video {
 
   --c360-bg: #181f39;
   --c360-bg-elevated: #1e2746;
+  --c360-card-bg: #1e2746;
   --c360-bg-secondary: #252d4f;
   --c360-text: #f4f4f4;
   --c360-text-muted: #9ba3b8;
@@ -317,6 +319,7 @@ a:hover {
 }
 
 @keyframes c360-pulse {
+
   0%,
   100% {
     opacity: 1;
@@ -339,6 +342,7 @@ a:hover {
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

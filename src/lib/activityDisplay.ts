@@ -3,7 +3,6 @@ import {
   Activity,
   Briefcase,
   Building2,
-  CreditCard,
   KeyRound,
   Mail,
   MessageSquare,
@@ -14,6 +13,8 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { STORAGE_DRAWER_DISPLAY_NAME } from "@/lib/files/storageDrawerUi";
+import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
 
 /** Normalize API strings for lookup (lowercase, underscores kept). */
 function norm(s: string): string {
@@ -27,10 +28,8 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   ai_chats: MessageSquare,
   linkedin: Share2,
   sales_navigator: Search,
-  jobs: Briefcase,
   imports: Upload,
   auth: KeyRound,
-  billing: CreditCard,
   profile: User,
   phone: Mail,
   hire_signal: Briefcase,
@@ -44,6 +43,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
 
 export function activityServiceIcon(serviceType: string): LucideIcon {
   const k = norm(serviceType);
+  if (k === "jobs" || k === "billing") return Activity;
   if (SERVICE_ICONS[k]) return SERVICE_ICONS[k];
   if (k.includes("email")) return Mail;
   if (k.includes("contact")) return Users;
@@ -81,5 +81,7 @@ export function activityStatusColor(status: string): string {
 
 export function humanizeToken(s: string): string {
   if (!s) return "—";
+  if (norm(s) === "jobs") return EXPORT_DRAWER_DISPLAY_NAME;
+  if (norm(s) === "files") return STORAGE_DRAWER_DISPLAY_NAME;
   return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }

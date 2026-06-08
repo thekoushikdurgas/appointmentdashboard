@@ -261,7 +261,7 @@ export function EmailBulkVerifierTab() {
   return (
     <Card
       title="Bulk email verifier"
-      subtitle={`Sync: verifyEmailsBulk (first ${MAX_SYNC} unique addresses). More than ${MAX_SYNC}: use an S3 verify job from Jobs.`}
+      subtitle={`Sync: verifyEmailsBulk (first ${MAX_SYNC} unique addresses). More than ${MAX_SYNC}: use an S3 verify job from Export.`}
     >
       <div className="c360-section-stack c360-max-w-720">
         <StepHeader step={step} total={STEPS.length} />
@@ -365,7 +365,7 @@ export function EmailBulkVerifierTab() {
                   type="button"
                   className="c360-text-primary"
                 >
-                  Jobs → Email verify (bulk) from S3
+                  Export → Email verify (bulk) from S3
                 </OpenJobsDrawerButton>{" "}
                 for the full file.
               </p>
@@ -445,7 +445,7 @@ export function EmailBulkVerifierTab() {
             {emails.length > MAX_SYNC && (
               <p className="c360-text-xs c360-text-muted">
                 This list has more addresses than one sync allows. Choose how
-                many to run now, or use Jobs for the full file.
+                many to run now, or use Export for the full file.
               </p>
             )}
             <div className="c360-flex c360-flex-wrap c360-gap-2">
@@ -466,17 +466,17 @@ export function EmailBulkVerifierTab() {
                 disabled={!canStartVerifyJob || jobButtonBusy || loading}
                 onClick={() => void startVerifyJobFromWizard()}
               >
-                Start Jobs
+                Start Export
               </Button>
             </div>
             <p className="c360-text-xs c360-text-muted">
-              Start Jobs uploads your CSV (or a file built from pasted emails)
+              Start Export uploads your CSV (or a file built from pasted emails)
               to workspace S3 and enqueues <strong>Email verify (bulk)</strong>{" "}
               with provider <strong>{providerLabel}</strong> and email column{" "}
               <strong>{emailColumn.trim() || "email"}</strong>. For more than{" "}
-              {MAX_SYNC} addresses per sync, use Start Jobs or{" "}
+              {MAX_SYNC} addresses per sync, use Start Export or{" "}
               <OpenJobsDrawerButton type="button" className="c360-text-primary">
-                Jobs
+                Export
               </OpenJobsDrawerButton>
               .
             </p>

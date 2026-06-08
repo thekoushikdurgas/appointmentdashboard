@@ -10,7 +10,7 @@ export interface OpenJobsDrawerButtonProps extends ButtonHTMLAttributes<HTMLButt
 }
 
 /**
- * Opens the global Jobs drawer (dashboard shell). Use instead of linking to `/jobs`.
+ * Opens the global Export drawer (dashboard shell). Use instead of linking to `/jobs`.
  */
 export function OpenJobsDrawerButton({
   jobFamily,

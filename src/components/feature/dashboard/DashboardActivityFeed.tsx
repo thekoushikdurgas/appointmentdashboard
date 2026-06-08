@@ -5,7 +5,8 @@ import type { CSSProperties } from "react";
 import { format } from "date-fns";
 import { Accordion } from "@/components/ui/Accordion";
 import type { AccordionItem } from "@/components/ui/Accordion";
-import { activityIconAccent, activityServiceIcon } from "@/lib/activityDisplay";
+import { ActivityServiceIcon } from "@/components/shared/ActivityServiceIcon";
+import { activityIconAccent } from "@/lib/activityDisplay";
 import { formatRelativeTime } from "@/lib/utils";
 
 export interface ActivityItem {
@@ -56,7 +57,6 @@ function toAccordionItems(items: ActivityItem[]): AccordionItem[] {
   return items.map((item) => {
     const { headline, subtitle } = splitActivityText(item.text);
     const serviceKey = firstSegment(item.text);
-    const Icon = activityServiceIcon(serviceKey);
     const iconFg = activityIconAccent(serviceKey);
     const iconWrapStyle: CSSProperties = {
       color: iconFg,
@@ -72,7 +72,11 @@ function toAccordionItems(items: ActivityItem[]): AccordionItem[] {
             style={iconWrapStyle}
             aria-hidden
           >
-            <Icon size={20} strokeWidth={2} />
+            <ActivityServiceIcon
+              serviceType={serviceKey}
+              size={20}
+              strokeWidth={2}
+            />
           </span>
           <span className="c360-dashboard-activity-accordion__text-stack">
             <span className="c360-dashboard-activity-accordion__headline">

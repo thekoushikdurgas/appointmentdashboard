@@ -20,7 +20,7 @@ function dataQualityActiveCount(draft: {
 }
 
 function formatUnderLabel(value: number): string {
-  if (value === 0) return "0 (no contacts)";
+  if (value === 0) return "0 (No Contacts)";
   return String(value);
 }
 
@@ -39,7 +39,7 @@ export function HiringSignalsDataQualityFilters() {
 
   return (
     <>
-      <h3 className="c360-hs-filters__group-header">Data quality</h3>
+      <h3 className="c360-hs-filters__group-header">Data Quality</h3>
       <HsFilterSection
         sectionId={HS_FILTER_SECTION_IDS.dataQuality}
         title="Data Quality"
@@ -47,11 +47,11 @@ export function HiringSignalsDataQualityFilters() {
         onClear={
           activeCount > 0
             ? () => {
-                onDraftField("companyMissingWebsite", false);
-                onDraftField("companyMissingRevenue", false);
-                onDraftField("companyCsuiteContactMinCount", null);
-                onDraftField("companyHrContactMinCount", null);
-              }
+              onDraftField("companyMissingWebsite", false);
+              onDraftField("companyMissingRevenue", false);
+              onDraftField("companyCsuiteContactMinCount", null);
+              onDraftField("companyHrContactMinCount", null);
+            }
             : undefined
         }
       >
@@ -65,7 +65,7 @@ export function HiringSignalsDataQualityFilters() {
                 onDraftField("companyMissingWebsite", e.target.checked)
               }
             />
-            <span>Missing website (null or empty)</span>
+            <span>Missing Website (Null or Empty)</span>
           </label>
 
           <label className="c360-flex c360-items-start c360-gap-2 c360-text-2xs">
@@ -77,7 +77,7 @@ export function HiringSignalsDataQualityFilters() {
                 onDraftField("companyMissingRevenue", e.target.checked)
               }
             />
-            <span>Missing revenue (null or zero)</span>
+            <span>Missing Revenue (Null or Zero)</span>
           </label>
 
           <div className="c360-space-y-1">
@@ -94,7 +94,7 @@ export function HiringSignalsDataQualityFilters() {
                   }
                 }}
               />
-              <span className="c360-shrink-0">C-Suite contacts under</span>
+              <span className="c360-shrink-0">C-Suite Contacts Under</span>
               <input
                 type="number"
                 min={0}
@@ -142,7 +142,7 @@ export function HiringSignalsDataQualityFilters() {
                   }
                 }}
               />
-              <span className="c360-shrink-0">HR contacts under</span>
+              <span className="c360-shrink-0">HR Contacts Under</span>
               <input
                 type="number"
                 min={0}

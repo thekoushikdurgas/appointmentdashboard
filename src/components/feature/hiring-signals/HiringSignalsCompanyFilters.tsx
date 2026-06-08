@@ -44,15 +44,15 @@ export function HiringSignalsCompanyFilters({
 
   return (
     <>
-      <h3 className="c360-hs-filters__group-header">Company filters</h3>
+      <h3 className="c360-hs-filters__group-header">Company Filters</h3>
       {companyCohortResolving ? (
         <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
           Resolving companies…
         </p>
       ) : null}
       {!companyCohortResolving &&
-      cohortActive &&
-      companyCohortMatchTotal != null ? (
+        cohortActive &&
+        companyCohortMatchTotal != null ? (
         <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
           {companyCohortMatchTotal.toLocaleString()} companies match
           {companyCohortTruncated
@@ -63,7 +63,7 @@ export function HiringSignalsCompanyFilters({
 
       <HsFilterSection
         sectionId={HS_FILTER_SECTION_IDS.companyName}
-        title="Company name"
+        title="Company Name"
         count={
           normalizeHiringSignalTokenList(draft.companyNames).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyNames).length
@@ -71,9 +71,9 @@ export function HiringSignalsCompanyFilters({
         onClear={
           draft.companyNames.length > 0 || draft.excludedCompanyNames.length > 0
             ? () => {
-                onDraftField("companyNames", []);
-                onDraftField("excludedCompanyNames", []);
-              }
+              onDraftField("companyNames", []);
+              onDraftField("excludedCompanyNames", []);
+            }
             : undefined
         }
       >
@@ -88,14 +88,14 @@ export function HiringSignalsCompanyFilters({
           <HiringSignalCompanyNameFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
-            label="Include company names"
+            label="Include Company Names"
             selectedValues={normalizeHiringSignalTokenList(draft.companyNames)}
             onSelectionChange={(v) => onDraftField("companyNames", v)}
           />
           <HiringSignalCompanyNameFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
-            label="Exclude company names"
+            label="Exclude Company Names"
             selectedValues={normalizeHiringSignalTokenList(
               draft.excludedCompanyNames,
             )}
@@ -113,11 +113,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyCountries.length > 0 ||
-          draft.excludedCompanyCountries.length > 0
+            draft.excludedCompanyCountries.length > 0
             ? () => {
-                onDraftField("companyCountries", []);
-                onDraftField("excludedCompanyCountries", []);
-              }
+              onDraftField("companyCountries", []);
+              onDraftField("excludedCompanyCountries", []);
+            }
             : undefined
         }
       >
@@ -132,7 +132,7 @@ export function HiringSignalsCompanyFilters({
           <HiringSignalCompanyCountryFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
-            label="Include country"
+            label="Include Country"
             selectedValues={normalizeHiringSignalTokenList(
               draft.companyCountries,
             )}
@@ -141,7 +141,7 @@ export function HiringSignalsCompanyFilters({
           <HiringSignalCompanyCountryFacetCombobox
             appliedListFilters={appliedListFilters}
             signalTimePreset={signalTimePreset}
-            label="Exclude country"
+            label="Exclude Country"
             selectedValues={normalizeHiringSignalTokenList(
               draft.excludedCompanyCountries,
             )}
@@ -161,11 +161,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyIndustries.length > 0 ||
-          draft.excludedCompanyIndustries.length > 0
+            draft.excludedCompanyIndustries.length > 0
             ? () => {
-                onDraftField("companyIndustries", []);
-                onDraftField("excludedCompanyIndustries", []);
-              }
+              onDraftField("companyIndustries", []);
+              onDraftField("excludedCompanyIndustries", []);
+            }
             : undefined
         }
       >
@@ -177,38 +177,32 @@ export function HiringSignalsCompanyFilters({
             )}
             variant="section"
           />
-          {canUseAdvancedCompanyCohortFilters ? (
-            <>
-              <HiringSignalCompanyIndustryFacetCombobox
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                label="Include industry"
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.companyIndustries,
-                )}
-                onSelectionChange={(v) => onDraftField("companyIndustries", v)}
-              />
-              <HiringSignalCompanyIndustryFacetCombobox
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                label="Exclude industry"
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.excludedCompanyIndustries,
-                )}
-                onSelectionChange={(v) =>
-                  onDraftField("excludedCompanyIndustries", v)
-                }
-              />
-            </>
-          ) : (
-            <HiringSignalFilterComingSoon featureLabel="Industry" />
-          )}
+          <HiringSignalCompanyIndustryFacetCombobox
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Include Industry"
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.companyIndustries,
+            )}
+            onSelectionChange={(v) => onDraftField("companyIndustries", v)}
+          />
+          <HiringSignalCompanyIndustryFacetCombobox
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Exclude Industry"
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.excludedCompanyIndustries,
+            )}
+            onSelectionChange={(v) =>
+              onDraftField("excludedCompanyIndustries", v)
+            }
+          />
         </div>
       </HsFilterSection>
 
       <HsFilterSection
         sectionId={HS_FILTER_SECTION_IDS.companyEmployeeSize}
-        title="Employee size"
+        title="Employee Size"
         count={
           normalizeHiringSignalTokenList(draft.companyEmployeeSizes).length +
           normalizeHiringSignalTokenList(draft.excludedCompanyEmployeeSizes)
@@ -216,11 +210,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyEmployeeSizes.length > 0 ||
-          draft.excludedCompanyEmployeeSizes.length > 0
+            draft.excludedCompanyEmployeeSizes.length > 0
             ? () => {
-                onDraftField("companyEmployeeSizes", []);
-                onDraftField("excludedCompanyEmployeeSizes", []);
-              }
+              onDraftField("companyEmployeeSizes", []);
+              onDraftField("excludedCompanyEmployeeSizes", []);
+            }
             : undefined
         }
       >
@@ -232,36 +226,28 @@ export function HiringSignalsCompanyFilters({
             )}
             variant="section"
           />
-          {canUseAdvancedCompanyCohortFilters ? (
-            <>
-              <HiringSignalCompanyBucketFacetCombobox
-                dimension="employeeSize"
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                label="Include employee size"
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.companyEmployeeSizes,
-                )}
-                onSelectionChange={(v) =>
-                  onDraftField("companyEmployeeSizes", v)
-                }
-              />
-              <HiringSignalCompanyBucketFacetCombobox
-                dimension="employeeSize"
-                appliedListFilters={appliedListFilters}
-                signalTimePreset={signalTimePreset}
-                label="Exclude employee size"
-                selectedValues={normalizeHiringSignalTokenList(
-                  draft.excludedCompanyEmployeeSizes,
-                )}
-                onSelectionChange={(v) =>
-                  onDraftField("excludedCompanyEmployeeSizes", v)
-                }
-              />
-            </>
-          ) : (
-            <HiringSignalFilterComingSoon featureLabel="Employee size" />
-          )}
+          <HiringSignalCompanyBucketFacetCombobox
+            dimension="employeeSize"
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Include Employee Size"
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.companyEmployeeSizes,
+            )}
+            onSelectionChange={(v) => onDraftField("companyEmployeeSizes", v)}
+          />
+          <HiringSignalCompanyBucketFacetCombobox
+            dimension="employeeSize"
+            appliedListFilters={appliedListFilters}
+            signalTimePreset={signalTimePreset}
+            label="Exclude Employee Size"
+            selectedValues={normalizeHiringSignalTokenList(
+              draft.excludedCompanyEmployeeSizes,
+            )}
+            onSelectionChange={(v) =>
+              onDraftField("excludedCompanyEmployeeSizes", v)
+            }
+          />
         </div>
       </HsFilterSection>
 
@@ -274,11 +260,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyRevenue.length > 0 ||
-          draft.excludedCompanyRevenue.length > 0
+            draft.excludedCompanyRevenue.length > 0
             ? () => {
-                onDraftField("companyRevenue", []);
-                onDraftField("excludedCompanyRevenue", []);
-              }
+              onDraftField("companyRevenue", []);
+              onDraftField("excludedCompanyRevenue", []);
+            }
             : undefined
         }
       >
@@ -296,7 +282,7 @@ export function HiringSignalsCompanyFilters({
                 dimension="revenue"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
-                label="Include revenue"
+                label="Include Revenue"
                 selectedValues={normalizeHiringSignalTokenList(
                   draft.companyRevenue,
                 )}
@@ -306,7 +292,7 @@ export function HiringSignalsCompanyFilters({
                 dimension="revenue"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
-                label="Exclude revenue"
+                label="Exclude Revenue"
                 selectedValues={normalizeHiringSignalTokenList(
                   draft.excludedCompanyRevenue,
                 )}
@@ -330,11 +316,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyFunding.length > 0 ||
-          draft.excludedCompanyFunding.length > 0
+            draft.excludedCompanyFunding.length > 0
             ? () => {
-                onDraftField("companyFunding", []);
-                onDraftField("excludedCompanyFunding", []);
-              }
+              onDraftField("companyFunding", []);
+              onDraftField("excludedCompanyFunding", []);
+            }
             : undefined
         }
       >
@@ -352,7 +338,7 @@ export function HiringSignalsCompanyFilters({
                 dimension="funding"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
-                label="Include funding"
+                label="Include Funding"
                 selectedValues={normalizeHiringSignalTokenList(
                   draft.companyFunding,
                 )}
@@ -362,7 +348,7 @@ export function HiringSignalsCompanyFilters({
                 dimension="funding"
                 appliedListFilters={appliedListFilters}
                 signalTimePreset={signalTimePreset}
-                label="Exclude funding"
+                label="Exclude Funding"
                 selectedValues={normalizeHiringSignalTokenList(
                   draft.excludedCompanyFunding,
                 )}

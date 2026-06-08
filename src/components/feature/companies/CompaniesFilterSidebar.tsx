@@ -170,11 +170,10 @@ export function CompaniesFilterSidebar({
             : "";
         const summary =
           vals.length === 1
-            ? `${prefix}${label}: ${
-                isCompanyRangeBucketFacet(key)
-                  ? formatCompanyRangeBucketLabel(key, vals[0])
-                  : vals[0]
-              }`
+            ? `${prefix}${label}: ${isCompanyRangeBucketFacet(key)
+              ? formatCompanyRangeBucketLabel(key, vals[0])
+              : vals[0]
+            }`
             : `${prefix}${label}: ${vals.length} selected`;
         out.push({
           key: `facet-include-${key}`,
@@ -189,11 +188,10 @@ export function CompaniesFilterSidebar({
         const label = section?.displayName ?? key;
         const summary =
           vals.length === 1
-            ? `Exclude ${label}: ${
-                isCompanyRangeBucketFacet(key)
-                  ? formatCompanyRangeBucketLabel(key, vals[0])
-                  : vals[0]
-              }`
+            ? `Exclude ${label}: ${isCompanyRangeBucketFacet(key)
+              ? formatCompanyRangeBucketLabel(key, vals[0])
+              : vals[0]
+            }`
             : `Exclude ${label}: ${vals.length} selected`;
         out.push({
           key: `facet-exclude-${key}`,
@@ -402,14 +400,15 @@ export function CompaniesFilterSidebar({
               <ContactsCollapsibleFilterSection
                 key={key}
                 title={section.displayName}
+                filterKey={key}
                 count={active}
                 defaultOpen={active > 0}
                 onClear={
                   active > 0
                     ? () => {
-                        onFacetChange(key, []);
-                        onExcludedFacetChange(key, []);
-                      }
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
                     : undefined
                 }
               >
@@ -439,14 +438,15 @@ export function CompaniesFilterSidebar({
               <ContactsCollapsibleFilterSection
                 key={key}
                 title={section.displayName}
+                filterKey={key}
                 count={active}
                 defaultOpen={active > 0}
                 onClear={
                   active > 0
                     ? () => {
-                        onFacetChange(key, []);
-                        onExcludedFacetChange(key, []);
-                      }
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
                     : undefined
                 }
               >
@@ -472,6 +472,7 @@ export function CompaniesFilterSidebar({
             <ContactsCollapsibleFilterSection
               key={key}
               title={section.displayName}
+              filterKey={key}
               count={has ? vals.length : 0}
               defaultOpen={has}
               onClear={has ? () => onFacetChange(key, []) : undefined}

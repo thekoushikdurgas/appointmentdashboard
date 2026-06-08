@@ -2,7 +2,6 @@
 import {
   endOfLocalDay,
   postedAtBoundToDateInputValue,
-  postedBoundsFromCustomDay,
   postedBoundsFromPreset,
   startOfLocalDay,
   toLocalRFC3339,
@@ -53,26 +52,6 @@ describe("postedBoundsFromPreset", () => {
     const { postedAfter, postedBefore } = postedBoundsFromPreset("30d", now);
     expect(postedAfter).toMatch(/2026-05-06T00:00:00/);
     expect(postedBefore).toMatch(/2026-06-04T23:59:59/);
-  });
-});
-
-describe("postedBoundsFromCustomDay", () => {
-  it("maps YYYY-MM-DD to local start and end of that day", () => {
-    const { postedAfter, postedBefore } =
-      postedBoundsFromCustomDay("2026-03-15");
-    expect(postedAfter).toMatch(/2026-03-15T00:00:00/);
-    expect(postedBefore).toMatch(/2026-03-15T23:59:59/);
-  });
-
-  it("returns empty bounds for invalid input", () => {
-    expect(postedBoundsFromCustomDay("")).toEqual({
-      postedAfter: "",
-      postedBefore: "",
-    });
-    expect(postedBoundsFromCustomDay("not-a-date")).toEqual({
-      postedAfter: "",
-      postedBefore: "",
-    });
   });
 });
 

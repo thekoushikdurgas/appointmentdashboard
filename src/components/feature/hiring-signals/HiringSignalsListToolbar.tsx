@@ -76,51 +76,51 @@ export function HiringSignalsListToolbar({
       </div>
       <DataToolbar
         cssPrefix="c360-toolbar"
-        tabs={[
-          {
-            value: "all",
-            label: "All signals",
-            count: total,
-            showCountOnlyWhenActive: true,
-          },
-          {
-            value: "new",
-            label: "Today's jobs",
-            count: total,
-            showCountOnlyWhenActive: true,
-          },
-        ]}
-        activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
-        onTabChange={(v) =>
-          onSignalTimePresetChange(v === "new" ? "new_7d" : "all")
-        }
-        totalCount={total}
-        filterConfig={{
-          activeCount: filterActiveCount,
-          onOpen: openFilters,
-          show: collapseEnabled,
-        }}
-        actionPrefix={
-          <>
-            {total > pageSize ? (
-              <Pagination
-                variant="dropdown"
-                className="c360-hiring-signals-toolbar-pagination"
-                page={currentPage + 1}
+          tabs={[
+            {
+              value: "all",
+              label: "All signals",
+              count: total,
+              showCountOnlyWhenActive: true,
+            },
+            {
+              value: "new",
+              label: "Today's jobs",
+              count: total,
+              showCountOnlyWhenActive: true,
+            },
+          ]}
+          activeTab={signalTimePreset === "new_7d" ? "new" : "all"}
+          onTabChange={(v) =>
+            onSignalTimePresetChange(v === "new" ? "new_7d" : "all")
+          }
+          totalCount={total}
+          filterConfig={{
+            activeCount: filterActiveCount,
+            onOpen: openFilters,
+            show: collapseEnabled,
+          }}
+          actionPrefix={
+            <>
+              {total > pageSize ? (
+                <Pagination
+                  variant="dropdown"
+                  className="c360-hiring-signals-toolbar-pagination"
+                  page={currentPage + 1}
+                  pageSize={pageSize}
+                  total={total}
+                  onPageChange={(p) => onPageChange(p - 1)}
+                />
+              ) : null}
+              <HiringSignalsToolbarTableExtras
                 pageSize={pageSize}
-                total={total}
-                onPageChange={(p) => onPageChange(p - 1)}
+                onPageSizeChange={onPageSizeChange}
               />
-            ) : null}
-            <HiringSignalsToolbarTableExtras
-              pageSize={pageSize}
-              onPageSizeChange={onPageSizeChange}
-            />
-          </>
-        }
-        actions={[
-          ...(canExportHireSignalXlsx
-            ? [
+            </>
+          }
+          actions={[
+            ...(canExportHireSignalXlsx
+              ? [
                 {
                   label: "Export XLSX",
                   onClick: onExportClick,
@@ -129,16 +129,16 @@ export function HiringSignalsListToolbar({
                   disabled: loading || total === 0,
                 },
               ]
-            : []),
-          {
-            label: "Refresh",
-            onClick: () => void onRefresh(),
-            icon: RefreshCw,
-            variant: "secondary",
-            disabled: loading,
-          },
-          ...(isSuperAdmin
-            ? [
+              : []),
+            {
+              label: "Refresh",
+              onClick: () => void onRefresh(),
+              icon: RefreshCw,
+              variant: "secondary",
+              disabled: loading,
+            },
+            ...(isSuperAdmin
+              ? [
                 {
                   label: "Run scrape",
                   onClick: onRunScrapeClick,
@@ -146,8 +146,8 @@ export function HiringSignalsListToolbar({
                   variant: "primary" as const,
                 },
               ]
-            : []),
-        ]}
+              : []),
+          ]}
       />
     </div>
   );

@@ -13,6 +13,7 @@ export interface SavedSearchesAsideDrawerProps {
   children: ReactNode;
   /** When false, skip focus trap (e.g. save-name modal is open above this panel). */
   trapFocus?: boolean;
+  "data-tour"?: string;
 }
 
 /** Right-hand slide-over for saved searches (contacts page). */
@@ -22,6 +23,7 @@ export function SavedSearchesAsideDrawer({
   ariaLabelledBy,
   children,
   trapFocus = true,
+  "data-tour": dataTour,
 }: SavedSearchesAsideDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const asideRef = useRef<HTMLElement | null>(null);
@@ -52,6 +54,7 @@ export function SavedSearchesAsideDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy}
+            data-tour={dataTour}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}

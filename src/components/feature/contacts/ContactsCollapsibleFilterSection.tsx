@@ -4,10 +4,15 @@ import { useId, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import type { ContactFilterChip } from "@/components/feature/contacts/contactFilterSectionChips";
 import { FilterSectionChips } from "@/components/feature/contacts/FilterSectionChips";
+import { FilterSectionIcon } from "@/components/shared/FilterSectionIcon";
 import { cn } from "@/lib/utils";
 
 export interface ContactsCollapsibleFilterSectionProps {
   title: string;
+  /** API facet key — used to pick a section icon when `sectionId` is absent. */
+  filterKey?: string;
+  /** Stable accordion id (Hiring Signals) — preferred for icon lookup. */
+  sectionId?: string;
   count?: number;
   /** Initial expanded state (e.g. open for primary filter block). */
   defaultOpen?: boolean;
@@ -25,6 +30,8 @@ const baseClass = "c360-contacts-filter-section";
 
 export function ContactsCollapsibleFilterSection({
   title,
+  filterKey,
+  sectionId,
   count,
   defaultOpen = false,
   isOpen: isOpenControlled,
@@ -50,7 +57,11 @@ export function ContactsCollapsibleFilterSection({
 
   return (
     <div
-      className={cn(baseClass, (isOpen || hasActive) && `${baseClass}--active`)}
+      className={cn(
+        baseClass,
+        hasActive && `${baseClass}--active`,
+        isOpen && `${baseClass}--open`,
+      )}
     >
       <div
         className={cn(
@@ -65,6 +76,11 @@ export function ContactsCollapsibleFilterSection({
           aria-expanded={isOpen ? "true" : "false"}
           aria-controls={contentId}
         >
+          <FilterSectionIcon
+            title={title}
+            filterKey={filterKey}
+            sectionId={sectionId}
+          />
           <span className={`${baseClass}__title`}>{title}</span>
           {hasActive ? (
             <span className={`${baseClass}__count`} aria-hidden>

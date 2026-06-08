@@ -112,12 +112,12 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
   },
   {
     id: "files",
-    name: "Files & storage",
+    name: "Storage",
     designation: "contact360.io",
     quote:
       "Upload files, run batch flows, and keep assets tied to your workspace.",
     href: FILES_DRAWER_NAV_HREF,
-    cta: "Open files",
+    cta: "Open storage",
     src: SLIDE_IMAGE.files,
   },
   {

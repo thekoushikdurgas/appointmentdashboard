@@ -136,7 +136,7 @@ function LearnSingleSection() {
         <p className="c360-mb-0">
           For bulk pattern learning from a CSV in S3, go to{" "}
           <OpenJobsDrawerButton type="button" className="c360-text-primary">
-            Jobs → Start Job → Email pattern learn (S3)
+            Export → Start Job → Email pattern learn (S3)
           </OpenJobsDrawerButton>
           .
         </p>
@@ -335,7 +335,7 @@ function LearnBulkSection() {
         <p className="c360-mb-0">
           Very large files: use{" "}
           <OpenJobsDrawerButton type="button" className="c360-text-primary">
-            Jobs → Email pattern learn (S3)
+            Export → Email pattern learn (S3)
           </OpenJobsDrawerButton>
           .
         </p>

@@ -24,6 +24,8 @@ import {
   useReviewDrawer,
 } from "@/context/ReviewDrawerContext";
 import { useRole } from "@/context/RoleContext";
+import { STORAGE_DRAWER_DISPLAY_NAME } from "@/lib/files/storageDrawerUi";
+import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
 
 interface NavCommandPaletteProps {
   open: boolean;
@@ -43,13 +45,21 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
   const { isAdmin } = useRole();
   const navIndex = useMemo((): FlatNavEntry[] => {
     const extra: FlatNavEntry[] = [
-      { label: "Jobs", href: JOBS_DRAWER_NAV_HREF, section: "Tools" },
+      {
+        label: EXPORT_DRAWER_DISPLAY_NAME,
+        href: JOBS_DRAWER_NAV_HREF,
+        section: "Tools",
+      },
       {
         label: "Notifications",
         href: NOTIFICATIONS_DRAWER_NAV_HREF,
         section: "Account",
       },
-      { label: "Files", href: FILES_DRAWER_NAV_HREF, section: "Tools" },
+      {
+        label: STORAGE_DRAWER_DISPLAY_NAME,
+        href: FILES_DRAWER_NAV_HREF,
+        section: "Tools",
+      },
       { label: "Job tickets", href: REVIEW_DRAWER_NAV_HREF, section: "Tools" },
       { label: "Billing", href: ROUTES.BILLING, section: "Account" },
       { label: "Profile", href: ROUTES.PROFILE, section: "Account" },
@@ -58,18 +68,18 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
     const base = isAdmin
       ? NAV_SEARCH_INDEX
       : NAV_SEARCH_INDEX.filter(
-          (e) =>
-            e.section !== "Campaigns" &&
-            e.section !== "AI" &&
-            e.section !== "Tools",
-        );
+        (e) =>
+          e.section !== "Campaigns" &&
+          e.section !== "AI" &&
+          e.section !== "Tools",
+      );
     return [...base, ...extra];
   }, [isAdmin]);
 
   const results = query.trim()
     ? navIndex.filter((r) =>
-        r.label.toLowerCase().includes(query.toLowerCase()),
-      )
+      r.label.toLowerCase().includes(query.toLowerCase()),
+    )
     : navIndex.slice(0, 8);
 
   const navigate = useCallback(

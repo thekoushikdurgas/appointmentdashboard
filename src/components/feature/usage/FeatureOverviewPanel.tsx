@@ -64,7 +64,7 @@ export function FeatureOverviewPanel({
                 ) : null}
               </TabsTrigger>
               <TabsTrigger value="jobs">
-                Jobs
+                Export
                 {overview.jobs.length > 0 ? (
                   <Badge color="blue" className="c360-ml-2">
                     {overview.jobs.length}
@@ -224,7 +224,7 @@ export function FeatureOverviewPanel({
               )}
               <p className="c360-text-sm c360-mt-3 c360-mb-0">
                 <OpenJobsDrawerButton type="button" className="c360-link">
-                  Open jobs →
+                  Open export →
                 </OpenJobsDrawerButton>
               </p>
             </TabsContent>

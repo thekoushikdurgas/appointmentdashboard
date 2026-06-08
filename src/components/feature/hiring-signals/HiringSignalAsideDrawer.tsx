@@ -12,6 +12,7 @@ export interface HiringSignalAsideDrawerProps {
   ariaLabelledBy: string;
   /** Inside `aside`: `header.c360-hs-drawer__header`, `div.c360-hs-drawer__body`. */
   children: ReactNode;
+  "data-tour"?: string;
 }
 
 /**
@@ -23,6 +24,7 @@ export function HiringSignalAsideDrawer({
   onClose,
   ariaLabelledBy,
   children,
+  "data-tour": dataTour,
 }: HiringSignalAsideDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const asideRef = useRef<HTMLElement | null>(null);
@@ -53,6 +55,7 @@ export function HiringSignalAsideDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy}
+            data-tour={dataTour}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}

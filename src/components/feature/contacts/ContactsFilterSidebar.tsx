@@ -291,6 +291,7 @@ export function ContactsFilterSidebar({
         {!filterSections.some((s) => s.filterKey === "email") ? (
           <ContactsCollapsibleFilterSection
             title="Email"
+            filterKey="email"
             count={search.trim() ? 1 : 0}
             defaultOpen={!!search.trim()}
             activeChips={buildEmailSearchChip(search, () => onSearchChange(""))}
@@ -326,15 +327,16 @@ export function ContactsFilterSidebar({
               <ContactsCollapsibleFilterSection
                 key={key}
                 title={section.displayName}
+                filterKey={key}
                 count={active}
                 defaultOpen={active > 0}
                 activeChips={facetSectionChips(key, section.displayName)}
                 onClear={
                   active > 0
                     ? () => {
-                        onFacetChange(key, []);
-                        onExcludedFacetChange(key, []);
-                      }
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
                     : undefined
                 }
               >
@@ -364,15 +366,16 @@ export function ContactsFilterSidebar({
               <ContactsCollapsibleFilterSection
                 key={key}
                 title={section.displayName}
+                filterKey={key}
                 count={active}
                 defaultOpen={active > 0}
                 activeChips={facetSectionChips(key, section.displayName)}
                 onClear={
                   active > 0
                     ? () => {
-                        onFacetChange(key, []);
-                        onExcludedFacetChange(key, []);
-                      }
+                      onFacetChange(key, []);
+                      onExcludedFacetChange(key, []);
+                    }
                     : undefined
                 }
               >
@@ -402,6 +405,7 @@ export function ContactsFilterSidebar({
             <ContactsCollapsibleFilterSection
               key={key}
               title={section.displayName}
+              filterKey={key}
               count={sectionActiveCount > 0 ? sectionActiveCount : 0}
               defaultOpen={sectionHasActive}
               activeChips={[
@@ -413,9 +417,9 @@ export function ContactsFilterSidebar({
               onClear={
                 sectionHasActive
                   ? () => {
-                      onFacetChange(key, []);
-                      if (hasEmailSearch) onSearchChange("");
-                    }
+                    onFacetChange(key, []);
+                    if (hasEmailSearch) onSearchChange("");
+                  }
                   : undefined
               }
             >

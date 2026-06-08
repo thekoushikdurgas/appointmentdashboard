@@ -2,10 +2,6 @@
 
 import { useEffect, useState } from "react";
 import DashboardPageLayout from "@/components/layouts/DashboardPageLayout";
-import {
-  OnboardingTour,
-  DEFAULT_TOUR_STEPS,
-} from "@/components/shared/OnboardingTour";
 import { activitiesService } from "@/services/graphql/activitiesService";
 import { usePerformanceMetric } from "@/hooks/usePerformanceMetric";
 import { useRole } from "@/context/RoleContext";
@@ -63,9 +59,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <DashboardPageLayout>
-      <OnboardingTour steps={DEFAULT_TOUR_STEPS} />
-
+    <DashboardPageLayout data-tour="dashboard-main">
       <DashboardAdCarousel interval={6000} />
 
       {hiringEnabled ? (

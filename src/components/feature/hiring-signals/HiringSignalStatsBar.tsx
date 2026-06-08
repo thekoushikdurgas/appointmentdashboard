@@ -170,9 +170,9 @@ export function HiringSignalStatsBar({
               <CountUpNumber end={filterMatchTotal} duration={900} />
             )}
           </p>
-          {!loading && totalJobs > 0 ? (
+          {!loading && totalJobs > 0 && filterMatchTotal > 0 ? (
             <TrendChip
-              direction={filterDepth > 0 ? "up" : "down"}
+              direction={filterDepth >= 50 ? "up" : "down"}
               label={`${filterDepth}%`}
             />
           ) : null}

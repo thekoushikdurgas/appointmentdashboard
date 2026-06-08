@@ -155,7 +155,9 @@ export default function ProfilePage() {
       });
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not send verification code.",
+        err instanceof Error
+          ? err.message
+          : "Could not send verification code.",
       );
     } finally {
       setVerifyRequestLoading(false);

@@ -533,7 +533,7 @@ export function StartJobFromS3Modal({
           <p className="c360-text-xs c360-text-muted">
             No files yet.{" "}
             <OpenFilesDrawerButton className="c360-text-primary c360-inline c360-underline c360-bg-transparent c360-border-none c360-cursor-pointer c360-p-0 c360-font-inherit">
-              Open Files to upload
+              Open Storage to upload
             </OpenFilesDrawerButton>
             .
           </p>

@@ -231,16 +231,21 @@ export function TabsContent({
   value,
   children,
   className,
+  ...props
 }: {
   value: string;
   children: React.ReactNode;
   className?: string;
-}) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, "children">) {
   const ctx = useContext(TabsContext);
   if (!ctx) throw new Error("TabsContent must be inside Tabs");
   if (ctx.activeTab !== value) return null;
   return (
-    <div role="tabpanel" className={cn("c360-tabs__panel", className)}>
+    <div
+      role="tabpanel"
+      className={cn("c360-tabs__panel", className)}
+      {...props}
+    >
       {children}
     </div>
   );

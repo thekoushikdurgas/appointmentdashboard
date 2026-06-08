@@ -210,7 +210,7 @@ export function EmailBulkFinderTab() {
     const doPoll = async () => {
       if (s3PollCountRef.current >= S3_JOB_MAX_POLLS) {
         setS3PollingActive(false);
-        toast.error("Job status polling timed out. Check Jobs for progress.");
+        toast.error("Job status polling timed out. Check Export for progress.");
         return;
       }
       s3PollCountRef.current += 1;
@@ -230,7 +230,7 @@ export function EmailBulkFinderTab() {
                 toast.success("Export ready — click Download to save.");
               }
             } catch {
-              toast.success("Job complete. Download manually from Files.");
+              toast.success("Job complete. Download manually from Storage.");
             }
           } else {
             toast.success("Job complete.");
@@ -251,7 +251,7 @@ export function EmailBulkFinderTab() {
     }, S3_JOB_POLL_INTERVAL_MS);
   }, []);
 
-  /** Upload current CSV to workspace S3, then enqueue email.server finder job (same payload as Jobs modal). */
+  /** Upload current CSV to workspace S3, then enqueue email.server finder job (same payload as Export modal). */
   const startFinderJobFromWizard = useCallback(async () => {
     if (!rawCsv.trim()) {
       toast.error("Upload a CSV first.");
@@ -339,7 +339,7 @@ export function EmailBulkFinderTab() {
   return (
     <Card
       title="Bulk email finder"
-      subtitle={`Sync run via findEmailsBulk — up to ${SYNC_CAP} rows per request. Larger CSVs: use an S3 finder job from Jobs.`}
+      subtitle={`Sync run via findEmailsBulk — up to ${SYNC_CAP} rows per request. Larger CSVs: use an S3 finder job from Export.`}
     >
       <div className="c360-section-stack c360-max-w-720">
         <StepHeader step={step} total={STEPS.length} />
@@ -507,7 +507,7 @@ export function EmailBulkFinderTab() {
             {parsedRows.length > SYNC_CAP && (
               <p className="c360-text-xs c360-text-muted">
                 This file has more rows than one sync allows. Choose how many to
-                run now, or use Jobs for the full file.
+                run now, or use Export for the full file.
               </p>
             )}
             <div className="c360-flex c360-flex-wrap c360-gap-2">
@@ -532,15 +532,15 @@ export function EmailBulkFinderTab() {
                 }
                 onClick={() => void startFinderJobFromWizard()}
               >
-                Start Jobs
+                Start Export
               </Button>
             </div>
             <p className="c360-text-xs c360-text-muted">
-              Start Jobs uploads this CSV to your workspace S3 and enqueues{" "}
+              Start Export uploads this CSV to your workspace S3 and enqueues{" "}
               <strong>Email finder (bulk)</strong> using your column mapping
-              above. For more than {SYNC_CAP} rows in sync, use Start Jobs or{" "}
+              above. For more than {SYNC_CAP} rows in sync, use Start Export or{" "}
               <OpenJobsDrawerButton type="button" className="c360-text-primary">
-                Jobs
+                Export
               </OpenJobsDrawerButton>
               .
             </p>

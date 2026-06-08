@@ -13,7 +13,7 @@ export const ACTIVITY_SERVICE_OPTIONS = [
   { value: "ai_chats", label: "AI chats" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "sales_navigator", label: "Sales Navigator" },
-  { value: "jobs", label: "Jobs" },
+  { value: "jobs", label: "Export" },
   { value: "imports", label: "Imports" },
   { value: "auth", label: "Auth" },
   { value: "billing", label: "Billing" },
@@ -24,7 +24,7 @@ export const ACTIVITY_SERVICE_OPTIONS = [
   { value: "saved_searches", label: "Saved searches" },
   { value: "notifications", label: "Notifications" },
   { value: "navigation", label: "Navigation" },
-  { value: "files", label: "Files" },
+  { value: "files", label: "Storage" },
   { value: "resume", label: "Resume" },
 ];
 

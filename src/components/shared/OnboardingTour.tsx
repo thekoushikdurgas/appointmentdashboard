@@ -7,11 +7,28 @@ import {
   useRef,
   useLayoutEffect,
 } from "react";
+import { createPortal } from "react-dom";
+import { usePathname, useRouter } from "next/navigation";
 import { applyVars } from "@/lib/applyCssVars";
-import { X, ArrowRight, ChevronLeft } from "lucide-react";
+import { computeTourPosition, type TooltipPos } from "@/lib/tourPosition";
+import { dispatchTourPrepare, type TourPrepareAction } from "@/lib/tourPrepare";
+import {
+  routeMatches,
+  waitForPath,
+  waitForRectStable,
+  waitForSelector,
+} from "@/lib/tourNavigation";
+import {
+  TOUR_COMPLETED_KEY,
+  clearTourSession,
+  isTourSessionActive,
+  readTourResumeStep,
+  writeTourResumeStep,
+} from "@/lib/tourSession";
+import { X, ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const TOUR_KEY = "c360_onboarding_completed";
+export { DEFAULT_TOUR_STEPS } from "@/lib/tourSteps";
 
 export interface TourStep {
   id: string;
@@ -20,6 +37,11 @@ export interface TourStep {
   title: string;
   content: string;
   position?: "top" | "bottom" | "left" | "right";
+  /** Navigate here before highlighting (cross-page tour). */
+  route?: string;
+  routeMatch?: "exact" | "prefix";
+  /** Page-specific setup (e.g. open filter sidebar on hiring signals). */
+  prepare?: TourPrepareAction;
 }
 
 interface OnboardingTourProps {
@@ -29,71 +51,26 @@ interface OnboardingTourProps {
   onComplete?: () => void;
 }
 
-interface TooltipPos {
-  top: number;
-  left: number;
-  placement: "top" | "bottom" | "left" | "right";
-  anchorRect?: DOMRect;
-}
+const PREPARE_WAIT_MS = 380;
+const DRAWER_PREPARE_WAIT_MS = 520;
+const SELECTOR_WAIT_MS = 8000;
 
-function computePosition(
-  el: Element | null,
-  preferred: TourStep["position"] = "bottom",
-): TooltipPos {
-  if (!el) {
-    return {
-      top: window.innerHeight / 2 - 80,
-      left: window.innerWidth / 2 - 160,
-      placement: "bottom",
-    };
-  }
-  const rect = el.getBoundingClientRect();
-  const gap = 12;
-  const TW = 320;
-  const TH = 140;
-
-  const placements: Record<NonNullable<TourStep["position"]>, TooltipPos> = {
-    bottom: {
-      top: rect.bottom + gap,
-      left: Math.min(rect.left, window.innerWidth - TW - 16),
-      placement: "bottom",
-      anchorRect: rect,
-    },
-    top: {
-      top: rect.top - TH - gap,
-      left: Math.min(rect.left, window.innerWidth - TW - 16),
-      placement: "top",
-      anchorRect: rect,
-    },
-    left: {
-      top: rect.top,
-      left: rect.left - TW - gap,
-      placement: "left",
-      anchorRect: rect,
-    },
-    right: {
-      top: rect.top,
-      left: rect.right + gap,
-      placement: "right",
-      anchorRect: rect,
-    },
-  };
-
-  const chosen = placements[preferred];
-  if (chosen.top >= 0 && chosen.left >= 0) return chosen;
-  for (const p of Object.values(placements)) {
-    if (p.top >= 0 && p.left >= 0) return p;
-  }
-  return placements.bottom;
-}
+const DRAWER_PREPARE_ACTIONS = new Set([
+  "hs-open-connectra",
+  "hs-open-saved-searches",
+]);
 
 export function OnboardingTour({
   steps,
   forceShow = false,
   onComplete,
 }: OnboardingTourProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [portalMounted, setPortalMounted] = useState(false);
   const [active, setActive] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
+  const [stepReady, setStepReady] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<TooltipPos>({
     top: 0,
     left: 0,
@@ -101,41 +78,143 @@ export function OnboardingTour({
   });
   const highlightRef = useRef<HTMLDivElement>(null);
   const tourTipRef = useRef<HTMLDivElement>(null);
+  const refinedStepRef = useRef(-1);
+  const scrolledStepRef = useRef(-1);
+  const reflowTimerRef = useRef<number | null>(null);
+  const enterTokenRef = useRef(0);
+  const stepIdxRef = useRef(stepIdx);
+  const pathnameRef = useRef(pathname);
+
+  pathnameRef.current = pathname;
+  stepIdxRef.current = stepIdx;
+
+  useEffect(() => setPortalMounted(true), []);
+
+  useEffect(() => {
+    if (!portalMounted) return;
+    document.body.classList.toggle("c360-tour-active", active);
+    return () => document.body.classList.remove("c360-tour-active");
+  }, [active, portalMounted]);
 
   useEffect(() => {
     if (forceShow) {
       setActive(true);
       setStepIdx(0);
+      writeTourResumeStep(0);
       return;
     }
-    const done = localStorage.getItem(TOUR_KEY);
-    if (!done) {
+    const done = localStorage.getItem(TOUR_COMPLETED_KEY);
+    if (done) return;
+    if (isTourSessionActive()) {
       setActive(true);
-      setStepIdx(0);
+      setStepIdx(readTourResumeStep());
+      return;
     }
+    setActive(true);
+    setStepIdx(0);
+    writeTourResumeStep(0);
   }, [forceShow]);
 
   const updatePosition = useCallback(
-    (idx: number) => {
+    (idx: number, measuredSize?: { width: number; height: number }) => {
+      if (idx !== stepIdxRef.current) return;
       const step = steps[idx];
       if (!step) return;
+      refinedStepRef.current = measuredSize ? idx : -1;
       const el = step.target ? document.querySelector(step.target) : null;
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      setTooltipPos(computePosition(el, step.position));
+      if (step.target && !el) return;
+      if (el && scrolledStepRef.current !== idx) {
+        scrolledStepRef.current = idx;
+        el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+      const pos = computeTourPosition(
+        el,
+        step.position,
+        { width: window.innerWidth, height: window.innerHeight },
+        measuredSize,
+      );
+      setTooltipPos(pos);
     },
     [steps],
   );
 
   useEffect(() => {
     if (!active) return;
-    const t = setTimeout(() => updatePosition(stepIdx), 100);
-    return () => clearTimeout(t);
-  }, [active, stepIdx, updatePosition]);
+    const step = steps[stepIdx];
+    if (!step) return;
 
-  const canShow = active && steps.length > 0;
+    const token = ++enterTokenRef.current;
+    setStepReady(false);
+    refinedStepRef.current = -1;
+    scrolledStepRef.current = -1;
+    writeTourResumeStep(stepIdx);
+
+    void (async () => {
+      const routeMode = step.routeMatch ?? "prefix";
+      const currentPath = pathnameRef.current;
+      if (step.route && !routeMatches(currentPath, step.route, routeMode)) {
+        router.push(step.route);
+        await waitForPath(step.route, routeMode);
+      }
+
+      if (enterTokenRef.current !== token) return;
+
+      if (step.prepare) {
+        dispatchTourPrepare(step.prepare);
+        const prepareWait = DRAWER_PREPARE_ACTIONS.has(step.prepare)
+          ? DRAWER_PREPARE_WAIT_MS
+          : PREPARE_WAIT_MS;
+        await new Promise((r) => window.setTimeout(r, prepareWait));
+      }
+
+      if (enterTokenRef.current !== token) return;
+
+      if (step.target) {
+        const waitMs = step.prepare ? SELECTOR_WAIT_MS : 5000;
+        await waitForSelector(step.target, waitMs);
+        if (
+          step.prepare &&
+          DRAWER_PREPARE_ACTIONS.has(step.prepare) &&
+          enterTokenRef.current === token
+        ) {
+          await waitForRectStable(step.target, 1800);
+        }
+      }
+
+      if (enterTokenRef.current !== token) return;
+
+      setStepReady(true);
+      updatePosition(stepIdx);
+    })();
+  }, [active, stepIdx, steps, router, updatePosition]);
+
+  useEffect(() => {
+    if (!active || !stepReady) return;
+    const t = window.setTimeout(() => updatePosition(stepIdx), 80);
+    return () => window.clearTimeout(t);
+  }, [active, stepReady, stepIdx, updatePosition]);
+
+  useEffect(() => {
+    if (!active || !stepReady) return;
+    const onResize = () => {
+      if (reflowTimerRef.current) window.clearTimeout(reflowTimerRef.current);
+      reflowTimerRef.current = window.setTimeout(
+        () => updatePosition(stepIdx),
+        120,
+      );
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (reflowTimerRef.current) window.clearTimeout(reflowTimerRef.current);
+    };
+  }, [active, stepReady, stepIdx, updatePosition]);
+
+  const canShow = active && steps.length > 0 && stepReady;
   const step = canShow ? (steps[stepIdx] ?? null) : null;
   const isLast = canShow && stepIdx === steps.length - 1;
-  const anchor = tooltipPos.anchorRect;
+  const anchor = tooltipPos.highlightRect ?? tooltipPos.anchorRect;
+  const progressPct = Math.round(((stepIdx + 1) / steps.length) * 100);
 
   useLayoutEffect(() => {
     if (!canShow || !highlightRef.current || !anchor) return;
@@ -147,16 +226,34 @@ export function OnboardingTour({
     });
   }, [canShow, anchor]);
 
+  const isCenteredStep = !step?.target;
+
   useLayoutEffect(() => {
-    if (!canShow || !tourTipRef.current) return;
+    if (!canShow || !tourTipRef.current || isCenteredStep) return;
     applyVars(tourTipRef.current, {
       "--c360-tour-tip-top": `${tooltipPos.top}px`,
       "--c360-tour-tip-left": `${tooltipPos.left}px`,
+      "--c360-tour-arrow-offset": `${tooltipPos.arrowOffset ?? 160}px`,
     });
-  }, [canShow, tooltipPos]);
+  }, [canShow, isCenteredStep, tooltipPos]);
+
+  useLayoutEffect(() => {
+    if (!canShow || !tourTipRef.current || isCenteredStep) return;
+    if (refinedStepRef.current === stepIdx) return;
+
+    const tipEl = tourTipRef.current;
+    const tipRect = tipEl.getBoundingClientRect();
+    if (tipRect.height > 0 && tipRect.width > 0) {
+      updatePosition(stepIdx, {
+        width: tipRect.width,
+        height: tipRect.height,
+      });
+    }
+  }, [canShow, stepIdx, isCenteredStep, updatePosition]);
 
   const complete = () => {
-    localStorage.setItem(TOUR_KEY, "1");
+    localStorage.setItem(TOUR_COMPLETED_KEY, "1");
+    clearTourSession();
     setActive(false);
     onComplete?.();
   };
@@ -173,9 +270,25 @@ export function OnboardingTour({
     if (stepIdx > 0) setStepIdx((i) => i - 1);
   };
 
-  if (!canShow || !step) return null;
+  if (!portalMounted || !active) return null;
 
-  return (
+  const loadingOverlay =
+    active && !stepReady ? (
+      <div className="c360-tour-loading" aria-live="polite" aria-busy="true">
+        <div className="c360-tour-loading__card">
+          <Loader2 className="c360-animate-spin" size={20} aria-hidden />
+          <span>Loading tour step…</span>
+        </div>
+      </div>
+    ) : null;
+
+  if (!canShow || !step) {
+    return loadingOverlay
+      ? createPortal(loadingOverlay, document.body)
+      : null;
+  }
+
+  const tourDialog = (
     <>
       <div className="c360-tour-backdrop" aria-hidden />
 
@@ -183,7 +296,15 @@ export function OnboardingTour({
 
       <div
         ref={tourTipRef}
-        className="c360-tour-tooltip"
+        className={cn(
+          "c360-tour-tooltip",
+          isCenteredStep && "c360-tour-tooltip--centered",
+          anchor && `c360-tour-tooltip--placement-${tooltipPos.placement}`,
+          anchor &&
+          (tooltipPos.placement === "left" ||
+            tooltipPos.placement === "right") &&
+          "c360-tour-tooltip--side",
+        )}
         role="dialog"
         aria-labelledby="c360-tour-title"
         aria-describedby="c360-tour-body"
@@ -211,16 +332,13 @@ export function OnboardingTour({
           {step.content}
         </p>
 
-        <div className="c360-tour-dots" aria-hidden>
-          {steps.map((_, i) => (
+        <div className="c360-tour-progress" aria-hidden>
+          <div className="c360-tour-progress__track">
             <div
-              key={i}
-              className={cn(
-                "c360-tour-dot",
-                i === stepIdx && "c360-tour-dot--active",
-              )}
+              className="c360-tour-progress__fill"
+              style={{ width: `${progressPct}%` }}
             />
-          ))}
+          </div>
         </div>
 
         <div className="c360-tour-actions">
@@ -256,57 +374,6 @@ export function OnboardingTour({
       </div>
     </>
   );
-}
 
-/**
- * Default tour steps for Contact360 app.
- */
-export const DEFAULT_TOUR_STEPS: TourStep[] = [
-  {
-    id: "welcome",
-    title: "Welcome to Contact360!",
-    content:
-      "Let's take a quick tour of the key features. You can skip at any time and restart later from your profile settings.",
-    position: "bottom",
-  },
-  {
-    id: "dashboard",
-    target: ".c360-nav__item[href='/dashboard'], a[href='/dashboard']",
-    title: "Dashboard",
-    content:
-      "Your command center. See live stats, activity streams, and product highlights at a glance.",
-    position: "right",
-  },
-  {
-    id: "contacts",
-    target: "a[href='/contacts']",
-    title: "Contacts",
-    content:
-      "Manage your contact database. Use the world map to see geographic distribution, and accordion rows to expand full contact details.",
-    position: "right",
-  },
-  {
-    id: "email",
-    target: "a[href='/email']",
-    title: "Email Finder & Verifier",
-    content:
-      "Find and verify professional email addresses — one at a time or in bulk with CSV upload using the step-by-step wizard.",
-    position: "right",
-  },
-  {
-    id: "campaigns",
-    target: "a[href='/campaigns']",
-    title: "Campaigns",
-    content:
-      "Create and manage outreach campaigns with rich email templates powered by the full text editor.",
-    position: "right",
-  },
-  {
-    id: "billing",
-    target: "a[href='/billing']",
-    title: "Billing",
-    content:
-      "Upgrade your plan, view invoices, and track your credit history — all in one place.",
-    position: "right",
-  },
-];
+  return createPortal(tourDialog, document.body);
+}

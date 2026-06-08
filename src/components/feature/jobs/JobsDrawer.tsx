@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useJobsDrawer } from "@/context/JobsDrawerContext";
 import { JobsWorkspace } from "@/components/feature/jobs/JobsWorkspace";
+import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
 
 export function JobsDrawer() {
   const { isOpen, closeJobsDrawer, openRequest } = useJobsDrawer();
@@ -33,7 +34,7 @@ export function JobsDrawer() {
           <motion.button
             type="button"
             className="c360-jobs-drawer-backdrop"
-            aria-label="Close jobs panel"
+            aria-label={`Close ${EXPORT_DRAWER_DISPLAY_NAME.toLowerCase()} panel`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -51,7 +52,7 @@ export function JobsDrawer() {
           >
             <header className="c360-jobs-drawer__header">
               <h2 id="c360-jobs-drawer-title" className="c360-sr-only">
-                Jobs
+                {EXPORT_DRAWER_DISPLAY_NAME}
               </h2>
               <div
                 ref={jobsDrawerToolbarPortalRef}

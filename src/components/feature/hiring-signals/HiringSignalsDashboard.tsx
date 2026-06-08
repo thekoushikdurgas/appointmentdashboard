@@ -15,7 +15,7 @@ function runStatusBadgeColor(status: string): BadgeColor {
   const s = status.toUpperCase();
   if (s.includes("SUCCESS") || s === "SUCCEEDED" || s === "DONE")
     return "success";
-  if (s.includes("RUNNING") || s.includes("PENDING")) return "warning";
+  if (s.includes("RUNNING") || s.includes("PENDING")) return "info";
   if (
     s.includes("FAIL") ||
     s.includes("ERROR") ||
