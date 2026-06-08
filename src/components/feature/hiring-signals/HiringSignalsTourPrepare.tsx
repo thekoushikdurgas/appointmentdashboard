@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import { useOptionalDataFiltersPanelContext } from "@/context/DataFiltersPanelContext";
-import {
-  TOUR_PREPARE_EVENT,
-  type TourPrepareAction,
-} from "@/lib/tourPrepare";
+import { TOUR_PREPARE_EVENT, type TourPrepareAction } from "@/lib/tourPrepare";
 
 export interface HiringSignalsTourPrepareProps {
   onOpenSavedSearches: () => void;

@@ -68,18 +68,18 @@ export function NavCommandPalette({ open, onClose }: NavCommandPaletteProps) {
     const base = isAdmin
       ? NAV_SEARCH_INDEX
       : NAV_SEARCH_INDEX.filter(
-        (e) =>
-          e.section !== "Campaigns" &&
-          e.section !== "AI" &&
-          e.section !== "Tools",
-      );
+          (e) =>
+            e.section !== "Campaigns" &&
+            e.section !== "AI" &&
+            e.section !== "Tools",
+        );
     return [...base, ...extra];
   }, [isAdmin]);
 
   const results = query.trim()
     ? navIndex.filter((r) =>
-      r.label.toLowerCase().includes(query.toLowerCase()),
-    )
+        r.label.toLowerCase().includes(query.toLowerCase()),
+      )
     : navIndex.slice(0, 8);
 
   const navigate = useCallback(

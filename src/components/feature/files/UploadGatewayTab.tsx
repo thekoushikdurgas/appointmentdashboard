@@ -91,13 +91,13 @@ export function UploadGatewayTab({ onSuccess }: UploadGatewayTabProps) {
       prev.map((r, j) =>
         j === activeIndex
           ? {
-            ...r,
-            uploadedBytes: progress.value,
-            totalBytes: progress.max,
-            partNumber: progress.partNumber,
-            numParts: progress.numParts,
-            status: "uploading",
-          }
+              ...r,
+              uploadedBytes: progress.value,
+              totalBytes: progress.max,
+              partNumber: progress.partNumber,
+              numParts: progress.numParts,
+              status: "uploading",
+            }
           : r,
       ),
     );

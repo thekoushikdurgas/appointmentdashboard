@@ -216,14 +216,14 @@ const DATE_POSTED_PRESET_OPTIONS: {
   value: DatePostedPreset;
   label: string;
 }[] = [
-    { value: "any", label: "Any Time" },
-    { value: "today", label: "Today" },
-    { value: "yesterday", label: "Yesterday" },
-    { value: "7d", label: "Last 7 Days" },
-    { value: "15d", label: "Last 15 Days" },
-    { value: "30d", label: "Last 30 Days" },
-    { value: "custom_range", label: "Custom Range" },
-  ];
+  { value: "any", label: "Any Time" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "7d", label: "Last 7 Days" },
+  { value: "15d", label: "Last 15 Days" },
+  { value: "30d", label: "Last 30 Days" },
+  { value: "custom_range", label: "Custom Range" },
+];
 
 function clearDatePostedDraftFields(
   onDraftField: (
@@ -609,13 +609,14 @@ function buildHiringSignalChipBuckets(
     const pk = draft.datePostedPreset;
     const label =
       pk === "custom_range"
-        ? `Date Posted: ${[
-          postedAtBoundToDateInputValue(draft.postedAfter),
-          postedAtBoundToDateInputValue(draft.postedBefore),
-        ]
-          .filter(Boolean)
-          .join(" – ") || "Custom Range"
-        }`
+        ? `Date Posted: ${
+            [
+              postedAtBoundToDateInputValue(draft.postedAfter),
+              postedAtBoundToDateInputValue(draft.postedBefore),
+            ]
+              .filter(Boolean)
+              .join(" – ") || "Custom Range"
+          }`
         : `Date Posted: ${DATE_POSTED_PRESET_LABELS[pk]}`;
     add("datePosted", {
       key: "dpreset",
@@ -710,7 +711,7 @@ export function HiringSignalsFilterSidebar({
           Run: {runIdTrimmed.slice(0, 12)}
           {runIdTrimmed.length > 12 ? "…" : ""}
           {typeof runScopedJobTotal === "number" &&
-            Number.isFinite(runScopedJobTotal) ? (
+          Number.isFinite(runScopedJobTotal) ? (
             <> · {runScopedJobTotal.toLocaleString()} jobs</>
           ) : null}
         </span>
@@ -739,9 +740,9 @@ export function HiringSignalsFilterSidebar({
   );
   const experienceBucketSelectValue =
     normalizedExperienceBuckets.length === 1 &&
-      EXPERIENCE_BUCKET_OPTIONS.some(
-        (o) => o.value === normalizedExperienceBuckets[0],
-      )
+    EXPERIENCE_BUCKET_OPTIONS.some(
+      (o) => o.value === normalizedExperienceBuckets[0],
+    )
       ? normalizedExperienceBuckets[0]
       : "";
   const normalizedEducationLevelMins = normalizeHiringSignalTokenList(
@@ -749,9 +750,9 @@ export function HiringSignalsFilterSidebar({
   );
   const educationMinSelectValue =
     normalizedEducationLevelMins.length === 1 &&
-      EDUCATION_MIN_OPTIONS.some(
-        (o) => o.value === normalizedEducationLevelMins[0],
-      )
+    EDUCATION_MIN_OPTIONS.some(
+      (o) => o.value === normalizedEducationLevelMins[0],
+    )
       ? normalizedEducationLevelMins[0]
       : "";
   const exTitleCount = normalizeHiringSignalTokenList(
@@ -763,8 +764,8 @@ export function HiringSignalsFilterSidebar({
   const salaryBounds = resolveSalaryBoundsFromDraft(draft);
   const salaryCount =
     draft.salaryPreset.trim() ||
-      salaryBounds.salaryMin != null ||
-      salaryBounds.salaryMax != null
+    salaryBounds.salaryMin != null ||
+    salaryBounds.salaryMax != null
       ? 1
       : 0;
   const expBucketCount = normalizeHiringSignalTokenList(
@@ -778,7 +779,7 @@ export function HiringSignalsFilterSidebar({
   const applyMethodCount = draft.applyMethod.trim() ? 1 : 0;
   const clearanceCount =
     draft.clearanceMode.trim() === "hide" ||
-      draft.clearanceMode.trim() === "only"
+    draft.clearanceMode.trim() === "only"
       ? 1
       : 0;
   const h1bCount = draft.h1bOnly ? 1 : 0;
@@ -811,9 +812,7 @@ export function HiringSignalsFilterSidebar({
   };
 
   return (
-    <div
-      className={cn("c360-contacts-filters c360-hs-filters", className)}
-    >
+    <div className={cn("c360-contacts-filters c360-hs-filters", className)}>
       <div data-tour="hs-filter-sidebar-head">
         <FilterSidebarHeader
           activeCount={totalActiveCount}
@@ -1298,10 +1297,10 @@ export function HiringSignalsFilterSidebar({
               onClear={
                 salaryCount > 0
                   ? () => {
-                    onDraftField("salaryPreset", "");
-                    onDraftField("salaryMin", "");
-                    onDraftField("salaryMax", "");
-                  }
+                      onDraftField("salaryPreset", "");
+                      onDraftField("salaryMin", "");
+                      onDraftField("salaryMax", "");
+                    }
                   : undefined
               }
             >

@@ -1,4 +1,6 @@
 /* Material Symbols Outlined — see docs/frontend/ideas/icon/export_icon.md */
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=download,paid&display=optional");
+
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
   font-weight: normal;

@@ -283,9 +283,7 @@ export function OnboardingTour({
     ) : null;
 
   if (!canShow || !step) {
-    return loadingOverlay
-      ? createPortal(loadingOverlay, document.body)
-      : null;
+    return loadingOverlay ? createPortal(loadingOverlay, document.body) : null;
   }
 
   const tourDialog = (
@@ -301,9 +299,9 @@ export function OnboardingTour({
           isCenteredStep && "c360-tour-tooltip--centered",
           anchor && `c360-tour-tooltip--placement-${tooltipPos.placement}`,
           anchor &&
-          (tooltipPos.placement === "left" ||
-            tooltipPos.placement === "right") &&
-          "c360-tour-tooltip--side",
+            (tooltipPos.placement === "left" ||
+              tooltipPos.placement === "right") &&
+            "c360-tour-tooltip--side",
         )}
         role="dialog"
         aria-labelledby="c360-tour-title"

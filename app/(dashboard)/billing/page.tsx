@@ -98,8 +98,8 @@ export default function BillingPage() {
         const apiFeatures =
           p.features && p.features.length > 0
             ? [...p.features]
-              .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
-              .map((f) => f.label)
+                .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
+                .map((f) => f.label)
             : null;
         const features: string[] = apiFeatures ?? [];
         if (!apiFeatures) {
@@ -287,7 +287,7 @@ export default function BillingPage() {
               <Alert
                 variant={
                   subscriptionPeriodBanner.daysLeft <=
-                    SUBSCRIPTION_END_WARNING_DAYS
+                  SUBSCRIPTION_END_WARNING_DAYS
                     ? "warning"
                     : "info"
                 }
@@ -305,14 +305,15 @@ export default function BillingPage() {
                   </strong>
                   {subscriptionPeriodBanner.daysLeft >= 0 &&
                     subscriptionPeriodBanner.daysLeft <=
-                    SUBSCRIPTION_END_WARNING_DAYS && (
+                      SUBSCRIPTION_END_WARNING_DAYS && (
                       <>
                         {" "}
                         (
                         {subscriptionPeriodBanner.daysLeft === 0
                           ? "last day"
-                          : `${subscriptionPeriodBanner.daysLeft} day${subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
-                          } left`}
+                          : `${subscriptionPeriodBanner.daysLeft} day${
+                              subscriptionPeriodBanner.daysLeft === 1 ? "" : "s"
+                            } left`}
                         ).
                       </>
                     )}

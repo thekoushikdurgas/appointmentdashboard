@@ -161,11 +161,17 @@ function buildPlacement(
   viewport: PositionViewport,
   panelLeft: number | null = null,
 ): TooltipPos {
-  const { width: TW, height: TH } = tooltipSize;
+  const { width: TW } = tooltipSize;
   const gap = TOUR_ANCHOR_GAP;
   const pad = TOUR_VIEWPORT_PADDING;
 
-  let left = horizontalForPlacement(rect, placement, tooltipSize, viewport, pad);
+  let left = horizontalForPlacement(
+    rect,
+    placement,
+    tooltipSize,
+    viewport,
+    pad,
+  );
   let top = verticalForPlacement(rect, placement, tooltipSize);
 
   let clamped = clampTooltipToViewport(top, left, tooltipSize, viewport, pad);

@@ -51,8 +51,8 @@ export function HiringSignalsCompanyFilters({
         </p>
       ) : null}
       {!companyCohortResolving &&
-        cohortActive &&
-        companyCohortMatchTotal != null ? (
+      cohortActive &&
+      companyCohortMatchTotal != null ? (
         <p className="c360-mb-2 c360-text-2xs c360-text-ink-muted">
           {companyCohortMatchTotal.toLocaleString()} companies match
           {companyCohortTruncated
@@ -71,9 +71,9 @@ export function HiringSignalsCompanyFilters({
         onClear={
           draft.companyNames.length > 0 || draft.excludedCompanyNames.length > 0
             ? () => {
-              onDraftField("companyNames", []);
-              onDraftField("excludedCompanyNames", []);
-            }
+                onDraftField("companyNames", []);
+                onDraftField("excludedCompanyNames", []);
+              }
             : undefined
         }
       >
@@ -113,11 +113,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyCountries.length > 0 ||
-            draft.excludedCompanyCountries.length > 0
+          draft.excludedCompanyCountries.length > 0
             ? () => {
-              onDraftField("companyCountries", []);
-              onDraftField("excludedCompanyCountries", []);
-            }
+                onDraftField("companyCountries", []);
+                onDraftField("excludedCompanyCountries", []);
+              }
             : undefined
         }
       >
@@ -161,11 +161,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyIndustries.length > 0 ||
-            draft.excludedCompanyIndustries.length > 0
+          draft.excludedCompanyIndustries.length > 0
             ? () => {
-              onDraftField("companyIndustries", []);
-              onDraftField("excludedCompanyIndustries", []);
-            }
+                onDraftField("companyIndustries", []);
+                onDraftField("excludedCompanyIndustries", []);
+              }
             : undefined
         }
       >
@@ -210,11 +210,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyEmployeeSizes.length > 0 ||
-            draft.excludedCompanyEmployeeSizes.length > 0
+          draft.excludedCompanyEmployeeSizes.length > 0
             ? () => {
-              onDraftField("companyEmployeeSizes", []);
-              onDraftField("excludedCompanyEmployeeSizes", []);
-            }
+                onDraftField("companyEmployeeSizes", []);
+                onDraftField("excludedCompanyEmployeeSizes", []);
+              }
             : undefined
         }
       >
@@ -260,11 +260,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyRevenue.length > 0 ||
-            draft.excludedCompanyRevenue.length > 0
+          draft.excludedCompanyRevenue.length > 0
             ? () => {
-              onDraftField("companyRevenue", []);
-              onDraftField("excludedCompanyRevenue", []);
-            }
+                onDraftField("companyRevenue", []);
+                onDraftField("excludedCompanyRevenue", []);
+              }
             : undefined
         }
       >
@@ -316,11 +316,11 @@ export function HiringSignalsCompanyFilters({
         }
         onClear={
           draft.companyFunding.length > 0 ||
-            draft.excludedCompanyFunding.length > 0
+          draft.excludedCompanyFunding.length > 0
             ? () => {
-              onDraftField("companyFunding", []);
-              onDraftField("excludedCompanyFunding", []);
-            }
+                onDraftField("companyFunding", []);
+                onDraftField("excludedCompanyFunding", []);
+              }
             : undefined
         }
       >

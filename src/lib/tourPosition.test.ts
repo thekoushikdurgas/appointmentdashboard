@@ -43,7 +43,9 @@ describe("clampTooltipToViewport", () => {
       { width: TOUR_TOOLTIP_WIDTH, height: tipH },
       viewport,
     );
-    expect(top + tipH).toBeLessThanOrEqual(viewport.height - TOUR_VIEWPORT_PADDING);
+    expect(top + tipH).toBeLessThanOrEqual(
+      viewport.height - TOUR_VIEWPORT_PADDING,
+    );
     expect(top).toBeLessThan(anchorTop);
   });
 });
@@ -51,8 +53,14 @@ describe("clampTooltipToViewport", () => {
 describe("computeTourPosition", () => {
   it("centers welcome step in viewport", () => {
     const pos = computeTourPosition(null, "bottom", viewport);
-    expect(pos.top).toBeCloseTo(viewport.height / 2 - TOUR_TOOLTIP_HEIGHT_ESTIMATE / 2, 0);
-    expect(pos.left).toBeCloseTo(viewport.width / 2 - TOUR_TOOLTIP_WIDTH / 2, 0);
+    expect(pos.top).toBeCloseTo(
+      viewport.height / 2 - TOUR_TOOLTIP_HEIGHT_ESTIMATE / 2,
+      0,
+    );
+    expect(pos.left).toBeCloseTo(
+      viewport.width / 2 - TOUR_TOOLTIP_WIDTH / 2,
+      0,
+    );
     expect(pos.anchorRect).toBeUndefined();
   });
 
@@ -72,7 +80,9 @@ describe("computeTourPosition", () => {
       width: TOUR_TOOLTIP_WIDTH,
       height: 190,
     });
-    expect(pos.top + 190).toBeLessThanOrEqual(viewport.height - TOUR_VIEWPORT_PADDING);
+    expect(pos.top + 190).toBeLessThanOrEqual(
+      viewport.height - TOUR_VIEWPORT_PADDING,
+    );
   });
 
   it("falls back to centered modal when anchor has zero size", () => {
@@ -88,9 +98,10 @@ describe("computeTourPosition", () => {
       width: TOUR_TOOLTIP_WIDTH,
       height: 171,
     });
-    expect(pos.placement === "top" || pos.top + 171 <= viewport.height - TOUR_VIEWPORT_PADDING).toBe(
-      true,
-    );
+    expect(
+      pos.placement === "top" ||
+        pos.top + 171 <= viewport.height - TOUR_VIEWPORT_PADDING,
+    ).toBe(true);
   });
 
   it("keeps right placement for tall filter sidebar (no footer flip)", () => {

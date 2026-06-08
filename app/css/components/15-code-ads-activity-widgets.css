@@ -63,9 +63,11 @@
 }
 
 .c360-ad-slide--gradient-brand {
-  background: linear-gradient(135deg,
-      var(--c360-primary) 0%,
-      var(--c360-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--c360-primary) 0%,
+    var(--c360-accent) 100%
+  );
 }
 
 .c360-ad-slide--gradient-midnight {
@@ -128,9 +130,11 @@
 
 /* Tint from --c360-activity-accent (set inline; value is usually var(--c360-*)) */
 .c360-activity-icon-tinted {
-  background: color-mix(in srgb,
-      var(--c360-activity-accent) 12.5%,
-      transparent);
+  background: color-mix(
+    in srgb,
+    var(--c360-activity-accent) 12.5%,
+    transparent
+  );
   color: var(--c360-activity-accent);
 }
 
@@ -357,7 +361,9 @@
   min-width: 0;
 }
 
-.c360-card--activity-feed-tab .c360-card__body--md>.c360-section-stack.c360-section-stack--sm {
+.c360-card--activity-feed-tab
+  .c360-card__body--md
+  > .c360-section-stack.c360-section-stack--sm {
   display: contents;
   width: 100%;
 }
@@ -383,13 +389,17 @@
 }
 
 /* Activities tabs: Cards in a section stack (e.g. Analytics) — kit `.c360-card__body { width: 50% }` clips charts */
-.c360-tabs--activities .c360-tabs__panel .c360-section-stack>.c360-card>.c360-card__body {
+.c360-tabs--activities
+  .c360-tabs__panel
+  .c360-section-stack
+  > .c360-card
+  > .c360-card__body {
   width: 100%;
   min-width: 0;
 }
 
 /* Activities panel: flatten card border-radius */
-.c360-tabs--activities .c360-tabs__panel>.c360-card {
+.c360-tabs--activities .c360-tabs__panel > .c360-card {
   border-radius: 0;
 }
 
@@ -400,7 +410,7 @@
 }
 
 /* Activities panel: toolbar/filter bar row inside section-stack — no wrap, centered */
-.c360-tabs--activities .c360-section-stack>.c360-mb-4.c360-items-center {
+.c360-tabs--activities .c360-section-stack > .c360-mb-4.c360-items-center {
   flex-wrap: nowrap;
   justify-content: center;
 }
@@ -457,7 +467,8 @@
 .c360-activity-calendar-tab__event-slot {
   position: relative;
   border-radius: var(--c360-radius-md);
-  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2) calc(var(--c360-spacing-2) + 6px);
+  padding: var(--c360-spacing-2) var(--c360-spacing-2) var(--c360-spacing-2)
+    calc(var(--c360-spacing-2) + 6px);
   background: var(--c360-bg-secondary);
   box-sizing: border-box;
 }

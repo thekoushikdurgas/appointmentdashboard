@@ -101,8 +101,8 @@ export function ReviewWorkspace({ openSeq, preset }: ReviewWorkspaceProps) {
       <section className="c360-review-workspace__section">
         <h3 className="c360-review-workspace__h">New job ticket</h3>
         <p className="c360-review-workspace__hint">
-          Link issues to a scheduler job ID (from Export) or a Hiring Signals job
-          UUID. Our team will review open tickets.
+          Link issues to a scheduler job ID (from Export) or a Hiring Signals
+          job UUID. Our team will review open tickets.
         </p>
         <form className="c360-section-stack" onSubmit={handleSubmit}>
           <Select

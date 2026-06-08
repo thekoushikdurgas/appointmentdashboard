@@ -47,11 +47,11 @@ export function HiringSignalsDataQualityFilters() {
         onClear={
           activeCount > 0
             ? () => {
-              onDraftField("companyMissingWebsite", false);
-              onDraftField("companyMissingRevenue", false);
-              onDraftField("companyCsuiteContactMinCount", null);
-              onDraftField("companyHrContactMinCount", null);
-            }
+                onDraftField("companyMissingWebsite", false);
+                onDraftField("companyMissingRevenue", false);
+                onDraftField("companyCsuiteContactMinCount", null);
+                onDraftField("companyHrContactMinCount", null);
+              }
             : undefined
         }
       >

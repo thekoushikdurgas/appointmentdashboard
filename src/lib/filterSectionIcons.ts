@@ -144,7 +144,10 @@ const KEYWORD_RULES: KeywordRule[] = [
   { test: (h) => h.includes("linkedin"), icon: Linkedin },
   { test: (h) => h.includes("revenue"), icon: DollarSign },
   { test: (h) => h.includes("funding"), icon: Landmark },
-  { test: (h) => h.includes("employee") || h.includes("headcount"), icon: Users },
+  {
+    test: (h) => h.includes("employee") || h.includes("headcount"),
+    icon: Users,
+  },
   { test: (h) => h.includes("industry"), icon: Factory },
   { test: (h) => h.includes("company"), icon: Building2 },
   { test: (h) => h.includes("country") || h.includes("region"), icon: Globe2 },
@@ -152,17 +155,35 @@ const KEYWORD_RULES: KeywordRule[] = [
   { test: (h) => h.includes("state") || h.includes("province"), icon: Map },
   { test: (h) => h.includes("zip") || h.includes("postal"), icon: Hash },
   { test: (h) => h.includes("skill"), icon: Wrench },
-  { test: (h) => h.includes("education") || h.includes("degree"), icon: GraduationCap },
-  { test: (h) => h.includes("salary") || h.includes("compensation"), icon: Banknote },
-  { test: (h) => h.includes("experience") || h.includes("seniority"), icon: Layers },
-  { test: (h) => h.includes("department") || h.includes("function"), icon: Network },
+  {
+    test: (h) => h.includes("education") || h.includes("degree"),
+    icon: GraduationCap,
+  },
+  {
+    test: (h) => h.includes("salary") || h.includes("compensation"),
+    icon: Banknote,
+  },
+  {
+    test: (h) => h.includes("experience") || h.includes("seniority"),
+    icon: Layers,
+  },
+  {
+    test: (h) => h.includes("department") || h.includes("function"),
+    icon: Network,
+  },
   { test: (h) => h.includes("title") || h.includes("role"), icon: Type },
   { test: (h) => h.includes("date") || h.includes("posted"), icon: Calendar },
-  { test: (h) => h.includes("clearance") || h.includes("compliance"), icon: Shield },
+  {
+    test: (h) => h.includes("clearance") || h.includes("compliance"),
+    icon: Shield,
+  },
   { test: (h) => h.includes("quality"), icon: ShieldCheck },
   { test: (h) => h.includes("website") || h.includes("domain"), icon: Globe2 },
   { test: (h) => h.includes("name"), icon: User },
-  { test: (h) => h.includes("job") || h.includes("employment"), icon: Briefcase },
+  {
+    test: (h) => h.includes("job") || h.includes("employment"),
+    icon: Briefcase,
+  },
 ];
 
 function normKey(value: string | undefined): string {
@@ -193,7 +214,9 @@ export function resolveFilterSectionIcon({
   const titleNorm = normTitle(title);
   if (titleNorm && TITLE_ICONS[titleNorm]) return TITLE_ICONS[titleNorm];
 
-  const haystack = [titleNorm, key, sid.replace(/-/g, " ")].filter(Boolean).join(" ");
+  const haystack = [titleNorm, key, sid.replace(/-/g, " ")]
+    .filter(Boolean)
+    .join(" ");
   for (const rule of KEYWORD_RULES) {
     if (rule.test(haystack)) return rule.icon;
   }

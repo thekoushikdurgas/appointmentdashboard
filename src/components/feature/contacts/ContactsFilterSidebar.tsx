@@ -334,9 +334,9 @@ export function ContactsFilterSidebar({
                 onClear={
                   active > 0
                     ? () => {
-                      onFacetChange(key, []);
-                      onExcludedFacetChange(key, []);
-                    }
+                        onFacetChange(key, []);
+                        onExcludedFacetChange(key, []);
+                      }
                     : undefined
                 }
               >
@@ -373,9 +373,9 @@ export function ContactsFilterSidebar({
                 onClear={
                   active > 0
                     ? () => {
-                      onFacetChange(key, []);
-                      onExcludedFacetChange(key, []);
-                    }
+                        onFacetChange(key, []);
+                        onExcludedFacetChange(key, []);
+                      }
                     : undefined
                 }
               >
@@ -417,9 +417,9 @@ export function ContactsFilterSidebar({
               onClear={
                 sectionHasActive
                   ? () => {
-                    onFacetChange(key, []);
-                    if (hasEmailSearch) onSearchChange("");
-                  }
+                      onFacetChange(key, []);
+                      if (hasEmailSearch) onSearchChange("");
+                    }
                   : undefined
               }
             >

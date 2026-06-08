@@ -291,28 +291,27 @@ function HiringSignalsPageBody({
       const parsed0 = parseStatusPayload(row.statusPayload);
       const rawPct0 =
         row.statusPayload &&
-          typeof row.statusPayload === "object" &&
-          typeof (row.statusPayload as Record<string, unknown>)
-            .progress_percent === "number"
+        typeof row.statusPayload === "object" &&
+        typeof (row.statusPayload as Record<string, unknown>)
+          .progress_percent === "number"
           ? ((row.statusPayload as Record<string, unknown>)
-            .progress_percent as number)
+              .progress_percent as number)
           : null;
       const prog0 =
         rawPct0 != null && rawPct0 > 0
           ? Math.min(100, Math.max(0, Math.round(rawPct0)))
           : deriveDisplayProgressPercent(st0.toUpperCase(), {
-            progress: parsed0.progress,
-            total: parsed0.total,
-            processed: parsed0.processed,
-          });
+              progress: parsed0.progress,
+              total: parsed0.total,
+              processed: parsed0.processed,
+            });
       setExportBanner({
         jobId: row.jobId,
         status: st0,
         progress: prog0,
       });
       toast.success("XLSX export queued", {
-        description:
-          `Track progress on ${EXPORT_DRAWER_DISPLAY_NAME} (filter: Hiring Signals) — download when complete.`,
+        description: `Track progress on ${EXPORT_DRAWER_DISPLAY_NAME} (filter: Hiring Signals) — download when complete.`,
         action: {
           label: `Open ${EXPORT_DRAWER_DISPLAY_NAME}`,
           onClick: () => openJobsDrawer({ jobFamily: "hire_signal" }),
@@ -409,20 +408,20 @@ function HiringSignalsPageBody({
             const parsed = parseStatusPayload(row.statusPayload);
             const rawPct =
               row.statusPayload &&
-                typeof row.statusPayload === "object" &&
-                typeof (row.statusPayload as Record<string, unknown>)
-                  .progress_percent === "number"
+              typeof row.statusPayload === "object" &&
+              typeof (row.statusPayload as Record<string, unknown>)
+                .progress_percent === "number"
                 ? ((row.statusPayload as Record<string, unknown>)
-                  .progress_percent as number)
+                    .progress_percent as number)
                 : null;
             const prog =
               rawPct != null && rawPct > 0
                 ? Math.min(100, Math.max(0, Math.round(rawPct)))
                 : deriveDisplayProgressPercent(st.toUpperCase(), {
-                  progress: parsed.progress,
-                  total: parsed.total,
-                  processed: parsed.processed,
-                });
+                    progress: parsed.progress,
+                    total: parsed.total,
+                    processed: parsed.processed,
+                  });
             setExportBanner((b) =>
               b && b.jobId === exportBanner.jobId
                 ? { jobId: b.jobId, status: st, progress: prog }
@@ -597,7 +596,7 @@ function HiringSignalsPageBody({
                       to download when complete.
                     </p>
                     {!isSuccessfulTerminalJobStatus(exportBanner.status) &&
-                      exportBanner.status.toUpperCase() !== "FAILED" ? (
+                    exportBanner.status.toUpperCase() !== "FAILED" ? (
                       <Progress
                         value={exportBanner.progress}
                         max={100}
