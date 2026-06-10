@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CompanyLogoThumb } from "@/components/feature/companies/CompanyLogoThumb";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { formatCompact } from "@/lib/utils";
 
 interface CompanyHeaderProps {
@@ -94,14 +95,20 @@ export function CompanyHeader({
           />
         </div>
         <div>
-          <h2 className="c360-company-header__name">{name}</h2>
+          <h2 className="c360-company-header__name">
+            {formatDisplayLabel(name)}
+          </h2>
           {description && (
             <p className="c360-text-sm c360-text-muted">{description}</p>
           )}
         </div>
         <div className="c360-badge-row c360-company-header__badges">
-          {industry && <Badge color="blue">{industry}</Badge>}
-          {country && <Badge color="gray">{country}</Badge>}
+          {industry && (
+            <Badge color="blue">{formatDisplayLabel(industry)}</Badge>
+          )}
+          {country && (
+            <Badge color="gray">{formatDisplayLabel(country)}</Badge>
+          )}
         </div>
       </div>
 

@@ -268,7 +268,7 @@ export function ContactImportModal({
     >
       <div className="c360-section-stack">
         <Alert variant="info" title="SuperAdmin import">
-          Uploads go to your Contact360 storage bucket, then Connectra runs the
+          Uploads go to your Contact360 storage bucket, then Contact360 runs the
           CSV import job. Column mapping renames headers so they match what the
           importer expects.
         </Alert>

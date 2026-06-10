@@ -73,8 +73,7 @@ export function SourcesTab({ jobs }: { jobs: LinkedInJobRow[] }) {
       </Card>
       <Card title="Company size &amp; type">
         <p className="c360-text-sm c360-text-muted">
-          Requires company enrichment from Connectra — coming when attributes
-          are wired.
+          Requires company enrichment — coming when attributes are wired.
         </p>
       </Card>
       <p className="c360-text-xs c360-text-muted">

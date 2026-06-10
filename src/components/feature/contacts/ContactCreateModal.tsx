@@ -86,8 +86,8 @@ export function ContactCreateModal({
 
   const field =
     <K extends keyof CreateContactInput>(key: K) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement>) =>
+        setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
     <Modal
@@ -128,8 +128,7 @@ export function ContactCreateModal({
         <p className="c360-text-muted c360-text-sm c360-m-0">
           Location fields are not on{" "}
           <code className="c360-text-xs">CreateContactInput</code> in the
-          gateway; use Connectra or edit after sync if your deployment adds
-          them.
+          gateway; import or edit after sync if your deployment adds them.
         </p>
         <div className="c360-modal-actions">
           <Button variant="secondary" onClick={onClose}>

@@ -170,7 +170,7 @@ export default function CompanyDetailPage({ params }: PageProps) {
           </TabsTrigger>
           {showHiringTab ? (
             <TabsTrigger value="hiring" icon={<Zap size={16} />}>
-              Hiring signals
+              Hiring Signals
             </TabsTrigger>
           ) : null}
         </TabsList>

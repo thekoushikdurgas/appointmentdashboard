@@ -15,9 +15,16 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
   employmentTypeBadgeColor,
+  hiringSignalCompanyIndustriesSubtitle,
   hiringSignalInitials,
+  hiringSignalTitleMetaLabel,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import {
+  formatDisplayLabel,
+  formatDisplayLabelList,
+  formatEmploymentTypeLabel,
+} from "@/lib/displayText";
 import {
   formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
@@ -39,9 +46,9 @@ export function hiringSignalsDisplayLocationForRow(
   row: LinkedInJobRow,
 ): string {
   const geo = row.location?.trim();
-  if (geo) return geo;
+  if (geo) return formatDisplayLabel(geo);
   const wt = row.workplaceTypes?.filter(Boolean) ?? [];
-  if (wt.length) return wt.join(", ");
+  if (wt.length) return formatDisplayLabelList(wt);
   return "—";
 }
 
@@ -87,7 +94,7 @@ export function HiringSignalsJobTitleCellCompact({
       className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink"
       title={row.title || undefined}
     >
-      {row.title || "—"}
+      {formatDisplayLabel(row.title)}
     </span>
   );
 }
@@ -109,7 +116,7 @@ export function HiringSignalsJobTitleCellComfortable({
           className="c360-hs-grid-title-stack__title c360-min-w-0 c360-font-medium c360-text-ink"
           title={row.title || undefined}
         >
-          {row.title || "—"}
+          {formatDisplayLabel(row.title)}
         </span>
         {showDescriptionButton ? (
           <Tooltip content="Job description" placement="top">
@@ -128,7 +135,9 @@ export function HiringSignalsJobTitleCellComfortable({
         ) : null}
       </div>
       {row.seniority ? (
-        <p className="c360-hs-grid-title-stack__meta">{row.seniority}</p>
+        <p className="c360-hs-grid-title-stack__meta">
+          {formatDisplayLabel(row.seniority)}
+        </p>
       ) : null}
     </div>
   );
@@ -156,7 +165,7 @@ export function HiringSignalsJobTypeBadgesCell({
           color={employmentTypeBadgeColor(row.employmentType)}
           size={badgeSize}
         >
-          {row.employmentType}
+          {formatEmploymentTypeLabel(row.employmentType)}
         </Badge>
       ) : (
         <span className="c360-text-xs c360-text-ink-muted">—</span>
@@ -213,12 +222,12 @@ export function HiringSignalsJobActionsCellMain({
   row,
   iconSz,
   onOpenCompany,
-  onOpenConnectra,
+  onOpenCompanyContacts,
 }: {
   row: LinkedInJobRow;
   iconSz: number;
   onOpenCompany: (row: LinkedInJobRow) => void;
-  onOpenConnectra: (row: LinkedInJobRow) => void;
+  onOpenCompanyContacts: (row: LinkedInJobRow) => void;
 }) {
   return (
     <div
@@ -240,14 +249,14 @@ export function HiringSignalsJobActionsCellMain({
           </Button>
         </Tooltip>
       ) : null}
-      <Tooltip content="Connectra profile & people" placement="top">
+      <Tooltip content="Company profile & people" placement="top">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="c360-hs-grid-action-btn c360-gap-1 c360-px-2"
-          onClick={() => onOpenConnectra(row)}
-          aria-label="Open Connectra data"
+          onClick={() => onOpenCompanyContacts(row)}
+          aria-label="Open company contacts"
         >
           <Users size={iconSz} aria-hidden />
         </Button>
@@ -329,13 +338,13 @@ export function HiringSignalsJobCompanyCellCompact({
         className="c360-hs-table__company-link c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-left c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
         onClick={() => onOpenCompanyDrawer(row)}
       >
-        {row.companyName || "—"}
+        {formatDisplayLabel(row.companyName)}
       </button>
     );
   }
   return (
     <span className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink">
-      {row.companyName || "—"}
+      {formatDisplayLabel(row.companyName)}
     </span>
   );
 }
@@ -360,16 +369,16 @@ export function HiringSignalsJobCompanyCellComfortable({
             className="c360-hs-table__company-link c360-block c360-max-w-full c360-truncate c360-text-left c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
             onClick={() => onOpenCompanyDrawer(row)}
           >
-            {row.companyName || "—"}
+            {formatDisplayLabel(row.companyName)}
           </button>
         ) : (
           <span className="c360-text-sm c360-font-medium c360-text-ink">
-            {row.companyName || "—"}
+            {formatDisplayLabel(row.companyName)}
           </span>
         )}
         {row.functionCategory ? (
           <p className="c360-m-0 c360-mt-0-5 c360-text-xs c360-text-ink-muted">
-            {row.functionCategory}
+            {formatDisplayLabel(row.functionCategory)}
           </p>
         ) : null}
       </div>
@@ -387,9 +396,9 @@ export function HiringSignalsContactInitialsCell({ name }: { name: string }) {
 }
 
 /**
- * Connectra drawer contacts: mask email until revealed.
+ * Company contacts drawer: mask email until revealed.
  * Parent grid reveals stored email (free/starter) or runs email.findEmails (pro/super-admin).
- * Once revealed, only `resolvedEmail` is shown — stored Connectra email is not used as fallback.
+ * Once revealed, only `resolvedEmail` is shown — stored index email is not used as fallback.
  */
 export function HiringSignalDrawerContactEmailCell({
   isRevealed,
@@ -470,10 +479,4 @@ export function HiringSignalsContactLinkedInCell({
             rel="noopener noreferrer"
             aria-label="LinkedIn"
           >
-            <Linkedin size={iconSz} aria-hidden />
-          </a>
-        </Button>
-      </Tooltip>
-    </div>
-  );
-}
+            <Linkedin size={iconSz} aria-hidden 

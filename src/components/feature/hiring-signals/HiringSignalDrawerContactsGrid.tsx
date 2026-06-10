@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
+import {
+  formatDisplayLabel,
+  formatDisplayLabelList,
+} from "@/lib/displayText";
 import { cn } from "@/lib/utils";
 import { parseEmailServiceError } from "@/lib/emailErrors";
 import { getHiringSignalsDataGridSx } from "@/components/feature/hiring-signals/hiringSignalsDataGridTheme";
@@ -18,7 +22,7 @@ import {
   HiringSignalsContactLinkedInCell,
 } from "@/components/feature/hiring-signals/hiringSignalsGridCells";
 import {
-  connectraContactStableKey,
+  companyContactStableKey,
   pickContactDepartments,
   pickContactDisplay,
   pickContactFinderNames,
@@ -82,7 +86,7 @@ export function HiringSignalDrawerContactsGrid({
         const n = pickContactFinderNames(row);
         const deps = pickContactDepartments(row);
         return {
-          id: connectraContactStableKey(row, i),
+          id: companyContactStableKey(row, i),
           name: p.name,
           title: p.title,
           departmentsLabel: deps.length ? deps.join(", ") : "",
@@ -185,7 +189,7 @@ export function HiringSignalDrawerContactsGrid({
           params: GridRenderCellParams<HiringSignalContactGridRow>,
         ) => (
           <span className="c360-text-sm c360-font-medium c360-text-ink">
-            {params.row.name || "—"}
+            {formatDisplayLabel(params.row.name)}
           </span>
         ),
         cellClassName: "c360-hs-grid-cell--center",
@@ -203,7 +207,9 @@ export function HiringSignalDrawerContactsGrid({
             className="c360-line-clamp-2 c360-text-2xs c360-text-ink-muted"
             title={params.row.title || undefined}
           >
-            {params.row.title?.trim() ? params.row.title : "—"}
+            {params.row.title?.trim()
+              ? formatDisplayLabel(params.row.title)
+              : "—"}
           </span>
         ),
         cellClassName: "c360-hs-grid-cell--center",
@@ -222,7 +228,9 @@ export function HiringSignalDrawerContactsGrid({
             title={params.row.departmentsLabel || undefined}
           >
             {params.row.departmentsLabel?.trim()
-              ? params.row.departmentsLabel
+              ? formatDisplayLabelList(
+                  params.row.departmentsLabel.split(",").map((s) => s.trim()),
+                )
               : "—"}
           </span>
         ),

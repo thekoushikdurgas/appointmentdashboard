@@ -56,7 +56,7 @@ const DRAWER_PREPARE_WAIT_MS = 520;
 const SELECTOR_WAIT_MS = 8000;
 
 const DRAWER_PREPARE_ACTIONS = new Set([
-  "hs-open-connectra",
+  "hs-open-company-contacts",
   "hs-open-saved-searches",
 ]);
 
@@ -299,9 +299,9 @@ export function OnboardingTour({
           isCenteredStep && "c360-tour-tooltip--centered",
           anchor && `c360-tour-tooltip--placement-${tooltipPos.placement}`,
           anchor &&
-            (tooltipPos.placement === "left" ||
-              tooltipPos.placement === "right") &&
-            "c360-tour-tooltip--side",
+          (tooltipPos.placement === "left" ||
+            tooltipPos.placement === "right") &&
+          "c360-tour-tooltip--side",
         )}
         role="dialog"
         aria-labelledby="c360-tour-title"

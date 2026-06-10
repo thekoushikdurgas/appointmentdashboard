@@ -6,7 +6,7 @@ import { TOUR_PREPARE_EVENT, type TourPrepareAction } from "@/lib/tourPrepare";
 
 export interface HiringSignalsTourPrepareProps {
   onOpenSavedSearches: () => void;
-  onOpenConnectraForTour: () => void;
+  onOpenCompanyContactsForTour: () => void;
   onClosePanels: () => void;
 }
 
@@ -15,7 +15,7 @@ export interface HiringSignalsTourPrepareProps {
  */
 export function HiringSignalsTourPrepare({
   onOpenSavedSearches,
-  onOpenConnectraForTour,
+  onOpenCompanyContactsForTour,
   onClosePanels,
 }: HiringSignalsTourPrepareProps) {
   const panelCtx = useOptionalDataFiltersPanelContext();
@@ -26,8 +26,8 @@ export function HiringSignalsTourPrepare({
         .detail?.action;
       if (action === "hs-open-filters") {
         panelCtx?.openFilters();
-      } else if (action === "hs-open-connectra") {
-        onOpenConnectraForTour();
+      } else if (action === "hs-open-company-contacts") {
+        onOpenCompanyContactsForTour();
       } else if (action === "hs-open-saved-searches") {
         onOpenSavedSearches();
       } else if (action === "hs-close-panels") {
@@ -37,7 +37,7 @@ export function HiringSignalsTourPrepare({
 
     window.addEventListener(TOUR_PREPARE_EVENT, onPrepare);
     return () => window.removeEventListener(TOUR_PREPARE_EVENT, onPrepare);
-  }, [panelCtx, onOpenConnectraForTour, onOpenSavedSearches, onClosePanels]);
+  }, [panelCtx, onOpenCompanyContactsForTour, onOpenSavedSearches, onClosePanels]);
 
   return null;
 }

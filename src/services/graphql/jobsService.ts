@@ -105,7 +105,7 @@ function mapJob(r: JobRow): Job {
       ? r.processedRows
       : parsed.processed;
   const live = normalizeEmailSatelliteStatus(parsed.liveStatus);
-  /** Connectra (sync_server) exposes live status on GET /common/jobs/:uuid — same as email.server. */
+  /** sync_server exposes live status on GET /common/jobs/:uuid — same as email.server. */
   const useLiveStatus =
     !!live &&
     (r.sourceService === "email_server" || r.sourceService === "sync_server");
@@ -118,8 +118,8 @@ function mapJob(r: JobRow): Job {
   const displayStatus = useLiveStatus ? live : dbDisplay;
   const fromResponse =
     r.responsePayload &&
-    typeof r.responsePayload === "object" &&
-    !Array.isArray(r.responsePayload)
+      typeof r.responsePayload === "object" &&
+      !Array.isArray(r.responsePayload)
       ? (r.responsePayload as Record<string, unknown>)
       : null;
   const outputFromResponse: string | undefined = fromResponse
@@ -548,22 +548,22 @@ export const jobsService = {
       { input },
     ),
 
-  /** Pause a sync.server (Connectra) job directly by UUID. */
-  pauseConnectraJob: (jobUuid: string) =>
+  /** Pause a sync.server job directly by UUID. */
+  pauseSyncServerJob: (jobUuid: string) =>
     graphqlMutation<{ jobs: { pauseConnectraJob: unknown } }>(
       PAUSE_CONNECTRA_JOB,
       { jobUuid },
     ),
 
-  /** Resume a paused sync.server (Connectra) job directly by UUID. */
-  resumeConnectraJob: (jobUuid: string) =>
+  /** Resume a paused sync.server job directly by UUID. */
+  resumeSyncServerJob: (jobUuid: string) =>
     graphqlMutation<{ jobs: { resumeConnectraJob: unknown } }>(
       RESUME_CONNECTRA_JOB,
       { jobUuid },
     ),
 
-  /** Terminate a sync.server (Connectra) job directly by UUID. */
-  terminateConnectraJob: (jobUuid: string) =>
+  /** Terminate a sync.server job directly by UUID. */
+  terminateSyncServerJob: (jobUuid: string) =>
     graphqlMutation<{ jobs: { terminateConnectraJob: unknown } }>(
       TERMINATE_CONNECTRA_JOB,
       { jobUuid },

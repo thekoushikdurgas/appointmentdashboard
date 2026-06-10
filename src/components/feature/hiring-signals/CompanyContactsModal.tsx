@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { MediaObject } from "@/components/ui/MediaObject";
 import {
   fetchCompanyHiringSignalJobs,
-  fetchConnectraCompany,
+  fetchEnrichedCompany,
   asRecord,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
@@ -46,9 +46,9 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     title: String(o.title ?? base.title),
     descriptionHtml: String(
       o.descriptionHTML ??
-        o.descriptionHtml ??
-        o.description ??
-        base.descriptionHtml,
+      o.descriptionHtml ??
+      o.description ??
+      base.descriptionHtml,
     ),
     postedAt: String(o.postedAt ?? o.posted_at ?? base.postedAt),
     jobUrl: String(o.jobUrl ?? o.job_url ?? base.jobUrl),
@@ -62,9 +62,9 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     seniority: String(o.seniorityLevel ?? o.seniority ?? base.seniority),
     functionCategory: String(
       o.functionCategoryV2 ??
-        o.function_category_v2 ??
-        o.functionCategory ??
-        base.functionCategory,
+      o.function_category_v2 ??
+      o.functionCategory ??
+      base.functionCategory,
     ),
     industries: String(o.industries ?? base.industries),
     location: String(
@@ -83,7 +83,7 @@ export interface CompanyContactsModalProps {
 }
 
 /**
- * Company: Mongo job rows for the same `company_uuid`, plus Connectra (sync) profile in the header strip.
+ * Company: Mongo job rows for the same `company_uuid`, plus enriched profile in the header strip.
  */
 export function CompanyContactsModal({
   companyUuid,
@@ -116,7 +116,7 @@ export function CompanyContactsModal({
     setCompanyLoading(true);
     (async () => {
       try {
-        const rec = await fetchConnectraCompany(companyUuid);
+        const rec = await fetchEnrichedCompany(companyUuid);
         if (cancelled) return;
         const rr = asRecord(rec.hireSignal?.connectraCompany);
         if (rr && rr.success === false) {
@@ -179,7 +179,7 @@ export function CompanyContactsModal({
   ) : (
     <div className="c360-stat-card__icon c360-flex c360-h-50 c360-w-50 c360-shrink-0 c360-overflow-hidden c360-rounded-full">
       {co.profilePic ? (
-        // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+        // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from enriched company / scraper
         <img
           src={proxiedCompanyLogoSrc(co.profilePic)}
           alt=""
@@ -193,7 +193,7 @@ export function CompanyContactsModal({
 
   const companyMetaBody =
     !companyLoading &&
-    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+      (co.website || co.industry || co.employees || co.linkedinUrl) ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {co.industry ? <p className="c360-text-ink">{co.industry}</p> : null}
         {co.website ? (

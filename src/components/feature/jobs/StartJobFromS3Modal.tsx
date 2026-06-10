@@ -57,8 +57,8 @@ const EMAIL_KINDS: { value: StartJobFromS3JobKind; label: string }[] = [
 ];
 
 const IMPORT_KINDS: { value: StartJobFromS3JobKind; label: string }[] = [
-  { value: "import_contact", label: "Import contacts (Connectra)" },
-  { value: "import_company", label: "Import companies (Connectra)" },
+  { value: "import_contact", label: "Import contacts (CSV)" },
+  { value: "import_company", label: "Import companies (CSV)" },
 ];
 
 const VERIFY_PROVIDERS = [
@@ -235,7 +235,7 @@ export function StartJobFromS3Modal({
     }
   }, [isSuperAdmin, jobKind]);
 
-  /** Connectra imports default to ``imports/`` in the API; avoid leaving email ``exports/`` in the field. */
+  /** CSV imports default to ``imports/`` in the API; avoid leaving email ``exports/`` in the field. */
   useEffect(() => {
     if (jobKind === "import_contact" || jobKind === "import_company") {
       setOutputPrefix((prev) => {
@@ -501,7 +501,7 @@ export function StartJobFromS3Modal({
     >
       <div className="c360-section-stack">
         {isImport && (
-          <Alert variant="info" title="SuperAdmin — Connectra import">
+          <Alert variant="info" title="SuperAdmin — CSV import">
             Uses{" "}
             <code className="c360-text-xs">jobs.createContact360Import</code>{" "}
             with <code className="c360-text-xs">s3Bucket</code>,{" "}
@@ -827,7 +827,7 @@ export function StartJobFromS3Modal({
         )}
         {isImport && (
           <p className="c360-text-xs c360-text-muted c360-mb-1">
-            Connectra imports default to{" "}
+            CSV imports default to{" "}
             <code className="c360-font-mono">imports/</code> (not{" "}
             <code className="c360-font-mono">exports/</code>) when you switch to
             this job type.
@@ -835,8 +835,8 @@ export function StartJobFromS3Modal({
         )}
         {isImport ? (
           <p className="c360-text-xs c360-text-muted">
-            This job calls Connectra{" "}
-            <code className="c360-text-xs">insert_csv_file</code> with the
+            This job runs a CSV import (
+            <code className="c360-text-xs">insert_csv_file</code>) with the
             bucket, S3 key, optional{" "}
             <code className="c360-text-xs">csv_columns</code>, and output
             prefix.

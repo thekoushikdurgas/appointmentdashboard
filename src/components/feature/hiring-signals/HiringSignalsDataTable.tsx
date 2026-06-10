@@ -253,7 +253,7 @@ export interface HiringSignalsDataTableProps {
   loading?: boolean;
   onOpenDescription: (row: LinkedInJobRow) => void;
   onOpenCompany: (row: LinkedInJobRow) => void;
-  onOpenConnectra: (row: LinkedInJobRow) => void;
+  onOpenCompanyContacts: (row: LinkedInJobRow) => void;
   /** Slide-over company panel (prototype-style). */
   onOpenCompanyDrawer?: (row: LinkedInJobRow) => void;
   selectedKeys: Set<string>;
@@ -281,7 +281,7 @@ export function HiringSignalsDataTable({
   loading,
   onOpenDescription,
   onOpenCompany,
-  onOpenConnectra,
+  onOpenCompanyContacts,
   onOpenCompanyDrawer,
   selectedKeys,
   onSelectionChange,
@@ -539,7 +539,7 @@ export function HiringSignalsDataTable({
             row={params.row}
             iconSz={iconSz}
             onOpenCompany={onOpenCompany}
-            onOpenConnectra={onOpenConnectra}
+            onOpenCompanyContacts={onOpenCompanyContacts}
           />
         ),
         cellClassName: "c360-hs-grid-cell--center",
@@ -550,7 +550,7 @@ export function HiringSignalsDataTable({
     density,
     onOpenCompany,
     onOpenCompanyDrawer,
-    onOpenConnectra,
+    onOpenCompanyContacts,
     onOpenDescription,
   ]);
 

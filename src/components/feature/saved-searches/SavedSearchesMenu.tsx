@@ -591,7 +591,7 @@ export function SavedSearchesMenu({
   const popoverListBody = (
     <div className="c360-flex c360-flex-col c360-gap-3 c360-p-1">
       <div className="c360-flex c360-justify-between c360-items-center c360-gap-2">
-        <span className="c360-text-sm c360-fw-medium">Saved searches</span>
+        <span className="c360-text-sm c360-fw-medium">Saved Searches</span>
         <Button
           type="button"
           variant="primary"
@@ -672,7 +672,7 @@ export function SavedSearchesMenu({
                   id={SAVED_SEARCHES_PANEL_TITLE_ID}
                   className="c360-saved-searches-panel__title"
                 >
-                  Saved searches
+                  Saved Searches
                 </h2>
               </div>
               <div className="c360-saved-searches-panel__header-actions">

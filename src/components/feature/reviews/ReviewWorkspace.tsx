@@ -18,7 +18,7 @@ const SEVERITY_OPTS = [
 
 const SOURCE_OPTS = [
   { value: "scheduler", label: "Scheduler job" },
-  { value: "scrape", label: "Hiring Signals" },
+  { value: "scrape", label: "Hiring signals" },
 ];
 
 interface ReviewWorkspaceProps {
@@ -101,7 +101,7 @@ export function ReviewWorkspace({ openSeq, preset }: ReviewWorkspaceProps) {
       <section className="c360-review-workspace__section">
         <h3 className="c360-review-workspace__h">New job ticket</h3>
         <p className="c360-review-workspace__hint">
-          Link issues to a scheduler job ID (from Export) or a Hiring Signals
+          Link issues to a scheduler job ID (from Export) or a hiring signals
           job UUID. Our team will review open tickets.
         </p>
         <form className="c360-section-stack" onSubmit={handleSubmit}>
@@ -117,14 +117,14 @@ export function ReviewWorkspace({ openSeq, preset }: ReviewWorkspaceProps) {
             label={
               jobSource === "scheduler"
                 ? "Scheduler job ID"
-                : "Hiring Signals job ID"
+                : "Hiring signals job ID"
             }
             value={externalJobId}
             onChange={(e) => setExternalJobId(e.target.value)}
             placeholder={
               jobSource === "scheduler"
                 ? "e.g. job id from the Export list"
-                : "UUID of the Hiring Signals job"
+                : "UUID of the hiring signals job"
             }
             required
           />

@@ -102,12 +102,12 @@ export const DASHBOARD_DEMO_TESTIMONIALS: CircularTestimonial[] = [
   },
   {
     id: "hiring-signals",
-    name: "Hiring signals",
+    name: "Hiring Signals",
     designation: "contact360.io",
     quote:
       "Track job and hiring signals to prioritize outreach to the right orgs.",
     href: ROUTES.HIRING_SIGNALS,
-    cta: "Hiring signals",
+    cta: "Hiring Signals",
     src: SLIDE_IMAGE["hiring-signals"],
   },
   {

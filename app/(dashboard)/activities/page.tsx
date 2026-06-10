@@ -43,6 +43,7 @@ import type { ActivityFiltersBarValues } from "@/components/feature/activities/A
 import { ActivitiesFilterSidebar } from "@/components/feature/activities/ActivitiesFilterSidebar";
 import { SavedSearchesTab } from "@/components/feature/activities/SavedSearchesTab";
 import { humanizeToken } from "@/lib/activityDisplay";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { useUsage } from "@/hooks/useUsage";
 import { useFeatureOverview } from "@/hooks/useFeatureOverview";
 import { useRole } from "@/context/RoleContext";
@@ -497,7 +498,7 @@ export default function ActivitiesPage() {
               Live Job Stats
             </TabsTrigger>
             <TabsTrigger value="saved_searches" icon={<Bookmark size={16} />}>
-              Saved searches
+              Saved Searches
             </TabsTrigger>
             <TabsTrigger value="usage" icon={<PieChart size={16} />}>
               Usage
@@ -650,7 +651,7 @@ export default function ActivitiesPage() {
                   <div>
                     <div className="c360-section-label">Current plan</div>
                     <div className="c360-billing-stat-value">
-                      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                      {formatDisplayLabel(plan)}
                     </div>
                   </div>
                   <div>

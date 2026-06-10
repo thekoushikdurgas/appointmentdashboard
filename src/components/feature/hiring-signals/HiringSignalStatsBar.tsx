@@ -139,7 +139,7 @@ export function HiringSignalStatsBar({
           className="c360-mt-2"
         />
         <p className="c360-stat-card__description">
-          Linked to Connectra company_uuid
+          Linked to enriched company records
         </p>
       </article>
 

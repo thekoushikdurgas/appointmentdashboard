@@ -1,5 +1,7 @@
 import type { BadgeColor, BadgeProps } from "@/components/ui/Badge";
 import type { ProgressProps } from "@/components/ui/Progress";
+import type { LinkedInJobRow } from "@/lib/jobs/hiringSignalJobRows";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { asRecord } from "@/services/graphql/hiringSignalService";
 export { hiringSignalRowKey } from "@/lib/jobs/hiringSignalRowKeys";
 export {
@@ -379,7 +381,7 @@ export function pickContactFinderNames(row: unknown): {
 }
 
 /** Stable list key for Connectra / VQL contact rows. */
-export function connectraContactStableKey(row: unknown, index: number): string {
+export function companyContactStableKey(row: unknown, index: number): string {
   const o = asRecord(row);
   if (!o) return `hs-contact-${index}`;
   const nested =
@@ -440,6 +442,44 @@ export function pickCompanyDisplay(row: unknown): {
       o.profile_pic ?? o.profilePic ?? o.logo ?? o.company_logo ?? "",
     ),
   };
+}
+
+/** Title column subtitle: seniority and job function combined with ` || `. */
+export function hiringSignalTitleMetaLabel(row: LinkedInJobRow): string {
+  const seniority = formatDisplayLabel(row.seniority);
+  const jobFunction = formatDisplayLabel(row.functionCategory);
+  const hasSeniority = seniority !== "—";
+  const hasFunction = jobFunction !== "—";
+  if (hasSeniority && hasFunction) {
+    if (seniority === jobFunction) return seniority;
+    return `${seniority} || ${jobFunction}`;
+  }
+  if (hasSeniority) return seniority;
+  if (hasFunction) return jobFunction;
+  return "";
+}
+
+const COMPANY_INDUSTRY_SUBTITLE_MAX = 2;
+
+/** Company column subtitle: first industries + optional +N more (empty when none). */
+export function hiringSignalCompanyIndustriesSubtitle(
+  row: LinkedInJobRow,
+): { text: string; title: string } {
+  const raw = row.companyIndustries ?? [];
+  const labels = raw
+    .map((item) => item?.trim())
+    .filter((item): item is string => Boolean(item))
+    .map((item) => formatDisplayLabel(item))
+    .filter((item) => item !== "—");
+  if (labels.length === 0) {
+    return { text: "", title: "" };
+  }
+  const title = labels.join(", ");
+  const shown = labels.slice(0, COMPANY_INDUSTRY_SUBTITLE_MAX);
+  const more = labels.length - shown.length;
+  const text =
+    more > 0 ? `${shown.join(", ")} +${more}` : shown.join(", ");
+  return { text, title };
 }
 
 /** Absolute https URL for a company website/domain string from Connectra or scraper. */

@@ -2,7 +2,7 @@ export const TOUR_PREPARE_EVENT = "c360-tour-prepare";
 
 export type TourPrepareAction =
   | "hs-open-filters"
-  | "hs-open-connectra"
+  | "hs-open-company-contacts"
   | "hs-open-saved-searches"
   | "hs-close-panels";
 

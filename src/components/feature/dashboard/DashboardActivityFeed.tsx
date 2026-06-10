@@ -7,6 +7,7 @@ import { Accordion } from "@/components/ui/Accordion";
 import type { AccordionItem } from "@/components/ui/Accordion";
 import { ActivityServiceIcon } from "@/components/shared/ActivityServiceIcon";
 import { activityIconAccent } from "@/lib/activityDisplay";
+import { formatStatusLabel } from "@/lib/displayText";
 import { formatRelativeTime } from "@/lib/utils";
 
 export interface ActivityItem {
@@ -37,7 +38,7 @@ function splitActivityText(text: string): {
     return { headline: text || "Activity", subtitle: "Event" };
   const raw = parts[0] ?? "";
   const headline =
-    raw.length > 0 ? raw.charAt(0).toUpperCase() + raw.slice(1) : "Activity";
+    raw.length > 0 ? formatStatusLabel(raw) : "Activity";
   const subtitle =
     parts.length > 1 ? parts.slice(1).join(" · ") : "Latest event";
   return { headline, subtitle };

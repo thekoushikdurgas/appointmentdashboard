@@ -4,6 +4,10 @@ import { ExternalLink } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import {
+  formatDisplayLabel,
+  formatEmploymentTypeLabel,
+} from "@/lib/displayText";
 import { cn } from "@/lib/utils";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
@@ -95,12 +99,12 @@ export function JobDescriptionModal({
         <div className="c360-hs-jd-modal-stack">
           <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2 c360-text-sm c360-text-ink-muted">
             <span className="c360-font-medium c360-text-ink">
-              {job.companyName || "—"}
+              {formatDisplayLabel(job.companyName)}
             </span>
             {job.location ? (
               <>
                 <span aria-hidden>·</span>
-                <span>{job.location}</span>
+                <span>{formatDisplayLabel(job.location)}</span>
               </>
             ) : null}
             {job.postedAt ? (
@@ -122,12 +126,12 @@ export function JobDescriptionModal({
                 color={employmentTypeBadgeColor(job.employmentType)}
                 size="sm"
               >
-                {job.employmentType}
+                {formatEmploymentTypeLabel(job.employmentType)}
               </Badge>
             ) : null}
             {job.seniority ? (
               <Badge color="gray" size="sm">
-                {job.seniority}
+                {formatDisplayLabel(job.seniority)}
               </Badge>
             ) : null}
             {job.remoteAllowed &&

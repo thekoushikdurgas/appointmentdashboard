@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Building2, ExternalLink, Users } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { formatCompact } from "@/lib/utils";
 
 export interface CompanyCardData {
@@ -42,7 +43,9 @@ export function CompanyCard({ company, onAction }: CompanyCardProps) {
               href={`/companies/${company.id}`}
               className="c360-company-name-link"
             >
-              {company.name ?? "(unnamed)"}
+              {company.name
+                ? formatDisplayLabel(company.name)
+                : "(unnamed)"}
             </Link>
             {company.domain && (
               <div className="c360-text-xs c360-text-muted c360-truncate">
@@ -72,7 +75,7 @@ export function CompanyCard({ company, onAction }: CompanyCardProps) {
           <div className="c360-badge-row c360-mt-2 c360-flex-wrap">
             {company.industries.slice(0, 3).map((ind) => (
               <Badge key={ind} color="secondary" size="sm">
-                {ind}
+                {formatDisplayLabel(ind)}
               </Badge>
             ))}
             {company.industries.length > 3 && (

@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { cn, formatDateTime, formatCompact } from "@/lib/utils";
 import { parseOperationError } from "@/lib/errorParser";
 import type { Company } from "@/services/graphql/companiesService";
@@ -296,7 +297,7 @@ export function CompaniesDataTable({
                   onClick={() => stashCompanyRowForDetail(row)}
                   className="c360-block c360-min-w-0 c360-max-w-full c360-truncate c360-text-sm c360-font-medium c360-text-ink hover:c360-underline"
                 >
-                  {row.name || "—"}
+                  {formatDisplayLabel(row.name)}
                 </Link>
               </div>
             );
@@ -310,7 +311,7 @@ export function CompaniesDataTable({
                   onClick={() => stashCompanyRowForDetail(row)}
                   className="c360-block c360-max-w-full c360-truncate c360-font-medium c360-text-body hover:c360-underline"
                 >
-                  {row.name}
+                  {formatDisplayLabel(row.name)}
                 </Link>
                 {row.website ? (
                   <div className="c360-text-xs c360-text-muted c360-truncate">
@@ -354,7 +355,7 @@ export function CompaniesDataTable({
                     INDUSTRY_BADGE_COLORS[i % INDUSTRY_BADGE_COLORS.length]
                   }
                 >
-                  {label}
+                  {formatDisplayLabel(label)}
                 </Badge>
               ))}
               {more > 0 ? (
@@ -409,11 +410,13 @@ export function CompaniesDataTable({
                 .join(", ")
             }
           >
-            {params.row.location ||
-              [params.row.city, params.row.state, params.row.country]
-                .filter(Boolean)
-                .join(", ") ||
-              "—"}
+            {formatDisplayLabel(
+              params.row.location ||
+                [params.row.city, params.row.state, params.row.country]
+                  .filter(Boolean)
+                  .join(", ") ||
+                "",
+            )}
           </span>
         ),
         cellClassName: "c360-co-grid-cell--center",

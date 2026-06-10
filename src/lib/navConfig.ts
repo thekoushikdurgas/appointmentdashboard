@@ -54,7 +54,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
       { href: ROUTES.COMPANIES, label: "Companies", icon: "Building2" },
       {
         href: ROUTES.HIRING_SIGNALS,
-        label: "Hiring signals",
+        label: "Hiring Signals",
         icon: "Zap",
       },
       {
@@ -82,8 +82,8 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
     label: "Campaigns",
     requiresAdmin: true,
     items: [
-      { href: ROUTES.CAMPAIGNS, label: "All campaigns", icon: "Megaphone" },
-      { href: ROUTES.CAMPAIGNS_NEW, label: "New campaign", icon: "Plus" },
+      { href: ROUTES.CAMPAIGNS, label: "All Campaigns", icon: "Megaphone" },
+      { href: ROUTES.CAMPAIGNS_NEW, label: "New Campaign", icon: "Plus" },
       {
         href: ROUTES.CAMPAIGNS_TEMPLATES,
         label: "Templates",

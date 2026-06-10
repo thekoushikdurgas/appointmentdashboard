@@ -63,9 +63,9 @@ export function JobsWorkspace({
     pause,
     resume,
     cancel,
-    pauseConnectra,
-    resumeConnectra,
-    terminateConnectra,
+    pauseSyncJob,
+    resumeSyncJob,
+    terminateSyncJob,
   } = useJobs({ jobFamily: familyFilter || undefined }, { cachedList: true });
   const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -329,11 +329,11 @@ export function JobsWorkspace({
               }
             }}
             onPause={(jobId) => void pause(jobId)}
-            onPauseConnectra={(jobId) => void pauseConnectra(jobId)}
+            onPauseSync={(jobId) => void pauseSyncJob(jobId)}
             onCancel={(jobId) => void cancel(jobId)}
-            onTerminateConnectra={(jobId) => void terminateConnectra(jobId)}
+            onTerminateSync={(jobId) => void terminateSyncJob(jobId)}
             onResume={(jobId) => void resume(jobId)}
-            onResumeConnectra={(jobId) => void resumeConnectra(jobId)}
+            onResumeSync={(jobId) => void resumeSyncJob(jobId)}
             onDownloadOutput={(j) => void openSchedulerExportDownload(j)}
             onOpenJobTicket={(j) =>
               openReviewDrawer({
@@ -371,76 +371,76 @@ export function JobsWorkspace({
           {(exportType === "email_finder" ||
             exportType === "email_verify" ||
             exportType === "email_pattern") && (
-            <>
-              <Input
-                label="S3 input CSV key"
-                value={emailInputCsvKey}
-                onChange={(e) => setEmailInputCsvKey(e.target.value)}
-                placeholder="uploads/abc.csv"
-              />
-              <Input
-                label="S3 output prefix (your storage id + folder)"
-                value={emailOutputPrefix}
-                onChange={(e) => setEmailOutputPrefix(e.target.value)}
-                placeholder={storageId ? `${storageId}/exports/` : "exports/"}
-              />
-              <p className="c360-text-xs c360-text-muted c360-mt-1">
-                Default matches Export:{" "}
-                <code className="c360-font-mono c360-break-all">
-                  {storageId ? `${storageId}/exports/` : "…/exports/"}
-                </code>
-                . On create, your id is stripped and a bucket-relative prefix is
-                sent (normalized like the API).
-              </p>
-              {exportType === "email_pattern" && (
-                <div className="c360-section-stack c360-text-sm">
-                  <p className="c360-text-xs c360-text-muted c360-mb-2">
-                    CSV column headers (override if your file differs)
-                  </p>
-                  <Input
-                    label="Company UUID column"
-                    value={patternCompanyUuidCol}
-                    onChange={(e) => setPatternCompanyUuidCol(e.target.value)}
-                    placeholder="company_uuid"
-                    inputSize="sm"
-                  />
-                  <Input
-                    label="Email column"
-                    value={patternEmailCol}
-                    onChange={(e) => setPatternEmailCol(e.target.value)}
-                    placeholder="email"
-                    inputSize="sm"
-                  />
-                  <Input
-                    label="First name column"
-                    value={patternFirstNameCol}
-                    onChange={(e) => setPatternFirstNameCol(e.target.value)}
-                    placeholder="first_name"
-                    inputSize="sm"
-                  />
-                  <Input
-                    label="Last name column"
-                    value={patternLastNameCol}
-                    onChange={(e) => setPatternLastNameCol(e.target.value)}
-                    placeholder="last_name"
-                    inputSize="sm"
-                  />
-                  <Input
-                    label="Domain column"
-                    value={patternDomainCol}
-                    onChange={(e) => setPatternDomainCol(e.target.value)}
-                    placeholder="domain"
-                    inputSize="sm"
-                  />
-                </div>
-              )}
-              <p className="c360-text-xs c360-text-muted">
-                Upload the CSV via the Upload flow, then paste the returned file
-                key. Poll progress with <code>email.emailJobStatus</code> or
-                open this job under Export.
-              </p>
-            </>
-          )}
+              <>
+                <Input
+                  label="S3 input CSV key"
+                  value={emailInputCsvKey}
+                  onChange={(e) => setEmailInputCsvKey(e.target.value)}
+                  placeholder="uploads/abc.csv"
+                />
+                <Input
+                  label="S3 output prefix (your storage id + folder)"
+                  value={emailOutputPrefix}
+                  onChange={(e) => setEmailOutputPrefix(e.target.value)}
+                  placeholder={storageId ? `${storageId}/exports/` : "exports/"}
+                />
+                <p className="c360-text-xs c360-text-muted c360-mt-1">
+                  Default matches Export:{" "}
+                  <code className="c360-font-mono c360-break-all">
+                    {storageId ? `${storageId}/exports/` : "…/exports/"}
+                  </code>
+                  . On create, your id is stripped and a bucket-relative prefix is
+                  sent (normalized like the API).
+                </p>
+                {exportType === "email_pattern" && (
+                  <div className="c360-section-stack c360-text-sm">
+                    <p className="c360-text-xs c360-text-muted c360-mb-2">
+                      CSV column headers (override if your file differs)
+                    </p>
+                    <Input
+                      label="Company UUID column"
+                      value={patternCompanyUuidCol}
+                      onChange={(e) => setPatternCompanyUuidCol(e.target.value)}
+                      placeholder="company_uuid"
+                      inputSize="sm"
+                    />
+                    <Input
+                      label="Email column"
+                      value={patternEmailCol}
+                      onChange={(e) => setPatternEmailCol(e.target.value)}
+                      placeholder="email"
+                      inputSize="sm"
+                    />
+                    <Input
+                      label="First name column"
+                      value={patternFirstNameCol}
+                      onChange={(e) => setPatternFirstNameCol(e.target.value)}
+                      placeholder="first_name"
+                      inputSize="sm"
+                    />
+                    <Input
+                      label="Last name column"
+                      value={patternLastNameCol}
+                      onChange={(e) => setPatternLastNameCol(e.target.value)}
+                      placeholder="last_name"
+                      inputSize="sm"
+                    />
+                    <Input
+                      label="Domain column"
+                      value={patternDomainCol}
+                      onChange={(e) => setPatternDomainCol(e.target.value)}
+                      placeholder="domain"
+                      inputSize="sm"
+                    />
+                  </div>
+                )}
+                <p className="c360-text-xs c360-text-muted">
+                  Upload the CSV via the Upload flow, then paste the returned file
+                  key. Poll progress with <code>email.emailJobStatus</code> or
+                  open this job under Export.
+                </p>
+              </>
+            )}
           {(exportType === "contacts" || exportType === "companies") && (
             <>
               <Input

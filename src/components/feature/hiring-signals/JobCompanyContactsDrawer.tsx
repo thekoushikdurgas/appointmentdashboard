@@ -20,7 +20,6 @@ import {
   collectDepartmentOptionsFromContacts,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
-import { formatDisplayLabel } from "@/lib/displayText";
 import { HiringSignalAsideDrawer } from "@/components/feature/hiring-signals/HiringSignalAsideDrawer";
 import { HiringSignalDrawerContactsGrid } from "@/components/feature/hiring-signals/HiringSignalDrawerContactsGrid";
 import { HiringSignalDrawerContactFilters } from "@/components/feature/hiring-signals/HiringSignalDrawerContactFilters";
@@ -353,9 +352,7 @@ export function JobCompanyContactsDrawer({
     state.kind === "ok" && state.company ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {companyDisp?.industry ? (
-          <p className="c360-text-ink">
-            {formatDisplayLabel(companyDisp.industry)}
-          </p>
+          <p className="c360-text-ink">{companyDisp.industry}</p>
         ) : null}
         {companyDisp?.website ? (
           <HiringSignalCompanyWebsiteButton website={companyDisp.website} />
@@ -394,7 +391,7 @@ export function JobCompanyContactsDrawer({
                   className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
                   data-tour="hs-contacts-panel-head"
                 >
-                  {formatDisplayLabel(companyDisplayName)}
+                  {companyDisplayName}
                 </h2>
               }
               body={companyMetaBody}
@@ -506,11 +503,11 @@ export function JobCompanyContactsDrawer({
                   </div>
                   <div className="c360-min-w-0">
                     <p className="c360-text-sm c360-font-medium c360-text-ink">
-                      {formatDisplayLabel(posterDisp?.name || "Poster")}
+                      {posterDisp?.name || "Poster"}
                     </p>
                     {posterDisp?.title ? (
                       <p className="c360-text-2xs c360-text-ink-muted">
-                        {formatDisplayLabel(posterDisp.title)}
+                        {posterDisp.title}
                       </p>
                     ) : null}
                     {posterDisp?.linkedinUrl ? (

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { MediaObject } from "@/components/ui/MediaObject";
 import { CompanyHiringTab } from "@/components/feature/companies/CompanyHiringTab";
 import {
-  fetchConnectraCompany,
+  fetchEnrichedCompany,
   fetchCompanyHiringSignalJobs,
   asRecord,
 } from "@/services/graphql/hiringSignalService";
@@ -17,6 +17,7 @@ import {
   type LinkedInJobRow,
 } from "@/lib/jobs/hiringSignalJobRows";
 import type { CompanyDrawerAnchor } from "@/lib/companyDrawerAnchor";
+import { formatDisplayLabel } from "@/lib/displayText";
 import {
   hiringSignalInitials,
   pickCompanyDisplay,
@@ -74,7 +75,7 @@ export function CompanyDrawerPanel({
     setCompanyLoading(true);
     (async () => {
       try {
-        const rec = await fetchConnectraCompany(companyUuid);
+        const rec = await fetchEnrichedCompany(companyUuid);
         if (cancelled) return;
         const rr = asRecord(rec.hireSignal?.connectraCompany);
         if (rr && rr.success !== false) {
@@ -136,7 +137,7 @@ export function CompanyDrawerPanel({
   ) : (
     <div className="c360-stat-card__icon c360-flex c360-h-50 c360-w-50 c360-shrink-0 c360-overflow-hidden c360-rounded-full">
       {co.profilePic ? (
-        // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from Connectra / scraper
+        // eslint-disable-next-line @next/next/no-img-element -- remote logo URLs from enriched company / scraper
         <img
           src={proxiedCompanyLogoSrc(co.profilePic)}
           alt=""
@@ -150,12 +151,14 @@ export function CompanyDrawerPanel({
 
   const companyMetaBody =
     !companyLoading &&
-    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+      (co.website || co.industry || co.employees || co.linkedinUrl) ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {co.website ? (
           <HiringSignalCompanyWebsiteButton website={co.website} />
         ) : null}
-        {co.industry ? <p className="c360-text-ink">{co.industry}</p> : null}
+        {co.industry ? (
+          <p className="c360-text-ink">{formatDisplayLabel(co.industry)}</p>
+        ) : null}
         {co.employees ? <p>~{co.employees} employees</p> : null}
         {co.linkedinUrl ? (
           <HiringSignalCompanyLinkedInButton linkedinUrl={co.linkedinUrl} />
@@ -180,7 +183,7 @@ export function CompanyDrawerPanel({
                   id="c360-hs-drawer-title"
                   className="c360-m-0 c360-text-lg c360-font-semibold c360-text-ink"
                 >
-                  {companyDisplayName}
+                  {formatDisplayLabel(companyDisplayName)}
                 </h2>
               }
               body={
@@ -209,10 +212,10 @@ export function CompanyDrawerPanel({
                       onClick={onClose}
                       className="c360-text-primary hover:c360-underline c360-break-words"
                     >
-                      {companyDisplayName}
+                      {formatDisplayLabel(companyDisplayName)}
                     </Link>
                   ) : (
-                    companyDisplayName
+                    formatDisplayLabel(companyDisplayName)
                   )}
                 </h2>
               }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchConnectraCompanyLogoUrl } from "@/lib/contactCompanyLogoCache";
+import { fetchCompanyLogoUrl } from "@/lib/contactCompanyLogoCache";
 
 /**
  * When the contact list omits ``company.profilePic``, load the logo the same way
- * the company drawer does (connectraCompany).
+ * the company drawer does (enriched company profile).
  */
-export function useConnectraCompanyLogoUrl(
+export function useCompanyLogoUrl(
   companyId: string | undefined,
   existingUrl: string | undefined,
 ): string | undefined {
@@ -24,7 +24,7 @@ export function useConnectraCompanyLogoUrl(
       return;
     }
     let cancelled = false;
-    void fetchConnectraCompanyLogoUrl(id).then((url) => {
+    void fetchCompanyLogoUrl(id).then((url) => {
       if (!cancelled) setFetched(url);
     });
     return () => {

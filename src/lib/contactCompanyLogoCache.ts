@@ -1,16 +1,16 @@
 import {
   asRecord,
-  fetchConnectraCompany,
+  fetchEnrichedCompany,
 } from "@/services/graphql/hiringSignalService";
 import { pickCompanyDisplay } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 
 const logoByCompanyUuid = new Map<string, Promise<string | undefined>>();
 
 /**
- * Load company logo from hireSignal.connectraCompany (same source as the drawer header).
+ * Load company logo from enriched company profile (same source as the drawer header).
  * Dedupes in-flight requests per company UUID.
  */
-export function fetchConnectraCompanyLogoUrl(
+export function fetchCompanyLogoUrl(
   companyUuid: string,
 ): Promise<string | undefined> {
   const id = companyUuid.trim();
@@ -19,7 +19,7 @@ export function fetchConnectraCompanyLogoUrl(
   if (cached) return cached;
   const p = (async () => {
     try {
-      const rec = await fetchConnectraCompany(id);
+      const rec = await fetchEnrichedCompany(id);
       const rr = asRecord(rec.hireSignal?.connectraCompany);
       if (!rr || rr.success === false) return undefined;
       const pic = pickCompanyDisplay(rr.data).profilePic.trim();

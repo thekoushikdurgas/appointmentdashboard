@@ -11,6 +11,7 @@ import {
   mergeAndSortHireSignalFacetOptions,
 } from "@/components/feature/hiring-signals/hireSignalFacetOptions";
 import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { fetchHireSignalJobFilterOptions } from "@/services/graphql/hiringSignalService";
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -75,7 +76,7 @@ export function HiringSignalTextFacetCombobox({
           offset,
         });
         if (req !== loadReqRef.current) return;
-        const mapped = mapHireSignalFacetRows(rows);
+        const mapped = mapHireSignalFacetRows(rows, formatDisplayLabel);
         if (mode === "replace") {
           setOptions(sortHireSignalFacetOptionsByCount(mapped));
         } else {

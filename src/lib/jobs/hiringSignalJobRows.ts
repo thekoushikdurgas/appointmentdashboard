@@ -86,6 +86,8 @@ export type LinkedInJobRow = {
   salaryMaxUsd?: number | null;
   jobState?: string;
   lastSeen?: string;
+  /** Connectra company industries (list read-time enrichment from job.server). */
+  companyIndustries?: string[];
 };
 
 function pickStr(v: unknown, fallback = ""): string {
@@ -107,6 +109,45 @@ function pickStrList(v: unknown): string[] | undefined {
     .map((x) => (typeof x === "string" ? x : String(x ?? "")).trim())
     .filter(Boolean);
   return out.length ? out : undefined;
+}
+
+/** Industries token list from API arrays or comma-separated strings. */
+function pickIndustryTokenList(v: unknown): string[] | undefined {
+  const fromArray = pickStrList(v);
+  if (fromArray?.length) return fromArray;
+  if (typeof v === "string") {
+    const parts = v
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return parts.length ? parts : undefined;
+  }
+  return undefined;
+}
+
+function industriesFromRecord(
+  rec: Record<string, unknown> | null,
+): string[] | undefined {
+  if (!rec) return undefined;
+  return pickIndustryTokenList(rec.industries ?? rec.industry);
+}
+
+/** Prefer job.server `companyIndustries`; fall back to scrape-shaped raw_payload company fields. */
+function resolveCompanyIndustries(
+  o: Record<string, unknown>,
+  rawPayload: Record<string, unknown> | null,
+): string[] | undefined {
+  const fromApi = pickIndustryTokenList(
+    o.companyIndustries ?? o.company_industries,
+  );
+  if (fromApi?.length) return fromApi;
+  if (!rawPayload) return undefined;
+  return (
+    industriesFromRecord(rawPayload) ??
+    industriesFromRecord(asRecord(rawPayload.company)) ??
+    industriesFromRecord(asRecord(rawPayload.organization)) ??
+    industriesFromRecord(asRecord(rawPayload.employer))
+  );
 }
 
 function pickBool(v: unknown): boolean | undefined {
@@ -332,6 +373,7 @@ export function normalizeLinkedInJobRow(raw: unknown): LinkedInJobRow {
     salaryMaxUsd: pickNum(o.salary_max_usd ?? o.salaryMaxUsd),
     jobState: jobStateRaw.trim() ? jobStateRaw : undefined,
     lastSeen: lastSeenRaw.trim() ? lastSeenRaw : undefined,
+    companyIndustries: resolveCompanyIndustries(o, rawPayload),
   };
 }
 

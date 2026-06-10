@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Contact } from "@/services/graphql/contactsService";
 import { emailService } from "@/services/graphql/emailService";
+import { emailStatusLabel } from "@/components/feature/contacts/contactsGridCells";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 
 interface ContactDetailPanelProps {
@@ -80,7 +82,7 @@ export function ContactDetailPanel({
         {contact.location && (
           <div className="c360-contact-info-row">
             <MapPin size={13} color="var(--c360-text-muted)" />
-            <span>{contact.location}</span>
+            <span>{formatDisplayLabel(contact.location)}</span>
           </div>
         )}
       </div>
@@ -89,9 +91,11 @@ export function ContactDetailPanel({
         <div className="c360-section-label">Company</div>
         <div className="c360-contact-info-row">
           <Building2 size={13} color="var(--c360-text-muted)" />
-          <span>{contact.company || "—"}</span>
+          <span>{formatDisplayLabel(contact.company)}</span>
         </div>
-        <div className="c360-page-subtitle">{contact.title || "—"}</div>
+        <div className="c360-page-subtitle">
+          {formatDisplayLabel(contact.title)}
+        </div>
       </div>
 
       <div>
@@ -119,7 +123,7 @@ export function ContactDetailPanel({
               (tag: string) => (
                 <Badge key={tag} color="gray" className="c360-text-2xs">
                   <Tag size={10} className="c360-mr-1" />
-                  {tag}
+                  {formatDisplayLabel(tag)}
                 </Badge>
               ),
             )
@@ -140,7 +144,7 @@ export function ContactDetailPanel({
                 : "gray"
           }
         >
-          {contact.emailStatus || "Unknown"}
+          {emailStatusLabel(contact.emailStatus)}
         </Badge>
       </div>
 

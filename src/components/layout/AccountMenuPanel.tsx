@@ -10,6 +10,7 @@ import { profileTabRoute, ROUTES } from "@/lib/routes";
 import { ContextMenuItem } from "@/components/ui/ContextMenu";
 import { TopBarCredits } from "./TopBarCredits";
 import { SidebarQuickActions } from "./SidebarQuickActions";
+import { formatRoleLabel } from "@/lib/displayText";
 import { cn } from "@/lib/utils";
 
 export type AccountMenuContentMode =
@@ -55,15 +56,6 @@ function AccountNavLinkIcon({
   if (!entry?.icon) return null;
   const Icon = entry.icon;
   return <Icon size={size} className={className} aria-hidden />;
-}
-
-function formatRoleLabel(role: string): string {
-  if (!role.trim()) return "Member";
-  return role
-    .split("_")
-    .filter(Boolean)
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(" ");
 }
 
 function accountInitial(displayName: string): string {

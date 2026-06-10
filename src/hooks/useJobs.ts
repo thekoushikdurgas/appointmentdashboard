@@ -36,9 +36,9 @@ interface UseJobsReturn {
   pause: (id: string) => Promise<void>;
   resume: (id: string) => Promise<void>;
   cancel: (id: string) => Promise<void>;
-  pauseConnectra: (uuid: string) => Promise<void>;
-  resumeConnectra: (uuid: string) => Promise<void>;
-  terminateConnectra: (uuid: string) => Promise<void>;
+  pauseSyncJob: (uuid: string) => Promise<void>;
+  resumeSyncJob: (uuid: string) => Promise<void>;
+  terminateSyncJob: (uuid: string) => Promise<void>;
 }
 
 export function useJobs(
@@ -191,18 +191,18 @@ export function useJobs(
     await fetchJobs(true);
   };
 
-  const pauseConnectra = async (uuid: string) => {
-    await jobsService.pauseConnectraJob(uuid);
+  const pauseSyncJob = async (uuid: string) => {
+    await jobsService.pauseSyncServerJob(uuid);
     await fetchJobs(true);
   };
 
-  const resumeConnectra = async (uuid: string) => {
-    await jobsService.resumeConnectraJob(uuid);
+  const resumeSyncJob = async (uuid: string) => {
+    await jobsService.resumeSyncServerJob(uuid);
     await fetchJobs(true);
   };
 
-  const terminateConnectra = async (uuid: string) => {
-    await jobsService.terminateConnectraJob(uuid);
+  const terminateSyncJob = async (uuid: string) => {
+    await jobsService.terminateSyncServerJob(uuid);
     await fetchJobs(true);
   };
 
@@ -218,8 +218,8 @@ export function useJobs(
     pause,
     resume,
     cancel,
-    pauseConnectra,
-    resumeConnectra,
-    terminateConnectra,
+    pauseSyncJob,
+    resumeSyncJob,
+    terminateSyncJob,
   };
 }

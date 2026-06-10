@@ -29,15 +29,21 @@ import {
   type Contact,
 } from "@/services/graphql/contactsService";
 import { companiesService } from "@/services/graphql/companiesService";
+import { emailStatusLabel } from "@/components/feature/contacts/contactsGridCells";
 import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateModal";
+import {
+  formatDisplayLabel,
+  formatDisplayLabelList,
+} from "@/lib/displayText";
 import { ROUTES } from "@/lib/routes";
 import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 import {
   asRecord,
-  fetchConnectraCompany,
+  fetchEnrichedCompany,
 } from "@/services/graphql/hiringSignalService";
 import { toast } from "sonner";
 import { readStashedContactRow } from "@/lib/rowSession";
+import { sanitizeUserFacingMessage } from "@/lib/linkedinValidation";
 
 interface PageProps {
   params: Promise<{ uuid: string }>;
@@ -124,13 +130,13 @@ export default function ContactDetailPage({ params }: PageProps) {
         companyRedirectAttempted.current = true;
         let redirected = false;
         try {
-          const rec = await fetchConnectraCompany(uuid);
+          const rec = await fetchEnrichedCompany(uuid);
           const rr = asRecord(rec.hireSignal?.connectraCompany);
           if (rr && rr.success !== false && rr.data) {
             redirected = true;
           }
         } catch {
-          /* not a company via Connectra */
+          /* not a company via enriched profile lookup */
         }
         if (!redirected) {
           const company = await companiesService.get(uuid, {
@@ -155,11 +161,11 @@ export default function ContactDetailPage({ params }: PageProps) {
         setFromListSnapshot(true);
         return;
       }
-      setError(`Contact with identifier '${uuid}' was not found in Connectra.`);
+      setError(`Contact with identifier '${uuid}' was not found in Contact360.`);
       setContact(null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load contact";
-      setError(msg);
+      setError(sanitizeUserFacingMessage(msg));
       setContact(null);
     } finally {
       setLoading(false);
@@ -233,9 +239,13 @@ export default function ContactDetailPage({ params }: PageProps) {
           <div className="c360-contact-detail-header">
             <div className="c360-avatar c360-avatar--lg">{initials}</div>
             <div className="c360-contact-detail-meta">
-              <h1 className="c360-page-title">{contact.name}</h1>
+              <h1 className="c360-page-title">
+                {formatDisplayLabel(contact.name)}
+              </h1>
               {contact.title && (
-                <p className="c360-page-subtitle">{contact.title}</p>
+                <p className="c360-page-subtitle">
+                  {formatDisplayLabel(contact.title)}
+                </p>
               )}
               {contact.company && (
                 <div className="c360-contact-info-row c360-mt-1">
@@ -245,10 +255,10 @@ export default function ContactDetailPage({ params }: PageProps) {
                       href={`/companies/${contact.companyId}`}
                       className="c360-link"
                     >
-                      {contact.company}
+                      {formatDisplayLabel(contact.company)}
                     </Link>
                   ) : (
-                    <span>{contact.company}</span>
+                    <span>{formatDisplayLabel(contact.company)}</span>
                   )}
                 </div>
               )}
@@ -271,7 +281,7 @@ export default function ContactDetailPage({ params }: PageProps) {
                       : "gray"
                 }
               >
-                {contact.emailStatus ?? "Email unknown"}
+                {emailStatusLabel(contact.emailStatus)}
               </Badge>
             </div>
           </div>
@@ -323,7 +333,7 @@ export default function ContactDetailPage({ params }: PageProps) {
               <InfoRow
                 icon={<MapPin size={14} />}
                 label="Location"
-                value={contact.location}
+                value={formatDisplayLabel(contact.location)}
               />
               <InfoRow
                 icon={<Linkedin size={14} />}
@@ -393,7 +403,7 @@ export default function ContactDetailPage({ params }: PageProps) {
                   <span className="c360-section-label">
                     <Briefcase size={12} /> Seniority
                   </span>
-                  <span>{contact.seniority}</span>
+                  <span>{formatDisplayLabel(contact.seniority)}</span>
                 </div>
               )}
               {contact.stage && (
@@ -401,7 +411,7 @@ export default function ContactDetailPage({ params }: PageProps) {
                   <span className="c360-section-label">
                     <CircleDot size={12} /> Stage
                   </span>
-                  <span>{contact.stage}</span>
+                  <span>{formatDisplayLabel(contact.stage)}</span>
                 </div>
               )}
               {contact.departments && contact.departments.length > 0 && (
@@ -409,7 +419,7 @@ export default function ContactDetailPage({ params }: PageProps) {
                   <span className="c360-section-label">
                     <Layers size={12} /> Departments
                   </span>
-                  <span>{contact.departments.join(", ")}</span>
+                  <span>{formatDisplayLabelList(contact.departments)}</span>
                 </div>
               )}
               <div className="c360-detail-row">

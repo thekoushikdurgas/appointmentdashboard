@@ -26,8 +26,12 @@ import {
 } from "@/components/feature/contacts/contactsGridCells";
 import { contactDetailRoute } from "@/lib/routes";
 import { stashContactRowForDetail } from "@/lib/rowSession";
+import {
+  formatDisplayLabel,
+  formatDisplayLabelList,
+} from "@/lib/displayText";
 import { cn, getAvatarUrl } from "@/lib/utils";
-import { mapConnectraError } from "@/lib/linkedinValidation";
+import { mapContactsDataError } from "@/lib/linkedinValidation";
 import type { Contact } from "@/services/graphql/contactsService";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
@@ -257,7 +261,7 @@ export function ContactsDataTable({
   );
 
   const errorMsg = useMemo(
-    () => (error ? mapConnectraError(error) : null),
+    () => (error ? mapContactsDataError(error) : null),
     [error],
   );
 
@@ -346,7 +350,7 @@ export function ContactsDataTable({
                       : "c360-contacts-dt__task-link c360-text-left"
                   }
                 >
-                  {row.name}
+                  {formatDisplayLabel(row.name)}
                 </span>
               </Link>
             );
@@ -366,7 +370,7 @@ export function ContactsDataTable({
                   className="c360-contact-avatar c360-shrink-0"
                 />
                 <span className="c360-contacts-dt__task-link c360-min-w-0 c360-truncate">
-                  {row.name}
+                  {formatDisplayLabel(row.name)}
                 </span>
               </button>
             );
@@ -385,7 +389,7 @@ export function ContactsDataTable({
                 className="c360-contact-avatar"
               />
               <span className="c360-contacts-dt__task-link c360-text-left">
-                {row.name}
+                {formatDisplayLabel(row.name)}
               </span>
             </button>
           );
@@ -405,7 +409,7 @@ export function ContactsDataTable({
         valueGetter: (_v, row) => row.title ?? "",
         renderCell: (params: GridRenderCellParams<Contact>) => (
           <span className="c360-contacts-dt__muted c360-min-w-0 c360-truncate">
-            {params.row.title || "—"}
+            {formatDisplayLabel(params.row.title)}
           </span>
         ),
         cellClassName: "c360-ct-grid-cell--center",
@@ -424,7 +428,9 @@ export function ContactsDataTable({
             className="c360-contacts-dt__muted c360-min-w-0 c360-truncate"
             title={params.value ? String(params.value) : undefined}
           >
-            {params.value ? String(params.value) : "—"}
+            {params.row.departments?.length
+              ? formatDisplayLabelList(params.row.departments)
+              : "—"}
           </span>
         ),
         cellClassName: "c360-ct-grid-cell--center",
@@ -446,7 +452,9 @@ export function ContactsDataTable({
                 : undefined
             }
           >
-            {params.row.location || params.row.country || "—"}
+            {formatDisplayLabel(
+              params.row.location || params.row.country || "",
+            )}
           </span>
         ),
         cellClassName: "c360-ct-grid-cell--center",
@@ -562,7 +570,7 @@ export function ContactsDataTable({
         filterable: false,
         renderCell: (params: GridRenderCellParams<Contact>) => (
           <span className="c360-contacts-dt__muted c360-text-xs c360-min-w-0 c360-truncate">
-            {params.row.seniority?.trim() || "—"}
+            {formatDisplayLabel(params.row.seniority)}
           </span>
         ),
         cellClassName: "c360-ct-grid-cell--center",
@@ -577,7 +585,7 @@ export function ContactsDataTable({
         filterable: false,
         renderCell: (params: GridRenderCellParams<Contact>) => (
           <span className="c360-contacts-dt__muted c360-text-xs c360-min-w-0 c360-truncate">
-            {params.row.stage?.trim() || "—"}
+            {formatDisplayLabel(params.row.stage)}
           </span>
         ),
         cellClassName: "c360-ct-grid-cell--center",
@@ -787,13 +795,13 @@ export function ContactsDataTable({
               }
               onSortModelChange={
                 embedded && !embeddedServerSort
-                  ? () => {}
+                  ? () => { }
                   : handleSortModelChange
               }
               disableColumnMenu={embedded}
               columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={
-                embedded ? () => {} : handleColumnVisibilityModelChange
+                embedded ? () => { } : handleColumnVisibilityModelChange
               }
               disableColumnFilter
               hideFooter

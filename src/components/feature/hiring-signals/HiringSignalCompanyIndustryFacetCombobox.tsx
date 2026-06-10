@@ -12,6 +12,7 @@ import {
 import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
 import { normalizeHiringSignalTokenList } from "@/components/feature/hiring-signals/hiringSignalFilterDraft";
 import type { JobListFilters } from "@/services/graphql/hiringSignalService";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { fetchHireSignalCompanyIndustryFilterOptions } from "@/services/graphql/hiringSignalService";
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -21,12 +22,7 @@ function industryFacetOptionKey(value: string): string {
 }
 
 function formatCompanyIndustryLabel(raw: string): string {
-  const t = raw.trim();
-  if (!t) return t;
-  return t
-    .split(/\s+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
+  return formatDisplayLabel(raw);
 }
 
 export interface HiringSignalCompanyIndustryFacetComboboxProps {

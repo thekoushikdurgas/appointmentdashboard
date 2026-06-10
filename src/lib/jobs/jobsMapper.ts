@@ -1,3 +1,4 @@
+import { formatStatusLabel } from "@/lib/displayText";
 import type { Job } from "@/services/graphql/jobsService";
 import { isSuccessfulTerminalJobStatus } from "@/lib/jobs/jobsUtils";
 
@@ -8,10 +9,10 @@ export interface MappedJob extends Job {
   canRetry: boolean;
   canPause: boolean;
   canCancel: boolean;
-  /** sync_server (Connectra): gateway `pauseConnectraJob(jobUuid)` — use scheduler `jobId`. */
-  canPauseConnectra: boolean;
-  canResumeConnectra: boolean;
-  canTerminateConnectra: boolean;
+  /** sync_server: gateway `pauseConnectraJob(jobUuid)` — use scheduler `jobId`. */
+  canPauseSync: boolean;
+  canResumeSync: boolean;
+  canTerminateSync: boolean;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -34,7 +35,7 @@ export function mapJob(job: Job): MappedJob {
     ...job,
     status,
     typeLabel: TYPE_LABELS[job.type] || job.type,
-    statusLabel: status ? status.charAt(0) + status.slice(1).toLowerCase() : "",
+    statusLabel: status ? formatStatusLabel(status) : "",
     isTerminal:
       status === "FAILED" ||
       status === "CANCELLED" ||
@@ -44,9 +45,9 @@ export function mapJob(job: Job): MappedJob {
     canPause: status === "RUNNING" && isEmail,
     canCancel:
       ["RUNNING", "PENDING", "PAUSED", "OPEN"].includes(status) && isEmail,
-    canPauseConnectra: status === "RUNNING" && isSync,
-    canResumeConnectra: status === "PAUSED" && isSync,
-    canTerminateConnectra:
+    canPauseSync: status === "RUNNING" && isSync,
+    canResumeSync: status === "PAUSED" && isSync,
+    canTerminateSync:
       ["RUNNING", "PENDING", "PAUSED", "OPEN"].includes(status) && isSync,
   };
 }

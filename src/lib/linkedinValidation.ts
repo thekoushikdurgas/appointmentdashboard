@@ -60,11 +60,19 @@ export function mapLinkedInError(err: unknown): string {
   return raw;
 }
 
+/** Strip internal service names from messages shown in the UI. */
+export function sanitizeUserFacingMessage(msg: string): string {
+  if (/\bconnectra\b/i.test(msg)) {
+    return "Contact data is temporarily unavailable. Please try again shortly.";
+  }
+  return msg;
+}
+
 /**
- * Map a raw GraphQL error from contacts/companies (Connectra backend) to a
- * friendly unavailability message for error states on list pages.
+ * Map a raw GraphQL error from contacts/companies data layer to a
+ * friendly message for error states on list pages.
  */
-export function mapConnectraError(err: unknown): string {
+export function mapContactsDataError(err: unknown): string {
   const raw =
     err instanceof Error
       ? err.message
@@ -82,7 +90,7 @@ export function mapConnectraError(err: unknown): string {
     lower.includes("502") ||
     lower.includes("503")
   ) {
-    return "The data service (Connectra) is currently unavailable. Contact data may be temporarily inaccessible. Please try again shortly.";
+    return "Contact data is temporarily unavailable. Please try again shortly.";
   }
 
   if (lower.includes("timeout") || lower.includes("timed out")) {
@@ -93,7 +101,7 @@ export function mapConnectraError(err: unknown): string {
     return "Network error — check your connection and try again.";
   }
 
-  return raw;
+  return sanitizeUserFacingMessage(raw);
 }
 
 /** Align with gateway LinkedIn URL rules: https prefix and reasonable length. */

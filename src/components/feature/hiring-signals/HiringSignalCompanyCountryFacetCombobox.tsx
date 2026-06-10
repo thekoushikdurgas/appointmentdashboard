@@ -12,18 +12,13 @@ import {
   mergeAndSortHireSignalFacetOptions,
 } from "@/components/feature/hiring-signals/hireSignalFacetOptions";
 import { sortHireSignalFacetOptionsByCount } from "@/components/feature/hiring-signals/hireSignalFacetSort";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { fetchHireSignalCompanyCountryFilterOptions } from "@/services/graphql/hiringSignalService";
 
 const DEFAULT_PAGE_SIZE = 50;
 
 function formatCompanyCountryLabel(raw: string): string {
-  const t = raw.trim();
-  if (!t) return t;
-  if (t.length <= 3 && t === t.toUpperCase()) return t;
-  return t
-    .split(/\s+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
+  return formatDisplayLabel(raw);
 }
 
 export interface HiringSignalCompanyCountryFacetComboboxProps {

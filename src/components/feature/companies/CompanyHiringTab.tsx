@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/Card";
 import { DonutChart } from "@/components/shared/DonutChart";
+import { HIRING_SIGNALS_PAGE_NAME } from "@/lib/productNames";
 import { ROUTES } from "@/lib/routes";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import {
@@ -74,7 +75,7 @@ export function CompanyHiringTab({ jobs, loading }: CompanyHiringTabProps) {
 
   if (!jobs.length) {
     return (
-      <Card title="Hiring signals">
+      <Card title={HIRING_SIGNALS_PAGE_NAME}>
         <div className="c360-empty-state c360-section-stack">
           <p className="c360-text-sm c360-text-muted">
             No LinkedIn hiring postings matched this company in Contact360 yet.

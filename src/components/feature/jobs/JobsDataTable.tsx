@@ -192,11 +192,11 @@ export interface JobsDataTableProps {
   retryingJobId: string | null;
   onRetry: (jobId: string) => void | Promise<void>;
   onPause: (jobId: string) => void;
-  onPauseConnectra: (jobId: string) => void;
+  onPauseSync: (jobId: string) => void;
   onCancel: (jobId: string) => void;
-  onTerminateConnectra: (jobId: string) => void;
+  onTerminateSync: (jobId: string) => void;
   onResume: (jobId: string) => void;
-  onResumeConnectra: (jobId: string) => void;
+  onResumeSync: (jobId: string) => void;
   /** Raw S3 object key or HTTPS URL; parent may presign keys via GraphQL. */
   onDownloadOutput: (job: MappedJob) => void | Promise<void>;
   /** Opens global review drawer with this scheduler job prefilled. */
@@ -216,11 +216,11 @@ export function JobsDataTable({
   retryingJobId,
   onRetry,
   onPause,
-  onPauseConnectra,
+  onPauseSync,
   onCancel,
-  onTerminateConnectra,
+  onTerminateSync,
   onResume,
-  onResumeConnectra,
+  onResumeSync,
   onDownloadOutput,
   onOpenJobTicket,
   renderDetailPanel,
@@ -614,11 +614,11 @@ export function JobsDataTable({
                         Pause
                       </button>
                     )}
-                    {job.canPauseConnectra && (
+                    {job.canPauseSync && (
                       <button
                         type="button"
                         className="c360-jobs-dt__menu-item"
-                        onClick={() => onPauseConnectra(job.jobId)}
+                        onClick={() => onPauseSync(job.jobId)}
                       >
                         Pause (sync)
                       </button>
@@ -633,11 +633,11 @@ export function JobsDataTable({
                           Resume
                         </button>
                       )}
-                    {job.canResumeConnectra && (
+                    {job.canResumeSync && (
                       <button
                         type="button"
                         className="c360-jobs-dt__menu-item"
-                        onClick={() => onResumeConnectra(job.jobId)}
+                        onClick={() => onResumeSync(job.jobId)}
                       >
                         Resume (sync)
                       </button>
@@ -651,11 +651,11 @@ export function JobsDataTable({
                         Cancel
                       </button>
                     )}
-                    {job.canTerminateConnectra && (
+                    {job.canTerminateSync && (
                       <button
                         type="button"
                         className="c360-jobs-dt__menu-item c360-jobs-dt__menu-item--danger"
-                        onClick={() => onTerminateConnectra(job.jobId)}
+                        onClick={() => onTerminateSync(job.jobId)}
                       >
                         Terminate (sync)
                       </button>
@@ -686,11 +686,11 @@ export function JobsDataTable({
     onDownloadOutput,
     onOpenJobTicket,
     onPause,
-    onPauseConnectra,
+    onPauseSync,
     onResume,
-    onResumeConnectra,
+    onResumeSync,
     onRetry,
-    onTerminateConnectra,
+    onTerminateSync,
     onToggleExpand,
     retryingJobId,
   ]);

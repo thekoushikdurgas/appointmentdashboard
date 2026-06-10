@@ -41,7 +41,7 @@ export function HiringSignalTopCompaniesCard({
     >
       {topCompanies.length === 0 ? (
         <p className="c360-text-sm c360-text-muted">
-          No company_uuid on visible rows — link jobs to Connectra first.
+          No company_uuid on visible rows — link jobs to company records first.
         </p>
       ) : (
         <ul

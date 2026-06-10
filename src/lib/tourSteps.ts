@@ -24,7 +24,7 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     id: "hiring-signals",
     route: ROUTES.HIRING_SIGNALS,
     target: "a.c360-sidebar__item[href='/hiring-signals']",
-    title: "Hiring signals",
+    title: "Hiring Signals",
     content:
       "Browse live job postings scraped from LinkedIn. Filter, export, and open company intelligence for each role.",
     position: "right",
@@ -45,17 +45,17 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     target: ".c360-hs-toolbar-stack .c360-toolbar__tabs",
     title: "Job list",
     content:
-      "Sort and paginate hiring signals. Open job descriptions, company drawers, or Connectra people for any row.",
+      "Sort and paginate hiring signals. Open job descriptions, company drawers, or company contacts for any row.",
     position: "bottom",
   },
   {
     id: "hs-contacts-panel",
     route: ROUTES.HIRING_SIGNALS,
-    prepare: "hs-open-connectra",
+    prepare: "hs-open-company-contacts",
     target: '[data-tour="hs-contacts-panel-head"]',
     title: "Company contacts",
     content:
-      "The right panel lists people at the hiring company from Connectra. Filter by title or department and export CSV.",
+      "The right panel lists people at the hiring company in Contact360. Filter by title or department and export CSV.",
     position: "left",
   },
   {

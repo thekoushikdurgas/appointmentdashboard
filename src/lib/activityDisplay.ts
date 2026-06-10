@@ -13,8 +13,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { STORAGE_DRAWER_DISPLAY_NAME } from "@/lib/files/storageDrawerUi";
-import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
+import { formatTokenLabel } from "@/lib/displayText";
 
 /** Normalize API strings for lookup (lowercase, underscores kept). */
 function norm(s: string): string {
@@ -80,8 +79,5 @@ export function activityStatusColor(status: string): string {
 }
 
 export function humanizeToken(s: string): string {
-  if (!s) return "—";
-  if (norm(s) === "jobs") return EXPORT_DRAWER_DISPLAY_NAME;
-  if (norm(s) === "files") return STORAGE_DRAWER_DISPLAY_NAME;
-  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return formatTokenLabel(s);
 }

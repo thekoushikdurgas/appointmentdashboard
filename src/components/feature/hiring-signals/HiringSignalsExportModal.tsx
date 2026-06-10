@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import type { LinkedInJobRow } from "@/hooks/useHiringSignals";
 import { hiringSignalRowKey } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import { EXPORT_DRAWER_DISPLAY_NAME } from "@/lib/jobs/exportDrawerUi";
+import { HIRING_SIGNALS_PAGE_NAME } from "@/lib/productNames";
 import { cn } from "@/lib/utils";
 
 export type HiringSignalsExportIntent =
@@ -124,7 +126,7 @@ export function HiringSignalsExportModal({
     >
       <div className="c360-space-y-4">
         <p className="c360-m-0 c360-text-2xs c360-text-ink-muted">
-          Queue an XLSX export on the server (track in Export → Hiring Signals).
+          Queue an XLSX export on the server (track in {EXPORT_DRAWER_DISPLAY_NAME} → {HIRING_SIGNALS_PAGE_NAME}).
         </p>
         <fieldset className="c360-m-0 c360-space-y-3 c360-border-0 c360-p-0">
           <legend className="c360-mb-2 c360-text-sm c360-font-medium c360-text-ink">

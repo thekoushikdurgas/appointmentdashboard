@@ -20,6 +20,7 @@ import {
 } from "@/services/graphql/billingService";
 import { useBilling } from "@/hooks/useBilling";
 import { toast } from "sonner";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { parseOperationError } from "@/lib/errorParser";
 import {
   BillingPlanCards,
@@ -329,7 +330,7 @@ export default function BillingPage() {
         <div className="c360-billing-page__header-aside">
           {billingLoading && <span className="c360-spinner c360-spinner--20" />}
           <Badge color={effectivePlan === "free" ? "gray" : "blue"} dot>
-            {effectivePlan.charAt(0).toUpperCase() + effectivePlan.slice(1)}{" "}
+            {formatDisplayLabel(effectivePlan)}{" "}
             Plan
           </Badge>
           {creditsInfo && (

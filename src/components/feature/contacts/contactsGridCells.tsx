@@ -2,8 +2,9 @@
 
 import type { Contact } from "@/services/graphql/contactsService";
 import { HiringSignalsCompanyAvatar } from "@/components/feature/hiring-signals/hiringSignalsGridCells";
-import { useConnectraCompanyLogoUrl } from "@/hooks/useConnectraCompanyLogoUrl";
+import { useCompanyLogoUrl } from "@/hooks/useCompanyLogoUrl";
 import { companyFaviconUrl } from "@/lib/companyLogoUrl";
+import { formatDisplayLabel } from "@/lib/displayText";
 import { cn } from "@/lib/utils";
 import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 
@@ -18,7 +19,7 @@ function emailStatusTone(status?: string): EmailStatusTone {
   return "muted";
 }
 
-function emailStatusLabel(status?: string): string {
+export function emailStatusLabel(status?: string): string {
   const s = (status || "").toUpperCase();
   if (isContactEmailVerifiedStatus(status)) return "Verified";
   if (s === "FOUND") return "Found";
@@ -84,7 +85,7 @@ export function ContactsGridEmailCellComfortable({
 /** Secondary line under company name (seniority; departments use the Department column). */
 export function contactsCompanySubtitle(contact: Contact): string | undefined {
   const seniority = contact.seniority?.trim();
-  if (seniority) return seniority;
+  if (seniority) return formatDisplayLabel(seniority);
   return undefined;
 }
 
@@ -97,7 +98,7 @@ function contactCompanyLogoUrl(contact: Contact): string | undefined {
 
 function ContactsGridCompanyAvatar({ contact }: { contact: Contact }) {
   const fromList = contactCompanyLogoUrl(contact);
-  const logoUrl = useConnectraCompanyLogoUrl(contact.companyId, fromList);
+  const logoUrl = useCompanyLogoUrl(contact.companyId, fromList);
   return (
     <HiringSignalsCompanyAvatar
       logoUrl={logoUrl}
@@ -113,7 +114,7 @@ function ContactsGridCompanyName({
   contact: Contact;
   onOpenCompanyDrawer?: (contact: Contact) => void;
 }) {
-  const name = contact.company || "—";
+  const name = formatDisplayLabel(contact.company);
   const companyId = contact.companyId?.trim();
 
   if (onOpenCompanyDrawer && companyId) {
@@ -150,7 +151,7 @@ export function ContactsGridCompanyCellCompact({
   onOpenCompanyDrawer?: (contact: Contact) => void;
 }) {
   const companyId = contact.companyId?.trim();
-  const name = contact.company || "—";
+  const name = formatDisplayLabel(contact.company);
 
   if (onOpenCompanyDrawer && companyId) {
     return (

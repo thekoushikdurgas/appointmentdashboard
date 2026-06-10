@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/Progress";
 import { Alert } from "@/components/ui/Alert";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { formatDisplayLabel, formatStatusLabel } from "@/lib/displayText";
 import { formatDate } from "@/lib/utils";
 import {
   parseScrapeRequestBody,
@@ -102,7 +103,7 @@ export function ScrapeSessionCard({
             </Tooltip>
             <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
               <Badge color={scrapeStatusBadgeColor(status)} size="sm">
-                {status}
+                {formatStatusLabel(status)}
               </Badge>
               <span className="c360-text-2xs c360-text-muted">
                 Created{" "}
@@ -126,7 +127,9 @@ export function ScrapeSessionCard({
           {req.keywords ? (
             <p className="c360-m-0">
               <span className="c360-font-medium">Keywords:</span>{" "}
-              <span className="c360-break-words">{req.keywords}</span>
+              <span className="c360-break-words">
+                {formatDisplayLabel(req.keywords)}
+              </span>
             </p>
           ) : null}
           <p className="c360-m-0 c360-text-muted">
