@@ -160,6 +160,9 @@ export function HiringSignalDrawerContactsGrid({
         const emails = result.email?.findEmails?.emails ?? [];
         const found = emails[0]?.email?.trim() ?? "";
         onRevealRow(row.id, found);
+        if (!found && !row.email.trim()) {
+          toast.info("No email found for this contact.");
+        }
       } catch (err) {
         toast.error(parseEmailServiceError(err));
         onRevealRow(row.id, "");
