@@ -389,6 +389,7 @@ export function HiringSignalsContactInitialsCell({ name }: { name: string }) {
 /**
  * Connectra drawer contacts: mask email until revealed.
  * Parent grid reveals stored email (free/starter) or runs email.findEmails (pro/super-admin).
+ * Once revealed, only `resolvedEmail` is shown — stored Connectra email is not used as fallback.
  */
 export function HiringSignalDrawerContactEmailCell({
   isRevealed,
@@ -423,7 +424,33 @@ export function HiringSignalDrawerContactEmailCell({
     );
   }
 
-  const email = (resolvedEmail || storedEmail).trim();
+  // #region agent log
+  const hadStoredFallback =
+    isRevealed && !resolvedEmail.trim() && Boolean(storedEmail.trim());
+  if (hadStoredFallback) {
+    fetch("http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "f23823",
+      },
+      body: JSON.stringify({
+        sessionId: "f23823",
+        location: "hiringSignalsGridCells.tsx:revealed",
+        message: "API miss with stored Connectra email present",
+        data: {
+          resolvedEmpty: !resolvedEmail.trim(),
+          storedPresent: Boolean(storedEmail.trim()),
+        },
+        timestamp: Date.now(),
+        hypothesisId: "A",
+      }),
+    }).catch(() => { });
+  }
+  // #endregion
+
+  // Revealed value is authoritative (API result for Pro, copied stored for Free).
+  const email = resolvedEmail.trim();
   if (email) {
     return (
       <a

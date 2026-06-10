@@ -159,8 +159,32 @@ export function HiringSignalDrawerContactsGrid({
         });
         const emails = result.email?.findEmails?.emails ?? [];
         const found = emails[0]?.email?.trim() ?? "";
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7300/ingest/efacfcad-0428-4256-933c-cee6eb66f540",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "f23823",
+            },
+            body: JSON.stringify({
+              sessionId: "f23823",
+              location: "HiringSignalDrawerContactsGrid.tsx:handleFindEmail",
+              message: "findEmails API result",
+              data: {
+                apiEmailCount: emails.length,
+                foundEmpty: !found,
+                storedPresent: Boolean(row.email.trim()),
+              },
+              timestamp: Date.now(),
+              hypothesisId: "A",
+            }),
+          },
+        ).catch(() => { });
+        // #endregion
         onRevealRow(row.id, found);
-        if (!found && !row.email.trim()) {
+        if (!found) {
           toast.info("No email found for this contact.");
         }
       } catch (err) {
