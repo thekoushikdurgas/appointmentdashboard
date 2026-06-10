@@ -26,10 +26,7 @@ import {
 } from "@/components/feature/contacts/contactsGridCells";
 import { contactDetailRoute } from "@/lib/routes";
 import { stashContactRowForDetail } from "@/lib/rowSession";
-import {
-  formatDisplayLabel,
-  formatDisplayLabelList,
-} from "@/lib/displayText";
+import { formatDisplayLabel, formatDisplayLabelList } from "@/lib/displayText";
 import { cn, getAvatarUrl } from "@/lib/utils";
 import { mapContactsDataError } from "@/lib/linkedinValidation";
 import type { Contact } from "@/services/graphql/contactsService";
@@ -795,13 +792,13 @@ export function ContactsDataTable({
               }
               onSortModelChange={
                 embedded && !embeddedServerSort
-                  ? () => { }
+                  ? () => {}
                   : handleSortModelChange
               }
               disableColumnMenu={embedded}
               columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={
-                embedded ? () => { } : handleColumnVisibilityModelChange
+                embedded ? () => {} : handleColumnVisibilityModelChange
               }
               disableColumnFilter
               hideFooter

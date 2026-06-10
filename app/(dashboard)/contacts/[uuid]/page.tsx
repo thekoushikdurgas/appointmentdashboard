@@ -31,10 +31,7 @@ import {
 import { companiesService } from "@/services/graphql/companiesService";
 import { emailStatusLabel } from "@/components/feature/contacts/contactsGridCells";
 import { ContactCreateModal } from "@/components/feature/contacts/ContactCreateModal";
-import {
-  formatDisplayLabel,
-  formatDisplayLabelList,
-} from "@/lib/displayText";
+import { formatDisplayLabel, formatDisplayLabelList } from "@/lib/displayText";
 import { ROUTES } from "@/lib/routes";
 import { isContactEmailVerifiedStatus } from "@/lib/contactEmailStatus";
 import {
@@ -161,7 +158,9 @@ export default function ContactDetailPage({ params }: PageProps) {
         setFromListSnapshot(true);
         return;
       }
-      setError(`Contact with identifier '${uuid}' was not found in Contact360.`);
+      setError(
+        `Contact with identifier '${uuid}' was not found in Contact360.`,
+      );
       setContact(null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load contact";

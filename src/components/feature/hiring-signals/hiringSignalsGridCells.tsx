@@ -134,11 +134,14 @@ export function HiringSignalsJobTitleCellComfortable({
           </Tooltip>
         ) : null}
       </div>
-      {row.seniority ? (
-        <p className="c360-hs-grid-title-stack__meta">
-          {formatDisplayLabel(row.seniority)}
-        </p>
-      ) : null}
+      {(() => {
+        const meta = hiringSignalTitleMetaLabel(row);
+        return meta ? (
+          <p className="c360-hs-grid-title-stack__meta" title={meta}>
+            {meta}
+          </p>
+        ) : null;
+      })()}
     </div>
   );
 }
@@ -376,11 +379,17 @@ export function HiringSignalsJobCompanyCellComfortable({
             {formatDisplayLabel(row.companyName)}
           </span>
         )}
-        {row.functionCategory ? (
-          <p className="c360-m-0 c360-mt-0-5 c360-text-xs c360-text-ink-muted">
-            {formatDisplayLabel(row.functionCategory)}
-          </p>
-        ) : null}
+        {(() => {
+          const { text, title } = hiringSignalCompanyIndustriesSubtitle(row);
+          return text ? (
+            <p
+              className="c360-hs-grid-company-cell__meta c360-m-0 c360-mt-0-5 c360-text-xs c360-text-ink-muted c360-truncate"
+              title={title}
+            >
+              {text}
+            </p>
+          ) : null;
+        })()}
       </div>
     </div>
   );
@@ -479,4 +488,10 @@ export function HiringSignalsContactLinkedInCell({
             rel="noopener noreferrer"
             aria-label="LinkedIn"
           >
-            <Linkedin size={iconSz} aria-hidden 
+            <Linkedin size={iconSz} aria-hidden />
+          </a>
+        </Button>
+      </Tooltip>
+    </div>
+  );
+}

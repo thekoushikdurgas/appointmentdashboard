@@ -43,9 +43,7 @@ export function CompanyCard({ company, onAction }: CompanyCardProps) {
               href={`/companies/${company.id}`}
               className="c360-company-name-link"
             >
-              {company.name
-                ? formatDisplayLabel(company.name)
-                : "(unnamed)"}
+              {company.name ? formatDisplayLabel(company.name) : "(unnamed)"}
             </Link>
             {company.domain && (
               <div className="c360-text-xs c360-text-muted c360-truncate">

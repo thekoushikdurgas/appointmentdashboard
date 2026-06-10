@@ -37,8 +37,7 @@ function splitActivityText(text: string): {
   if (parts.length === 0)
     return { headline: text || "Activity", subtitle: "Event" };
   const raw = parts[0] ?? "";
-  const headline =
-    raw.length > 0 ? formatStatusLabel(raw) : "Activity";
+  const headline = raw.length > 0 ? formatStatusLabel(raw) : "Activity";
   const subtitle =
     parts.length > 1 ? parts.slice(1).join(" · ") : "Latest event";
   return { headline, subtitle };

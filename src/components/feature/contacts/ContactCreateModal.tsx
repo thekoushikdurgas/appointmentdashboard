@@ -86,8 +86,8 @@ export function ContactCreateModal({
 
   const field =
     <K extends keyof CreateContactInput>(key: K) =>
-      (e: React.ChangeEvent<HTMLInputElement>) =>
-        setForm((f) => ({ ...f, [key]: e.target.value }));
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
     <Modal

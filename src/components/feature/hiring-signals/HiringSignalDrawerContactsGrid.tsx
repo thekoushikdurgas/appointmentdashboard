@@ -10,10 +10,7 @@ import { toast } from "sonner";
 import { C360DataTableShell } from "@/components/ui/C360DataTableShell";
 import { C360MuiThemeProvider } from "@/components/ui/C360MuiThemeProvider";
 import { C360DataGrid as DataGrid } from "@/components/ui/C360DataGrid";
-import {
-  formatDisplayLabel,
-  formatDisplayLabelList,
-} from "@/lib/displayText";
+import { formatDisplayLabel, formatDisplayLabelList } from "@/lib/displayText";
 import { cn } from "@/lib/utils";
 import { parseEmailServiceError } from "@/lib/emailErrors";
 import { getHiringSignalsDataGridSx } from "@/components/feature/hiring-signals/hiringSignalsDataGridTheme";

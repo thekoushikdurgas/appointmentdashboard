@@ -142,9 +142,7 @@ function titleCaseWord(word: string): string {
 }
 
 /** Word title-case for human-readable labels; preserves protected and mixed-case strings. */
-export function formatDisplayLabel(
-  s: string | null | undefined,
-): string {
+export function formatDisplayLabel(s: string | null | undefined): string {
   if (s == null) return EMPTY_DISPLAY;
   const t = s.trim();
   if (!t) return EMPTY_DISPLAY;

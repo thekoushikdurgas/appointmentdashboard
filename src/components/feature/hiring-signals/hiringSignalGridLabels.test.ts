@@ -36,7 +36,10 @@ describe("hiringSignalTitleMetaLabel", () => {
   it("combines seniority and function with ||", () => {
     expect(
       hiringSignalTitleMetaLabel(
-        stubRow({ seniority: "management", functionCategory: "customer_service" }),
+        stubRow({
+          seniority: "management",
+          functionCategory: "customer service",
+        }),
       ),
     ).toBe("Management || Customer Service");
   });
@@ -50,9 +53,9 @@ describe("hiringSignalTitleMetaLabel", () => {
   });
 
   it("returns seniority only when function missing", () => {
-    expect(
-      hiringSignalTitleMetaLabel(stubRow({ seniority: "Director" })),
-    ).toBe("Director");
+    expect(hiringSignalTitleMetaLabel(stubRow({ seniority: "Director" }))).toBe(
+      "Director",
+    );
   });
 
   it("returns function only when seniority missing", () => {

@@ -37,7 +37,12 @@ export function HiringSignalsTourPrepare({
 
     window.addEventListener(TOUR_PREPARE_EVENT, onPrepare);
     return () => window.removeEventListener(TOUR_PREPARE_EVENT, onPrepare);
-  }, [panelCtx, onOpenCompanyContactsForTour, onOpenSavedSearches, onClosePanels]);
+  }, [
+    panelCtx,
+    onOpenCompanyContactsForTour,
+    onOpenSavedSearches,
+    onClosePanels,
+  ]);
 
   return null;
 }

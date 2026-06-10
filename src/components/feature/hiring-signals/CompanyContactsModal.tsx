@@ -46,9 +46,9 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     title: String(o.title ?? base.title),
     descriptionHtml: String(
       o.descriptionHTML ??
-      o.descriptionHtml ??
-      o.description ??
-      base.descriptionHtml,
+        o.descriptionHtml ??
+        o.description ??
+        base.descriptionHtml,
     ),
     postedAt: String(o.postedAt ?? o.posted_at ?? base.postedAt),
     jobUrl: String(o.jobUrl ?? o.job_url ?? base.jobUrl),
@@ -62,9 +62,9 @@ function rowFromItem(item: unknown): LinkedInJobRow {
     seniority: String(o.seniorityLevel ?? o.seniority ?? base.seniority),
     functionCategory: String(
       o.functionCategoryV2 ??
-      o.function_category_v2 ??
-      o.functionCategory ??
-      base.functionCategory,
+        o.function_category_v2 ??
+        o.functionCategory ??
+        base.functionCategory,
     ),
     industries: String(o.industries ?? base.industries),
     location: String(
@@ -193,7 +193,7 @@ export function CompanyContactsModal({
 
   const companyMetaBody =
     !companyLoading &&
-      (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {co.industry ? <p className="c360-text-ink">{co.industry}</p> : null}
         {co.website ? (

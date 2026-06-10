@@ -151,7 +151,7 @@ export function CompanyDrawerPanel({
 
   const companyMetaBody =
     !companyLoading &&
-      (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {co.website ? (
           <HiringSignalCompanyWebsiteButton website={co.website} />

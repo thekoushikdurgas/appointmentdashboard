@@ -118,8 +118,8 @@ function mapJob(r: JobRow): Job {
   const displayStatus = useLiveStatus ? live : dbDisplay;
   const fromResponse =
     r.responsePayload &&
-      typeof r.responsePayload === "object" &&
-      !Array.isArray(r.responsePayload)
+    typeof r.responsePayload === "object" &&
+    !Array.isArray(r.responsePayload)
       ? (r.responsePayload as Record<string, unknown>)
       : null;
   const outputFromResponse: string | undefined = fromResponse

@@ -106,9 +106,7 @@ export function CompanyHeader({
           {industry && (
             <Badge color="blue">{formatDisplayLabel(industry)}</Badge>
           )}
-          {country && (
-            <Badge color="gray">{formatDisplayLabel(country)}</Badge>
-          )}
+          {country && <Badge color="gray">{formatDisplayLabel(country)}</Badge>}
         </div>
       </div>
 

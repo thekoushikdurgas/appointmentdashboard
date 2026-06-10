@@ -462,9 +462,10 @@ export function hiringSignalTitleMetaLabel(row: LinkedInJobRow): string {
 const COMPANY_INDUSTRY_SUBTITLE_MAX = 2;
 
 /** Company column subtitle: first industries + optional +N more (empty when none). */
-export function hiringSignalCompanyIndustriesSubtitle(
-  row: LinkedInJobRow,
-): { text: string; title: string } {
+export function hiringSignalCompanyIndustriesSubtitle(row: LinkedInJobRow): {
+  text: string;
+  title: string;
+} {
   const raw = row.companyIndustries ?? [];
   const labels = raw
     .map((item) => item?.trim())
@@ -477,8 +478,7 @@ export function hiringSignalCompanyIndustriesSubtitle(
   const title = labels.join(", ");
   const shown = labels.slice(0, COMPANY_INDUSTRY_SUBTITLE_MAX);
   const more = labels.length - shown.length;
-  const text =
-    more > 0 ? `${shown.join(", ")} +${more}` : shown.join(", ");
+  const text = more > 0 ? `${shown.join(", ")} +${more}` : shown.join(", ");
   return { text, title };
 }
 

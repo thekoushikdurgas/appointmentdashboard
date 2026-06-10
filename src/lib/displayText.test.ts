@@ -12,9 +12,9 @@ describe("isProtectedDisplayText", () => {
   it("detects emails, URLs, UUIDs, domains, and path prefixes", () => {
     expect(isProtectedDisplayText("jane@acme.com")).toBe(true);
     expect(isProtectedDisplayText("https://example.com")).toBe(true);
-    expect(
-      isProtectedDisplayText("00000000-0000-0000-0000-000000000001"),
-    ).toBe(true);
+    expect(isProtectedDisplayText("00000000-0000-0000-0000-000000000001")).toBe(
+      true,
+    );
     expect(isProtectedDisplayText("acme.com")).toBe(true);
     expect(isProtectedDisplayText("upload/foo.csv")).toBe(true);
     expect(isProtectedDisplayText("exports/bar.xlsx")).toBe(true);

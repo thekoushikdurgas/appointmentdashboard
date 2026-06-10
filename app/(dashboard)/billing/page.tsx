@@ -330,8 +330,7 @@ export default function BillingPage() {
         <div className="c360-billing-page__header-aside">
           {billingLoading && <span className="c360-spinner c360-spinner--20" />}
           <Badge color={effectivePlan === "free" ? "gray" : "blue"} dot>
-            {formatDisplayLabel(effectivePlan)}{" "}
-            Plan
+            {formatDisplayLabel(effectivePlan)} Plan
           </Badge>
           {creditsInfo && (
             <span className="c360-dropzone__hint">{creditsInfo}</span>
