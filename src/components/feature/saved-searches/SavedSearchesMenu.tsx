@@ -141,8 +141,8 @@ function describeSavedSearchSummary(s: SavedSearch): string {
   }
   if (isHireSignalSavedSearchPayload(raw)) {
     const parts: string[] = [];
-    if (raw.signalTimePreset === "new_7d") parts.push("Today's jobs");
-    return parts.length > 0 ? parts.join(" · ") : "All signals";
+    if (raw.signalTimePreset === "new_7d") parts.push("Today's Jobs");
+    return parts.length > 0 ? parts.join(" · ") : "All Signals";
   }
   return "Click to apply this view";
 }
@@ -552,7 +552,7 @@ export function SavedSearchesMenu({
                     className={cn(
                       "c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-notify",
                       emailSubscribed &&
-                        "c360-saved-searches-panel__item-notify--active",
+                      "c360-saved-searches-panel__item-notify--active",
                     )}
                     aria-label={`Email notifications for ${s.name}`}
                     aria-pressed={emailSubscribed ? "true" : "false"}

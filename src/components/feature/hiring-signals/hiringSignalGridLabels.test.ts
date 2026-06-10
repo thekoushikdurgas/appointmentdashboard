@@ -3,6 +3,7 @@ import type { LinkedInJobRow } from "@/lib/jobs/hiringSignalJobRows";
 import {
   hiringSignalCompanyIndustriesSubtitle,
   hiringSignalTitleMetaLabel,
+  pickCompanyIndustryList,
 } from "./hiringSignalUiUtils";
 
 function stubRow(overrides: Partial<LinkedInJobRow> = {}): LinkedInJobRow {
@@ -66,6 +67,22 @@ describe("hiringSignalTitleMetaLabel", () => {
 
   it("returns empty when both missing", () => {
     expect(hiringSignalTitleMetaLabel(stubRow())).toBe("");
+  });
+});
+
+describe("pickCompanyIndustryList", () => {
+  it("parses industries array from Connectra company record", () => {
+    expect(
+      pickCompanyIndustryList({
+        industries: ["Construction", "Management Consulting"],
+      }),
+    ).toEqual(["Construction", "Management Consulting"]);
+  });
+
+  it("parses comma-separated industry string", () => {
+    expect(
+      pickCompanyIndustryList({ industries: "Retail, Grocery" }),
+    ).toEqual(["Retail", "Grocery"]);
   });
 });
 

@@ -444,6 +444,28 @@ export function pickCompanyDisplay(row: unknown): {
   };
 }
 
+/** Connectra / scraper company industries as a token list for drawer badges. */
+export function pickCompanyIndustryList(row: unknown): string[] {
+  const o = asRecord(row);
+  if (!o) return [];
+  const raw = o.industries;
+  if (Array.isArray(raw)) {
+    const out = raw
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean);
+    return out.length ? out : [];
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    const out = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return out.length ? out : [];
+  }
+  const single = String(o.industry ?? "").trim();
+  return single ? [single] : [];
+}
+
 /** Title column subtitle: seniority and job function combined with ` || `. */
 export function hiringSignalTitleMetaLabel(row: LinkedInJobRow): string {
   const seniority = formatDisplayLabel(row.seniority);

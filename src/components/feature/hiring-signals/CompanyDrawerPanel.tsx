@@ -21,6 +21,7 @@ import { formatDisplayLabel } from "@/lib/displayText";
 import {
   hiringSignalInitials,
   pickCompanyDisplay,
+  pickCompanyIndustryList,
   proxiedCompanyLogoSrc,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { HiringSignalAsideDrawer } from "@/components/feature/hiring-signals/HiringSignalAsideDrawer";
@@ -57,13 +58,10 @@ export function CompanyDrawerPanel({
 
   const displayJobs = usePagePreviewJobs ? previewJobs : fetchedJobs;
 
-  const rolePills = useMemo(() => {
-    const fc = new Set<string>();
-    for (const j of displayJobs) {
-      if (j.functionCategory?.trim()) fc.add(j.functionCategory.trim());
-    }
-    return [...fc].slice(0, 8);
-  }, [displayJobs]);
+  const industryPills = useMemo(
+    () => pickCompanyIndustryList(cRecord).slice(0, 8),
+    [cRecord],
+  );
 
   useEffect(() => {
     if (!isOpen || !companyUuid) {
@@ -150,21 +148,19 @@ export function CompanyDrawerPanel({
   );
 
   const companyMetaBody =
-    !companyLoading &&
-    (co.website || co.industry || co.employees || co.linkedinUrl) ? (
+    !companyLoading && (co.website || co.linkedinUrl) ? (
       <div className="c360-hs-drawer__header-meta c360-text-2xs c360-text-ink-muted">
         {co.website ? (
           <HiringSignalCompanyWebsiteButton website={co.website} />
         ) : null}
-        {co.industry ? (
-          <p className="c360-text-ink">{formatDisplayLabel(co.industry)}</p>
-        ) : null}
-        {co.employees ? <p>~{co.employees} employees</p> : null}
         {co.linkedinUrl ? (
           <HiringSignalCompanyLinkedInButton linkedinUrl={co.linkedinUrl} />
         ) : null}
       </div>
     ) : null;
+
+  const showCompanyFactsSection =
+    !companyLoading && (industryPills.length > 0 || Boolean(co.employees));
 
   return (
     <HiringSignalAsideDrawer
@@ -248,18 +244,27 @@ export function CompanyDrawerPanel({
           ) : null}
         </p>
 
-        {rolePills.length > 0 ? (
+        {showCompanyFactsSection ? (
           <section className="c360-mb-4">
-            <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-uppercase c360-tracking-wide c360-text-muted">
-              Hiring functions{usePagePreviewJobs ? " (this page)" : null}
-            </p>
-            <div className="c360-flex c360-flex-wrap c360-gap-1">
-              {rolePills.map((p) => (
-                <Badge key={p} color="gray" size="sm">
-                  {p}
-                </Badge>
-              ))}
-            </div>
+            {industryPills.length > 0 ? (
+              <>
+                <p className="c360-mb-2 c360-text-2xs c360-font-medium c360-uppercase c360-tracking-wide c360-text-muted">
+                  Industries
+                </p>
+                <div className="c360-flex c360-flex-wrap c360-gap-1">
+                  {industryPills.map((p) => (
+                    <Badge key={p} color="gray" size="sm">
+                      {formatDisplayLabel(p)}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {co.employees ? (
+              <p className="c360-m-0 c360-text-sm c360-text-muted">
+                ~{co.employees} employees
+              </p>
+            ) : null}
           </section>
         ) : null}
 
