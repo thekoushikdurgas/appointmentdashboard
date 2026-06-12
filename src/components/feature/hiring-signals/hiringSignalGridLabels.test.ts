@@ -80,9 +80,10 @@ describe("pickCompanyIndustryList", () => {
   });
 
   it("parses comma-separated industry string", () => {
-    expect(
-      pickCompanyIndustryList({ industries: "Retail, Grocery" }),
-    ).toEqual(["Retail", "Grocery"]);
+    expect(pickCompanyIndustryList({ industries: "Retail, Grocery" })).toEqual([
+      "Retail",
+      "Grocery",
+    ]);
   });
 });
 

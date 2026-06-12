@@ -1,3 +1,5 @@
+export { nextFilterOpenSectionId as nextHsFilterOpenSectionId } from "@/components/layouts/filters/FilterAccordionContext";
+
 /** Stable accordion section ids for the Hiring Signals filter sidebar. */
 export const HS_FILTER_SECTION_IDS = {
   companyName: "company-name",
@@ -22,13 +24,3 @@ export const HS_FILTER_SECTION_IDS = {
 
 export type HsFilterSectionId =
   (typeof HS_FILTER_SECTION_IDS)[keyof typeof HS_FILTER_SECTION_IDS];
-
-/** Pure toggle helper for accordion open-state (unit-tested). */
-export function nextHsFilterOpenSectionId(
-  currentOpenId: string | null,
-  sectionId: string,
-  open: boolean,
-): string | null {
-  if (open) return sectionId;
-  return currentOpenId === sectionId ? null : currentOpenId;
-}

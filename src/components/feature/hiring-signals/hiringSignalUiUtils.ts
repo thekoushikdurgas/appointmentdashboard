@@ -450,9 +450,7 @@ export function pickCompanyIndustryList(row: unknown): string[] {
   if (!o) return [];
   const raw = o.industries;
   if (Array.isArray(raw)) {
-    const out = raw
-      .map((item) => String(item ?? "").trim())
-      .filter(Boolean);
+    const out = raw.map((item) => String(item ?? "").trim()).filter(Boolean);
     return out.length ? out : [];
   }
   if (typeof raw === "string" && raw.trim()) {

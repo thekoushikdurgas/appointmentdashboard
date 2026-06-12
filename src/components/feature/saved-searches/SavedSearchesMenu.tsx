@@ -552,7 +552,7 @@ export function SavedSearchesMenu({
                     className={cn(
                       "c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-notify",
                       emailSubscribed &&
-                      "c360-saved-searches-panel__item-notify--active",
+                        "c360-saved-searches-panel__item-notify--active",
                     )}
                     aria-label={`Email notifications for ${s.name}`}
                     aria-pressed={emailSubscribed ? "true" : "false"}

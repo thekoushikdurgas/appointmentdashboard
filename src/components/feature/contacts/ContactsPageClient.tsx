@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  Plus,
-  Download,
-  Trash2,
-  Mail,
-  Upload,
-  Globe,
-  RefreshCw,
-} from "lucide-react";
+import { Plus, Download, Trash2, Mail, Upload, Globe } from "lucide-react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import DataPageLayout from "@/components/layouts/DataPageLayout";
@@ -51,7 +43,6 @@ import {
   writeContactsSortPreference,
 } from "@/lib/contactsListCache";
 import { swallowBestEffortAsync } from "@/lib/bestEffort";
-import { cn } from "@/lib/utils";
 import {
   tryLocalStorageGet,
   tryLocalStorageSetJSON,
@@ -567,26 +558,6 @@ export default function ContactsPageClient() {
     [openSavedSearchesPanel],
   );
 
-  const filtersRefreshButton = useMemo(
-    () => (
-      <button
-        type="button"
-        className="c360-contacts-filters__icon-btn"
-        title="Refresh filter definitions"
-        aria-label="Refresh filter definitions"
-        disabled={filtersRefreshing}
-        onClick={() => void handleRefreshFilters()}
-      >
-        <RefreshCw
-          size={16}
-          className={cn(filtersRefreshing && "c360-spin")}
-          aria-hidden
-        />
-      </button>
-    ),
-    [filtersRefreshing, handleRefreshFilters],
-  );
-
   const handleAiSearch = useCallback(() => {
     if (CONTACTS_AI_SEARCH_ENABLED) {
       setAiSearching(true);
@@ -661,18 +632,16 @@ export default function ContactsPageClient() {
         hiddenColumnCount={hiddenColumnCount}
         onResetVisibleColumns={resetVisibleColumns}
         filterDrawerTitleId="c360-filter-drawer-title"
-        headerActions={
-          <>
-            {savedSearchesTrigger}
-            {filtersRefreshButton}
-          </>
-        }
+        headerActions={savedSearchesTrigger}
+        onRefreshFilters={handleRefreshFilters}
+        filtersRefreshing={filtersRefreshing}
         tableDensity={tableDensity}
         onTableDensityChange={setTableDensity}
       />
     ),
     [
-      filtersRefreshButton,
+      handleRefreshFilters,
+      filtersRefreshing,
       savedSearchesTrigger,
       search,
       sortBy,
@@ -711,6 +680,13 @@ export default function ContactsPageClient() {
     <DataToolbar
       cssPrefix="c360-toolbar"
       totalCount={total}
+      tabs={[
+        { value: "total", label: "Total" },
+        { value: "net_new", label: "Net New" },
+        { value: "do_not_contact", label: "Do Not Contact" },
+      ]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
       meta={
         <div className="c360-contacts-toolbar-meta">
           {!loading && total > 0 ? (

@@ -1302,3 +1302,117 @@
 .c360-companies-data-grid .MuiDataGrid-root {
   min-width: 960px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENTITY FILTER SIDEBAR (Companies, Contacts, shared with Hiring Signals chips)
+══════════════════════════════════════════════════════════════════════════════ */
+.c360-entity-filters__group-header {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: var(--c360-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--c360-text-ink-muted);
+  border-bottom: 1px solid var(--c360-border-ink-8);
+}
+
+.c360-entity-filters__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.c360-entity-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.c360-entity-filters__chips--section {
+  flex-wrap: nowrap;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 0;
+}
+
+.c360-entity-filters__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--c360-radius-full);
+  background: var(--c360-bg-secondary);
+  border: 1px solid var(--c360-border);
+  font-size: var(--c360-text-2xs);
+  color: var(--c360-text);
+}
+
+.c360-entity-filters__chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c360-entity-filters__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--c360-text-muted);
+  border-radius: var(--c360-radius-sm);
+  cursor: pointer;
+}
+
+.c360-entity-filters__chip-remove:hover {
+  color: var(--c360-danger);
+  background: var(--c360-danger-light);
+}
+
+.c360-entity-filters .c360-contacts-filter-section {
+  border-radius: 0;
+}
+
+.c360-entity-filters .c360-contacts-filter-section--open {
+  border-color: color-mix(in srgb, var(--c360-primary) 32%, var(--c360-border));
+  background: #f0f7ff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c360-primary) 10%, transparent);
+}
+
+.c360-entity-filters
+  .c360-contacts-filter-section--open
+  .c360-contacts-filter-section__header-toggle,
+.c360-entity-filters
+  .c360-contacts-filter-section--open
+  .c360-contacts-filter-section__header-chevron {
+  color: var(--c360-primary);
+  font-weight: var(--c360-font-semibold);
+}
+
+.c360-entity-filters
+  .c360-contacts-filter-section--open
+  .c360-contacts-filter-section__title {
+  font-weight: var(--c360-font-semibold);
+  color: var(--c360-primary);
+}
+
+.c360-entity-filters
+  .c360-contacts-filter-section--open
+  .c360-contacts-filter-section__count {
+  background: color-mix(in srgb, var(--c360-primary) 14%, #fff);
+  color: var(--c360-primary);
+}
