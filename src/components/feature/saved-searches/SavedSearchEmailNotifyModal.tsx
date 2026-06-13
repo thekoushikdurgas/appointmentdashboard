@@ -5,20 +5,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import {
+  SavedSearchEmailNotifyFields,
+  type NewJobMode,
+} from "@/components/feature/saved-searches/SavedSearchEmailNotifyFields";
+import {
   emailService,
   type JobEmailNotificationConfig,
 } from "@/services/graphql/emailService";
 import { parseOperationError } from "@/lib/errorParser";
-
-const DELAY_OPTIONS = [
-  { value: 1, label: "1 hour" },
-  { value: 3, label: "3 hours" },
-  { value: 6, label: "6 hours" },
-  { value: 12, label: "12 hours" },
-  { value: 24, label: "24 hours" },
-] as const;
-
-type NewJobMode = "off" | "instant" | "delayed";
 
 export function SavedSearchEmailNotifyModal({
   isOpen,
@@ -112,12 +106,24 @@ export function SavedSearchEmailNotifyModal({
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button loading={saving} onClick={() => void handleSave()}>
+        <Button
+          variant="primary"
+          loading={sendingNow}
+          disabled={configLoading || saving}
+          onClick={() => void handleSendNow()}
+        >
+          Send email now
+        </Button>
+        <Button
+          loading={saving}
+          disabled={configLoading}
+          onClick={() => void handleSave()}
+        >
           Save preferences
         </Button>
       </>
     ),
-    [handleSave, onClose, saving],
+    [configLoading, handleSave, handleSendNow, onClose, saving, sendingNow],
   );
 
   return (
@@ -131,79 +137,16 @@ export function SavedSearchEmailNotifyModal({
       {configLoading ? (
         <p className="c360-text-sm c360-text-muted">Loading preferences…</p>
       ) : (
-        <div className="c360-flex c360-flex-col c360-gap-4">
-          <div>
-            <Button
-              type="button"
-              variant="primary"
-              loading={sendingNow}
-              onClick={() => void handleSendNow()}
-            >
-              Send email now
-            </Button>
-            <p className="c360-text-xs c360-text-muted c360-mt-2">
-              Sends a one-time digest of current matching jobs.
-            </p>
-          </div>
-
-          <label className="c360-flex c360-items-center c360-gap-2 c360-cursor-pointer">
-            <input
-              type="checkbox"
-              checked={dailyEnabled}
-              onChange={(e) => setDailyEnabled(e.target.checked)}
-            />
-            <span className="c360-text-sm">Daily digest (10:00 AM IST)</span>
-          </label>
-
-          <fieldset className="c360-flex c360-flex-col c360-gap-2">
-            <legend className="c360-text-sm c360-fw-medium">
-              New job alerts
-            </legend>
-            <label className="c360-flex c360-items-center c360-gap-2 c360-cursor-pointer">
-              <input
-                type="radio"
-                name={`new-job-mode-${searchId}`}
-                checked={newJobMode === "off"}
-                onChange={() => setNewJobMode("off")}
-              />
-              <span className="c360-text-sm">Off</span>
-            </label>
-            <label className="c360-flex c360-items-center c360-gap-2 c360-cursor-pointer">
-              <input
-                type="radio"
-                name={`new-job-mode-${searchId}`}
-                checked={newJobMode === "instant"}
-                onChange={() => setNewJobMode("instant")}
-              />
-              <span className="c360-text-sm">
-                Immediately when new jobs match
-              </span>
-            </label>
-            <label className="c360-flex c360-items-center c360-gap-2 c360-cursor-pointer">
-              <input
-                type="radio"
-                name={`new-job-mode-${searchId}`}
-                checked={newJobMode === "delayed"}
-                onChange={() => setNewJobMode("delayed")}
-              />
-              <span className="c360-text-sm">After a delay (batched)</span>
-            </label>
-            {newJobMode === "delayed" ? (
-              <select
-                className="c360-text-sm"
-                value={delayHours}
-                onChange={(e) => setDelayHours(Number(e.target.value))}
-                aria-label="Delay before sending new job email"
-              >
-                {DELAY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-          </fieldset>
-        </div>
+        <SavedSearchEmailNotifyFields
+          fieldIdPrefix={searchId}
+          dailyEnabled={dailyEnabled}
+          onDailyEnabledChange={setDailyEnabled}
+          newJobMode={newJobMode}
+          onNewJobModeChange={setNewJobMode}
+          delayHours={delayHours}
+          onDelayHoursChange={setDelayHours}
+          showSendNowHint
+        />
       )}
     </Modal>
   );

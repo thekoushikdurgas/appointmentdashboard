@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Key, Monitor, Settings, Shield, User, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { ProfileSessionsTab } from "@/components/feature/profile/ProfileSessions
 import { ProfileTeamTab } from "@/components/feature/profile/ProfileTeamTab";
 import { ProfileSettingsTab } from "@/components/feature/profile/ProfileSettingsTab";
 import { EmailOtpModal } from "@/components/feature/auth/EmailOtpModal";
+import { ShellSuspenseFallback } from "@/components/shared/ShellSuspenseFallback";
 import { authService } from "@/services/graphql/authService";
 import { setTokens } from "@/lib/tokenManager";
 import { isProfileTab, type ProfileTab } from "@/lib/profileTabs";
@@ -31,7 +32,7 @@ const TABS: Array<{ id: ProfileTab; label: string; icon: React.ReactNode }> = [
   { id: "settings", label: "Settings", icon: <Settings size={16} /> },
 ];
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlTab = searchParams.get("tab");
@@ -327,8 +328,17 @@ export default function ProfilePage() {
           onVerify={handleVerifyProfileEmailOtp}
           onResend={handleResendProfileEmailOtp}
           onClose={handleCloseVerifyModal}
+          submitLabel="Verify email"
         />
       ) : null}
     </DashboardPageLayout>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ShellSuspenseFallback />}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }

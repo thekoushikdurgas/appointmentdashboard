@@ -40,6 +40,10 @@ import {
   type JobEmailNotificationConfig,
 } from "@/services/graphql/emailService";
 import { SavedSearchEmailNotifyModal } from "@/components/feature/saved-searches/SavedSearchEmailNotifyModal";
+import {
+  SavedSearchEmailNotifyFields,
+  type NewJobMode,
+} from "@/components/feature/saved-searches/SavedSearchEmailNotifyFields";
 
 type Entity = "contact" | "company" | "hire_signal";
 
@@ -51,7 +55,16 @@ function SaveSearchNameModal({
   onSaveNameChange,
   onClose,
   onSave,
+  onSaveAndSendEmail,
   nameInputRef,
+  showEmailOptions,
+  dailyEnabled,
+  onDailyEnabledChange,
+  newJobMode,
+  onNewJobModeChange,
+  delayHours,
+  onDelayHoursChange,
+  sendingEmailNow,
 }: {
   isOpen: boolean;
   saving: boolean;
@@ -59,7 +72,16 @@ function SaveSearchNameModal({
   onSaveNameChange: (value: string) => void;
   onClose: () => void;
   onSave: () => void;
+  onSaveAndSendEmail?: () => void;
   nameInputRef: RefObject<HTMLInputElement | null>;
+  showEmailOptions?: boolean;
+  dailyEnabled?: boolean;
+  onDailyEnabledChange?: (value: boolean) => void;
+  newJobMode?: NewJobMode;
+  onNewJobModeChange?: (value: NewJobMode) => void;
+  delayHours?: number;
+  onDelayHoursChange?: (value: number) => void;
+  sendingEmailNow?: boolean;
 }) {
   const footer = useMemo(
     () => (
@@ -67,12 +89,29 @@ function SaveSearchNameModal({
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
+        {onSaveAndSendEmail ? (
+          <Button
+            variant="primary"
+            loading={sendingEmailNow}
+            disabled={!saveName.trim() || saving}
+            onClick={onSaveAndSendEmail}
+          >
+            Send email now
+          </Button>
+        ) : null}
         <Button loading={saving} onClick={onSave} disabled={!saveName.trim()}>
           Save
         </Button>
       </>
     ),
-    [onClose, onSave, saveName, saving],
+    [
+      onClose,
+      onSave,
+      onSaveAndSendEmail,
+      saveName,
+      saving,
+      sendingEmailNow,
+    ],
   );
 
   return (
@@ -84,13 +123,30 @@ function SaveSearchNameModal({
       stacked
       initialFocusRef={nameInputRef}
     >
-      <Input
-        ref={nameInputRef}
-        label="Name"
-        value={saveName}
-        onChange={(e) => onSaveNameChange(e.target.value)}
-        placeholder="e.g. EU verified contacts"
-      />
+      <div className="c360-flex c360-flex-col c360-gap-4">
+        <Input
+          ref={nameInputRef}
+          label="Name"
+          value={saveName}
+          onChange={(e) => onSaveNameChange(e.target.value)}
+          placeholder="e.g. EU verified contacts"
+        />
+        {showEmailOptions &&
+          onDailyEnabledChange &&
+          onNewJobModeChange &&
+          onDelayHoursChange ? (
+          <SavedSearchEmailNotifyFields
+            fieldIdPrefix="save-search"
+            dailyEnabled={dailyEnabled ?? false}
+            onDailyEnabledChange={onDailyEnabledChange}
+            newJobMode={newJobMode ?? "off"}
+            onNewJobModeChange={onNewJobModeChange}
+            delayHours={delayHours ?? 3}
+            onDelayHoursChange={onDelayHoursChange}
+            showSendNowHint={Boolean(onSaveAndSendEmail)}
+          />
+        ) : null}
+      </div>
     </Modal>
   );
 }
@@ -224,6 +280,10 @@ export function SavedSearchesMenu({
   const [loading, setLoading] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
+  const [saveDailyEnabled, setSaveDailyEnabled] = useState(false);
+  const [saveNewJobMode, setSaveNewJobMode] = useState<NewJobMode>("off");
+  const [saveDelayHours, setSaveDelayHours] = useState(3);
+  const [sendingEmailNow, setSendingEmailNow] = useState(false);
   const [saving, setSaving] = useState(false);
   const [internalPanelOpen, setInternalPanelOpen] = useState(false);
   const [jobEmailConfig, setJobEmailConfig] =
@@ -362,6 +422,9 @@ export function SavedSearchesMenu({
   const closeSaveModal = useCallback(() => {
     setSaveOpen(false);
     setSaveName("");
+    setSaveDailyEnabled(false);
+    setSaveNewJobMode("off");
+    setSaveDelayHours(3);
   }, []);
 
   const closePanel = useCallback(() => {
@@ -369,8 +432,38 @@ export function SavedSearchesMenu({
   }, [setPanelOpen]);
 
   const openSaveModal = useCallback(() => {
+    setSaveDailyEnabled(false);
+    setSaveNewJobMode("off");
+    setSaveDelayHours(3);
     setSaveOpen(true);
   }, []);
+
+  const persistEmailPreferences = useCallback(
+    async (searchId: string) => {
+      if (!showJobEmailNotify) return null;
+      const hasEmailPrefs =
+        saveDailyEnabled || saveNewJobMode !== "off";
+      if (!hasEmailPrefs) return null;
+      const res = await emailService.setJobEmailNotificationPreferences(
+        searchId,
+        {
+          dailyEnabled: saveDailyEnabled,
+          newJobMode: saveNewJobMode,
+          newJobDelayHours:
+            saveNewJobMode === "delayed" ? saveDelayHours : null,
+        },
+      );
+      const cfg = res.email.setJobEmailNotificationPreferences;
+      setJobEmailConfig(cfg);
+      return cfg;
+    },
+    [
+      showJobEmailNotify,
+      saveDailyEnabled,
+      saveNewJobMode,
+      saveDelayHours,
+    ],
+  );
 
   const handleSave = useCallback(async () => {
     const name = saveName.trim();
@@ -412,6 +505,7 @@ export function SavedSearchesMenu({
         };
         return [optimistic, ...prev];
       });
+      await persistEmailPreferences(row.id);
       toast.success("Saved search created.");
       closeSaveModal();
       await load({ fresh: true, silent: true });
@@ -430,6 +524,68 @@ export function SavedSearchesMenu({
     errorDomain,
     closeSaveModal,
     load,
+    persistEmailPreferences,
+  ]);
+
+  const handleSaveAndSendEmail = useCallback(async () => {
+    const name = saveName.trim();
+    if (!name) return;
+    const filters = getHireSignalPayload?.();
+    if (!filters) {
+      toast.error("Could not build a payload for this view.");
+      return;
+    }
+    setSendingEmailNow(true);
+    setSaving(true);
+    try {
+      const created = await savedSearchesService.create({
+        name,
+        type: typeFilter,
+        filters: filters as unknown as Record<string, unknown>,
+      });
+      const row = created.savedSearches.createSavedSearch;
+      setList((prev) => {
+        if (prev.some((s) => s.id === row.id)) return prev;
+        const optimistic: SavedSearch = {
+          id: row.id,
+          name: row.name,
+          description: null,
+          type: row.type,
+          searchTerm: null,
+          filters: filters as unknown as Record<string, unknown>,
+          sortField: null,
+          sortDirection: null,
+          pageSize: null,
+          createdAt: row.createdAt ?? new Date().toISOString(),
+          updatedAt: null,
+          lastUsedAt: null,
+          useCount: row.useCount ?? 0,
+        };
+        return [optimistic, ...prev];
+      });
+      await persistEmailPreferences(row.id);
+      const res = await emailService.sendJobEmailNow(row.id);
+      if (res.email.sendJobEmailNow.success) {
+        toast.success(`Email sent for “${name}”.`);
+      } else {
+        toast.error("Could not send email.");
+      }
+      closeSaveModal();
+      await load({ fresh: true, silent: true });
+    } catch (e) {
+      toast.error(parseOperationError(e, errorDomain).userMessage);
+    } finally {
+      setSaving(false);
+      setSendingEmailNow(false);
+    }
+  }, [
+    saveName,
+    getHireSignalPayload,
+    typeFilter,
+    errorDomain,
+    closeSaveModal,
+    load,
+    persistEmailPreferences,
   ]);
 
   const handleApply = async (s: SavedSearch) => {
@@ -552,7 +708,7 @@ export function SavedSearchesMenu({
                     className={cn(
                       "c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-notify",
                       emailSubscribed &&
-                        "c360-saved-searches-panel__item-notify--active",
+                      "c360-saved-searches-panel__item-notify--active",
                     )}
                     aria-label={`Email notifications for ${s.name}`}
                     aria-pressed={emailSubscribed ? "true" : "false"}
@@ -702,7 +858,18 @@ export function SavedSearchesMenu({
         onSaveNameChange={handleSaveNameChange}
         onClose={closeSaveModal}
         onSave={handleSave}
+        onSaveAndSendEmail={
+          showJobEmailNotify ? handleSaveAndSendEmail : undefined
+        }
         nameInputRef={saveNameInputRef}
+        showEmailOptions={showJobEmailNotify}
+        dailyEnabled={saveDailyEnabled}
+        onDailyEnabledChange={setSaveDailyEnabled}
+        newJobMode={saveNewJobMode}
+        onNewJobModeChange={setSaveNewJobMode}
+        delayHours={saveDelayHours}
+        onDelayHoursChange={setSaveDelayHours}
+        sendingEmailNow={sendingEmailNow}
       />
 
       {emailNotifyModal ? (

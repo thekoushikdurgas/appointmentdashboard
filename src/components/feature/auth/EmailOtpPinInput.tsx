@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PinInput } from "@ark-ui/react/pin-input";
+import { Button } from "@/components/ui/Button";
 
 export interface EmailOtpPinInputProps {
   email?: string;
@@ -13,6 +14,10 @@ export interface EmailOtpPinInputProps {
   /** Reset pin cells when this key changes (e.g. new challenge). */
   resetKey?: string;
   showIntro?: boolean;
+  /** Show a primary action to submit the entered code (modal flows). */
+  showSubmitButton?: boolean;
+  /** Override default submit label derived from `purpose`. */
+  submitLabel?: string;
 }
 
 const OTP_LENGTH = 4;
@@ -27,6 +32,8 @@ export function EmailOtpPinInput({
   onResend,
   resetKey,
   showIntro = true,
+  showSubmitButton = false,
+  submitLabel,
 }: EmailOtpPinInputProps) {
   const [value, setValue] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SEC);
@@ -47,9 +54,12 @@ export function EmailOtpPinInput({
     return () => window.clearInterval(t);
   }, [cooldown, resetKey]);
 
-  const handleComplete = useCallback(
-    async (details: { value: string[] }) => {
-      const code = details.value.join("");
+  useEffect(() => {
+    if (error) submittedRef.current = null;
+  }, [error]);
+
+  const submitCode = useCallback(
+    async (code: string) => {
       if (code.length !== OTP_LENGTH || loading) return;
       if (submittedRef.current === code) return;
       submittedRef.current = code;
@@ -57,6 +67,17 @@ export function EmailOtpPinInput({
     },
     [loading, onVerify],
   );
+
+  const handleComplete = useCallback(
+    async (details: { value: string[] }) => {
+      await submitCode(details.value.join(""));
+    },
+    [submitCode],
+  );
+
+  const handleSubmitClick = async () => {
+    await submitCode(value.join(""));
+  };
 
   const handleResend = async () => {
     if (cooldown > 0 || loading) return;
@@ -66,10 +87,10 @@ export function EmailOtpPinInput({
     setCooldown(RESEND_COOLDOWN_SEC);
   };
 
-  const intro =
-    purpose === "login"
-      ? "Enter the 4-digit code we sent to"
-      : "Enter the 4-digit code we sent to";
+  const intro = "Enter the 4-digit code we sent to";
+  const resolvedSubmitLabel =
+    submitLabel ?? (purpose === "login" ? "Sign in" : "Create account");
+  const codeComplete = value.join("").length === OTP_LENGTH;
 
   return (
     <div className="c360-otp-pin-block">
@@ -128,6 +149,18 @@ export function EmailOtpPinInput({
           </button>
         )}
       </div>
+
+      {showSubmitButton && (
+        <Button
+          type="button"
+          className="c360-w-full c360-otp-pin-block__submit"
+          loading={loading}
+          disabled={!codeComplete}
+          onClick={handleSubmitClick}
+        >
+          {resolvedSubmitLabel}
+        </Button>
+      )}
     </div>
   );
 }

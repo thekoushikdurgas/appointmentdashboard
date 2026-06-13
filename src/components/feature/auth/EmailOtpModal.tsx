@@ -10,12 +10,13 @@ export type EmailOtpPurpose = "registration" | "login";
 
 export interface EmailOtpModalProps extends Omit<
   EmailOtpPinInputProps,
-  "showIntro" | "resetKey"
+  "showIntro" | "resetKey" | "showSubmitButton"
 > {
   isOpen: boolean;
   email: string;
   purpose: EmailOtpPurpose;
   onClose?: () => void;
+  submitLabel?: string;
 }
 
 export function EmailOtpModal({
@@ -27,6 +28,7 @@ export function EmailOtpModal({
   onVerify,
   onResend,
   onClose,
+  submitLabel,
 }: EmailOtpModalProps) {
   const title =
     purpose === "login" ? "Enter sign-in code" : "Verify your email";
@@ -49,6 +51,8 @@ export function EmailOtpModal({
         onVerify={onVerify}
         onResend={onResend}
         resetKey={email}
+        showSubmitButton
+        submitLabel={submitLabel}
       />
     </Modal>
   );

@@ -7,6 +7,7 @@ import { KeyRound, ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { authService } from "@/services/graphql/authService";
+import { AuthLoginFallback } from "@/components/feature/auth/AuthLoginFallback";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -153,7 +154,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<AuthLoginFallback />}>
       <ResetPasswordForm />
     </Suspense>
   );

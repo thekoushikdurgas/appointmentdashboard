@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
+import { ShellSuspenseFallback } from "@/components/shared/ShellSuspenseFallback";
 import { useAuth } from "@/context/AuthContext";
 import { RouteTracker } from "@/hooks/useRouteTracker";
 import { RouteActivityTracker } from "@/hooks/useRouteActivityTracker";
@@ -32,16 +33,14 @@ function ConditionalLayoutInner({ children }: ConditionalLayoutProps) {
   }
 
   if (loading) {
-    return (
-      <div className="c360-shell c360-flex c360-items-center c360-justify-center c360-min-h-screen">
-        <div className="c360-spinner" aria-label="Loading…" />
-      </div>
-    );
+    return <ShellSuspenseFallback />;
   }
 
   return (
     <>
-      <RouteTracker />
+      <Suspense fallback={null}>
+        <RouteTracker />
+      </Suspense>
       <RouteActivityTracker />
       <MainLayout>{children}</MainLayout>
     </>
@@ -52,7 +51,7 @@ export default function ConditionalLayout({
   children,
 }: ConditionalLayoutProps) {
   return (
-    <Suspense fallback={children}>
+    <Suspense fallback={<ShellSuspenseFallback />}>
       <ConditionalLayoutInner>{children}</ConditionalLayoutInner>
     </Suspense>
   );
