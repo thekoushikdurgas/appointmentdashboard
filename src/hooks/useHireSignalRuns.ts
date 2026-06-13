@@ -15,6 +15,8 @@ import {
   resumeHireSignalRun,
 } from "@/services/graphql/hiringSignalService";
 import {
+  downloadTextFile,
+  linkedinJobsPayloadToCsv,
   satelliteJobsCollected,
   satelliteRunIdFromRow,
   satelliteStatusFromRow,
@@ -62,10 +64,8 @@ export type UseHireSignalRunsOpts = {
 
 export function useHireSignalRuns(
   mainTab: "overview" | "signals" | "runs",
-  opts: UseHireSignalRunsOpts,
+  _opts: UseHireSignalRunsOpts,
 ) {
-  const { satellitePage, runsPageSize, satelliteFilter = "active" } = opts;
-
   const [runsLoading, setRunsLoading] = useState(false);
   const [metrics, setMetrics] = useState<Record<string, unknown> | null>(null);
   const [satelliteRunsRows, setSatelliteRunsRows] = useState<
@@ -83,8 +83,7 @@ export function useHireSignalRuns(
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
     try {
-      const limit =
-        mainTab === "runs" ? 0 : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
+      const limit = mainTab === "runs" ? 0 : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
       const offset = 0;
 
       const [r, s, m] = await Promise.all([
@@ -146,10 +145,7 @@ export function useHireSignalRuns(
         };
       }
       const st = String(row.status ?? "").toLowerCase();
-      if (
-        rid &&
-        (st === "pending" || st === "running" || st === "paused")
-      ) {
+      if (rid && (st === "pending" || st === "running" || st === "paused")) {
         return { ...row, status: "cancelled" };
       }
       return row;

@@ -141,17 +141,17 @@ export function formatHireSignalPostedDate(
     if (!out?.trim()) {
       out = showTime
         ? d.toLocaleString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : d.toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        });
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
     }
     const t = out.trim() || s.slice(0, 10);
     return t;

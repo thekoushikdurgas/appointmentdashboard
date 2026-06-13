@@ -104,14 +104,7 @@ function SaveSearchNameModal({
         </Button>
       </>
     ),
-    [
-      onClose,
-      onSave,
-      onSaveAndSendEmail,
-      saveName,
-      saving,
-      sendingEmailNow,
-    ],
+    [onClose, onSave, onSaveAndSendEmail, saveName, saving, sendingEmailNow],
   );
 
   return (
@@ -132,9 +125,9 @@ function SaveSearchNameModal({
           placeholder="e.g. EU verified contacts"
         />
         {showEmailOptions &&
-          onDailyEnabledChange &&
-          onNewJobModeChange &&
-          onDelayHoursChange ? (
+        onDailyEnabledChange &&
+        onNewJobModeChange &&
+        onDelayHoursChange ? (
           <SavedSearchEmailNotifyFields
             fieldIdPrefix="save-search"
             dailyEnabled={dailyEnabled ?? false}
@@ -441,8 +434,7 @@ export function SavedSearchesMenu({
   const persistEmailPreferences = useCallback(
     async (searchId: string) => {
       if (!showJobEmailNotify) return null;
-      const hasEmailPrefs =
-        saveDailyEnabled || saveNewJobMode !== "off";
+      const hasEmailPrefs = saveDailyEnabled || saveNewJobMode !== "off";
       if (!hasEmailPrefs) return null;
       const res = await emailService.setJobEmailNotificationPreferences(
         searchId,
@@ -457,12 +449,7 @@ export function SavedSearchesMenu({
       setJobEmailConfig(cfg);
       return cfg;
     },
-    [
-      showJobEmailNotify,
-      saveDailyEnabled,
-      saveNewJobMode,
-      saveDelayHours,
-    ],
+    [showJobEmailNotify, saveDailyEnabled, saveNewJobMode, saveDelayHours],
   );
 
   const handleSave = useCallback(async () => {
@@ -708,7 +695,7 @@ export function SavedSearchesMenu({
                     className={cn(
                       "c360-btn c360-btn--ghost c360-btn--icon c360-saved-searches-panel__item-notify",
                       emailSubscribed &&
-                      "c360-saved-searches-panel__item-notify--active",
+                        "c360-saved-searches-panel__item-notify--active",
                     )}
                     aria-label={`Email notifications for ${s.name}`}
                     aria-pressed={emailSubscribed ? "true" : "false"}

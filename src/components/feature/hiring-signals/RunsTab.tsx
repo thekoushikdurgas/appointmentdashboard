@@ -68,10 +68,10 @@ export function RunsTab({
 }: RunsTabProps) {
   const [satellitePage, setSatellitePage] = useState(1);
   const [trackedPage, setTrackedPage] = useState(1);
-  const [trackedFilter, setTrackedFilter] = useState<RunsSessionsFilter>("active");
-  const [satelliteFilter, setSatelliteFilter] = useState<RunsSessionsFilter>(
-    "active",
-  );
+  const [trackedFilter, setTrackedFilter] =
+    useState<RunsSessionsFilter>("active");
+  const [satelliteFilter, setSatelliteFilter] =
+    useState<RunsSessionsFilter>("active");
   const [runsSortKey, setRunsSortKey] = useState<HireSignalRunSortKey | null>(
     "status",
   );
@@ -194,12 +194,7 @@ export function RunsTab({
           </Button>
         </>
       ) : null,
-    [
-      isSuperAdmin,
-      onOpenRunScrapeModal,
-      purgeSessionsLoading,
-      runsLoading,
-    ],
+    [isSuperAdmin, onOpenRunScrapeModal, purgeSessionsLoading, runsLoading],
   );
 
   const renderRunDateTime = useCallback((raw: string) => {
@@ -375,12 +370,12 @@ export function RunsTab({
         render: (row) => {
           const raw = String(
             row.finished_at ??
-            row.finishedAt ??
-            row.FinishedAt ??
-            row.completed_at ??
-            row.completedAt ??
-            row.CompletedAt ??
-            "",
+              row.finishedAt ??
+              row.FinishedAt ??
+              row.completed_at ??
+              row.completedAt ??
+              row.CompletedAt ??
+              "",
           );
           return renderRunDateTime(raw);
         },
