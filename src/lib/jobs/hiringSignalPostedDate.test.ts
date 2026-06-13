@@ -71,6 +71,18 @@ describe("formatHireSignalPostedParts", () => {
     expect(time).toBeNull();
   });
 
+  it("treats naive scraper UTC timestamps as UTC and labels IST", () => {
+    const { date, time } = formatHireSignalPostedParts("2026-06-13T10:27:00");
+    expect(date).toMatch(/13.*Jun/i);
+    expect(time).toMatch(/03:57.*IST|3:57.*IST/i);
+  });
+
+  it("matches Z-suffixed UTC to the same IST clock time", () => {
+    const naive = formatHireSignalPostedParts("2026-06-13T10:27:00");
+    const zulu = formatHireSignalPostedParts("2026-06-13T10:27:00Z");
+    expect(naive.time).toBe(zulu.time);
+  });
+
   it("formats UTC-midnight calendar stamp as the same calendar day", () => {
     const { date, time } = formatHireSignalPostedParts("2026-05-31T00:00:00Z");
     expect(date).toMatch(/31.*May|May.*31/i);

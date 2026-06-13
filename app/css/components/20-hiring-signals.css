@@ -2008,6 +2008,10 @@
   gap: 20px;
 }
 
+.c360-hs-runs-tab-panel .c360-accordion--bordered .c360-accordion__panel-inner {
+  padding: 0;
+}
+
 /* Runs tab — tracked scrape session cards */
 .c360-hs-scrape-session-card .c360-card__body {
   width: 100%;

@@ -15,10 +15,11 @@ import {
   resumeHireSignalRun,
 } from "@/services/graphql/hiringSignalService";
 import {
-  downloadTextFile,
-  linkedinJobsPayloadToCsv,
+  satelliteJobsCollected,
+  satelliteRunIdFromRow,
   satelliteStatusFromRow,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
+import type { RunsSessionsFilter } from "@/components/feature/hiring-signals/runsSessionsFilter";
 
 /**
  * True when a scraper.server session can be cancelled (satellite or tracked row).
@@ -47,8 +48,8 @@ export function hireSignalRunCanResume(
 /** How many satellite runs to load for Overview “latest run” preview (first page). */
 export const HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT = 25;
 
-/** Satellite table filter on the Runs tab (client filter for active only). */
-export type HireSignalSatelliteFilter = "active" | "all";
+/** Satellite table filter on the Runs tab (client-side). */
+export type HireSignalSatelliteFilter = RunsSessionsFilter;
 
 export type UseHireSignalRunsOpts = {
   /** 1-based page when `mainTab === "runs"`. */
@@ -82,15 +83,9 @@ export function useHireSignalRuns(
   const loadRuns = useCallback(async () => {
     setRunsLoading(true);
     try {
-      const runsAllServerPage = mainTab === "runs" && satelliteFilter === "all";
-      const limit = runsAllServerPage
-        ? runsPageSize
-        : mainTab === "runs"
-          ? 500
-          : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
-      const offset = runsAllServerPage
-        ? Math.max(0, satellitePage - 1) * runsPageSize
-        : 0;
+      const limit =
+        mainTab === "runs" ? 0 : HIRE_SIGNAL_OVERVIEW_RUNS_LIMIT;
+      const offset = 0;
 
       const [r, s, m] = await Promise.all([
         fetchHireSignalRuns(limit, offset),
@@ -114,7 +109,7 @@ export function useHireSignalRuns(
     } finally {
       setRunsLoading(false);
     }
-  }, [mainTab, runsPageSize, satellitePage, satelliteFilter]);
+  }, [mainTab]);
 
   useEffect(() => {
     if (mainTab === "runs" || mainTab === "overview") void loadRuns();
@@ -128,19 +123,52 @@ export function useHireSignalRuns(
     );
   }, [scrapeJobsPayload]);
 
+  /** Overlay live scraper.server status onto gateway Postgres rows (same runId). */
+  const trackedScrapeRowsLive = useMemo(() => {
+    if (trackedScrapeRows.length === 0) return trackedScrapeRows;
+
+    const byRunId = new Map<string, Record<string, unknown>>();
+    for (const row of satelliteRunsRows) {
+      const rid = satelliteRunIdFromRow(row);
+      if (rid) byRunId.set(rid, row);
+    }
+
+    return trackedScrapeRows.map((row) => {
+      const rid = String(row.runId ?? row.run_id ?? "").trim();
+      const sat = rid ? byRunId.get(rid) : undefined;
+      if (sat) {
+        const liveStatus = satelliteStatusFromRow(sat);
+        const liveCount = satelliteJobsCollected(sat);
+        return {
+          ...row,
+          ...(liveStatus ? { status: liveStatus } : null),
+          ...(liveCount > 0 ? { itemCount: liveCount } : null),
+        };
+      }
+      const st = String(row.status ?? "").toLowerCase();
+      if (
+        rid &&
+        (st === "pending" || st === "running" || st === "paused")
+      ) {
+        return { ...row, status: "cancelled" };
+      }
+      return row;
+    });
+  }, [trackedScrapeRows, satelliteRunsRows]);
+
   useEffect(() => {
     const satActive = satelliteRunsRows.some((row) => {
       const st = satelliteStatusFromRow(row);
       return st === "pending" || st === "running" || st === "paused";
     });
-    const trackActive = trackedScrapeRows.some((row) => {
+    const trackActive = trackedScrapeRowsLive.some((row) => {
       const st = String(row.status ?? "").toLowerCase();
       return st === "pending" || st === "running" || st === "paused";
     });
     if (!satActive && !trackActive) return;
     const id = setInterval(() => void loadRuns(), 15_000);
     return () => clearInterval(id);
-  }, [satelliteRunsRows, trackedScrapeRows, loadRuns]);
+  }, [satelliteRunsRows, trackedScrapeRowsLive, loadRuns]);
 
   const onRefreshRun = useCallback(
     async (runId: string) => {
@@ -252,10 +280,24 @@ export function useHireSignalRuns(
         payload && typeof payload === "object" && !Array.isArray(payload)
           ? Number((payload as Record<string, unknown>).deleted)
           : NaN;
+      const gatewayCancelled =
+        payload && typeof payload === "object" && !Array.isArray(payload)
+          ? Number((payload as Record<string, unknown>).gatewayCancelled)
+          : NaN;
+      const parts: string[] = [];
+      if (Number.isFinite(deleted)) {
+        parts.push(`Removed ${deleted} satellite session row(s).`);
+      }
+      if (Number.isFinite(gatewayCancelled) && gatewayCancelled > 0) {
+        parts.push(
+          `Marked ${gatewayCancelled} gateway scrape job(s) as cancelled.`,
+        );
+      }
       toast.success("Sessions cleared", {
-        description: Number.isFinite(deleted)
-          ? `Removed ${deleted} session row(s) from scrape_data_index.`
-          : "All satellite session rows were purged.",
+        description:
+          parts.length > 0
+            ? parts.join(" ")
+            : "Satellite sessions were purged and gateway jobs were synced.",
       });
       void loadRuns();
     } catch (e) {
@@ -277,7 +319,7 @@ export function useHireSignalRuns(
     scrapeDownloadId,
     satelliteRunsRows,
     satelliteRunsTotal,
-    trackedScrapeRows,
+    trackedScrapeRows: trackedScrapeRowsLive,
     loadRuns,
     onRefreshRun,
     onCancelRun,

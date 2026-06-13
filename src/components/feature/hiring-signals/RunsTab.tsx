@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { History, Play, RefreshCw, Trash2 } from "lucide-react";
+import { History, Play, Trash2 } from "lucide-react";
 import { Pagination } from "@/components/ui/Pagination";
 import { Table, type TableColumn } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/Button";
 import { Accordion } from "@/components/ui/Accordion";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Progress } from "@/components/ui/Progress";
-import { cn } from "@/lib/utils";
 import {
   formatHireSignalPostedParts,
   isHireSignalPostedDateOnly,
@@ -34,12 +33,19 @@ import {
   satelliteSessionProgressProps,
   scrapeStatusBadgeColor,
   satelliteRunIdFromRow,
+  satelliteRunStartedIso,
+  satelliteRunStartedIsQueued,
   satelliteStatusFromRow,
   satelliteJobsCollected,
   satelliteJobsCompletionRatio,
   satelliteJobsCountSummary,
 } from "@/components/feature/hiring-signals/hiringSignalUiUtils";
 import { QueueMetricsBar } from "@/components/feature/hiring-signals/QueueMetricsBar";
+import { RunsSessionsToolbar } from "@/components/feature/hiring-signals/RunsSessionsToolbar";
+import {
+  matchesRunsSessionsFilter,
+  type RunsSessionsFilter,
+} from "@/components/feature/hiring-signals/runsSessionsFilter";
 import { ScrapeSessionCard } from "@/components/feature/hiring-signals/ScrapeSessionCard";
 
 export const RUNS_PAGE_SIZE = 10;
@@ -62,11 +68,12 @@ export function RunsTab({
 }: RunsTabProps) {
   const [satellitePage, setSatellitePage] = useState(1);
   const [trackedPage, setTrackedPage] = useState(1);
-  const [satelliteFilter, setSatelliteFilter] = useState<"active" | "all">(
+  const [trackedFilter, setTrackedFilter] = useState<RunsSessionsFilter>("active");
+  const [satelliteFilter, setSatelliteFilter] = useState<RunsSessionsFilter>(
     "active",
   );
   const [runsSortKey, setRunsSortKey] = useState<HireSignalRunSortKey | null>(
-    "started",
+    "status",
   );
   const [runsSortDir, setRunsSortDir] = useState<HireSignalRunSortDir>("desc");
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
@@ -80,7 +87,6 @@ export function RunsTab({
     resumeRunId,
     scrapeDownloadId,
     satelliteRunsRows,
-    satelliteRunsTotal,
     trackedScrapeRows,
     loadRuns,
     onRefreshRun,
@@ -103,14 +109,18 @@ export function RunsTab({
 
   useEffect(() => {
     setTrackedPage(1);
-  }, [trackedScrapeRows.length]);
+  }, [trackedScrapeRows.length, trackedFilter]);
+
+  const filteredTrackedRows = useMemo(() => {
+    return trackedScrapeRows.filter((row) =>
+      matchesRunsSessionsFilter(String(row.status ?? ""), trackedFilter),
+    );
+  }, [trackedScrapeRows, trackedFilter]);
 
   const filteredSatelliteRows = useMemo(() => {
-    if (satelliteFilter === "all") return satelliteRunsRows;
-    return satelliteRunsRows.filter((row) => {
-      const st = satelliteStatusFromRow(row);
-      return st === "pending" || st === "running" || st === "paused";
-    });
+    return satelliteRunsRows.filter((row) =>
+      matchesRunsSessionsFilter(satelliteStatusFromRow(row), satelliteFilter),
+    );
   }, [satelliteRunsRows, satelliteFilter]);
 
   const sortedSatelliteRows = useMemo(() => {
@@ -128,8 +138,7 @@ export function RunsTab({
   }, [sortedSatelliteRows, satellitePage]);
 
   const satelliteTotalFiltered = filteredSatelliteRows.length;
-  const satellitePaginationTotal =
-    satelliteFilter === "all" ? satelliteRunsTotal : satelliteTotalFiltered;
+  const satellitePaginationTotal = satelliteTotalFiltered;
 
   useEffect(() => {
     const maxPage = Math.max(
@@ -141,13 +150,57 @@ export function RunsTab({
 
   const trackedPaged = useMemo(() => {
     const start = (trackedPage - 1) * RUNS_PAGE_SIZE;
-    return trackedScrapeRows.slice(start, start + RUNS_PAGE_SIZE);
-  }, [trackedScrapeRows, trackedPage]);
+    return filteredTrackedRows.slice(start, start + RUNS_PAGE_SIZE);
+  }, [filteredTrackedRows, trackedPage]);
+
+  const trackedPaginationTotal = filteredTrackedRows.length;
+
+  useEffect(() => {
+    const maxPage = Math.max(
+      1,
+      Math.ceil(trackedPaginationTotal / RUNS_PAGE_SIZE),
+    );
+    if (trackedPage > maxPage) setTrackedPage(maxPage);
+  }, [trackedPaginationTotal, trackedPage]);
 
   const metricsTotal = metrics ? Number(metrics.total) : 0;
   const metricsActive = metrics
     ? Number(metrics.pending) + Number(metrics.running) + Number(metrics.paused)
     : 0;
+
+  const superAdminToolbarActions = useMemo(
+    () =>
+      isSuperAdmin ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="c360-gap-2"
+            disabled={purgeSessionsLoading || runsLoading}
+            leftIcon={<Trash2 size={15} />}
+            onClick={() => setPurgeConfirmOpen(true)}
+          >
+            Clear all sessions
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            leftIcon={<Play size={15} />}
+            onClick={onOpenRunScrapeModal}
+          >
+            Run scrape
+          </Button>
+        </>
+      ) : null,
+    [
+      isSuperAdmin,
+      onOpenRunScrapeModal,
+      purgeSessionsLoading,
+      runsLoading,
+    ],
+  );
 
   const renderRunDateTime = useCallback((raw: string) => {
     const s = raw.trim();
@@ -163,7 +216,12 @@ export function RunsTab({
       >
         <span className="c360-hs-grid-posted__date">{date}</span>
         {time ? (
-          <span className="c360-hs-grid-posted__time">{time}</span>
+          <span
+            className="c360-hs-grid-posted__time"
+            title={`${s} (UTC source)`}
+          >
+            {time}
+          </span>
         ) : null}
       </span>
     );
@@ -278,12 +336,35 @@ export function RunsTab({
         sortable: true,
         sortValue: (row) => hireSignalRunStartedMs(row),
         render: (row) => {
-          const raw =
-            String(
-              row.started_at ?? row.startedAt ?? row.StartedAt ?? "",
-            ).trim() ||
-            String(row.created_at ?? row.createdAt ?? row.CreatedAt ?? "");
-          return renderRunDateTime(raw);
+          const raw = satelliteRunStartedIso(row);
+          const queued = satelliteRunStartedIsQueued(row);
+          const { date, time } = formatHireSignalPostedParts(raw);
+          if (!raw) {
+            return renderRunDateTime("");
+          }
+          const dateOnly = isHireSignalPostedDateOnly(raw);
+          return (
+            <span
+              className="c360-hs-grid-posted"
+              title={
+                queued
+                  ? `Queued at ${raw} (UTC source)`
+                  : dateOnly
+                    ? `Date only in index: ${raw}`
+                    : `${raw} (UTC source)`
+              }
+            >
+              <span className="c360-hs-grid-posted__date">{date}</span>
+              {time ? (
+                <span className="c360-hs-grid-posted__time">{time}</span>
+              ) : null}
+              {queued ? (
+                <span className="c360-block c360-text-2xs c360-text-muted">
+                  queued
+                </span>
+              ) : null}
+            </span>
+          );
         },
       },
       {
@@ -294,12 +375,12 @@ export function RunsTab({
         render: (row) => {
           const raw = String(
             row.finished_at ??
-              row.finishedAt ??
-              row.FinishedAt ??
-              row.completed_at ??
-              row.completedAt ??
-              row.CompletedAt ??
-              "",
+            row.finishedAt ??
+            row.FinishedAt ??
+            row.completed_at ??
+            row.completedAt ??
+            row.CompletedAt ??
+            "",
           );
           return renderRunDateTime(raw);
         },
@@ -395,47 +476,71 @@ export function RunsTab({
     <div className="c360-flex c360-flex-col c360-gap-6 c360-px-4">
       <QueueMetricsBar metrics={metrics} loading={runsLoading} />
 
-      <section className="c360-space-y-3">
-        <h3 className="c360-m-0 c360-text-2xs c360-font-semibold c360-uppercase c360-tracking-wide c360-text-muted">
-          Your tracked scrapes (gateway)
-        </h3>
-        <div className="c360-2col-grid c360-gap-4">
-          {trackedPaged.map((row) => (
-            <ScrapeSessionCard
-              key={String(row.id ?? JSON.stringify(row))}
-              row={row}
-              showManageActions={isAdmin}
-              onDrillSignals={drillSignalsByRun}
-              onCancel={onCancelRun}
-              onPause={onPauseRun}
-              onResume={onResumeRun}
-              onDownloadCsv={onDownloadCsv}
-              onRefresh={onRefreshRun}
-              cancelRunId={cancelRunId}
-              pauseRunId={pauseRunId}
-              resumeRunId={resumeRunId}
-              scrapeDownloadId={scrapeDownloadId}
-              runActionId={runActionId}
-            />
-          ))}
+      <section className="c360-space-y-4">
+        <RunsSessionsToolbar
+          title="Your tracked scrapes (gateway)"
+          description="Scrape jobs you saved in Contact360 (Postgres). Live status syncs from scraper.server when a run is linked."
+          filter={trackedFilter}
+          onFilterChange={(f) => {
+            setTrackedFilter(f);
+            setTrackedPage(1);
+          }}
+          runsLoading={runsLoading}
+          onReload={() => void loadRuns()}
+          trailingActions={superAdminToolbarActions}
+        />
+        <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
+          {trackedPaginationTotal === 0 && !runsLoading ? (
+            <div className="c360-table-wrapper">
+              <table className="c360-table">
+                <tbody>
+                  <tr>
+                    <td className="c360-table__empty">
+                      <p className="c360-m-0 c360-text-sm">
+                        {trackedFilter === "running"
+                          ? "No running scrapes in this view."
+                          : "No tracked scrapes in this view."}
+                        {isSuperAdmin && trackedFilter === "all" ? (
+                          <>
+                            {" "}
+                            Use <strong>Run scrape</strong> to queue one.
+                          </>
+                        ) : null}
+                      </p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="c360-2col-grid c360-gap-4 c360-p-4">
+              {trackedPaged.map((row) => (
+                <ScrapeSessionCard
+                  key={String(row.id ?? JSON.stringify(row))}
+                  row={row}
+                  showManageActions={isAdmin}
+                  onDrillSignals={drillSignalsByRun}
+                  onCancel={onCancelRun}
+                  onPause={onPauseRun}
+                  onResume={onResumeRun}
+                  onDownloadCsv={onDownloadCsv}
+                  onRefresh={onRefreshRun}
+                  cancelRunId={cancelRunId}
+                  pauseRunId={pauseRunId}
+                  resumeRunId={resumeRunId}
+                  scrapeDownloadId={scrapeDownloadId}
+                  runActionId={runActionId}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        {trackedScrapeRows.length === 0 && !runsLoading ? (
-          <p className="c360-m-0 c360-text-sm c360-text-muted">
-            No tracked scrapes yet.
-            {isSuperAdmin ? (
-              <>
-                {" "}
-                Use <strong>Run scrape</strong> to queue one.
-              </>
-            ) : null}
-          </p>
-        ) : null}
-        {trackedScrapeRows.length > RUNS_PAGE_SIZE ? (
+        {trackedPaginationTotal > RUNS_PAGE_SIZE ? (
           <Pagination
             className="c360-hs-table-pagination"
             page={trackedPage}
             pageSize={RUNS_PAGE_SIZE}
-            total={trackedScrapeRows.length}
+            total={trackedPaginationTotal}
             onPageChange={setTrackedPage}
           />
         ) : null}
@@ -455,89 +560,18 @@ export function RunsTab({
             ),
             content: (
               <div className="c360-space-y-4 c360-pt-2">
-                <div className="c360-hs-runs-sessions-toolbar c360-flex c360-flex-wrap c360-items-center c360-justify-between c360-gap-2">
-                  <div className="c360-hs-runs-sessions-toolbar__lead c360-flex c360-min-w-0">
-                    <div>
-                      <h2 className="c360-m-0 c360-text-sm c360-font-semibold c360-text-ink">
-                        Scraper sessions &amp; tracked jobs
-                      </h2>
-                      <p className="c360-m-0 c360-mt-1 c360-text-2xs c360-text-muted">
-                        Manage LinkedIn job scrapes (scraper.server). Interval
-                        repeats appear on each card.
-                      </p>
-                    </div>
-                    <div className="c360-flex c360-flex-wrap c360-gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={
-                          satelliteFilter === "active" ? "primary" : "outline"
-                        }
-                        onClick={() => {
-                          setSatelliteFilter("active");
-                          setSatellitePage(1);
-                        }}
-                      >
-                        Active
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={
-                          satelliteFilter === "all" ? "primary" : "outline"
-                        }
-                        onClick={() => {
-                          setSatelliteFilter("all");
-                          setSatellitePage(1);
-                        }}
-                      >
-                        All
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="c360-flex c360-flex-wrap c360-items-center c360-gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="c360-gap-2"
-                      onClick={() => void loadRuns()}
-                      disabled={runsLoading}
-                      leftIcon={
-                        <RefreshCw
-                          size={15}
-                          className={cn(runsLoading && "c360-spin")}
-                        />
-                      }
-                    >
-                      Reload
-                    </Button>
-                    {isSuperAdmin ? (
-                      <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="c360-gap-2"
-                          disabled={purgeSessionsLoading || runsLoading}
-                          leftIcon={<Trash2 size={15} />}
-                          onClick={() => setPurgeConfirmOpen(true)}
-                        >
-                          Clear all sessions
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          leftIcon={<Play size={15} />}
-                          onClick={onOpenRunScrapeModal}
-                        >
-                          Run scrape
-                        </Button>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
+                <RunsSessionsToolbar
+                  title="Scraper sessions & tracked jobs"
+                  description="Manage LinkedIn job scrapes (scraper.server). Interval repeats appear on each card."
+                  filter={satelliteFilter}
+                  onFilterChange={(f) => {
+                    setSatelliteFilter(f);
+                    setSatellitePage(1);
+                  }}
+                  runsLoading={runsLoading}
+                  onReload={() => void loadRuns()}
+                  trailingActions={superAdminToolbarActions}
+                />
                 <div className="c360-overflow-x-auto c360-rounded c360-border c360-border-ink-8">
                   <Table<Record<string, unknown>>
                     columns={satelliteColumns}
@@ -553,7 +587,9 @@ export function RunsTab({
                     loading={runsLoading && satelliteRunsRows.length === 0}
                     emptyState={
                       <p className="c360-m-0 c360-text-sm">
-                        No sessions in this view.
+                        {satelliteFilter === "running"
+                          ? "No running sessions in this view."
+                          : "No sessions in this view."}
                       </p>
                     }
                   />
@@ -595,8 +631,9 @@ export function RunsTab({
           <span className="c360-font-mono">scrape_data_index</span>.
         </p>
         <p className="c360-m-0 c360-mt-2 c360-text-sm c360-text-muted">
-          Scraped LinkedIn job documents and tracked Postgres scrape jobs are
-          not deleted.
+          Tracked Postgres scrape jobs are kept for history but active ones are
+          marked <strong>cancelled</strong> when their satellite session is
+          removed. Scraped LinkedIn job documents are not deleted.
         </p>
         {metricsTotal > 0 ? (
           <p className="c360-m-0 c360-mt-2 c360-text-2xs c360-text-muted">

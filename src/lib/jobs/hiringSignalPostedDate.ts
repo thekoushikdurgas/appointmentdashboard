@@ -6,6 +6,31 @@
 const CALENDAR_DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const UTC_MIDNIGHT_RE = /^(\d{4})-(\d{2})-(\d{2})T00:00:00(\.000)?Z$/i;
 
+/** Scraper.server emits UTC instants without a `Z` suffix — treat as UTC, not local. */
+function isNaiveUtcIsoDateTime(s: string): boolean {
+  return (
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) &&
+    !/[zZ]$/.test(s) &&
+    !/[+-]\d{2}:\d{2}$/.test(s) &&
+    !/[+-]\d{4}$/.test(s)
+  );
+}
+
+/** Display timezone for hiring-signal scraper session clocks (product copy uses IST). */
+export const HIRE_SIGNAL_DISPLAY_TZ = "Asia/Kolkata";
+
+export function parseHireSignalInstant(iso: string): Date | null {
+  let s = iso?.trim() ?? "";
+  if (!s || s.startsWith("0001-01-01")) return null;
+  if (!s.includes("T")) {
+    s = `${s}T00:00:00.000Z`;
+  } else if (isNaiveUtcIsoDateTime(s)) {
+    s = `${s}Z`;
+  }
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? new Date(t) : null;
+}
+
 type CalendarParts = { y: number; m: number; d: number };
 
 /** Parse YYYY-MM-DD or legacy UTC-midnight calendar stamps without timezone rollover. */
@@ -63,19 +88,21 @@ export function formatHireSignalPostedParts(
     return { date: formatCalendarParts(calendar), time: null };
   }
   try {
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime()) || d.getUTCFullYear() < 1970) {
+    const d = parseHireSignalInstant(s);
+    if (!d) {
       return { date: s.slice(0, 10) || "—", time: null };
     }
     const date = d.toLocaleDateString("en-IN", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: HIRE_SIGNAL_DISPLAY_TZ,
     });
-    const time = d.toLocaleTimeString("en-IN", {
+    const time = `${d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
-    });
+      timeZone: HIRE_SIGNAL_DISPLAY_TZ,
+    })} IST`;
     return { date, time };
   } catch {
     return { date: s.slice(0, 10) || "—", time: null };
@@ -114,17 +141,17 @@ export function formatHireSignalPostedDate(
     if (!out?.trim()) {
       out = showTime
         ? d.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
         : d.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
     }
     const t = out.trim() || s.slice(0, 10);
     return t;

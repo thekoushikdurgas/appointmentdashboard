@@ -151,6 +151,36 @@ export function satelliteRunIdFromRow(row: Record<string, unknown>): string {
   return String(row.job_id ?? row.runId ?? row.run_id ?? row.id ?? "");
 }
 
+function pickIsoField(row: Record<string, unknown>, ...keys: string[]): string {
+  for (const k of keys) {
+    const v = row[k];
+    if (v != null && String(v).trim()) return String(v).trim();
+  }
+  return "";
+}
+
+/**
+ * Best timestamp for the Runs "Started" column: worker start, else queue (created), else updated.
+ */
+export function satelliteRunStartedIso(row: Record<string, unknown>): string {
+  return (
+    pickIsoField(row, "started_at", "startedAt", "StartedAt") ||
+    pickIsoField(row, "queuedAt", "queued_at") ||
+    pickIsoField(row, "created_at", "createdAt", "CreatedAt") ||
+    pickIsoField(row, "updated_at", "updatedAt", "UpdatedAt") ||
+    ""
+  );
+}
+
+/** True when Started column shows queue time (pending/paused, no worker start yet). */
+export function satelliteRunStartedIsQueued(
+  row: Record<string, unknown>,
+): boolean {
+  const st = satelliteStatusFromRow(row);
+  if (st !== "pending" && st !== "paused") return false;
+  return !pickIsoField(row, "started_at", "startedAt", "StartedAt");
+}
+
 /** Jobs ingested so far for a scraper.server session row (snake/camel aliases). */
 export function satelliteJobsCollected(row: Record<string, unknown>): number {
   const raw =
